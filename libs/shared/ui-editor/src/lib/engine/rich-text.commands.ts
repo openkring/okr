@@ -317,6 +317,8 @@ export function caretSelection(doc: PMNode, caret: RichTextCaret): Selection {
   if (caret === 'start') return Selection.findFrom(doc.resolve(0), 1, true) ?? Selection.atStart(doc);
   if (caret === 'end') return atEnd;
   const upper = htmlToDoc(caret.afterHtml);
+  // nothing stood above: the lower text begins at the start, whatever it begins with
+  if (upper.childCount === 1 && upper.child(0).isTextblock && upper.child(0).content.size === 0) return caretSelection(doc, 'start');
   // the end of its text, not of its last tag: the first paragraph below may have been merged into it
   const upperEnd = Selection.atEnd(upper);
   const pos = upperEnd instanceof TextSelection ? upperEnd.head : upper.content.size;

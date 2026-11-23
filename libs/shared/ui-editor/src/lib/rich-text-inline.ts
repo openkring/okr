@@ -1,5 +1,5 @@
 import {
-  Component, ComponentRef, computed, DestroyRef, effect, inject, input, output, PLATFORM_ID, signal, Type, untracked, viewChild,
+  Component, ComponentRef, computed, DestroyRef, effect, ErrorHandler, inject, input, output, PLATFORM_ID, signal, Type, untracked, viewChild,
   ViewContainerRef, ViewEncapsulation,
 } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
@@ -50,10 +50,14 @@ export type RichTextCaret = 'start' | 'end' | { afterHtml: string };
   template: `<ng-container #engineHost />`,
 })
 export class RichTextInline {
+  private readonly errorHandler = inject(ErrorHandler);
   private readonly texts = inject(I18nService).translateAll(RICH_TEXT_I18N_KEYS) as RichTextI18n;
 
   // inputs
-  /** Stored html. The same html that `valueChange` emitted leaves the cursor alone; any other is loaded, with the cursor at `caret`. */
+  /**
+   * Stored html. A changed value other than the html last emitted is loaded, with the cursor at `caret`. For undo the host must set
+   * it to what `valueChange` emits, at once: without that, going back to the value that is still set is no change and loads nothing.
+   */
   public readonly value = input<string>(EMPTY_RICH_TEXT.html);
   /** default: the one of the rich-text field */
   public readonly placeholder = input('');
@@ -145,34 +149,44 @@ export class RichTextInline {
   }
 
   private async load(host: ViewContainerRef): Promise<void> {
+    let engineType: Type<RichTextEngine>;
     try {
-      const [{ RichTextEngine }, { RichTextToolbar }] = await Promise.all([
-        import('./engine/rich-text-engine'), import('./engine/rich-text-toolbar'),
-      ]);
-      if (this.destroyed) return;
-      const ref = host.createComponent(RichTextEngine);
-      ref.setInput('showToolbar', false);
-      ref.setInput('inPlace', true);
-      ref.setInput('i18n', this.texts);
-      ref.setInput('value', this.value() || EMPTY_RICH_TEXT.html);
-      ref.setInput('placeholder', this.placeholder() || this.texts.placeholder());
-      ref.setInput('hiddenFeatures', this.hiddenFeatures());
-      ref.setInput('blockEditing', this.blockEditing());
-      ref.setInput('caret', this.caretWish());
-      ref.instance.valueChange.subscribe((html: string) => this.valueChange.emit(html));
-      ref.instance.split.subscribe((html: string) => this.split.emit(html));
-      ref.instance.join.subscribe((html: string) => this.join.emit(html));
-      ref.changeDetectorRef.detectChanges();
-      this.toolbarType = RichTextToolbar;
-      this.engine.set(ref);
+      const [engine, toolbar] = await Promise.all([import('./engine/rich-text-engine'), import('./engine/rich-text-toolbar')]);
+      engineType = engine.RichTextEngine;
+      this.toolbarType = toolbar.RichTextToolbar;
     } catch (error) {
-      if (this.destroyed) return;
-      // handled here: the app's handler would reload the page for a missing chunk, and unsaved changes with it
+      // not for the app's handler: it would reload the page for a missing chunk, and unsaved changes with it
       console.warn('RichTextInline: the editor could not be loaded', error);
+      if (!this.destroyed) this.failed.emit();
+      return;
+    }
+    if (this.destroyed) return;
+    try {
+      this.engine.set(this.createEngine(host, engineType));
+    } catch (error) {
+      // a bug, not a missing chunk; nothing else would hand it to the app's handler from here
+      this.errorHandler.handleError(error);
       host.clear();
       this.failed.emit();
       return;
     }
     this.ready.emit();
+  }
+
+  private createEngine(host: ViewContainerRef, engineType: Type<RichTextEngine>): ComponentRef<RichTextEngine> {
+    const ref = host.createComponent(engineType);
+    ref.setInput('showToolbar', false);
+    ref.setInput('inPlace', true);
+    ref.setInput('i18n', this.texts);
+    ref.setInput('value', this.value() || EMPTY_RICH_TEXT.html);
+    ref.setInput('placeholder', this.placeholder() || this.texts.placeholder());
+    ref.setInput('hiddenFeatures', this.hiddenFeatures());
+    ref.setInput('blockEditing', this.blockEditing());
+    ref.setInput('caret', this.caretWish());
+    ref.instance.valueChange.subscribe((html: string) => this.valueChange.emit(html));
+    ref.instance.split.subscribe((html: string) => this.split.emit(html));
+    ref.instance.join.subscribe((html: string) => this.join.emit(html));
+    ref.changeDetectorRef.detectChanges();
+    return ref;
   }
 }

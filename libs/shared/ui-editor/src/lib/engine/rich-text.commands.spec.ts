@@ -223,6 +223,14 @@ describe('editing texts block by block (1.175)', () => {
       expect(at('<p></p><p>cd</p>', { afterHtml: '<p></p>' })).toBe(1);
     });
 
+    it('stands at the start before a list or a heading when the upper text was empty', () => {
+      for (const afterHtml of ['', '<p></p>', '<h2></h2>']) {
+        expect(at('<ul><li><p>cd</p></li></ul>', { afterHtml })).toBe(3);
+        expect(at('<h2>cd</h2><p>e</p>', { afterHtml })).toBe(1);
+        expect(at('<p>cd</p><p>e</p>', { afterHtml })).toBe(1);
+      }
+    });
+
     it('falls back to the end when the upper text is not there', () => {
       expect(at('<p>ab</p><p>cd</p>', { afterHtml: '<p>xy</p>' })).toBe(7);
       expect(at('<p>ab</p>', { afterHtml: '<p>ab</p><p>cd</p>' })).toBe(3);

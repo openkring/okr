@@ -49,15 +49,19 @@ function taskCheckboxPlugin(): Plugin {
   });
 }
 
-/** Marks empty lines without the cursor: readers see no height for them, so a text edited in place must not show any either. */
+/**
+ * Marks empty lines without the cursor: readers see no height for them, so a text edited in place must not show any either.
+ * Not the line of a list item: the item has its height from the marker, and without the line no click or arrow key reaches it.
+ */
 function emptyLinesPlugin(): Plugin {
   return new Plugin({
     props: {
       decorations: (state) => {
         const { from, to } = state.selection;
         const decorations: Decoration[] = [];
-        state.doc.descendants((node, pos) => {
+        state.doc.descendants((node, pos, parent, index) => {
           if (!node.isTextblock) return true;
+          if (parent?.type === schema.nodes['list_item'] && index === 0) return false;
           const hasCursor = from <= pos + 1 && to >= pos + 1;
           if (node.content.size === 0 && !hasCursor) decorations.push(Decoration.node(pos, pos + node.nodeSize, { class: 'rte-empty-line' }));
           return false;
@@ -161,19 +165,26 @@ export class RichTextEngine implements AfterViewInit, RichTextToolbarEngine {
   private currentHtml: string | undefined;
 
   /** The editor state as a signal, so the toolbar re-renders on every transaction (zoneless). */
-  public readonly state = signal<EditorState | undefined>(undefined);
+  private readonly currentState = signal<EditorState | undefined>(undefined);
+  public readonly state = this.currentState.asReadonly();
 
   constructor() {
     // a value set from outside (load, revert, clear) replaces the document; the author's own edits do not
+    let loaded: string | undefined;
     let placed: RichTextCaret | undefined;
     effect(() => {
       const html = this.value() || this.empty();
       const caret = this.caret();
+      // only a value that changed: a host that never passes the typed text back must not lose it when the caret changes
+      const isNewValue = html !== loaded;
       const isNewCaret = caret !== placed;
+      loaded = html;
       placed = caret;
       if (!this.view) return;
-      if (html !== untracked(() => this.currentHtml)) this.loadDocument(html, caret);
-      else if (caret && isNewCaret) this.placeCaret(caret);
+      untracked(() => {
+        if (isNewValue && html !== this.currentHtml) this.loadDocument(html, caret);
+        else if (caret && isNewCaret) this.placeCaret(caret);
+      });
     });
     effect(() => {
       const editable = !this.readOnly();
@@ -272,7 +283,7 @@ export class RichTextEngine implements AfterViewInit, RichTextToolbarEngine {
         if (!this.view) return;
         const next = this.view.state.apply(tr);
         this.view.updateState(next);
-        this.state.set(next);
+        this.currentState.set(next);
         if (tr.docChanged) {
           const out = this.fromDoc(next.doc);
           this.currentHtml = out;
@@ -280,7 +291,8 @@ export class RichTextEngine implements AfterViewInit, RichTextToolbarEngine {
         }
       },
     });
-    this.state.set(state);
+    this.currentState.set(state);
+    if (untracked(() => this.caret())) this.revealIfOutOfSight(this.view);
   }
 
   private stateOf(html: string, caret: RichTextCaret | undefined, plugins: readonly Plugin[]): EditorState {
@@ -294,12 +306,28 @@ export class RichTextEngine implements AfterViewInit, RichTextToolbarEngine {
     this.currentHtml = html;
     const state = this.stateOf(html, caret, this.view.state.plugins);
     this.view.updateState(state);
-    this.state.set(state);
+    this.currentState.set(state);
+    if (caret) this.revealCaret();
   }
 
   private placeCaret(caret: RichTextCaret): void {
     if (!this.view) return;
     const { tr, doc } = this.view.state;
     this.view.dispatch(tr.setSelection(caretSelection(doc, caret)));
+    this.revealCaret();
+  }
+
+  /** Scrolls to the cursor if it is out of sight; in the next frame, when the host has drawn what changes with it. */
+  private revealCaret(): void {
+    requestAnimationFrame(() => this.view?.dispatch(this.view.state.tr.scrollIntoView()));
+  }
+
+  /** A text that opens in sight must not jump (a click in the middle of a long one); one that opens out of sight is scrolled to. */
+  private revealIfOutOfSight(view: EditorView): void {
+    const observer = new IntersectionObserver(([entry]) => {
+      observer.disconnect();
+      if (!entry.isIntersecting && view === this.view) view.dispatch(view.state.tr.scrollIntoView());
+    });
+    observer.observe(view.dom);
   }
 }
