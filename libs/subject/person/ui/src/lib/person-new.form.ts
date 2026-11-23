@@ -287,7 +287,7 @@ import { PersonLookup } from './person-lookup';
       @if(isShown('tags')) {
         <okr-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [allChips]="allTags()" [readOnly]="isReadOnly()" />
       }
-      @if(hasRole('admin')) {
+      @if(isShown('notes') && hasRole('admin')) {
         <okr-textarea-input variant="card" [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [maxLength]="descriptionLength" [readOnly]="isReadOnly()" [errors]="notesErrors()" />
       }
     </form>

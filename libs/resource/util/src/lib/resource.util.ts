@@ -42,7 +42,7 @@ export function getDefaultForResourceType(resourceType?: string): string {
 /**
  * A copy of `resource` with `type`, whose subType and usage are items the tenant offers for that
  * type — so a subType left over from the previous type (a car with 'b1x') or a default the tenant
- * does not offer is replaced. Unchanged where the new type has no list or the list is still empty.
+ * does not offer is replaced. Where the new type has no subtypes to choose from, it gets its default.
  * Only for a record being created: an existing record keeps its values.
  *
  * @param categoryFor the category list by name (`appStore.tryGetCategory`); only asked for the type's own lists
@@ -52,8 +52,12 @@ export function applyResourceType(resource: ResourceModel, type: string, categor
   const result = { ...resource, type } as ResourceModel;
   const subTypeList = getCategoryNameForResourceType(type);
   const subTypes = subTypeList ? categoryFor(subTypeList) : undefined;
-  if (subTypes && subTypes.items.length > 0 && !subTypes.items.some(item => item.name === result.subType)) {
-    result.subType = defaultItemName(subTypes, getDefaultForResourceType(type));
+  if (subTypes && subTypes.items.length > 0) {
+    if (!subTypes.items.some(item => item.name === result.subType)) {
+      result.subType = defaultItemName(subTypes, getDefaultForResourceType(type));
+    }
+  } else if (type !== resource.type) {
+    result.subType = getDefaultForResourceType(type);
   }
   const usageList = getUsageNameForResourceType(type);
   const usages = usageList ? categoryFor(usageList) : undefined;

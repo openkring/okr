@@ -367,6 +367,7 @@ import { getUsageForYear, ResourceI18n, resourceValidations, getKeyNr, getLocker
              property silently did nothing. -->
         @if(isShown('data')) {
           <okr-property-list [properties]="data()" (propertiesChange)="onFieldChange('data', $event)" />
+          <okr-error-note [errors]="dataErrors()" />
         }
 
         @if(isShown('tags') && (hasRole('privileged') || hasRole('resourceAdmin'))) {
@@ -439,7 +440,7 @@ export class ResourceForm {
     .filter(([field]) => field === 'tags' || field.startsWith('tags['))
     .flatMap(([, messages]) => messages));
 
-  private readonly dataErrors = computed(() => this.validationResult().getErrors('data'));
+  protected readonly dataErrors = computed(() => this.validationResult().getErrors('data'));
 
   /** A hidden field with an error stays on screen, so the user can fix what blocks the save. */
   protected isShown(field: string): boolean {

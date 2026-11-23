@@ -7,60 +7,38 @@ import { DeliveryChannel } from '@okr/shared-models';
 import { deliveryChannelsValidations, imageUrlValidations, partialDateValidations, stringValidations, tagValidations, urlValidations } from './vest.util';
 
 /**
- * The configured tag lists in the `tags` collection are authored with ", " separators
- * (e.g. "@tag.advertiser, @tag.bexio, @tag.business"), while a model's own `tags` field is
- * written without them ("@tag.bexio,@tag.sponsor"). tagValidations compares the two by exact
- * string match, so an untrimmed split made every configured tag but the first unmatchable —
- * silently invalidating the whole form of any tagged person, org or document.
+ * Tags are picked from chips, so only the string and its length are checked. A tag that is not (or
+ * no longer) in the tenant's list must not make the whole form invalid.
  */
-function runTags(tags: string, givenTags: string) {
+function runTags(tags: unknown, givenTags?: string) {
   const suite = create(() => tagValidations('tags', tags, givenTags));
   return suite();
 }
 
-const CONFIGURED = '@tag.advertiser, @tag.bexio, @tag.business, @tag.family, @tag.friend, @tag.important';
+const CONFIGURED = '@tag.advertiser, @tag.bexio, @tag.business';
 
 describe('tagValidations', () => {
-
-  it('accepts tags stored without separator spaces against a spaced tag list', () => {
-    const result = runTags('@tag.bexio,@tag.sponsor'.replace('@tag.sponsor', '@tag.family'), CONFIGURED);
-    expect(result.getErrors()).toEqual({});
-    expect(result.isValid()).toBe(true);
-  });
-
-  it('accepts tags stored with separator spaces', () => {
-    const result = runTags('@tag.bexio, @tag.family', CONFIGURED);
-    expect(result.getErrors()).toEqual({});
-    expect(result.isValid()).toBe(true);
-  });
-
-  it('accepts the first configured tag (the only one that ever matched)', () => {
-    expect(runTags('@tag.advertiser', CONFIGURED).isValid()).toBe(true);
-  });
 
   it('accepts an empty tag list', () => {
     expect(runTags('', CONFIGURED).isValid()).toBe(true);
   });
 
-  it('skips the membership check when no configured list is passed (Signal Forms bridge)', () => {
-    const suite = create(() => tagValidations('tags', '@tag.bexio', undefined));
-    expect(suite().isValid()).toBe(true);
-  });
-
-  it('accepts a tag that is not configured (a tag removed from the list must not lock the record)', () => {
-    const result = runTags('@tag.bexio,@tag.doesnotexist', CONFIGURED);
+  it.each([
+    ['in the list', '@tag.bexio,@tag.business', CONFIGURED],
+    ['not in the list', '@tag.bexio,@tag.doesnotexist', CONFIGURED],
+    ['without any list', '@tag.bexio', undefined],
+  ])('accepts tags %s', (_case, tags, givenTags) => {
+    const result = runTags(tags, givenTags);
     expect(result.getErrors()).toEqual({});
     expect(result.isValid()).toBe(true);
   });
 
-  it('still rejects a tag string over LONG_NAME_LENGTH', () => {
-    const result = runTags('@tag.' + 'x'.repeat(LONG_NAME_LENGTH), CONFIGURED);
-    expect(result.isValid()).toBe(false);
+  it('rejects a tag string over LONG_NAME_LENGTH', () => {
+    expect(runTags('@tag.' + 'x'.repeat(LONG_NAME_LENGTH), CONFIGURED).isValid()).toBe(false);
   });
 
   it('rejects a non-string', () => {
-    const suite = create(() => tagValidations('tags', 42, CONFIGURED));
-    expect(suite().isValid()).toBe(false);
+    expect(runTags(42, CONFIGURED).isValid()).toBe(false);
   });
 });
 

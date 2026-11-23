@@ -8,6 +8,7 @@ import {
   getKeyNr,
   getLockerNr,
   getCategoryNameForResourceType,
+  getDefaultForResourceType,
   getUsageNameForResourceType,
 } from './resource.util';
 
@@ -93,8 +94,17 @@ describe('applyResourceType', () => {
     expect(applyResourceType(resource('rboat', 'b4x'), 'rboat', lookup, 2026).subType).toBe('b4x');
   });
 
-  it('leaves subType alone when the new type has no subtype list', () => {
-    expect(applyResourceType(resource('rboat', 'b1x'), 'key', lookup, 2026).subType).toBe('b1x');
+  it('clears the leftover subType when the new type has no subtype list', () => {
+    expect(applyResourceType(resource('rboat', 'b1x'), 'key', lookup, 2026).subType).toBe('');
+  });
+
+  it('falls back to the default of the new type when the tenant lacks its list', () => {
+    expect(applyResourceType(resource('rboat', 'b1x'), 'car', () => undefined, 2026).subType).toBe(getDefaultForResourceType('car'));
+    expect(applyResourceType(resource('rboat', 'b1x'), 'car', () => list(), 2026).subType).toBe(getDefaultForResourceType('car'));
+  });
+
+  it('keeps the subType when the type stays the same and has no subtype list', () => {
+    expect(applyResourceType(resource('boat', 'sail'), 'boat', lookup, 2026).subType).toBe('sail');
   });
 
   it('leaves subType alone while the list is empty (categories loading)', () => {

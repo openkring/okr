@@ -96,21 +96,25 @@ const FIXED_GROUP_MODELS = ['person', 'org'];
           <ion-item-divider>
             <ion-icon slot="start" src="{{ 'category' | svgIcon }}" />
             <ion-label>{{ group.title }}</ion-label>
-            <ion-button slot="end" fill="clear" size="small" (click)="onReset(group.modelKey)">
-              {{ text('reset') }}
-            </ion-button>
+            @if (isConfigLoaded()) {
+              <ion-button slot="end" fill="clear" size="small" (click)="onReset(group.modelKey)">
+                {{ text('reset') }}
+              </ion-button>
+            }
           </ion-item-divider>
           @if (group.note) {
             <ion-item lines="none">
               <ion-note class="ion-text-wrap">{{ group.note }}</ion-note>
             </ion-item>
           }
-          @for (field of group.fields; track field.field + '/' + epoch()) {
-            <okr-checkbox
-              [i18n]="field.i18n"
-              [checked]="field.visible"
-              [readOnly]="false"
-              (checkedChange)="onToggle(group.modelKey, field.field, $event)" />
+          @if (isConfigLoaded()) {
+            @for (field of group.fields; track field.field + '/' + epoch()) {
+              <okr-checkbox
+                [i18n]="field.i18n"
+                [checked]="field.visible"
+                [readOnly]="false"
+                (checkedChange)="onToggle(group.modelKey, field.field, $event)" />
+            }
           }
           @if (group.lists.length > 0) {
             <ion-item-divider>
@@ -139,7 +143,7 @@ const FIXED_GROUP_MODELS = ['person', 'org'];
       </ion-list>
     }
 
-    @if (featureStore.settled() && widgets().length > 0) {
+    @if (isConfigLoaded() && featureStore.settled() && widgets().length > 0) {
       <ion-list>
         <ion-item-group>
           <ion-item-divider>
@@ -203,9 +207,14 @@ export class CustomizeTab {
   /** Bumped after a failed write: the checkboxes are drawn anew from the stored state. */
   protected readonly epoch = signal(0);
 
+  /** Until the stored config is here, `appConfig()` is the class default: writing from it would replace the tenant's settings. */
+  protected readonly isConfigLoaded = computed(() => this.appStore.isAppConfigSettled() && this.appStore.appConfigResource.hasValue());
+
   protected readonly groups = computed(() => {
-    const stored = this.appStore.appConfig()?.modelFields;
-    const resourceKeys = [...new Set(this.appStore.getCategory('resource_type').items.map((item) => resourceFieldKey(item.name)))];
+    const stored = this.isConfigLoaded() ? this.appStore.appConfig().modelFields : undefined;
+    const isResourceOn = this.isConfigLoaded() && this.featureStore.settled() && this.featureStore.isEnabled()('resource');
+    const resourceTypes = isResourceOn ? this.appStore.tryGetCategory('resource_type')?.items ?? [] : [];
+    const resourceKeys = [...new Set(resourceTypes.map((item) => resourceFieldKey(item.name)))];
     const models = [...FIXED_GROUP_MODELS, ...resourceKeys];
     return models.map((modelKey, index) => {
       const hidden = hiddenFieldsOf(modelKey, stored);
@@ -272,7 +281,7 @@ export class CustomizeTab {
       let saved = false;
       try {
         const tenantId = this.appStore.tenantId();
-        if (!tenantId) return;
+        if (!tenantId || !this.isConfigLoaded()) return;
         const next = withWidgetVisibility(this.appStore.appConfig()?.hiddenWidgets, key, visible, tenantId);
         saved = !!await this.appConfigService.setHiddenWidgets(tenantId, next);
       } catch (error) {
@@ -326,7 +335,7 @@ export class CustomizeTab {
       let saved = false;
       try {
         const tenantId = this.appStore.tenantId();
-        if (!tenantId) return;
+        if (!tenantId || !this.isConfigLoaded()) return;
         saved = !!await this.appConfigService.setModelFields(tenantId, next(this.appStore.appConfig()?.modelFields));
       } catch (error) {
         this.alertService.error(`CustomizeTab.${where}: ${error}`);

@@ -117,9 +117,9 @@ async function runGuardWithStub(blockId: string, stub: ReturnType<typeof feature
 
 describe('FeatureStore.settled', () => {
   /**
-   * THE ANONYMOUS STEADY STATE, not a load window. `appConfigResource` returns `of(undefined)`
-   * without an `fbUser`, and `firestore.rules` allows `feature-rollout` reads only
-   * `if signedIn()`, so NEITHER source is guaranteed to emit for a signed-out visitor —
+   * THE ANONYMOUS STEADY STATE, not a load window. `firestore.rules` allows `feature-rollout`
+   * reads only `if signedIn()`, so the rollout stream is not guaranteed to emit for a signed-out
+   * visitor, and `settled` does not wait for app-config either (which loads for visitors too) —
    * modelled here as a rollout stream that never emits and an app-config that never settles.
    * Without the explicit anonymous clause `settled` stays false forever and every PUBLIC route
    * hangs.
