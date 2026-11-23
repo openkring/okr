@@ -1,18 +1,18 @@
 import { staticSuite } from 'vest';
 
-import { SHORT_NAME_LENGTH } from '@okr/shared-constants';
+import { EMAIL_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { AvatarUsage, CalendarSmallScreenView, Language, StartPage, NameDisplay, PersonSortCriteria, PrivacyUsage, UserModel } from '@okr/shared-models';
 import { baseValidations, booleanValidations, categoryValidations, deliveryChannelsValidations, stringValidations } from '@okr/shared-util-core';
 
 export const userValidations = staticSuite((model: UserModel, tenants: string, tags: string) => {
   baseValidations(model, tenants, tags);
-  stringValidations('loginEmail', model.loginEmail, SHORT_NAME_LENGTH);
+  stringValidations('loginEmail', model.loginEmail, EMAIL_LENGTH);
   stringValidations('personKey', model.personKey);
   stringValidations('firstName', model.firstName, SHORT_NAME_LENGTH);
   stringValidations('lastName', model.lastName, SHORT_NAME_LENGTH);
   categoryValidations('userLanguage', model.userLanguage, Language);
   categoryValidations('avatarUsage', model.avatarUsage, AvatarUsage);
-  stringValidations('gravatarEmail', model.gravatarEmail, SHORT_NAME_LENGTH);
+  stringValidations('gravatarEmail', model.gravatarEmail, EMAIL_LENGTH);
   categoryValidations('nameDisplay', model.nameDisplay, NameDisplay);
   categoryValidations('personSortCriteria', model.personSortCriteria, PersonSortCriteria);
   // legacy docs lack the field (Firestore reads skip model defaults) — validate the effective default

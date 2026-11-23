@@ -11,7 +11,7 @@ import { coerceBoolean, hasRole, toEditableChannels } from "@okr/shared-util-cor
 
 import { userValidations } from "@okr/user-util";
 import { ProfileI18n } from "@okr/profile-util";
-import { SHORT_NAME_LENGTH } from '@okr/shared-constants';
+import { EMAIL_LENGTH } from '@okr/shared-constants';
 
 /** The user fields this accordion renders as editable — the ones its `valid` output may gate on. */
 const EDITED_FIELDS = [
@@ -71,7 +71,7 @@ const EDITED_FIELDS = [
               </ion-col>
               @if(avatarUsage() === avatarUsageEnum.GravatarFirst || avatarUsage() === avatarUsageEnum.PhotoFirst) {
                 <ion-col size="12" size-md="6">
-                  <okr-text-input [i18n]="gravatarEmailI18n()" [value]="gravatarEmail()" (valueChange)="onFieldChange('gravatarEmail', $event)" [showHelper]="showHelper()" [copyable]=true [maxLength]="shortNameLength" [readOnly]="isReadOnly()" />
+                  <okr-text-input [i18n]="gravatarEmailI18n()" [value]="gravatarEmail()" (valueChange)="onFieldChange('gravatarEmail', $event)" [showHelper]="showHelper()" [copyable]=true [maxLength]="emailLength" [readOnly]="isReadOnly()" />
                   <okr-error-note [errors]="gravatarEmailErrors()" />                                                 
                 </ion-col>
               }
@@ -140,7 +140,7 @@ const EDITED_FIELDS = [
 })
 export class ProfileSettingsAccordion {
   /** kept in step with the cap the Vest suite enforces on this field */
-  protected readonly shortNameLength = SHORT_NAME_LENGTH;
+  protected readonly emailLength = EMAIL_LENGTH;
   protected readonly modalController = inject(ModalController);
   protected readonly fcmService = inject(FcmService);
   // iOS can refuse without a dialog when the app's notifications are off in the iPhone settings

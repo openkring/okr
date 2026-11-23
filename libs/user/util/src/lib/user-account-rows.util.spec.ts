@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { UserModel } from '@okr/shared-models';
 
-import { buildUserAccountRows, filterUserAccountRows, formatLastLogin, searchUserAccountRows, UserAccountRow } from './user-account-rows.util';
+import { accountRowOfPerson, buildUserAccountRows, filterUserAccountRows, formatLastLogin, personKeysWithAccount, searchUserAccountRows, UserAccountRow } from './user-account-rows.util';
 
 function user(okey: string, tenant: string, extra: Partial<UserModel> = {}): UserModel {
   const u = new UserModel(tenant);
@@ -146,5 +146,26 @@ describe('last login', () => {
   it('returns an empty string without a (valid) sign-in time', () => {
     expect(formatLastLogin(undefined)).toBe('');
     expect(formatLastLogin('not a date')).toBe('');
+  });
+});
+
+describe('adding a user', () => {
+  const rows: UserAccountRow[] = [
+    { kind: 'normal', uid: 'u1', personKey: 'p1', name: 'A', roles: [] },
+    { kind: 'normal', uid: 'u2', name: 'B', roles: [] },
+    { kind: 'userWithoutLogin', uid: 'u3', personKey: 'p3', name: 'C', roles: [] },
+    { kind: 'memberWithoutAccount', personKey: 'p4', name: 'D', roles: [] },
+  ];
+
+  it('leaves out only the persons with user and login', () => {
+    expect(personKeysWithAccount(rows)).toEqual(['p1']);
+  });
+
+  it('takes the existing row of the person', () => {
+    expect(accountRowOfPerson(rows, 'p3', 'C')).toBe(rows[2]);
+  });
+
+  it('makes a row for a person without one', () => {
+    expect(accountRowOfPerson(rows, 'p9', 'Z')).toEqual({ kind: 'memberWithoutAccount', personKey: 'p9', name: 'Z', roles: [] });
   });
 });
