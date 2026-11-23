@@ -216,6 +216,61 @@ describe('renderSite', () => {
     expect(fileOf(files, 'en/news-artikel.html')).toContain('https://example.org/en/news-artikel');
   });
 
+  describe('an editable fixed page (manifest.fixedPages[].editable)', () => {
+    const TEMPLATE = '{{#if cmsPage}}<div class="cms">{{{content}}}</div>{{else}}<h1>Vorgabe</h1>{{/if}}<div id="list" data-name="{{page.key}}" data-sections="{{sections.length}}"></div>';
+    const bound = (page: Partial<PageModel> = {}, fixed: Partial<TemplateManifest['fixedPages'][number]> = {}): RenderInput => {
+      const i = input({}, { nav: [node('n-news', 'news', 'scsw_news', { label: 'Alle', labelI18n: { en: 'All' } })] } as Partial<WebsiteModel>);
+      i.pages.set('scsw_news', pg(['s-hero'], page));
+      i.templates.manifest.legacyRedirects = [];
+      i.templates.manifest.fixedPages = [{ name: 'news', slug: 'news', title: 'News', description: 'Vorgabetext', editable: true, ...fixed }];
+      i.templates.pages['news'] = TEMPLATE;
+      return i;
+    };
+
+    it('draws the sections of the tree page with its slug above the template body', () => {
+      const { files, problems } = renderSite(bound({ title: 'Aktuelles', abstract: 'Was läuft' }));
+      expect(problems).toEqual([]);
+      const html = fileOf(files, 'news.html') ?? '';
+      expect(html).toContain('Willkommen');
+      expect(html).not.toContain('Vorgabe');
+      expect(html).toContain('<title>Aktuelles – Fixture Club</title>');
+      expect(html).toContain('<meta name="description" content="Was läuft">');
+      expect(html).toContain('data-name="news" data-sections="1"');
+      expect(fileOf(files, 'en/news.html')).toContain('Welcome');
+      expect(files.filter((f) => f.path === 'news.html')).toHaveLength(1);
+    });
+
+    it('falls back to the manifest title and description, not to the menu label', () => {
+      const html = fileOf(renderSite(bound()).files, 'news.html') ?? '';
+      expect(html).toContain('<title>News – Fixture Club</title>');
+      expect(html).toContain('<meta name="description" content="Vorgabetext">');
+    });
+
+    it('marks the page entry as current and lists it in sitemap.xml', () => {
+      const { files } = renderSite(bound());
+      expect(fileOf(files, 'news.html')).toContain('aria-current="page"');
+      expect(fileOf(files, 'sitemap.xml')).toContain('<loc>https://example.org/news</loc>');
+    });
+
+    it('keeps the template heading without a tree page of its slug', () => {
+      const i = bound();
+      i.site.nav = [];
+      const { files, problems } = renderSite(i);
+      expect(problems).toEqual([]);
+      expect(fileOf(files, 'news.html')).toContain('Vorgabe');
+    });
+
+    it('refuses a tree page on the slug of a fixed page that is not editable', () => {
+      const { problems } = renderSite(bound({}, { editable: false }));
+      expect(problems).toContainEqual({ code: 'slugDuplicate', detail: 'news' });
+    });
+
+    it('refuses an editable standalone page: it has no place for the sections', () => {
+      const { problems } = renderSite(bound({}, { standalone: true }));
+      expect(problems).toContainEqual({ code: 'slugDuplicate', detail: 'news' });
+    });
+  });
+
   it('lists every page and language in sitemap.xml', () => {
     const xml = fileOf(renderSite(input()).files, 'sitemap.xml') ?? '';
     expect(xml.match(/<url>/g)?.length).toBe(4);

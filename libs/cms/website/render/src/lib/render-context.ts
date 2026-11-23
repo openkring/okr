@@ -82,7 +82,7 @@ export interface TemplateContext {
   nav: NavItem[];
   footer: FooterContext;
   page: PageContext;
-  /** the page's published sections in order; empty for a fixed page */
+  /** the page's published sections in order; empty for a fixed page (but see `cmsPage`) */
   sections: SectionContext[];
   /** the page body: every section's html joined, or the fixed page's rendered template */
   main: string;
@@ -93,6 +93,13 @@ export interface TemplateContext {
   groupPage?: boolean;
   /** true on the home page when `main` comes from the manifest's homeLayout page template */
   home?: boolean;
+  /**
+   * pages/<name>.hbs of an editable fixed page only: a tree page with the same slug fills it. `page` is
+   * that page (`page.key` stays the fixed page's name), `sections` are its sections, `content` their html.
+   * The template draws them in place of its own heading. The layout still gets `sections: []`.
+   */
+  cmsPage?: boolean;
+  content?: string;
   /** fixed pages only: the group pages of the tree, for the Termine filter (spec 1.165 EV4) */
   groups?: { key: string; label: string; slug: string }[];
 }
