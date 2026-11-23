@@ -23,3 +23,5 @@ export * from './lib/books-setup.validations';
 export * from './lib/tenant-settings';
 export * from './lib/tenant-settings.validations';
 export * from './lib/tenant-settings-confirm';
+export * from './lib/tenant-settings-i18n';
+export * from './lib/tenant-settings-display';

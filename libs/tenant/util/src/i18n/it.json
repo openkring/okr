@@ -500,6 +500,311 @@
       "rebuild": "L'elenco degli indirizzi verrà poi ricostruito. Può richiedere alcuni minuti.",
       "policy": "Tutte le persone che usano questa app dovranno poi accettare di nuovo l'informativa sulla privacy.",
       "ask": "Vuoi salvare?"
+    },
+    "title": "Impostazioni",
+    "missing": "Non è stato possibile caricare le impostazioni di questa app. Riprova più tardi o rivolgiti al gestore.",
+    "public_note": "Questi dati sono leggibili pubblicamente.",
+    "operator_only": "Questo lo modifica il gestore.",
+    "empty": "Predefinito",
+    "edit": "Modifica",
+    "yes": "Sì",
+    "no": "No",
+    "color_remove": "Rimuovi il colore",
+    "country_search": "Cerca paese (p. es. CH o Svizzera)",
+    "country_empty": "Nessun paese trovato",
+    "page_none": "Nessuna pagina",
+    "group": {
+      "app": "App",
+      "images": "Immagini",
+      "language": "Lingua",
+      "start": "Pagina iniziale",
+      "operator": "Gestore",
+      "mail": "E-mail",
+      "privacy": "Protezione dei dati",
+      "defaults": "Valori predefiniti",
+      "platform": "Piattaforma"
+    },
+    "audience": {
+      "title": "Chi può vedere cosa",
+      "public": "Tutti, anche senza accesso",
+      "registered": "Tutte le persone che hanno effettuato l'accesso",
+      "privileged": "Persone con diritti estesi",
+      "admin": "Solo l'amministrazione"
+    },
+    "locale": {
+      "de_ch": "Tedesco (Svizzera)",
+      "fr_ch": "Francese (Svizzera)",
+      "it_ch": "Italiano (Svizzera)",
+      "en": "Inglese",
+      "es": "Spagnolo"
+    },
+    "more": {
+      "title": "Altre impostazioni",
+      "cookie": {
+        "label": "Avviso sui cookie",
+        "helper": "Se l'avviso appare e che cosa contiene. Lo trovi in «Accesso e privacy»."
+      },
+      "task_archive": {
+        "label": "Archiviare le attività",
+        "helper": "Dopo quanti giorni le attività concluse vanno in archivio. Lo trovi nel menu dell'elenco delle attività, in «Impostazioni»."
+      },
+      "file_transfer": {
+        "label": "Limiti dei trasferimenti di file",
+        "helper": "Quanto possono essere grandi i file e per quanto tempo restano disponibili."
+      },
+      "post": {
+        "label": "Valori predefiniti per l'invio postale",
+        "helper": "Li salvi quando invii una lettera, nel passaggio «Invio postale»."
+      },
+      "menu_rows": {
+        "label": "Righe di menu nascoste",
+        "helper": "Quali righe non appaiono nel menu. Le trovi in «Righe di menu»."
+      }
+    },
+    "field": {
+      "appName": {
+        "label": "Nome dell'app",
+        "helper": "Appare nell'app e come mittente delle e-mail."
+      },
+      "appTitle": {
+        "label": "Titolo",
+        "helper": "Appare nella pagina di accesso sopra il modulo. Vuoto: non viene mostrato alcun titolo."
+      },
+      "appSubtitle": {
+        "label": "Sottotitolo",
+        "helper": "Appare nella pagina di accesso sotto il titolo. Vuoto: non viene mostrato alcun sottotitolo."
+      },
+      "description": {
+        "label": "Descrizione",
+        "helper": "Una nota su questa app. Appare solo in questa pagina e presso il gestore. Vuoto: non appare nulla."
+      },
+      "brandColor": {
+        "label": "Colore del marchio",
+        "helper": "Colore dell'intestazione e dei pulsanti nelle e-mail su appuntamenti e corsi. Vuoto: un blu neutro."
+      },
+      "welcomeBannerUrl": {
+        "label": "Immagine della pagina di accesso",
+        "helper": "Senza un'immagine propria viene mostrata l'immagine predefinita dell'app."
+      },
+      "notfoundBannerUrl": {
+        "label": "Immagine della pagina «Non trovato»",
+        "helper": "Senza un'immagine propria viene mostrata l'immagine predefinita dell'app."
+      },
+      "locale": {
+        "label": "Formato di data e ora",
+        "helper": "Vale ovunque si scelga una data o un'ora."
+      },
+      "enabledLanguages": {
+        "label": "Lingue",
+        "helper": "Queste lingue possono essere scelte nell'app. Almeno una deve essere attiva."
+      },
+      "rootUrl": {
+        "label": "Pagina iniziale",
+        "helper": "Questa pagina si apre all'avvio dell'app e dopo l'accesso. Chi ha scelto una propria pagina iniziale nel profilo vede quella."
+      },
+      "opName": {
+        "label": "Nome",
+        "helper": "Appare nell'esportazione dei dati come responsabile. Vuoto: la riga manca. Se tutti i dati sono vuoti, appare il nome dell'app."
+      },
+      "opEmail": {
+        "label": "E-mail",
+        "helper": "Contatto nel profilo e nell'esportazione dei dati. Vuoto: la riga manca nell'esportazione e il contatto nel profilo resta senza indirizzo."
+      },
+      "opStreet": {
+        "label": "Via e numero",
+        "helper": "Appare nell'esportazione dei dati. Vuoto: la riga manca."
+      },
+      "opZipCode": {
+        "label": "NPA",
+        "helper": "Appare nell'esportazione dei dati. Vuoto: la riga manca."
+      },
+      "opCity": {
+        "label": "Località",
+        "helper": "Appare nell'esportazione dei dati. Vuoto: la riga manca."
+      },
+      "opCountryCode": {
+        "label": "Paese",
+        "helper": "Appare nell'esportazione dei dati. Vuoto: la riga manca."
+      },
+      "opWebUrl": {
+        "label": "Sito web",
+        "helper": "Appare nell'esportazione dei dati. Vuoto: la riga manca."
+      },
+      "issueUrl": {
+        "label": "Indirizzo per segnalare errori",
+        "helper": "Destinazione della voce di menu per segnalare un errore. Vuoto: nessuna destinazione è definita."
+      },
+      "mailFrom": {
+        "label": "Indirizzo del mittente",
+        "helper": "Mittente proposto quando scrivi un'e-mail. Vuoto: app@ con il dominio e-mail dell'app."
+      },
+      "dpoName": {
+        "label": "Contatto protezione dei dati: nome",
+        "helper": "Appare accanto all'e-mail del contatto. Vuoto: non appare alcun nome."
+      },
+      "dpoEmail": {
+        "label": "Contatto protezione dei dati: e-mail",
+        "helper": "Riceve un messaggio quando qualcuno fa cancellare i propri dati. Vuoto: il messaggio va all'e-mail del gestore."
+      },
+      "privacyPolicyPageKey": {
+        "label": "Pagina della politica sulla privacy",
+        "helper": "Un link nel profilo porta a questa pagina. Nessuna pagina: il link manca."
+      },
+      "privacyPolicyVersion": {
+        "label": "Versione della politica sulla privacy",
+        "helper": "Per esempio 2026-07. Dopo una modifica viene chiesta a tutti una nuova conferma. Vuoto: non viene chiesto a nessuno."
+      },
+      "showDateOfBirth": {
+        "label": "Data di nascita",
+        "helper": "Se una persona ha scelto per sé un'impostazione più restrittiva, vale la sua scelta. Senza accesso la data non è mai visibile."
+      },
+      "showDateOfDeath": {
+        "label": "Data di decesso",
+        "helper": "Questo dato non viene mai mostrato oltre le persone con diritti estesi."
+      },
+      "showEmail": {
+        "label": "E-mail",
+        "helper": "Se una persona ha scelto per sé un'impostazione più restrittiva, vale la sua scelta."
+      },
+      "showPhone": {
+        "label": "Telefono",
+        "helper": "Se una persona ha scelto per sé un'impostazione più restrittiva, vale la sua scelta."
+      },
+      "showPostalAddress": {
+        "label": "Indirizzo postale",
+        "helper": "Se una persona ha scelto per sé un'impostazione più restrittiva, vale la sua scelta."
+      },
+      "showIban": {
+        "label": "IBAN",
+        "helper": "Questo dato non viene mai mostrato oltre le persone con diritti estesi."
+      },
+      "showTaxId": {
+        "label": "Numero AVS",
+        "helper": "Questo dato non viene mai mostrato oltre le persone con diritti estesi."
+      },
+      "showGender": {
+        "label": "Genere",
+        "helper": "Stabilisce chi vede questo dato nella pagina di una persona."
+      },
+      "showBexioId": {
+        "label": "ID Bexio",
+        "helper": "Stabilisce chi vede questo dato nella pagina di una persona."
+      },
+      "showTags": {
+        "label": "Tag",
+        "helper": "Stabilisce chi vede questo dato nella pagina di una persona."
+      },
+      "ownerLocationId": {
+        "label": "Ubicazione",
+        "helper": "Luogo del tabellone delle partenze. Vuoto: nessun luogo è definito."
+      },
+      "defaultResourceId": {
+        "label": "Risorsa predefinita",
+        "helper": "Vale per le prenotazioni in cui non si sceglie altro. Vuoto: nessun valore predefinito."
+      },
+      "avatarUsage": {
+        "label": "Immagine del profilo",
+        "helper": "Vale per i nuovi account. Gli account esistenti mantengono la loro scelta."
+      },
+      "nameDisplay": {
+        "label": "Visualizzazione dei nomi",
+        "helper": "Vale per i nuovi account. Gli account esistenti mantengono la loro scelta."
+      },
+      "personSortCriteria": {
+        "label": "Ordinamento delle persone",
+        "helper": "Vale per i nuovi account. Gli account esistenti mantengono la loro scelta."
+      },
+      "newsDelivery": {
+        "label": "Consegna delle novità",
+        "helper": "Vale per i nuovi account. Gli account esistenti mantengono la loro scelta."
+      },
+      "invoiceDelivery": {
+        "label": "Consegna delle fatture",
+        "helper": "Vale per i nuovi account. Gli account esistenti mantengono la loro scelta."
+      },
+      "appDomain": {
+        "label": "Indirizzo dell'app",
+        "helper": "Usato nei link, per esempio per reimpostare la password."
+      },
+      "emailDomain": {
+        "label": "Dominio e-mail",
+        "helper": "Le e-mail vengono inviate da questo dominio. Vuoto: l'indirizzo dell'app."
+      },
+      "emailProvider": {
+        "label": "Servizio e-mail",
+        "helper": "Le e-mail vengono inviate tramite questo servizio. Vuoto: il servizio predefinito."
+      },
+      "mailtrapPasswordResetTemplate": {
+        "label": "Modello per reimpostare la password",
+        "helper": "Vuoto: un'e-mail semplice con il nome dell'app."
+      },
+      "loginUrl": {
+        "label": "Pagina di accesso",
+        "helper": "Vuoto: la pagina inclusa nell'app."
+      },
+      "passwordResetUrl": {
+        "label": "Pagina per reimpostare la password",
+        "helper": "Vuoto: la pagina inclusa nell'app."
+      },
+      "logoUrl": {
+        "label": "Logo",
+        "helper": "Il logo dell'app e la base della sua icona."
+      },
+      "ownerOrgId": {
+        "label": "Organizzazione",
+        "helper": "L'organizzazione dietro questa app, per esempio come beneficiaria delle fatture QR."
+      },
+      "ownerUserId": {
+        "label": "Account responsabile",
+        "helper": "L'account responsabile di questa app."
+      },
+      "defaultAccountingTenantId": {
+        "label": "Contabilità",
+        "helper": "Questa contabilità si apre dal menu. Vuoto: le voci di contabilità sono nascoste."
+      },
+      "integrations": {
+        "label": "Servizi collegati",
+        "helper": "Servizi che ricevono dati di questa app. Vuoto: nessuno."
+      },
+      "additionalProcessors": {
+        "label": "Altri destinatari di dati",
+        "helper": "Altre parti che ricevono dati di questa app. Vuoto: nessuna."
+      },
+      "personLookupEnabled": {
+        "label": "Ricerca di indirizzi",
+        "helper": "Quando si registra una persona si può cercare il suo indirizzo nell'elenco telefonico."
+      },
+      "weatherIntervalHours": {
+        "label": "Meteo: intervallo in ore",
+        "helper": "Numero di ore fino al rinnovo dei dati meteo."
+      },
+      "gitRepo": {
+        "label": "Codice del programma: archivio",
+        "helper": "Dato per la manutenzione dell'app. Vuoto: manca il link al codice del programma."
+      },
+      "gitOrg": {
+        "label": "Codice del programma: organizzazione",
+        "helper": "Dato per la manutenzione dell'app. Vuoto: manca il link al codice del programma."
+      },
+      "isArchived": {
+        "label": "Archiviata",
+        "helper": "Sì significa: l'app non è più in uso."
+      },
+      "showDebugInfo": {
+        "label": "Dati per la ricerca di errori",
+        "helper": "Mostra dati aggiuntivi utili per la ricerca di errori."
+      }
+    },
+    "validation": {
+      "email": "Questo non è un indirizzo e-mail valido.",
+      "https": "L'indirizzo deve iniziare con https:// e non può contenere spazi.",
+      "appNameChars": "Virgolette, parentesi angolari e interruzioni di riga non sono possibili.",
+      "brandColor": "Questo non è un colore valido.",
+      "languagesNone": "Scegli almeno una lingua.",
+      "languagesUnknown": "Una delle lingue scelte non esiste nell'app.",
+      "mailFromDomain": "L'indirizzo deve appartenere al dominio e-mail o all'indirizzo dell'app.",
+      "domain": "Questo non è un dominio valido.",
+      "positive": "Il numero deve essere maggiore di 0."
     }
   }
 }

@@ -5,8 +5,8 @@ import { enforce, skip, staticSuite, test } from 'vest';
 
 import { sameValue, SETTINGS_AUDIENCES, SETTINGS_GROUPS, type SettingsGroupId, type TenantSettings } from './tenant-settings';
 
-// Vest messages are i18n keys: okr-error-note resolves any message starting with '@'.
-const MSG = '@tenant/util.settings.validation.';
+// Vest messages are i18n keys, written out literally so that check-i18n can resolve them: okr-error-note
+// resolves any message starting with '@'.
 
 export interface SettingsContext {
   /** The group as it was loaded: an unchanged stored value always passes. */
@@ -20,8 +20,8 @@ const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 // quotes and angle brackets, and every control character (C0, DEL, C1, line and paragraph separator)
 // eslint-disable-next-line no-control-regex
 const APP_NAME_FORBIDDEN = /["<>\u0000-\u001f\u007f-\u009f\u2028\u2029]/;
-/** Longest e-mail address a settings field takes. */
-const SETTINGS_EMAIL_LENGTH = 100;
+/** Longest e-mail address a settings field takes; the forms bind it as [maxLength]. */
+export const SETTINGS_EMAIL_LENGTH = 100;
 const HAS_SPACE = /\s/;
 
 function text(value: unknown): string {
@@ -30,14 +30,14 @@ function text(value: unknown): string {
 
 function emailOrEmpty(field: string, value: unknown): void {
   stringValidations(field, value, SETTINGS_EMAIL_LENGTH);
-  test(field, `${MSG}email`, () => {
+  test(field, '@tenant/util.settings.validation.email', () => {
     enforce(text(value) === '' || EMAIL.test(text(value))).isTruthy();
   });
 }
 
 function httpsOrEmpty(field: string, value: unknown): void {
   stringValidations(field, value, URL_LENGTH);
-  test(field, `${MSG}https`, () => {
+  test(field, '@tenant/util.settings.validation.https', () => {
     enforce(text(value) === '' || (text(value).startsWith('https://') && !HAS_SPACE.test(text(value)))).isTruthy();
   });
 }
@@ -69,13 +69,13 @@ function skipUnchanged(group: SettingsGroupId, m: TenantSettings, context: Setti
 const appSuite = staticSuite((m: TenantSettings, context: SettingsContext) => {
   skipUnchanged('app', m, context);
   stringValidations('appName', m.appName, NAME_LENGTH, 1, true);
-  test('appName', `${MSG}appNameChars`, () => {
+  test('appName', '@tenant/util.settings.validation.appNameChars', () => {
     enforce(APP_NAME_FORBIDDEN.test(text(m.appName))).isFalsy();
   });
   stringValidations('appTitle', m.appTitle, LONG_NAME_LENGTH);
   stringValidations('appSubtitle', m.appSubtitle, LONG_NAME_LENGTH);
   stringValidations('description', m.description, DESCRIPTION_LENGTH);
-  test('brandColor', `${MSG}brandColor`, () => {
+  test('brandColor', '@tenant/util.settings.validation.brandColor', () => {
     enforce(typeof m.brandColor === 'string' && (m.brandColor === '' || COLOR.test(m.brandColor))).isTruthy();
   });
 });
@@ -90,10 +90,10 @@ const imagesSuite = staticSuite((m: TenantSettings, context: SettingsContext) =>
 const languageSuite = staticSuite((m: TenantSettings, context: SettingsContext) => {
   skipUnchanged('language', m, context);
   stringValidations('locale', m.locale, undefined, 1, true);
-  test('enabledLanguages', `${MSG}languagesNone`, () => {
+  test('enabledLanguages', '@tenant/util.settings.validation.languagesNone', () => {
     enforce(Array.isArray(m.enabledLanguages) && m.enabledLanguages.length > 0).isTruthy();
   });
-  test('enabledLanguages', `${MSG}languagesUnknown`, () => {
+  test('enabledLanguages', '@tenant/util.settings.validation.languagesUnknown', () => {
     enforce(Array.isArray(m.enabledLanguages) && m.enabledLanguages.every((l) => AvailableLanguages.includes(l))).isTruthy();
   });
 });
@@ -121,10 +121,10 @@ const mailSuite = staticSuite((m: TenantSettings, context: SettingsContext) => {
   stringValidations('mailFrom', m.mailFrom, SETTINGS_EMAIL_LENGTH);
   // the raw value: what is validated is what settingsDiff writes
   const from = text(m.mailFrom);
-  test('mailFrom', `${MSG}email`, () => {
+  test('mailFrom', '@tenant/util.settings.validation.email', () => {
     enforce(from === '' || EMAIL.test(from)).isTruthy();
   });
-  test('mailFrom', `${MSG}mailFromDomain`, () => {
+  test('mailFrom', '@tenant/util.settings.validation.mailFromDomain', () => {
     enforce(from === '' || allowedSenderDomains(context).includes(senderHost(from))).isTruthy();
   });
 });
@@ -153,7 +153,7 @@ const defaultsSuite = staticSuite((m: TenantSettings, context: SettingsContext) 
 });
 
 function domainOrEmpty(field: string, value: unknown): void {
-  test(field, `${MSG}domain`, () => {
+  test(field, '@tenant/util.settings.validation.domain', () => {
     enforce(typeof value === 'string' && (value === '' || (value === value.trim() && bareHostname(value) !== undefined))).isTruthy();
   });
 }
@@ -162,7 +162,7 @@ const platformSuite = staticSuite((m: TenantSettings, context: SettingsContext) 
   skipUnchanged('platform', m, context);
   domainOrEmpty('appDomain', m.appDomain);
   domainOrEmpty('emailDomain', m.emailDomain);
-  test('weatherIntervalHours', `${MSG}positive`, () => {
+  test('weatherIntervalHours', '@tenant/util.settings.validation.positive', () => {
     enforce(typeof m.weatherIntervalHours === 'number' && Number.isFinite(m.weatherIntervalHours) && m.weatherIntervalHours > 0).isTruthy();
   });
   booleanValidations('personLookupEnabled', m.personLookupEnabled);
