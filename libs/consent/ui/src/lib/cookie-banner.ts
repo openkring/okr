@@ -99,9 +99,10 @@ export class CookieBanner {
     return cookieNoticeHash(own);
   });
 
+  /** `/public/:id`: the notice shows before sign-in. */
   protected readonly privacyHref = computed(() => {
     const key = this.privacyPageKey() ?? '';
-    return key ? `/page/${key}` : '';
+    return key ? `/public/${key}` : '';
   });
 
   protected readonly showBanner = computed(() => {

@@ -22,7 +22,7 @@ Collection name: `menuItems`
 | `label` | string | i18n key displayed to the user in the menu (may contain `@VERSION@` placeholder) |
 | `icon` | string | Ion-icon name shown next to the label (default: `help-circle`) |
 | `action` | string | The action type (see Actions below) |
-| `url` | string | Target URL for `navigate` and `browse` actions, or route for `call` (a `browse` url may contain `@REPO_URL@`) |
+| `url` | string | Target URL for `navigate` and `browse` actions, or route for `call` (a `browse` url may contain `@REPO_URL@` or `@ISSUE_URL@`) |
 | `data` | BaseProperty[] | Optional URL / route parameters passed alongside the URL |
 | `menuItems` | string[] | Child menu item names for `sub`, `main`, and `context` action types |
 | `roleNeeded` | RoleName | Minimum role required to see this item (default: `contentAdmin`) |
@@ -118,6 +118,7 @@ expanded at render/select time by `expandMenuTokens(text, ctx)` (`@okr/cms-menu-
 |---|---|---|---|
 | `@VERSION@` | `v` + current app version (e.g. `v4.2.0`) | `version` | `label` |
 | `@REPO_URL@` | `https://github.com/<gitOrg>/<gitRepo>` from `app-config`, no trailing slash | `repoUrl` | `url` |
+| `@ISSUE_URL@` | the page for reporting errors, `app-config.issueUrl` (settings page, group «Betreiber»). Only a `https` url counts (`getIssueUrl`); the row is hidden while there is none | `issueUrl` | `url` |
 | `@TID@` | the **app tenant** id (e.g. `scs`) — for per-tenant records such as `/album/@TID@-album/…` | `tenantId` | `url` |
 | `@TID_UPPER@` | the app tenant id upper-cased | `tenantId` | label value |
 | `@BOOKS@` | the app's **default books**, `app-config.defaultAccountingTenantId` (e.g. `scs`) — the accountingTenantId of `/accounting/@BOOKS@/…` and `/my-cost-centers/@BOOKS@` | `booksId` | `url` |
@@ -135,3 +136,6 @@ covered by `menu-tokens.spec.ts`.
 keeps the books `scs` and `gss`. An accounting url takes `@BOOKS@`; while `defaultAccountingTenantId` is empty,
 a row whose url needs `@BOOKS@` is hidden, and so is a submenu whose every child is. A second set of books
 (`gss`) never uses a token: its rows are hand-authored with the id written out (`gssf_*`).
+
+**Rows without a value are hidden.** `lacksTokenValue(url, ctx)` decides it for `@BOOKS@`, `@BOOKS_UPPER@` and
+`@ISSUE_URL@` (`REQUIRED_VALUES` in `menu-tokens.ts`); every other token only expands to nothing.

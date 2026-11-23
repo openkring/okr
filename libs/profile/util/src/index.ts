@@ -4,3 +4,4 @@ export * from './lib/signature-logo';
 export * from './lib/signature-template';
 export * from './lib/signature-client-adapter';
 export * from './lib/diary-sources.validations';
+export * from './lib/data-protection-contact.util';

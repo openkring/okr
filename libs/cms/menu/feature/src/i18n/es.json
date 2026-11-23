@@ -207,7 +207,7 @@
   "url": {
     "label": "URL",
     "placeholder": "/route/to/page",
-    "helper": "La URL enlaza con la página que se debe mostrar."
+    "helper": "La URL enlaza con la página que se debe mostrar. @ISSUE_URL@ corresponde a la página para comunicar errores de los ajustes; sin esa página, la entrada no aparece."
   },
   "category": {
     "plural": "Categorías"

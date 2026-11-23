@@ -196,7 +196,8 @@
     "link": "Datenschutzerklärung lesen",
     "accept": "Gelesen und akzeptiert",
     "accepted": "Du hast die Datenschutzerklärung akzeptiert",
-    "error": "Die Bestätigung konnte nicht gespeichert werden"
+    "error": "Die Bestätigung konnte nicht gespeichert werden",
+    "contact": "Kontakt für Fragen zum Datenschutz:"
   },
   "export": {
     "title": "Meine Daten herunterladen",

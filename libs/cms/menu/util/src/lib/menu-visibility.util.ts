@@ -1,8 +1,8 @@
 import type { MenuItemModel } from '@okr/shared-models';
 
 /**
- * Whether a menu node renders, given the per-row gates (`rowVisible`: hidden keys, missing books, owning
- * feature block) — plus ONE structural rule: a `sub` (accordion) none of whose children would render is
+ * Whether a menu node renders, given the per-row gates (`rowVisible`: hidden keys, a missing token
+ * value such as the books, owning feature block) — plus ONE structural rule: a `sub` (accordion) none of whose children would render is
  * hidden too. An empty accordion is a dead row; it appears whenever every child of a shared parent belongs to
  * a block the tenant does not run (finance split, 2026-11-10: «Finanzen» for a tenant without Spesen and
  * Kostenrechnung) and when a tenant has no books (every `@BOOKS@` row hidden).

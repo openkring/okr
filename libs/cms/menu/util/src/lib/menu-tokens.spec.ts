@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
-import { expandMenuTokens, getRepoUrl, getWebDomain, lacksBooks, resolveMenuLabelKey, resolveMenuUrl } from './menu-tokens';
+import { AppConfig } from '@okr/shared-models';
+
+import { expandMenuTokens, getIssueUrl, getRepoUrl, getWebDomain, lacksTokenValue, resolveMenuLabelKey, resolveMenuUrl } from './menu-tokens';
 
 const ctx = { version: '4.2.0' };
 
@@ -113,11 +115,11 @@ describe('@BOOKS@ — the default books, never the app tenant', () => {
     expect(expandMenuTokens('@BOOKS_UPPER@ Buchhaltung', c)).toBe('GSS Buchhaltung');
     expect(resolveMenuUrl('/album/@TID@-album/c-album', c)).toBe('/album/scs-album/c-album');
   });
-  it('lacksBooks: a text that needs books while none are configured', () => {
-    expect(lacksBooks('/accounting/@BOOKS@/journal', { ...ctx, tenantId: 'bkg', booksId: '' })).toBe(true);
-    expect(lacksBooks('@BOOKS_UPPER@ Buchhaltung', { ...ctx, tenantId: 'bkg' })).toBe(true);
-    expect(lacksBooks('/accounting/@BOOKS@/journal', { ...ctx, booksId: 'scs' })).toBe(false);
-    expect(lacksBooks('/album/@TID@-album', { ...ctx, booksId: '' })).toBe(false);
+  it('lacksTokenValue: a text that needs books while none are configured', () => {
+    expect(lacksTokenValue('/accounting/@BOOKS@/journal', { ...ctx, tenantId: 'bkg', booksId: '' })).toBe(true);
+    expect(lacksTokenValue('@BOOKS_UPPER@ Buchhaltung', { ...ctx, tenantId: 'bkg' })).toBe(true);
+    expect(lacksTokenValue('/accounting/@BOOKS@/journal', { ...ctx, booksId: 'scs' })).toBe(false);
+    expect(lacksTokenValue('/album/@TID@-album', { ...ctx, booksId: '' })).toBe(false);
   });
 });
 
@@ -140,5 +142,42 @@ describe('@APP_DOMAIN@ / @WEB_DOMAIN@ — the two sitemap rows', () => {
   });
   it('expands to an empty host when the app has no domain', () => {
     expect(expandMenuTokens('Sitemap @WEB_DOMAIN@', ctx).trim()).toBe('Sitemap');
+  });
+});
+
+describe('@ISSUE_URL@ — the page for reporting errors', () => {
+  it('expands to the issue url of the context', () => {
+    expect(expandMenuTokens('@ISSUE_URL@', { ...ctx, issueUrl: 'https://github.com/openkring/okr/issues/new' }))
+      .toBe('https://github.com/openkring/okr/issues/new');
+    expect(resolveMenuUrl('@ISSUE_URL@?labels=bug', { ...ctx, issueUrl: 'https://x.ch/new' })).toBe('https://x.ch/new?labels=bug');
+  });
+  it('expands to nothing when absent', () => {
+    expect(expandMenuTokens('@ISSUE_URL@', ctx)).toBe('');
+  });
+  it('lacksTokenValue: a row that needs the issue url while there is none', () => {
+    expect(lacksTokenValue('@ISSUE_URL@', ctx)).toBe(true);
+    expect(lacksTokenValue('@ISSUE_URL@', { ...ctx, issueUrl: '', booksId: 'scs' })).toBe(true);
+    expect(lacksTokenValue('@ISSUE_URL@', { ...ctx, issueUrl: 'https://x.ch' })).toBe(false);
+    // each token looks at its own value only
+    expect(lacksTokenValue('/accounting/@BOOKS@/journal', { ...ctx, issueUrl: 'https://x.ch' })).toBe(true);
+    expect(lacksTokenValue('/accounting/@BOOKS@/journal', { ...ctx, booksId: 'scs' })).toBe(false);
+    // tokens without a hide rule never hide a row
+    expect(lacksTokenValue('@REPO_URL@/commits/main/', ctx)).toBe(false);
+  });
+});
+
+describe('getIssueUrl', () => {
+  it('returns a https url, trimmed', () => {
+    expect(getIssueUrl(' https://github.com/openkring/okr/issues/new ')).toBe('https://github.com/openkring/okr/issues/new');
+  });
+  it('is empty for anything that is not https', () => {
+    for (const url of [undefined, null, '', ' ', 5, 'http://x.ch', 'javascript:alert(1)', 'www.x.ch', '/issues', 'https://']) {
+      expect(getIssueUrl(url)).toBe('');
+    }
+  });
+  it('is empty for the AppConfig class default of a document without git coordinates', () => {
+    expect(new AppConfig('scs').issueUrl).toBe('https://github.com///issues/new');
+    expect(getIssueUrl(new AppConfig('scs').issueUrl)).toBe('');
+    expect(getIssueUrl('https://github.com/openkring//issues/new')).toBe('');
   });
 });

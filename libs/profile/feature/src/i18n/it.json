@@ -196,7 +196,8 @@
     "link": "Leggi l'informativa sulla privacy",
     "accept": "Letto e accettato",
     "accepted": "Hai accettato l'informativa sulla privacy",
-    "error": "Non è stato possibile salvare la conferma"
+    "error": "Non è stato possibile salvare la conferma",
+    "contact": "Contatto per domande sulla privacy:"
   },
   "export": {
     "title": "Scarica i miei dati",

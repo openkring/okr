@@ -207,7 +207,7 @@
   "url": {
     "label": "URL",
     "placeholder": "/route/to/page",
-    "helper": "L'URL renvoie vers la page à afficher."
+    "helper": "L'URL renvoie vers la page à afficher. @ISSUE_URL@ correspond à la page de signalement d'erreurs des réglages ; sans cette page, l'entrée n'apparaît pas."
   },
   "category": {
     "plural": "Catégories"

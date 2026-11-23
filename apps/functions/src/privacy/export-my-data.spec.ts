@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { HttpsError } from 'firebase-functions/v2/https';
-import { buildSubjectCtx, isRateLimited, loadFavEmailIfSynthetic } from './export-my-data';
+import { buildController, buildSubjectCtx, isRateLimited, loadFavEmailIfSynthetic } from './export-my-data';
 
 const dirGet = vi.hoisted(() => vi.fn());
 const dirDoc = vi.hoisted(() => vi.fn());
@@ -102,5 +102,56 @@ describe('isRateLimited', () => {
   it('treats a non-finite/negative newest timestamp as "no prior export"', () => {
     expect(isRateLimited(Number.NaN, now)).toBe(false);
     expect(isRateLimited(-1, now)).toBe(false);
+  });
+});
+
+describe('buildController', () => {
+  const full = {
+    opName: 'Seeclub', opStreet: 'Seestrasse 1', opZipCode: '8712', opCity: 'Stäfa', opCountryCode: 'CH',
+    opEmail: 'info@seeclub.org', opWebUrl: 'https://www.seeclub.org', dpoName: 'Anna Muster', dpoEmail: 'privacy@seeclub.org',
+  };
+
+  it('lists name, street, city, country, e-mail, web and data protection contact, in this order', () => {
+    expect(buildController(full, 'App')).toBe([
+      'Seeclub', 'Seestrasse 1', '8712 Stäfa', 'Schweiz', 'E-Mail: info@seeclub.org',
+      'Web: https://www.seeclub.org', 'Datenschutz: Anna Muster, privacy@seeclub.org',
+    ].join('\n'));
+  });
+
+  it('leaves empty values out, blank, null and non-text ones included', () => {
+    expect(buildController({ opName: ' Seeclub ', opStreet: null, opZipCode: '', opCity: 'Stäfa', opWebUrl: ' ' }, 'App'))
+      .toBe('Seeclub\nStäfa');
+    expect(buildController({ opName: 'Seeclub', dpoName: 'Anna Muster' }, 'App')).toBe('Seeclub\nDatenschutz: Anna Muster');
+    expect(buildController({ opName: 'Seeclub', dpoEmail: 'p@s.ch' }, 'App')).toBe('Seeclub\nDatenschutz: p@s.ch');
+    expect(buildController({ opName: 'Seeclub', opCity: ['x'], opEmail: {} }, 'App')).toBe('Seeclub');
+  });
+
+  it('accepts a zip code stored as a number', () => {
+    expect(buildController({ opName: 'A', opZipCode: 8712, opCity: 'Stäfa' }, 'App')).toBe('A\n8712 Stäfa');
+  });
+
+  it('keeps a country it does not know as it is stored', () => {
+    expect(buildController({ opName: 'A', opCountryCode: 'Schweiz' }, 'App')).toBe('A\nSchweiz');
+    expect(buildController({ opName: 'A', opCountryCode: 'ch' }, 'App')).toBe('A\nSchweiz');
+  });
+
+  it('shows only http(s) web addresses', () => {
+    expect(buildController({ opName: 'A', opWebUrl: 'http://a.ch' }, 'App')).toBe('A\nWeb: http://a.ch');
+    for (const opWebUrl of ['javascript:alert(1)', 'ftp://a.ch', 'www.a.ch', 'https://']) {
+      expect(buildController({ opName: 'A', opWebUrl }, 'App')).toBe('A');
+    }
+  });
+
+  it('keeps one value on one line', () => {
+    expect(buildController({ opName: 'A\nB', dpoName: 'C\r\nD' }, 'App')).toBe('A B\nDatenschutz: C D');
+  });
+
+  it('falls back to the tenant name when the operator is not named', () => {
+    expect(buildController(undefined, 'App')).toBe('App');
+    expect(buildController({}, 'App')).toBe('App');
+    // country, web and contact alone do not say who is responsible
+    expect(buildController({ opCountryCode: 'CH', dpoEmail: 'p@s.ch' }, 'App')).toBe('App\nSchweiz\nDatenschutz: p@s.ch');
+    // an operator block without a name stays as it was
+    expect(buildController({ opEmail: 'a@b.ch' }, 'App')).toBe('E-Mail: a@b.ch');
   });
 });

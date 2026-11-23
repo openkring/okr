@@ -144,6 +144,7 @@ export const PROFILE_I18N_KEYS = {
   policy_accept:                   PFX + 'policy.accept',
   policy_accepted:                 PFX + 'policy.accepted',
   policy_error:                    PFX + 'policy.error',
+  policy_contact:                  PFX + 'policy.contact',
 
   export_title:                    PFX + 'export.title',
   export_description:              PFX + 'export.description',

@@ -6,7 +6,7 @@ import {
 
 import { AppStore } from '@okr/shared-feature';
 import { PrivacyRightsService } from '@okr/profile-data-access';
-import { ProfileI18n } from '@okr/profile-util';
+import { dataProtectionContact, ProfileI18n } from '@okr/profile-util';
 import { acceptPolicyPatch, needsPolicyAcceptance } from '@okr/user-util';
 import { DateFormat, getTodayStr } from '@okr/shared-util-core';
 
@@ -67,6 +67,18 @@ import { ProfileStore } from './profile.store';
             }
             @if (policyError()) {
               <ion-item lines="none"><ion-text color="danger"><p>{{ i18n().policy_error() }}</p></ion-text></ion-item>
+            }
+            @if (contact(); as contact) {
+              <ion-item lines="none">
+                <ion-label class="ion-text-wrap">
+                  <p>
+                    {{ i18n().policy_contact() }} {{ contact.name }}{{ contact.name && contact.email ? ',' : '' }}
+                    @if (contact.email) {
+                      <a [href]="'mailto:' + contact.email">{{ contact.email }}</a>
+                    }
+                  </p>
+                </ion-label>
+              </ion-item>
             }
           </ion-col>
         </ion-row>
@@ -157,7 +169,11 @@ export class DataRightsAccordion {
   });
 
   protected readonly policyPageKey = computed(() => this.appStore.appConfig()?.privacyPolicyPageKey ?? '');
-  protected readonly policyHref = computed(() => `/page/${this.policyPageKey()}`);
+  /** `/private/:id`: opens every page for a signed-in member, also one that is not public. */
+  protected readonly policyHref = computed(() => `/private/${this.policyPageKey()}`);
+
+  /** Data protection contact of the tenant; undefined = no line. */
+  protected readonly contact = computed(() => dataProtectionContact(this.appStore.appConfig()));
 
   /******************************* actions *************************************** */
 

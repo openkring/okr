@@ -33,6 +33,11 @@ export interface MenuTokenContext {
    * and, derived, by '@WEB_DOMAIN@' in a translated label («Sitemap app.seeclub.org»).
    */
   appDomain?: string;
+  /**
+   * The tenant's page for reporting errors, `app-config.issueUrl` through {@link getIssueUrl}.
+   * Used by '@ISSUE_URL@' in a `browse` url; '' = the tenant has none (rows needing it are hidden).
+   */
+  issueUrl?: string;
 }
 
 /** an app served only on its built-in Firebase host: `<tenant>-app-<suffix>.web.app` / `.firebaseapp.com` */
@@ -63,6 +68,8 @@ export const MENU_TOKENS: Record<string, (ctx: MenuTokenContext) => string> = {
   // through every tenant's menu docs (which is exactly how the bk2 → openkring/okr rename
   // left the shared `version` item pointing at a dead repo).
   '@REPO_URL@': (ctx) => ctx.repoUrl ?? '',
+  // The page for reporting errors, in a `browse` item's url; hidden without one (REQUIRED_VALUES).
+  '@ISSUE_URL@': (ctx) => ctx.issueUrl ?? '',
   // Same '@TID@' spelling `pages.sections` and `feature-catalogue.ts`'s `id: 'news_@TID@'`
   // already use, so one convention covers page ids, section keys and menu urls.
   // '@TID@' is ALWAYS the app tenant — for per-tenant records (album, news pages). Never use it for
@@ -122,12 +129,36 @@ export function getRepoUrl(gitOrg?: string, gitRepo?: string): string {
   return `https://github.com/${gitOrg}/${gitRepo}`;
 }
 
-/** The book tokens: a text carrying one is meaningless while the app has no default books. */
-const BOOK_TOKENS = ['@BOOKS@', '@BOOKS_UPPER@'];
+/**
+ * Builds the '@ISSUE_URL@' value from `app-config.issueUrl`. Only a https url counts, so a `browse` row can
+ * never open a `javascript:` or relative url through this token. A GitHub url with empty path segments is the
+ * `AppConfig` class default of a document without an issue url: its constructor builds the GitHub url from the two
+ * git names while both are still '', which gives 'https://github.com///issues/new'.
+ */
+export function getIssueUrl(issueUrl: unknown): string {
+  const url = typeof issueUrl === 'string' ? issueUrl.trim() : '';
+  try {
+    const { protocol, hostname, pathname } = new URL(url);
+    if (protocol !== 'https:') return '';
+    return hostname === 'github.com' && pathname.includes('//') ? '' : url;
+  } catch {
+    return '';
+  }
+}
 
-/** True when `text` (a url or label) needs the default books but none are configured — such a row is hidden. */
-export function lacksBooks(text: string, ctx: MenuTokenContext): boolean {
-  return !ctx.booksId && BOOK_TOKENS.some(t => (text ?? '').includes(t));
+/** Tokens without which a row makes no sense, and the value each one needs. */
+const REQUIRED_VALUES: Record<string, (ctx: MenuTokenContext) => string | undefined> = {
+  '@BOOKS@': (ctx) => ctx.booksId,
+  '@BOOKS_UPPER@': (ctx) => ctx.booksId,
+  '@ISSUE_URL@': (ctx) => ctx.issueUrl,
+};
+
+/**
+ * True when `text` (a url or label) needs a value the app does not have — the default books ('@BOOKS@') or the page
+ * for reporting errors ('@ISSUE_URL@'). Such a row is hidden.
+ */
+export function lacksTokenValue(text: string, ctx: MenuTokenContext): boolean {
+  return Object.entries(REQUIRED_VALUES).some(([token, value]) => !value(ctx) && (text ?? '').includes(token));
 }
 
 /**
