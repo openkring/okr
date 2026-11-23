@@ -1,4 +1,4 @@
-import { create } from 'vest';
+import { staticSuite } from 'vest';
 import { describe, expect, it } from 'vitest';
 
 import { IMAGE_CONFIG_SHAPE, ImageActionType, type ArticleBlock, type ArticleConfig, type ArticleSection, type ImageConfig } from '@okr/shared-models';
@@ -203,7 +203,7 @@ describe('errors of the panel', () => {
 
   /** the keys the suite really reports for this gallery */
   const reported = (block: ArticleBlock): SectionErrors => {
-    const suite = create(() => articleBlocksValidations({ images: [], blocks: [block] }));
+    const suite = staticSuite(() => articleBlocksValidations({ images: [], blocks: [block] }));
     return Object.fromEntries(Object.entries(suite().getErrors()).map(([key, messages]) => [key.replace('blocks.g.', ''), messages as string[]]));
   };
 
@@ -226,7 +226,7 @@ describe('errors of the panel', () => {
 
 describe('what the panel shows', () => {
   /** what is left at the end of the panel for these blocks, with the keys the suite really reports */
-  const suite = create((blocks: ArticleBlock[]) => articleBlocksValidations({ images: [], blocks }));
+  const suite = staticSuite((blocks: ArticleBlock[]) => articleBlocksValidations({ images: [], blocks }));
   const rest = (block: unknown): string[] => {
     const blocks = [block] as ArticleBlock[];
     const errors = blockErrors(suite(blocks).getErrors() as SectionErrors, blocks[0].id, blocks);
