@@ -24,6 +24,12 @@ describe('UNGATED_ROUTES guards', () => {
     expect(admits('billing/board', { privileged: true })).toBe(false);
     expect(admits('billing/board', { registered: true })).toBe(false);
   });
+  it('tenant/settings is admin-only', () => {
+    expect(admits('tenant/settings', { admin: true })).toBe(true);
+    for (const role of ['privileged', 'contentAdmin', 'memberAdmin', 'treasurer', 'registered']) {
+      expect(admits('tenant/settings', { [role]: true }), role).toBe(false);
+    }
+  });
   it('billing stays admin-only', () => {
     expect(admits('billing', { admin: true })).toBe(true);
     expect(admits('billing', { treasurer: true })).toBe(false);

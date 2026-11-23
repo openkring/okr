@@ -5,18 +5,19 @@ import { isAdminGuard, isAuthenticatedGuard, isTreasurerGuard } from '@okr/auth-
  * Routes that belong to NO feature block and must therefore never pass through
  * `isFeatureEnabledGuard` — but which a catalogued `menuItems` document may still point at.
  *
- * Today these are the feature picker and the billing screens (`billing`, `billing/board`, `pay/:invoiceKey`).
- * The picker must not be feature-gated, because it is the screen you use to switch a block back
- * on — gating it on a block would let a tenant lock itself out of its own configuration. Billing
- * is how the tenant pays the operator; no block may switch it off. `tenant` is in `NON_BLOCK_DOMAINS` for the same reason:
- * control plane, not a product feature.
+ * Today these are the feature picker, the app settings (`tenant/settings`) and the billing screens (`billing`,
+ * `billing/board`, `pay/:invoiceKey`). The picker must not be feature-gated, because it is the screen you use to
+ * switch a block back on — gating it on a block would let a tenant lock itself out of its own configuration. The app
+ * settings (name, languages, operator, privacy) apply whatever blocks are on. Billing is how the tenant pays the
+ * operator; no block may switch it off. `tenant` is in `NON_BLOCK_DOMAINS` for the same reason: control plane, not a
+ * product feature.
  *
  * WHY THIS EXISTS AS AN EXPORTED CONSTANT rather than a literal in each app's `app.routes.ts`,
  * which is where it lived until the `tenant-features` menu row was catalogued: the two
  * catalogue specs (`feature-catalogue.spec.ts`, `menu-role-resolution.spec.ts`) compose their
  * route table from `FEATURE_ROUTES` alone, so a menu url pointing at an app-level literal
  * resolved against nothing and failed coverage — while the route itself was perfectly fine.
- * Both specs now append this array, so the picker is catalogued for the purpose of "does every
+ * Both specs now append this array, so these screens are catalogued for the purpose of "does every
  * menu row open?" WITHOUT being catalogued as a gateable feature. Keeping the definition here
  * also stops the apps from drifting apart on it — every tenant app composes its table from
  * `composeGatedFeatureRoutes()` plus this array.
@@ -29,6 +30,12 @@ export const UNGATED_ROUTES: Route[] = [
     path: 'tenant/features',
     canActivate: [isAdminGuard()],
     loadComponent: () => import('@okr/tenant-feature').then(m => m.FeaturePicker),
+  },
+  // App settings (spec 1.174 §9.2): the tenant's own `app-config` fields.
+  {
+    path: 'tenant/settings',
+    canActivate: [isAdminGuard()],
+    loadComponent: () => import('@okr/tenant-feature').then(m => m.TenantSettingsPage),
   },
   // Billing (spec 1.149): how this tenant pays the operator — control plane, never a block a tenant could switch off.
   // Stripe returns to both with `?stripe=done|cancel`; the urls are built by the callables, so keep the paths stable.

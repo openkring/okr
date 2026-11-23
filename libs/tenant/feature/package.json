@@ -23,6 +23,7 @@
     "@okr/cms-menu-util": "*",
     "@okr/cms-page-data-access": "*",
     "@okr/cms-section-data-access": "*",
+    "@okr/location-data-access": "*",
     "@okr/shared-util-core": "*",
     "@okr/activity-data-access": "*"
   }
