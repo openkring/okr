@@ -88,4 +88,10 @@ describe('rich-text HTML round trip', () => {
     expect(roundTrip('<p>ok</p><script>alert(1)</script>')).toBe('<p>ok</p>');
     expect(roundTrip('<p><img src="x.png" onerror="alert(1)"></p>')).toBe('<p><img src="x.png"></p>');
   });
+
+  it('keeps the text of a pasted fragment without its scripts, styles, handlers and Word tags', () => {
+    const pasted = '<style>p { color: red }</style><script>alert(1)</script>'
+      + '<p class="MsoNormal" onclick="alert(2)">Hallo <b>Welt</b><o:p></o:p></p><p>Zweiter<o:p> Absatz</o:p></p>';
+    expect(roundTrip(pasted)).toBe('<p>Hallo <strong>Welt</strong></p><p>Zweiter Absatz</p>');
+  });
 });

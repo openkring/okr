@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { Command, EditorState, TextSelection } from 'prosemirror-state';
+import { Command, EditorState, NodeSelection, TextSelection } from 'prosemirror-state';
 
 import {
-  activeAlign, activeBlockLevel, activeColor, indent, inTaskItem, isMarkActive, setAlign, setBlockLevel, setColor, setLink, splitItem,
+  activeAlign, activeBlockLevel, activeColor, caretSelection, endsWithEmptyParagraph, indent, inTaskItem, isAtVeryStart, isMarkActive,
+  removeEmptyLastParagraph, setAlign, setBlockLevel, setColor, setLink, splitItem,
   toggleBlockquote, toggleChecked, toggleList, toggleMarkCommand, toggleTaskItem,
 } from './rich-text.commands';
 import { docToMarkdown, markdownToDoc } from './rich-text.markdown';
@@ -109,6 +110,123 @@ describe('rich-text commands', () => {
     it('starts a new item after a ticked one unchecked', () => {
       // '- [x] erledigt': the item's text ends at 11
       expect(out(run(md('- [x] erledigt', 11), splitItem()))).toBe('- [x] erledigt\n- [ ] ');
+    });
+  });
+});
+
+describe('editing texts block by block (1.175)', () => {
+  /** `<p>a</p><p></p>`: 0 <p> 1 a 2 </p> 3 <p> 4 </p> 5 */
+  const TWO = '<p>a</p><p></p>';
+
+  describe('endsWithEmptyParagraph', () => {
+    it('is true with the cursor in an empty last paragraph', () => {
+      expect(endsWithEmptyParagraph(stateOf(TWO, 4))).toBe(true);
+    });
+
+    it('is false for a text that is one empty paragraph', () => {
+      expect(endsWithEmptyParagraph(stateOf('<p></p>', 1))).toBe(false);
+    });
+
+    it('is false in an empty item of a list at the end', () => {
+      // 0 <p> 1 a 2 </p> 3 <ul> 4 <li> 5 <p> 6
+      expect(endsWithEmptyParagraph(stateOf('<p>a</p><ul><li><p></p></li></ul>', 6))).toBe(false);
+    });
+
+    it('is false in an empty paragraph of a quote at the end', () => {
+      expect(endsWithEmptyParagraph(stateOf('<p>a</p><blockquote><p></p></blockquote>', 5))).toBe(false);
+    });
+
+    it('is false with a selection', () => {
+      expect(endsWithEmptyParagraph(stateOf(TWO, 1, 4))).toBe(false);
+    });
+
+    it('is false in an empty paragraph in the middle and in a last paragraph with text', () => {
+      expect(endsWithEmptyParagraph(stateOf('<p>a</p><p></p><p>b</p>', 4))).toBe(false);
+      expect(endsWithEmptyParagraph(stateOf('<p>a</p><p>b</p>', 4))).toBe(false);
+    });
+
+    it('is false in an empty heading at the end', () => {
+      expect(endsWithEmptyParagraph(stateOf('<p>a</p><h2></h2>', 4))).toBe(false);
+    });
+  });
+
+  describe('removeEmptyLastParagraph', () => {
+    it('takes the paragraph away and leaves the cursor at the end of the text', () => {
+      const next = run(stateOf(TWO, 4), removeEmptyLastParagraph());
+      expect(html(next)).toBe('<p>a</p>');
+      expect(next.selection.from).toBe(2);
+    });
+
+    it('does nothing elsewhere', () => {
+      expect(removeEmptyLastParagraph()(stateOf(TWO, 1))).toBe(false);
+      expect(html(run(stateOf(TWO, 1), removeEmptyLastParagraph()))).toBe(TWO);
+    });
+  });
+
+  describe('isAtVeryStart', () => {
+    it('is true at the start of a paragraph and of a heading', () => {
+      expect(isAtVeryStart(stateOf('<p>a</p>', 1))).toBe(true);
+      expect(isAtVeryStart(stateOf('<h2>a</h2><p>b</p>', 1))).toBe(true);
+      expect(isAtVeryStart(stateOf('<p></p>', 1))).toBe(true);
+    });
+
+    it('is false in a list item and in a quote', () => {
+      expect(isAtVeryStart(stateOf('<ul><li><p>a</p></li></ul>', 3))).toBe(false);
+      expect(isAtVeryStart(stateOf('<blockquote><p>a</p></blockquote>', 2))).toBe(false);
+    });
+
+    it('is false after one character and in a later paragraph', () => {
+      expect(isAtVeryStart(stateOf('<p>ab</p>', 2))).toBe(false);
+      expect(isAtVeryStart(stateOf(TWO, 4))).toBe(false);
+    });
+
+    it('is false with a selection', () => {
+      expect(isAtVeryStart(stateOf('<p>ab</p>', 1, 2))).toBe(false);
+      const state = stateOf('<p><img src="https://a.test/x.png"></p>', 1);
+      expect(isAtVeryStart(state.apply(state.tr.setSelection(NodeSelection.create(state.doc, 1))))).toBe(false);
+    });
+  });
+
+  describe('caretSelection', () => {
+    /** The cursor position for `caret` in `text`. */
+    const at = (text: string, caret: Parameters<typeof caretSelection>[1]) => {
+      const selection = caretSelection(htmlToDoc(text), caret);
+      expect(selection.empty).toBe(true);
+      return selection.from;
+    };
+
+    it('finds the start and the end of the text', () => {
+      expect(at('<p>ab</p><p>cd</p>', 'start')).toBe(1);
+      expect(at('<p>ab</p><p>cd</p>', 'end')).toBe(7);
+      expect(at('<p>ab</p><hr>', 'end')).toBe(3);             // the cursor needs a text: the one before the line
+      expect(at('<ul><li><p>ab</p></li></ul>', 'end')).toBe(5);
+      expect(at('', 'end')).toBe(1);
+    });
+
+    it('stands after the upper of two joined texts', () => {
+      expect(at('<p>ab</p><p>cd</p>', { afterHtml: '<p>ab</p>' })).toBe(3);
+      expect(at('<p>ab</p><p>cd</p><p>e</p>', { afterHtml: '<p>ab</p><p>cd</p>' })).toBe(7);
+      expect(at('<ul><li><p>ab</p></li></ul><p>c</p>', { afterHtml: '<ul><li><p>ab</p></li></ul>' })).toBe(5);
+      expect(at('<p>ab</p><hr><p>cd</p>', { afterHtml: '<p>ab</p><hr>' })).toBe(6);
+    });
+
+    it('stands inside a paragraph into which both texts were merged', () => {
+      expect(at('<p>abcd</p>', { afterHtml: '<p>ab</p>' })).toBe(3);
+    });
+
+    it('reads the upper text as the editor does', () => {
+      expect(at('<p><strong>ab</strong></p><p>cd</p>', { afterHtml: '<p><b>ab</b></p>' })).toBe(3);
+    });
+
+    it('stands at the start when the upper text was empty', () => {
+      expect(at('<p>cd</p>', { afterHtml: '' })).toBe(1);
+      expect(at('<p></p><p>cd</p>', { afterHtml: '<p></p>' })).toBe(1);
+    });
+
+    it('falls back to the end when the upper text is not there', () => {
+      expect(at('<p>ab</p><p>cd</p>', { afterHtml: '<p>xy</p>' })).toBe(7);
+      expect(at('<p>ab</p>', { afterHtml: '<p>ab</p><p>cd</p>' })).toBe(3);
+      expect(at('<p>abc</p>', { afterHtml: '<p><strong>ab</strong></p>' })).toBe(4);
     });
   });
 });

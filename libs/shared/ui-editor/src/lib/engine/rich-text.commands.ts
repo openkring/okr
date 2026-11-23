@@ -2,8 +2,10 @@ import { lift, setBlockType, toggleMark, wrapIn } from 'prosemirror-commands';
 import { redo, undo } from 'prosemirror-history';
 import { MarkType, Node as PMNode, NodeType } from 'prosemirror-model';
 import { liftListItem, sinkListItem, splitListItem, wrapInList } from 'prosemirror-schema-list';
-import { Command, EditorState, TextSelection, Transaction } from 'prosemirror-state';
+import { Command, EditorState, Selection, TextSelection, Transaction } from 'prosemirror-state';
 
+import type { RichTextCaret } from '../rich-text-inline';
+import { htmlToDoc } from './rich-text.html';
 import { richTextSchema as schema } from './rich-text.schema';
 
 export type MarkName = 'strong' | 'em' | 'u' | 's' | 'sup' | 'sub' | 'code';
@@ -278,4 +280,47 @@ export function insertImage(src: string): Command {
     if (dispatch) dispatch(state.tr.replaceSelectionWith(schema.nodes['image'].create({ src })).scrollIntoView());
     return true;
   };
+}
+
+// ---------------------------------------------------------------- texts edited block by block (spec 1.175 §7.5)
+
+/** Is the cursor in an empty last paragraph, with something above it? Not in a list, a quote or a heading. */
+export function endsWithEmptyParagraph(state: EditorState): boolean {
+  const { $from, empty } = state.selection;
+  return empty && $from.depth === 1 && $from.parent.type === schema.nodes['paragraph'] && $from.parent.content.size === 0
+    && state.doc.childCount > 1 && $from.index(0) === state.doc.childCount - 1;
+}
+
+/** Is the cursor at the start of the first paragraph or heading? Not in a list or a quote, where Backspace lifts the line. */
+export function isAtVeryStart(state: EditorState): boolean {
+  const { $from, empty } = state.selection;
+  return empty && $from.depth === 1 && $from.parent.isTextblock && $from.parentOffset === 0 && $from.index(0) === 0;
+}
+
+/** Takes the empty last paragraph away (see `endsWithEmptyParagraph`); the cursor goes to the end of the text above. */
+export function removeEmptyLastParagraph(): Command {
+  return (state, dispatch) => {
+    if (!endsWithEmptyParagraph(state)) return false;
+    if (dispatch) {
+      const { $from } = state.selection;
+      const tr = state.tr.delete($from.before(1), $from.after(1));
+      dispatch(tr.setSelection(caretSelection(tr.doc, 'end')));
+    }
+    return true;
+  };
+}
+
+/** The cursor for `caret` in `doc`; a text that cannot be found gives the end. */
+export function caretSelection(doc: PMNode, caret: RichTextCaret): Selection {
+  // a cursor needs a text: a line or a picture block at the end is skipped
+  const atEnd = Selection.findFrom(doc.resolve(doc.content.size), -1, true) ?? Selection.atEnd(doc);
+  if (caret === 'start') return Selection.findFrom(doc.resolve(0), 1, true) ?? Selection.atStart(doc);
+  if (caret === 'end') return atEnd;
+  const upper = htmlToDoc(caret.afterHtml);
+  // the end of its text, not of its last tag: the first paragraph below may have been merged into it
+  const upperEnd = Selection.atEnd(upper);
+  const pos = upperEnd instanceof TextSelection ? upperEnd.head : upper.content.size;
+  const differs = doc.content.findDiffStart(upper.content);
+  if (differs !== null && differs < pos) return atEnd;
+  return Selection.findFrom(doc.resolve(pos), 1, true) ?? atEnd;
 }
