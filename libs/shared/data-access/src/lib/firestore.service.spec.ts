@@ -39,6 +39,7 @@ vi.mock('firebase/firestore', () => ({
   updateDoc: vi.fn(),
   deleteDoc: vi.fn(),
   writeBatch: vi.fn(),
+  arrayRemove: vi.fn((value: unknown) => ({ arrayRemove: value })),
   // createModel takes this branch whenever the caller named the document id. `transaction.set` is
   // routed to the same setDoc mock the other tests assert on, so the retry/denial cases keep
   // working through the guarded path exactly as they did through the bare setDoc.
@@ -994,5 +995,245 @@ describe('FirestoreService.readObjectStrict', () => {
     await expect(svc.readObjectStrict('courses/c1/finance/settings')).rejects.toThrow('offline');
     getDocFromServerMock.mockRejectedValue(permissionDenied());
     await expect(svc.readObjectStrict('courses/c1/finance/settings')).rejects.toBeDefined();
+  });
+});
+
+// Spec 1.175: read, compare and write in one transaction, and say truly whether it was written.
+describe('FirestoreService.writeChecked', () => {
+  type Doc = { okey: string; tenants: string[]; isArchived: boolean; title?: string };
+  const MESSAGES = { createConfirm: 'created', createError: 'not created', updateConfirm: 'updated', updateError: 'not updated' };
+  const MODEL: Doc = { okey: 'a1', tenants: ['scs'], isArchived: false, title: 'new' };
+  const STORED = { tenants: ['scs'], isArchived: false, title: 'new' };
+  const isSame = (sent: Doc, stored: Doc) => sent.title === stored.title;
+  const update = async () => ({ kind: 'update' as const, key: 'a1', model: { ...MODEL } });
+  const create = async () => ({ kind: 'create' as const, key: 'a1', model: { ...MODEL } });
+  const user = { okey: 'u1', firstName: 'A', lastName: 'B' } as never;
+
+  const error = (code: string) => Object.assign(new Error(code), { code });
+  const get = vi.fn();
+  const set = vi.fn();
+  const transactionUpdate = vi.fn();
+  const toast = vi.fn();
+  /** What the commits answer, in turn; undefined = committed. A read that fails ends its attempt. */
+  let commits: unknown[];
+  let service: FirestoreService;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    TestBed.resetTestingModule();
+    commits = [];
+    get.mockReset().mockResolvedValue({ exists: () => false });
+    toast.mockReset().mockResolvedValue({ present: vi.fn() });
+    setDocMock.mockReset().mockResolvedValue(undefined);
+    getDocFromServerMock.mockReset();
+    attestAppCheckMock.mockResolvedValue('refreshed');
+    docMock.mockImplementation(((_db: unknown, path: string) => ({ path })) as never);
+    runTransactionMock.mockImplementation((async (_db: unknown, body: (t: unknown) => Promise<void>) => {
+      // as the SDK: an attempt whose commit answer is retryable runs again
+      for (let attempt = 1; ; attempt++) {
+        try {
+          await body({ get, set, update: transactionUpdate });
+          const answer = commits.shift();
+          if (answer) throw answer;
+          return;
+        } catch (ex) {
+          if (attempt >= 5 || !['unavailable', 'aborted'].includes((ex as { code?: string }).code ?? '')) throw ex;
+        }
+      }
+    }) as never);
+    service = makeService();
+    Object.assign(TestBed.inject(ToastController), { create: toast });
+    Object.assign(service['i18n'], { comment_initial_conf: () => 'created', comment_update_conf: () => 'updated' });
+    for (const level of ['debug', 'warn', 'error'] as const) vi.spyOn(console, level).mockImplementation(() => undefined);
+  });
+
+  const settled = () => new Promise(resolve => setTimeout(resolve));
+
+  it('updates: merges without okey and undefined values, toast and comment', async () => {
+    const result = await service.writeChecked<Doc, string>('sections', async () => ({ kind: 'update', key: 'a1', model: { ...MODEL, title: undefined } }), isSame, MESSAGES, user);
+    await settled();
+    expect(result).toEqual({ status: 'written', key: 'a1', sent: { tenants: ['scs'], isArchived: false } });
+    expect(transactionUpdate.mock.calls).toEqual([[{ path: 'sections/a1' }, { tenants: ['scs'], isArchived: false }]]);
+    expect(set).not.toHaveBeenCalled();
+    expect(toast).toHaveBeenCalledWith(expect.objectContaining({ message: 'updated' }));
+    expect(setDocMock).toHaveBeenCalledTimes(1);   // the comment
+    expect(setDocMock.mock.calls[0][1]).toMatchObject({ parentKey: 'sections.a1' });
+    expect(updateDocMock).not.toHaveBeenCalled();
+    expect(writeBatch).not.toHaveBeenCalled();
+  });
+
+  it('creates with the tenant of the app', async () => {
+    const result = await service.writeChecked<Doc, string>('sections', async () => ({ kind: 'create', key: 'a1', model: { ...MODEL, tenants: [] } }), isSame, MESSAGES);
+    await settled();
+    expect(result).toMatchObject({ status: 'written', key: 'a1' });
+    expect(set.mock.calls).toEqual([[{ path: 'sections/a1' }, STORED]]);
+    expect(toast).toHaveBeenCalledWith(expect.objectContaining({ message: 'created' }));
+    expect(setDocMock).not.toHaveBeenCalled();     // no user, no comment
+  });
+
+  it('refuses to create over an existing document', async () => {
+    get.mockResolvedValue({ exists: () => true, data: () => ({ ...STORED, title: 'other' }) });
+    await expect(service.writeChecked<Doc, string>('sections', create, isSame, MESSAGES)).resolves.toEqual({ status: 'failed' });
+    expect(set).not.toHaveBeenCalled();
+    expect(toast).toHaveBeenCalledWith(expect.objectContaining({ message: 'not created' }));
+    expect(captureMessageMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('forks: replaces the copy and detaches the tenant, no toast and no comment', async () => {
+    const result = await service.writeChecked<Doc, string>('sections', async () => ({ kind: 'fork', key: 'a1_scs', model: { ...MODEL, tenants: ['scs', 'p13'] }, original: 'a1' }), isSame, MESSAGES, user);
+    await settled();
+    expect(result).toMatchObject({ status: 'written', key: 'a1_scs' });
+    expect(set.mock.calls).toEqual([[{ path: 'sections/a1_scs' }, STORED]]);
+    expect(transactionUpdate.mock.calls).toEqual([[{ path: 'sections/a1' }, { tenants: { arrayRemove: 'scs' } }]]);
+    expect(toast).not.toHaveBeenCalled();
+    expect(setDocMock).not.toHaveBeenCalled();
+  });
+
+  it('reads each document once per attempt, as stored', async () => {
+    get.mockResolvedValue({ exists: () => true, data: () => STORED });
+    const seen: unknown[] = [];
+    await service.writeChecked<Doc, string>('sections', async (read) => {
+      seen.push(await read('a1'), await read('a1'));
+      return update();
+    }, isSame, MESSAGES);
+    expect(seen).toEqual([STORED, STORED]);
+    expect(get).toHaveBeenCalledTimes(1);
+  });
+
+  it('returns a refusal without writing or a toast', async () => {
+    await expect(service.writeChecked<Doc, string>('sections', async () => ({ kind: 'refuse', reason: 'conflict' }), isSame, MESSAGES))
+      .resolves.toEqual({ status: 'refused', reason: 'conflict' });
+    expect(commits).toEqual([]);
+    expect(toast).not.toHaveBeenCalled();
+    expect(getDocFromServerMock).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['fails', async () => ({ kind: 'fail' as const, message: 'no' })],
+    ['throws', async () => { throw new Error('boom'); }],
+    ['wants data that cannot be cloned', async () => ({ kind: 'update' as const, key: 'a1', model: { ...MODEL, f: () => 1 } as Doc })],
+    ['wants no tenant', async () => ({ kind: 'update' as const, key: 'a1', model: { ...MODEL, tenants: [] } })],
+  ])('is failed when the callback %s', async (_label, decide) => {
+    await expect(service.writeChecked<Doc, string>('sections', decide, isSame, MESSAGES)).resolves.toEqual({ status: 'failed' });
+    expect(set).not.toHaveBeenCalled();
+    expect(transactionUpdate).not.toHaveBeenCalled();
+    expect(toast).toHaveBeenCalledWith(expect.objectContaining({ message: 'not updated' }));
+  });
+
+  it.each(['unavailable', 'permission-denied', 'internal'])('is offline when the read fails with %s', async (code) => {
+    get.mockImplementation(async () => { throw error(code); });
+    await expect(service.writeChecked<Doc, string>('sections', async (read) => { await read('a1'); return update(); }, isSame, MESSAGES)).resolves.toEqual({ status: 'offline' });
+    expect(toast).not.toHaveBeenCalled();
+    expect(getDocFromServerMock).not.toHaveBeenCalled();
+  });
+
+  it('retries a denied commit once with a fresh App Check token', async () => {
+    commits = [error('permission-denied')];
+    await expect(service.writeChecked<Doc, string>('sections', update, isSame, MESSAGES)).resolves.toMatchObject({ status: 'written' });
+    expect(attestAppCheckMock).toHaveBeenCalledWith(undefined, true);
+  });
+
+  it('is failed after a denied commit, and unreadable does not make it offline', async () => {
+    commits = [error('permission-denied'), error('permission-denied')];
+    getDocFromServerMock.mockRejectedValue(error('permission-denied'));
+    await expect(service.writeChecked<Doc, string>('sections', update, isSame, MESSAGES)).resolves.toMatchObject({ status: 'failed' });
+    expect(toast).toHaveBeenCalledWith(expect.objectContaining({ message: 'not updated' }));
+  });
+
+  it('does not read again after an invalid commit', async () => {
+    commits = [error('invalid-argument')];
+    await expect(service.writeChecked<Doc, string>('sections', update, isSame, MESSAGES)).resolves.toEqual({ status: 'failed' });
+    expect(getDocFromServerMock).not.toHaveBeenCalled();
+  });
+
+  describe('an unclear commit', () => {
+    beforeEach(() => { commits = Array.from({ length: 5 }, () => error('unavailable')); });
+
+    it('is written when the document holds what was sent', async () => {
+      getDocFromServerMock.mockResolvedValue({ exists: () => true, data: () => STORED });
+      await expect(service.writeChecked<Doc, string>('sections', update, isSame, MESSAGES, user)).resolves.toMatchObject({ status: 'written', key: 'a1' });
+      await settled();
+      expect(getDocFromServerMock).toHaveBeenCalledTimes(1);
+      expect(getDocFromServerMock).toHaveBeenCalledWith({ path: 'sections/a1' });
+      expect(toast).toHaveBeenCalledWith(expect.objectContaining({ message: 'updated' }));
+      expect(setDocMock).toHaveBeenCalledTimes(1);
+    });
+
+    it.each([[{ ...STORED, title: 'other' }], [null]])('is failed when the server holds %j', async (stored) => {
+      getDocFromServerMock.mockResolvedValue({ exists: () => stored !== null, data: () => stored });
+      await expect(service.writeChecked<Doc, string>('sections', update, isSame, MESSAGES)).resolves.toEqual({ status: 'failed', sent: STORED });
+      expect(toast).toHaveBeenCalledWith(expect.objectContaining({ message: 'not updated' }));
+    });
+
+    it('is offline when the server cannot be read, and says what was sent', async () => {
+      getDocFromServerMock.mockRejectedValue(error('unavailable'));
+      await expect(service.writeChecked<Doc, string>('sections', update, isSame, MESSAGES)).resolves.toEqual({ status: 'offline', sent: STORED });
+      expect(toast).not.toHaveBeenCalled();
+    });
+
+    it('is offline when the retry could not read', async () => {
+      commits = [error('unavailable')];
+      get.mockResolvedValueOnce({ exists: () => true, data: () => STORED }).mockImplementation(async () => { throw error('unavailable'); });
+      getDocFromServerMock.mockRejectedValue(error('unavailable'));
+      await expect(service.writeChecked<Doc, string>('sections', async (read) => { await read('a1'); return update(); }, isSame, MESSAGES))
+        .resolves.toEqual({ status: 'offline', sent: STORED });
+    });
+
+    it('is read again when an earlier commit may have been applied before one was denied', async () => {
+      commits = [error('unavailable'), error('invalid-argument')];
+      getDocFromServerMock.mockResolvedValue({ exists: () => true, data: () => STORED });
+      await expect(service.writeChecked<Doc, string>('sections', update, isSame, MESSAGES)).resolves.toMatchObject({ status: 'written' });
+    });
+
+    it('is read again when the retry was denied the read', async () => {
+      commits = [error('unavailable')];
+      get.mockResolvedValueOnce({ exists: () => true, data: () => STORED }).mockImplementation(async () => { throw error('permission-denied'); });
+      getDocFromServerMock.mockResolvedValue({ exists: () => true, data: () => STORED });
+      await expect(service.writeChecked<Doc, string>('sections', async (read) => { await read('a1'); return update(); }, isSame, MESSAGES))
+        .resolves.toMatchObject({ status: 'written' });
+    });
+
+    it('is offline when the retried create finds a document that cannot be read again', async () => {
+      commits = [error('unavailable')];
+      get.mockResolvedValueOnce({ exists: () => false }).mockResolvedValue({ exists: () => true, data: () => STORED });
+      getDocFromServerMock.mockRejectedValue(error('unavailable'));
+      await expect(service.writeChecked<Doc, string>('sections', create, isSame, MESSAGES)).resolves.toEqual({ status: 'offline', sent: STORED });
+    });
+
+    it('is written when the retry refuses because it finds our own document', async () => {
+      commits = [error('unavailable')];
+      getDocFromServerMock.mockResolvedValue({ exists: () => true, data: () => STORED });
+      const decide = vi.fn().mockImplementationOnce(update).mockResolvedValue({ kind: 'refuse', reason: 'conflict' });
+      await expect(service.writeChecked<Doc, string>('sections', decide, isSame, MESSAGES)).resolves.toMatchObject({ status: 'written' });
+    });
+
+    it('stays refused when the retry finds a document of somebody else', async () => {
+      commits = [error('aborted')];
+      getDocFromServerMock.mockResolvedValue({ exists: () => true, data: () => ({ ...STORED, title: 'other' }) });
+      const decide = vi.fn().mockImplementationOnce(update).mockResolvedValue({ kind: 'refuse', reason: 'conflict' });
+      await expect(service.writeChecked<Doc, string>('sections', decide, isSame, MESSAGES)).resolves.toEqual({ status: 'refused', reason: 'conflict' });
+    });
+
+    it('is written when the retried create finds its own document', async () => {
+      commits = [error('unavailable')];
+      get.mockResolvedValueOnce({ exists: () => false }).mockResolvedValue({ exists: () => true, data: () => STORED });
+      getDocFromServerMock.mockResolvedValue({ exists: () => true, data: () => STORED });
+      await expect(service.writeChecked<Doc, string>('sections', create, isSame, MESSAGES)).resolves.toMatchObject({ status: 'written', key: 'a1' });
+      expect(captureMessageMock).not.toHaveBeenCalled();
+      expect(set).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  it('is written when the toast or the comment fails or hangs', async () => {
+    toast.mockRejectedValue(new Error('no toast'));
+    await expect(service.writeChecked<Doc, string>('sections', update, isSame, MESSAGES, user)).resolves.toMatchObject({ status: 'written' });
+    await settled();
+    expect(setDocMock).toHaveBeenCalledTimes(1);   // the comment does not wait for the toast
+    toast.mockResolvedValue({ present: vi.fn() });
+    setDocMock.mockRejectedValue(permissionDenied());
+    await expect(service.writeChecked<Doc, string>('sections', update, isSame, MESSAGES, user)).resolves.toMatchObject({ status: 'written' });
+    setDocMock.mockReturnValue(new Promise(() => undefined));
+    await expect(service.writeChecked<Doc, string>('sections', update, isSame, MESSAGES, user)).resolves.toMatchObject({ status: 'written' });
+    await settled();
   });
 });

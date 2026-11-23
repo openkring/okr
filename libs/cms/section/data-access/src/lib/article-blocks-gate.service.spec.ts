@@ -87,6 +87,26 @@ describe('ArticleBlocksGate', () => {
     expect(readObjectStrict).toHaveBeenCalledWith('app-version/app-version');
   });
 
+  it('mayWrite follows the released gate', async () => {
+    readObjectStrict.mockResolvedValueOnce({ minVersion: '7.69.0' }).mockResolvedValueOnce({ minVersion: '7.70.0' });
+    const service = gate(ReleasedGate);
+    expect(service.mayWrite()).toBe(false);
+    await expect(service.loadMayWrite()).resolves.toBe(false);
+    expect(service.mayWrite()).toBe(false);
+    await expect(service.loadMayWrite()).resolves.toBe(true);
+    expect(service.mayWrite()).toBe(true);
+    expect(service.open()).toBe(true);
+    await expect(service.load()).resolves.toBe(true);
+    expect(readObjectStrict).toHaveBeenCalledTimes(2);
+  });
+
+  it('loadMayWrite is closed when app-version cannot be read, and while nothing is released', async () => {
+    readObjectStrict.mockRejectedValue(new Error('offline'));
+    await expect(gate(ReleasedGate).loadMayWrite()).resolves.toBe(false);
+    TestBed.resetTestingModule();
+    await expect(gate(UnreleasedGate).loadMayWrite()).resolves.toBe(false);
+  });
+
   it('asks again when it was closed', async () => {
     readObjectStrict.mockResolvedValueOnce({ minVersion: '7.69.0' }).mockResolvedValueOnce({ minVersion: '7.70.0' });
     const service = gate(ReleasedGate);
@@ -135,6 +155,16 @@ describe('ArticleBlocksGate', () => {
       expect(service.trial).toBe(true);
       expect(service.open()).toBe(true);
       await expect(service.load()).resolves.toBe(true);
+      expect(readObjectStrict).not.toHaveBeenCalled();
+    });
+
+    it('never opens mayWrite, also when the blocks are released', async () => {
+      localStorage.setItem(TRIAL_KEY, 'trial');
+      readObjectStrict.mockResolvedValue({ minVersion: '99.0.0' });
+      const service = gate(ReleasedGate);
+      await expect(service.load()).resolves.toBe(true);
+      await expect(service.loadMayWrite()).resolves.toBe(false);
+      expect(service.mayWrite()).toBe(false);
       expect(readObjectStrict).not.toHaveBeenCalled();
     });
 

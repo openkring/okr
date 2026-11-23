@@ -2,7 +2,7 @@ import { Injectable, inject } from "@angular/core";
 import { Observable, combineLatest, first, forkJoin, map, of } from "rxjs";
 
 import { ENV } from "@okr/shared-config";
-import { FirestoreService } from "@okr/shared-data-access";
+import { FirestoreService, type CheckedDecision, type CheckedWriteResult } from "@okr/shared-data-access";
 import { I18nService } from "@okr/shared-i18n";
 import { DbQuery, SectionCollection, SectionModel, UserModel } from "@okr/shared-models";
 import { addSystemQueries, forkKeyFor, getSystemQuery, isOwnedBy } from "@okr/shared-util-core";
@@ -77,6 +77,31 @@ export class SectionService {
     }
     return await this.firestoreService.forkModel<SectionModel>(
       SectionCollection, section, {}, this.i18n.update_error(), forkKeyFor(section.okey, this.env.tenantId));
+  }
+
+  /**
+   * Create, update or fork a section in one transaction that first reads what it depends on (`FirestoreService.writeChecked`):
+   * for a save that must not overwrite somebody else's newer change. What is written equals {@link create} and {@link update}.
+   * @param decide reads sections (as stored, without `okey`) and says what to write; may run several times, no side effects
+   * @param isSame whether the stored section holds what was sent
+   */
+  public saveChecked<R>(
+    decide: (read: (key: string) => Promise<SectionModel | null>) => Promise<CheckedDecision<SectionModel, R>>,
+    isSame: (sent: SectionModel, stored: SectionModel) => boolean,
+    currentUser?: UserModel,
+  ): Promise<CheckedWriteResult<SectionModel, R>> {
+    return this.firestoreService.writeChecked<SectionModel, R>(SectionCollection, async (read) => {
+      const decision = await decide(read);
+      return decision.kind === 'refuse' || decision.kind === 'fail' ? decision : { ...decision, model: this.prepared(decision.model) };
+    }, isSame, {
+      createConfirm: this.i18n.create_conf(), createError: this.i18n.create_error(),
+      updateConfirm: this.i18n.update_conf(), updateError: this.i18n.update_error(),
+    }, currentUser);
+  }
+
+  private prepared(section: SectionModel): SectionModel {
+    const compact = compactSectionForSave(section);
+    return { ...compact, index: getSectionIndex(compact) };
   }
 
   /**

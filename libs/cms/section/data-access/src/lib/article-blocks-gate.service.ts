@@ -1,4 +1,4 @@
-import { Injectable, inject, isDevMode, signal, type Signal } from '@angular/core';
+import { Injectable, computed, inject, isDevMode, signal, type Signal } from '@angular/core';
 
 import { FirestoreService } from '@okr/shared-data-access';
 import { AppVersionCollection, compareAppVersions } from '@okr/shared-util-angular';
@@ -31,28 +31,47 @@ function isTrial(): boolean {
 /**
  * Whether articles may be written with blocks (spec 1.175 §11): only once no app that cannot read blocks is in use any more,
  * which the global `minVersion` guarantees. Every failure is a closed gate.
+ *
+ * Two answers, which differ in trial mode only: `open` (the editor may be opened) and `mayWrite` (blocks may be stored). Code that
+ * stores blocks itself uses `mayWrite` / `loadMayWrite()` only.
  */
 @Injectable({ providedIn: 'root' })
 export class ArticleBlocksGate {
   private readonly firestoreService = inject(FirestoreService);
 
   /**
-   * Trial mode (development builds only): the gate is open and `ArticleSaveService` writes nothing. Fixed when the app starts,
-   * so that an editor opened in trial mode can never save for real. Everything else that writes must ask for it itself.
+   * Trial mode (development builds only): the editor opens, nothing may be written. Fixed when the app starts, so that an editor
+   * opened in trial mode can never save for real. `ArticleSaveService` obeys it; everything else that writes
+   * (for example an upload) must ask for it itself.
    */
   public readonly trial: boolean = isTrial();
 
-  private readonly _open = signal(this.trial);
-  /** The answer of the last `load()`; closed before it. */
-  public readonly open: Signal<boolean> = this._open.asReadonly();
+  /** Whether `minVersion` was read and is high enough. */
+  private readonly released = signal(false);
+  /** The editor may be opened. False until `load()` has found the gate open; always true in trial mode. Says nothing about writing. */
+  public readonly open: Signal<boolean> = computed(() => this.trial || this.released());
+  /** Blocks may be stored. False until `load()` / `loadMayWrite()` has found the gate open; always false in trial mode. */
+  public readonly mayWrite: Signal<boolean> = computed(() => !this.trial && this.released());
 
   /** Overridden in the tests. */
   protected readonly needed: string | undefined = ARTICLE_BLOCKS_MIN_VERSION;
   private loading: Promise<boolean> | undefined;
 
-  /** Reads `app-version` once per session while the gate is open, and again when it was closed or unreadable. Never rejects. */
+  /**
+   * Whether the editor may be opened. Reads `app-version` once per session while the gate is open, and again when it was closed
+   * or unreadable. Never rejects.
+   */
   public load(): Promise<boolean> {
-    if (this._open()) return Promise.resolve(true);
+    return this.trial ? Promise.resolve(true) : this.loadReleased();
+  }
+
+  /** Whether blocks may be stored; the same reads as `load()`. Never rejects. */
+  public loadMayWrite(): Promise<boolean> {
+    return this.trial ? Promise.resolve(false) : this.loadReleased();
+  }
+
+  private loadReleased(): Promise<boolean> {
+    if (this.released()) return Promise.resolve(true);
     if (this.needed === undefined) return Promise.resolve(false);   // nothing to compare with
     this.loading ??= this.read().finally(() => { this.loading = undefined; });
     return this.loading;
@@ -61,10 +80,10 @@ export class ArticleBlocksGate {
   private async read(): Promise<boolean> {
     try {
       const document = await this.firestoreService.readObjectStrict<{ minVersion?: unknown }>(`${AppVersionCollection}/${AppVersionCollection}`);
-      this._open.set(isGateOpen(this.needed, document?.minVersion));
+      this.released.set(isGateOpen(this.needed, document?.minVersion));
     } catch (error) {
       console.warn('ArticleBlocksGate: app-version cannot be read, the gate stays closed', error);
     }
-    return this._open();
+    return this.released();
   }
 }

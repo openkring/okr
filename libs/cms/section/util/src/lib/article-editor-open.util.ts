@@ -104,7 +104,8 @@ export function articleWithBlocks(section: ArticleSection): ArticleSection {
 
 // ------------------------------------------------------- comparing -------------------------------------------------------
 
-const COMPARED_FIELDS = [
+/** The top-level fields of an article that are compared: what the editor can change. */
+export const ARTICLE_COMPARED_FIELDS = [
   'type', 'state', 'name', 'title', 'subTitle', 'intro', 'introPosition', 'color', 'colSize', 'roleNeeded', 'isArchived',
   'content', 'properties', 'notes', 'tags',
 ] as const;
@@ -118,7 +119,7 @@ function normalisedField(value: unknown): unknown {
 
 function sameFields(a: object, b: object): boolean {
   const [left, right] = [a as Loose, b as Loose];
-  return COMPARED_FIELDS.every((key) => DEEP_FIELDS.includes(key)
+  return ARTICLE_COMPARED_FIELDS.every((key) => DEEP_FIELDS.includes(key)
     ? isSameValue(left[key], right[key])
     : isSameValue(normalisedField(left[key]), normalisedField(right[key])));
 }

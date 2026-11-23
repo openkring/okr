@@ -53,6 +53,45 @@ export class DocumentExistsError extends Error {
   }
 }
 
+/** A write decided by {@link FirestoreService.writeChecked}; `key` is the document that is written. */
+export type CheckedWrite<T extends OkrModel> =
+  /** A new document, as `createModel` with an okey: never written over an existing one. */
+  | { kind: 'create'; key: string; model: T }
+  /** Merged into the document, as `updateModel`. */
+  | { kind: 'update'; key: string; model: T }
+  /** The tenant's own copy, replaced as a whole, and the tenant is removed from `original`, as `forkModel`. */
+  | { kind: 'fork'; key: string; model: T; original: string };
+
+/** `refuse` is an answer for the caller (`reason`); `fail` is a failed save (error toast). */
+export type CheckedDecision<T extends OkrModel, R> = CheckedWrite<T> | { kind: 'refuse'; reason: R } | { kind: 'fail'; message: string };
+
+/**
+ * `sent` is the document as it was sent (without `okey`).
+ * - `written`  it is on the server
+ * - `refused`  the callback refused
+ * - `offline`  the server could not be read. With `sent`: it is not known whether that was written
+ * - `failed`   not written (error toast shown). With `sent`: it was not there when read afterwards, but it was sent
+ */
+export type CheckedWriteResult<T extends OkrModel, R> =
+  | { status: 'written'; key: string; sent: T }
+  | { status: 'refused'; reason: R }
+  | { status: 'offline'; sent?: T }
+  | { status: 'failed'; sent?: T };
+
+/** Toasts of {@link FirestoreService.writeChecked}, already resolved. */
+export interface CheckedWriteMessages { createConfirm: string; createError: string; updateConfirm: string; updateError: string }
+
+/** Ends a transaction without a write (and without a retry). */
+class CheckedWriteRefusal extends Error {
+  constructor(public readonly reason: unknown) {
+    super('refused');
+    this.name = 'CheckedWriteRefusal';
+  }
+}
+
+/** A commit that failed with one of these was not applied. */
+const NOT_APPLIED = ['permission-denied', 'unauthenticated', 'invalid-argument', 'not-found', 'already-exists', 'failed-precondition', 'resource-exhausted', 'out-of-range', 'unimplemented'];
+
 @Injectable({
   providedIn: 'root'
 })
@@ -1315,6 +1354,152 @@ export class FirestoreService {
   /** Runs a transaction with the App Check recovery of {@link commitBatch}. */
   public async runTransactionWithRetry(context: string, update: (transaction: Transaction) => Promise<void>): Promise<void> {
     await this.writeWithTokenDenialRetry(context, () => runTransaction(this.firestore, update));
+  }
+
+  /**
+   * Read, decide and write in ONE transaction. Unlike `updateDoc` and a batch, a transaction is never queued while
+   * offline (a queued write is sent much later, over newer work): it fails, and a document that changes between
+   * the read and the write is read and decided again. What is written equals `createModel` / `updateModel` / `forkModel`, with the same
+   * toasts, history comment and App Check retry; only a failed or slow comment or toast does not delay or fail the save.
+   *
+   * When it is unclear whether a commit was applied (its answer was lost), the document is read once more: if it holds
+   * what was sent, the write counts as `written`. Never rejects.
+   *
+   * @param decide reads what it needs through `read` (a server read without `okey`; null = does not exist) and says what to write. Runs
+   *        again when the transaction is retried: no side effects.
+   * @param isSame whether the stored document holds what was sent
+   */
+  public async writeChecked<T extends OkrModel, R>(
+    collectionName: string,
+    decide: (read: (key: string) => Promise<T | null>) => Promise<CheckedDecision<T, R>>,
+    isSame: (sent: T, stored: T) => boolean,
+    messages: CheckedWriteMessages,
+    currentUser?: UserModel,
+  ): Promise<CheckedWriteResult<T, R>> {
+    if (!isBrowser(this.platformId)) {
+      this.okrError(undefined, 'FirestoreService.writeChecked: This method can only be called in the browser context.', true);
+      return { status: 'failed' };
+    }
+    const run: { write?: CheckedWrite<T>; sent?: { write: CheckedWrite<T>; data: T }; sends: number; readError?: unknown } = { sends: 0 };
+    try {
+      await this.writeWithTokenDenialRetry(`writeChecked(${collectionName})`, () => runTransaction(this.firestore, async (transaction) => {
+        const known = new Map<string, T | null>();
+        const read = async (key: string): Promise<T | null> => {
+          const stored = known.get(key);
+          if (stored !== undefined) return stored;
+          try {
+            const snapshot = await transaction.get(doc(this.firestore, `${collectionName}/${key}`));
+            const data = snapshot.exists() ? (snapshot.data() as unknown as T) : null;
+            known.set(key, data);
+            return data;
+          } catch (ex) {
+            run.readError = ex;
+            throw ex;
+          }
+        };
+
+        const decision = await decide(read);
+        if (decision.kind === 'refuse') throw new CheckedWriteRefusal(decision.reason);
+        if (decision.kind === 'fail') throw new Error(decision.message);
+        run.write = decision;
+        const path = `${collectionName}/${decision.key}`;
+        const data = this.checkedData(decision);
+        if (decision.kind === 'create' && await read(decision.key) !== null) throw new DocumentExistsError(path);
+
+        if (decision.kind === 'update') {
+          transaction.update(doc(this.firestore, path), { ...data } as Record<string, unknown>);
+        } else {
+          transaction.set(doc(this.firestore, path), { ...data });
+        }
+        if (decision.kind === 'fork') {
+          transaction.update(doc(this.firestore, `${collectionName}/${decision.original}`), { tenants: arrayRemove(this.env.tenantId) });
+        }
+        run.sent = { write: decision, data };
+        run.sends++;
+      }));
+    } catch (ex) {
+      return this.failedCheckedWrite<T, R>(collectionName, ex, run, isSame, messages, currentUser);
+    }
+    // the transaction cannot succeed without having sent
+    return run.sent ? this.checkedWritten(collectionName, run.sent, messages, currentUser) : { status: 'failed' };
+  }
+
+  /** What is stored for a checked write: as in `createModel`, `updateModel` and `forkModel`. */
+  private checkedData<T extends OkrModel>(write: CheckedWrite<T>): T {
+    const data = removeUndefinedFields(removeKeyFromOkrModel(structuredClone(write.model))) as unknown as T;
+    if (write.kind !== 'update') data.tenants = [this.env.tenantId];
+    if (!data.tenants || data.tenants.length === 0) throw new Error('FirestoreService.writeChecked: model.tenants is mandatory.');
+    return data;
+  }
+
+  private checkedWritten<T extends OkrModel>(
+    collectionName: string, sent: { write: CheckedWrite<T>; data: T }, messages: CheckedWriteMessages, currentUser?: UserModel,
+  ): { status: 'written'; key: string; sent: T } {
+    const { kind, key } = sent.write;
+    this.noteCheckedWrite(collectionName, kind, key, messages, currentUser);
+    return { status: 'written', key, sent: sent.data };
+  }
+
+  /** Toast and history comment of a checked write. Neither is waited for nor can fail the save: the document is written already. */
+  private noteCheckedWrite(
+    collectionName: string, kind: CheckedWrite<OkrModel>['kind'], key: string, messages: CheckedWriteMessages, currentUser?: UserModel,
+  ): void {
+    if (kind === 'fork') return;    // as forkModel: neither
+    const [confirm, text] = kind === 'create'
+      ? [messages.createConfirm, this.i18n.comment_initial_conf] : [messages.updateConfirm, this.i18n.comment_update_conf];
+    const report = (ex: unknown) => console.error(`FirestoreService.writeChecked(${collectionName}/${key}): written, but the toast or the comment failed:`, ex);
+    if (confirm) this.okrShowToast(this.toastController, confirm).catch(report);
+    if (!currentUser) return;
+    try {
+      const comment = createComment(currentUser.okey, getFullName(currentUser.firstName, currentUser.lastName), text(), `${collectionName}.${key}`, this.env.tenantId);
+      this.saveComment(comment).catch(report);
+    } catch (ex) {
+      report(ex);
+    }
+  }
+
+  private async failedCheckedWrite<T extends OkrModel, R>(
+    collectionName: string,
+    ex: unknown,
+    run: { write?: CheckedWrite<T>; sent?: { write: CheckedWrite<T>; data: T }; sends: number; readError?: unknown },
+    isSame: (sent: T, stored: T) => boolean,
+    messages: CheckedWriteMessages,
+    currentUser?: UserModel,
+  ): Promise<CheckedWriteResult<T, R>> {
+    const code = (ex as { code?: string } | null)?.code ?? '';
+    const atRead = run.readError !== undefined && ex === run.readError;
+    const refusal = ex instanceof CheckedWriteRefusal ? ex : undefined;
+    const sent = run.sent;
+
+    // unclear: an answer was lost. A retry then finds our own document, or cannot read at all any more.
+    const unclear = !!sent && (run.sends > 1 || atRead || !NOT_APPLIED.includes(code));
+    let readable = true;
+    if (sent && unclear) {
+      try {
+        const stored = await this.readObjectStrict<T>(`${collectionName}/${sent.write.key}`);
+        if (stored && isSame(sent.data, stored)) return this.checkedWritten(collectionName, sent, messages, currentUser);
+      } catch (readEx) {
+        readable = false;
+        console.warn(`FirestoreService.writeChecked(${collectionName}/${sent.write.key}): it is not known whether it was written:`, readEx);
+      }
+    }
+    if (refusal) return { status: 'refused', reason: refusal.reason as R };
+    const maybe = sent && unclear ? { sent: sent.data } : {};
+    if (atRead || (!readable && !NOT_APPLIED.includes(code))) {
+      console.warn(`FirestoreService.writeChecked(${collectionName}): the server cannot be read:`, ex);
+      return { status: 'offline', ...maybe };
+    }
+
+    const key = run.write?.key ?? '';
+    console.error(`FirestoreService.writeChecked(${collectionName}/${key}) -> ERROR:`, ex);
+    if (ex instanceof DocumentExistsError) {
+      captureMessage(`FirestoreService.writeChecked refused to overwrite ${ex.path}`, {
+        level: 'warning', tags: { firestoreCode: 'already-exists', collection: collectionName }, extra: { path: ex.path },
+      });
+    }
+    this.okrShowToast(this.toastController, run.write?.kind === 'create' ? messages.createError : messages.updateError)
+      .catch((toastEx) => console.error('FirestoreService.writeChecked: the toast failed:', toastEx));
+    return { status: 'failed', ...maybe };
   }
 
   /**
