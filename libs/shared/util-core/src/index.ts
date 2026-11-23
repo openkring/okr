@@ -15,6 +15,7 @@ export * from './lib/dencrypt.util';
 export * from './lib/email.util';
 export * from './lib/delivery-channel.util';
 export * from './lib/expense-status.util';
+export * from './lib/salutation.util';
 export * from './lib/swiss-qr-bill.util';
 export * from './lib/export.util';
 export * from './lib/fcm-token.util';

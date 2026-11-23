@@ -412,8 +412,8 @@ export function getMembershipIndexInfo(): string {
     return [
       person.firstName,
       person.lastName,
-      person.gender === 'male' ? 'männlich' : 'weiblich',
-      person.gender === 'male' ? 'Herr' : 'Frau',
+      person.gender === 'male' ? 'männlich' : person.gender === 'female' ? 'weiblich' : '',
+      person.gender === 'male' ? 'Herr' : person.gender === 'female' ? 'Frau' : '',
       postal ? `${postal.streetName} ${postal.streetNumber}`.trim() : '',
       postal?.city ?? '',
       postal?.zipCode ?? person.favZipCode,

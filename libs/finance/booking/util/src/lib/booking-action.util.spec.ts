@@ -73,6 +73,12 @@ describe('buildReceiptPayload', () => {
     expect(normSep(payload['amount'])).toBe("1'000.00");
   });
 
+  it('uses the neutral greeting for a person who is neither male nor female', () => {
+    const p = new PersonModel('scs');
+    p.firstName = 'Kim'; p.lastName = 'Muster'; p.gender = 'other';
+    const payload = buildReceiptPayload({ kind: 'person', person: p }, addr(), ONE, 2026, label);
+    expect(payload['greeting']).toBe('Guten Tag Kim');
+  });
   it('uses "Lieber" for a male person', () => {
     const p = new PersonModel('gss');
     p.firstName = 'Hans'; p.lastName = 'Muster'; p.gender = 'male';

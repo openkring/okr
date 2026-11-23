@@ -1,6 +1,6 @@
 import { BookingAction } from './booking-action.model';
 import { AddressModel, AvatarInfo, BookingLineModel, BookingModel, OrgModel, PersonModel } from '@okr/shared-models';
-import { convertDateFormatToString, DateFormat } from '@okr/shared-util-core';
+import { convertDateFormatToString, DateFormat, personGreeting } from '@okr/shared-util-core';
 
 /**
  * Returns every action whose trigger matches the given accounting tenant and
@@ -87,7 +87,7 @@ export function buildRecipientPayload(party: ReceiptParty, address: AddressModel
   const firstName = isPerson ? party.person.firstName : '';
   const lastName = isPerson ? party.person.lastName : party.org.name;
   const greeting = isPerson
-    ? (party.person.gender === 'female' ? 'Liebe ' : 'Lieber ') + party.person.firstName
+    ? personGreeting(party.person.firstName, party.person.gender)
     : 'Sehr geehrte Damen und Herren';
 
   return {

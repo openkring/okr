@@ -1,4 +1,4 @@
-import { convertDateFormatToString, DateFormat, isMoneyPosition, isRebatePosition } from '@okr/shared-util-core';
+import { convertDateFormatToString, DateFormat, isMoneyPosition, isRebatePosition, personGreeting } from '@okr/shared-util-core';
 import { touchedPeriodKeys } from '../booking/period-lock';
 
 /**
@@ -122,12 +122,10 @@ export function recipientFields(
 ): Record<string, string> {
   const firstName = receiver?.name1 ?? '';
   const isPerson = receiver?.modelType === 'person';
-  // same rule as the payment confirmation: female → Liebe, any other value → Lieber
-  const salutation = gender === 'female' ? 'Liebe' : 'Lieber';
   return {
     firstName,
     lastName: receiver?.name2 ?? '',
-    greeting: isPerson && firstName ? `${salutation} ${firstName}` : 'Guten Tag',
+    greeting: isPerson && firstName ? personGreeting(firstName, gender) : 'Guten Tag',
     streetName: address?.streetName ?? '',
     streetNumber: address?.streetNumber ?? '',
     zipCode: address?.zipCode ?? '',

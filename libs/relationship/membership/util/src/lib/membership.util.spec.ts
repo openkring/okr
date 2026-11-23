@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { CategoryItemModel, CategoryListModel, GroupModel, MembershipModel, PersonModel } from '@okr/shared-models';
 import * as coreUtils from '@okr/shared-util-core';
-import { addPersonInfoToMembership, createGroupMembership, getMembershipIndex, getMembershipIndexInfo, getSortOrderChanges, matchCategoryItem, newMembershipForPerson, sortMembersBySortOrder } from './membership.util';
+import { addPersonInfoToMembership, convertToClubdeskImportRow, createGroupMembership, getMembershipIndex, getMembershipIndexInfo, getSortOrderChanges, matchCategoryItem, newMembershipForPerson, sortMembersBySortOrder } from './membership.util';
 
 // Mock shared utility functions
 vi.mock('@okr/shared-util-core', async importOriginal => {
@@ -128,4 +128,13 @@ describe('getSortOrderChanges', () => {
   it('returns nothing when the order is already stored', () => {
     expect(getSortOrderChanges([{ okey: 'a', sortOrder: 1 }, { okey: 'b', sortOrder: 2 }])).toEqual([]);
   });
+});
+
+describe('convertToClubdeskImportRow gender columns', () => {
+  const contact = { email: '', phone: '', dateOfBirth: '20000101' };
+  const row = (gender: string) =>
+    convertToClubdeskImportRow(new MembershipModel('scs'), Object.assign(new PersonModel('scs'), { firstName: 'Kim', lastName: 'Muster', gender }), contact);
+  it('male → männlich / Herr', () => expect(row('male').slice(2, 4)).toEqual(['männlich', 'Herr']));
+  it('female → weiblich / Frau', () => expect(row('female').slice(2, 4)).toEqual(['weiblich', 'Frau']));
+  it('other → both empty', () => expect(row('other').slice(2, 4)).toEqual(['', '']));
 });
