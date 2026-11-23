@@ -373,6 +373,11 @@ describe('review findings of Task 5', () => {
 });
 
 describe('mapBlocksI18n', () => {
+  it('a warning names the section by the given id when the name is empty', () => {
+    mapBlocksI18n(free([{ id: 'x', type: 'bogus' }], { name: '' }), keep, 'okey123');
+    expect(String(warn.mock.calls[0][0])).toContain('"okey123"');
+  });
+
   const sec = (blocks: unknown, extra: Partial<SectionDoc> = {}): SectionDoc => free(blocks, { name: 'sec1', ...extra });
 
   it('carries German and every language a block has, each sanitized; an empty translation is German', () => {

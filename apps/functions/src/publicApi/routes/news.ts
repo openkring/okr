@@ -3,7 +3,7 @@ import { getFirestore } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/v2';
 import { isPublishedSection, setCacheHeaders, parseTags, storeDateToIso, titleToI18n } from '../utils';
 import { getHtmlSanitizer, sanitizeI18n } from '../sanitize';
-import { articleCover, isFreeArticle, withClassicFields, type I18nString } from '@okr/shared-models';
+import { articleBlocksOf, articleCover, isFreeArticle, withClassicFields, type ArticleLike, type I18nString } from '@okr/shared-models';
 
 type SanitizeFn = (html: string) => string;
 import { shortenText } from '@okr/shared-util-core';
@@ -77,16 +77,32 @@ function mapImage(img: StoredImage) {
   return { url: toImgixUrl(img.url), alt: { de: img.altText ?? '' } };
 }
 
-/** The picture of teasers and lists: the cover, else the first image (spec 1.173 §9.2). */
-function coverOf(original: ArticleSectionDoc): StoredImage | undefined {
-  const cover = articleCover(original as never);
-  return cover?.url ? { url: cover.url, altText: cover.altText } : undefined;
+/** An image the website can draw: a non-blank string url. Stored values are not trusted (a number would throw in toImgixUrl). */
+function usableImage(img: unknown): StoredImage | undefined {
+  const stored = img as Partial<Record<keyof StoredImage, unknown>> | null | undefined;
+  if (typeof stored?.url !== 'string' || stored.url.trim() === '') return undefined;
+  return { url: stored.url, altText: typeof stored.altText === 'string' ? stored.altText : '' };
+}
+
+/**
+ * The images of the article as served. Without blocks exactly as ever; with blocks (spec 1.173) only the usable ones,
+ * since an unfilled image block or a malformed value must not fail the whole list.
+ */
+function imagesOf(original: ArticleSectionDoc, doc: ArticleSectionDoc): StoredImage[] {
+  const images = doc.properties?.images ?? [];
+  return articleBlocksOf(original as ArticleLike) ? images.flatMap((i) => usableImage(i) ?? []) : images;
+}
+
+/** The picture of teasers and lists: with blocks the cover, else the first image (spec 1.173 §9.2); without, the first image as ever. */
+function coverOf(original: ArticleSectionDoc, doc: ArticleSectionDoc): StoredImage | undefined {
+  if (!articleBlocksOf(original as ArticleLike)) return doc.properties?.images?.[0];
+  return usableImage(articleCover(original as ArticleLike)) ?? imagesOf(original, doc)[0];
 }
 
 export function sectionToNewsSummary(original: ArticleSectionDoc, sanitize: SanitizeFn) {
-  const doc = withClassicFields(original as never) as ArticleSectionDoc;
+  const doc = withClassicFields(original as ArticleLike) as ArticleSectionDoc;
   const props = doc.properties ?? {};
-  const img = coverOf(original);
+  const img = coverOf(original, doc);
   const excerpt = hasContent(props.excerptI18n)
     ? props.excerptI18n!
     : excerptFromContent(props.contentI18n, doc.content?.htmlContent ?? '');
@@ -103,14 +119,14 @@ export function sectionToNewsSummary(original: ArticleSectionDoc, sanitize: Sani
 
 /** A free article carries its blocks in all languages too, since the route has no language (spec 1.173 §9.2). */
 export function sectionToNewsDetail(original: ArticleSectionDoc, sanitize: SanitizeFn) {
-  const doc = withClassicFields(original as never) as ArticleSectionDoc;
+  const doc = withClassicFields(original as ArticleLike) as ArticleSectionDoc;
   const props = doc.properties ?? {};
-  const images = (props.images ?? []).map(mapImage);
+  const images = imagesOf(original, doc).map(mapImage);
   return {
     ...sectionToNewsSummary(original, sanitize),
     content: sanitizeI18n(props.contentI18n ?? { de: doc.content?.htmlContent ?? '' }, sanitize),
     images,
-    ...(isFreeArticle(original as never) ? { blocks: mapBlocksI18n(original as unknown as SectionDoc, sanitize) } : {}),
+    ...(isFreeArticle(original as ArticleLike) ? { blocks: mapBlocksI18n(original as unknown as SectionDoc, sanitize, articleSlug(original)) } : {}),
   };
 }
 

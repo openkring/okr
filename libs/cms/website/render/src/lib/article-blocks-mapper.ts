@@ -81,7 +81,7 @@ function columnSizes(sizes: unknown[]): number[] {
   return valid ? sizes as number[] : sizes.map(() => Math.max(1, Math.floor(12 / sizes.length)));
 }
 
-/** Maps the blocks of one article in one language and collects its album. */
+/** Maps the blocks of one article in the given languages (all texts in each) and collects its album. */
 class BlockMapper {
   public readonly images: PublicImage[] = [];
 
@@ -276,11 +276,11 @@ export function mapBlocks(s: SectionDoc, sanitize: SanitizeFn, lang: string, id?
 
 /**
  * The same blocks for the news API, which has no language: the texts in German and in every language a block carries,
- * all sanitized (the route is public output).
+ * all sanitized (the route is public output). `id` names the section in a warning.
  */
-export function mapBlocksI18n(s: SectionDoc, sanitize: SanitizeFn): PublicBlockI18n[] {
+export function mapBlocksI18n(s: SectionDoc, sanitize: SanitizeFn, id?: string): PublicBlockI18n[] {
   const props = s.properties ?? {};
   const stored = storedBlocks(s);
   const captions = [pickText(s.subTitle, props.subTitleI18n, 'de'), pickText(s.title, props.titleI18n, 'de')];
-  return new BlockMapper(sanitize, languagesOf(stored), captions, str(s.name)).blocks(stored).map(withoutAlbum);
+  return new BlockMapper(sanitize, languagesOf(stored), captions, id ?? str(s.name)).blocks(stored).map(withoutAlbum);
 }

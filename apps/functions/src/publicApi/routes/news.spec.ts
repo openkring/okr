@@ -1,10 +1,10 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 // The newsRouter tests drive a fake Firestore; articleSlug does not touch it.
 const fakeDb = vi.hoisted(() => ({ current: undefined as unknown }));
 vi.mock('firebase-admin/firestore', () => ({ getFirestore: () => fakeDb.current }));
 
-import { blocksFromClassic } from '@okr/shared-models';
+import { blocksFromClassic, type ArticleLike } from '@okr/shared-models';
 import { articleSlug, newsRouter } from './news';
 
 describe('articleSlug', () => {
@@ -112,6 +112,8 @@ describe('unpublished articles', () => {
 // Spec 1.173: articles with blocks. An article without blocks is served exactly as before.
 // ---------------------------------------------------------------------------------------------------------------------
 describe('news articles with blocks (1.173)', () => {
+  beforeEach(() => { vi.spyOn(console, 'warn').mockImplementation(() => undefined); });
+  afterEach(() => { vi.restoreAllMocks(); });
   const img = (n: string): Record<string, unknown> => ({ url: `a/${n}.jpg`, altText: n });
   const base = (properties: Record<string, unknown>, htmlContent = '<p>Hallo <b>Welt</b></p>', position = 1): Record<string, unknown> => ({
     type: 'article', state: 'published', name: 'art', title: 'Titel', subTitle: 'Unter', tags: 'a, b', tenants: ['scs'], isArchived: false,
@@ -223,24 +225,64 @@ describe('news articles with blocks (1.173)', () => {
   });
 
   it('a migrated article is served like the old one', async () => {
+    const cta = { label: 'Los', url: '/los' };
     const cases: Record<string, Record<string, unknown>> = {
       'text only': base({ datePublished: '20260101' }, '<p>Nur Text</p>', 0),
       'image on top': base({ images: [img('a')], contentI18n: { de: '<p>Hallo</p>', en: '<p>Hello</p>' } }, '<p>Hallo</p>', 1),
-      'image at the bottom, with a button': base({ images: [img('a')], cta: { label: 'Los', url: '/los' } }, '<p>T</p>', 2),
+      'image at the bottom, with a button': base({ images: [img('a')], cta }, '<p>T</p>', 2),
       'image left': base({ images: [img('a')] }, '<p>T</p>', 3),
+      'image right': base({ images: [img('a')] }, '<p>T</p>', 4),
+      'position absent': { ...base({ images: [img('a')] }), content: { htmlContent: '<p>T</p>' } },
       'two images': base({ images: [img('a'), img('b')] }, '<p>T</p>', 1),
+      'two images at the bottom with a layout': base({ images: [img('a'), img('b')], imageLayout: 'stacked' }, '<p>T</p>', 2),
+      'side by side': base({ images: [img('a'), img('b')], imageLayout: 'side-by-side' }, '<p>T</p>', 1),
+      'a slideshow': base({ images: [img('a'), img('b')], imageLayout: 'slider', slideshow: { effect: 'fade', interval: 3 } }, '<p>T</p>', 1),
+      'a layout on one image': base({ images: [img('a')], imageLayout: 'slider' }, '<p>T</p>', 1),
+      'contentI18n without images': base({ contentI18n: { de: '<p>Hallo</p>', en: '<p>Hello</p>' } }, '<p>Hallo</p>', 0),
       'the hidden image': base({ images: [img('a')], titleI18n: { en: 'Title' } }, '<p>T</p>', 0),
+      'the hidden image and a button': base({ images: [img('a')], cta }, '<p>T</p>', 0),
     };
     for (const [name, doc] of Object.entries(cases)) {
-      const classic = { ...doc, properties: doc['properties'] as Record<string, unknown> };
-      const { blocks, cover } = blocksFromClassic(classic as never);
-      const { images: _images, contentI18n: _i18n, cta: _cta, ...kept } = classic.properties as Record<string, unknown>; // eslint-disable-line @typescript-eslint/no-unused-vars
+      const { blocks, cover } = blocksFromClassic(doc as ArticleLike);
+      const { images: _images, contentI18n: _i18n, cta: _cta, ...kept } = (doc['properties'] ?? {}) as Record<string, unknown>; // eslint-disable-line @typescript-eslint/no-unused-vars
       const migrated = { ...doc, content: { position: 1 }, properties: { ...kept, blocks, ...(cover ? { cover } : {}) } };
-      const [oldDetail, newDetail] = [(await call(classic, 'art')).body, (await call(migrated, 'art')).body];
-      expect(newDetail, name).toEqual(oldDetail);
+      const [oldDetail, newDetail] = [(await call(doc, 'art')).body, (await call(migrated, 'art')).body];
       expect(newDetail, name).not.toHaveProperty('blocks');
-      expect((await call(migrated)).body, name).toEqual((await call(classic)).body);
+      expect(JSON.stringify(newDetail), name).toBe(JSON.stringify(oldDetail));
+      expect(JSON.stringify((await call(migrated)).body), name).toBe(JSON.stringify((await call(doc)).body));
     }
+  });
+
+  describe('malformed images', () => {
+    const bad = [{ url: 5, altText: 'n' }, { url: '' }, { altText: 'none' }, { url: 'a/ok.jpg', altText: 7 }];
+    const blocks = [
+      { id: 't', type: 'text', html: '<p>A</p>' },
+      ...bad.map((image, i) => ({ id: `i${i}`, type: 'image', image })),
+      { id: 'g', type: 'gallery', images: bad },
+    ];
+    const withBlocks = (extra: Record<string, unknown>) => base({ blocks, ...extra });
+
+    it('do not fail the list or the detail of an article with blocks', async () => {
+      for (const doc of [withBlocks({}), withBlocks({ cover: { url: 5 } }), withBlocks({ cover: { altText: 'x' } }), withBlocks({ cover: { url: '' } })]) {
+        const list = await call(doc);
+        const detail = await call(doc, 'art');
+        expect([list.status, detail.status]).toEqual([200, 200]);
+        for (const image of [...detail.body.images, list.body[0].coverImage]) expect(image.url).toMatch(/^https:\/\//);
+        for (const image of detail.body.images) expect(image.alt.de).toBe('');
+      }
+    });
+
+    it('the cover skips an unusable cover and takes the first usable image', async () => {
+      const [item] = (await call(withBlocks({ cover: { url: 5 } }))).body;
+      expect(item.coverImage.url).toContain('a/ok.jpg');
+    });
+
+    it('an article without blocks keeps its first image as the cover, even with an empty url', async () => {
+      const doc = base({ images: [{ url: '', altText: 'leer' }, img('b')] });
+      const [item] = (await call(doc)).body;
+      expect(item.coverImage).toEqual({ url: '', alt: { de: 'leer' } });
+      expect((await call(doc, 'art')).body.images).toHaveLength(2);
+    });
   });
 
   describe('a free article', () => {
