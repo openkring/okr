@@ -28,10 +28,12 @@ export interface CalloutBlockView extends BaseView { type: 'callout'; html: stri
 export interface DividerBlockView extends BaseView { type: 'divider' }
 export interface SpaceBlockView extends BaseView { type: 'space'; size: SpaceSize }
 export type ColumnContentView = TextBlockView | ImageBlockView | ButtonBlockView;
-/** `holdsText`: the column has a text block, even an empty one that is not drawn (it carries the header, see `articleHeaderPlace`) */
-export interface ArticleColumnView { blocks: ColumnContentView[]; holdsText: boolean }
-/** `template`: the CSS `grid-template-columns` of the columns side by side */
-export interface ColumnsBlockView extends BaseView { type: 'columns'; columns: ArticleColumnView[]; template: string; stackReverse: boolean }
+export interface ArticleColumnView { blocks: ColumnContentView[] }
+/**
+ * `template`: the CSS `grid-template-columns` of the columns side by side. `headerColumn`: the text column beside the image
+ * column, only for columns of one image and one text; it can carry the header (see `articleHeaderPlace`).
+ */
+export interface ColumnsBlockView extends BaseView { type: 'columns'; columns: ArticleColumnView[]; template: string; stackReverse: boolean; headerColumn?: number }
 
 export type ArticleBlockView =
   | ColumnContentView | GridBlockView | CarouselBlockView | SlideshowBlockView | CalloutBlockView | DividerBlockView | SpaceBlockView
@@ -106,13 +108,32 @@ export function columnsTemplate(sizes: unknown[]): string {
 
 type ReplaceText = (html: string) => string;
 
-/** Turns blocks into views with unique keys. */
+/**
+ * The column of the text in columns of one image and one text, by what they draw. A text that is empty still counts when
+ * it is alone in its column: the heading then stands beside the image.
+ */
+function headerColumnOf(stored: Loose[][], drawn: ColumnContentView[][]): number | undefined {
+  if (drawn.length !== 2) return undefined;
+  const is = (i: number, type: 'image' | 'text'): boolean => drawn[i].length === 1 && drawn[i][0].type === type;
+  const isText = (i: number): boolean => is(i, 'text') || (stored[i].length === 1 && stored[i][0]['type'] === 'text');
+  return [0, 1].find((i) => isText(i) && is(1 - i, 'image'));
+}
+
+/** Turns blocks into views with unique keys. What is drawn does not depend on the replacement. */
 class ViewBuilder {
   private readonly keys = new Set<string>();
   constructor(private readonly replace: ReplaceText) {}
 
   public views(value: unknown): ArticleBlockView[] {
     return blocksOf(value).map((block) => this.view(block)).filter((view) => view !== undefined);
+  }
+
+  public firstView(value: unknown): ArticleBlockView | undefined {
+    for (const block of blocksOf(value)) {
+      const view = this.view(block);
+      if (view) return view;
+    }
+    return undefined;
   }
 
   private view(block: Loose): ArticleBlockView | undefined {
@@ -123,8 +144,8 @@ class ViewBuilder {
       case 'gallery': return galleryView(block, this.key(block));
       case 'columns': return this.columnsView(block);
       case 'callout': {
-        const html = this.html(block);
-        return html ? { key: this.key(block), type: 'callout', html, tone: oneOf(block['tone'], CALLOUT_TONES, 'neutral') } : undefined;
+        const html = drawnHtml(block['html']);
+        return html ? { key: this.key(block), type: 'callout', html: this.replace(html), tone: oneOf(block['tone'], CALLOUT_TONES, 'neutral') } : undefined;
       }
       case 'divider': return { key: this.key(block), type: 'divider' };
       case 'space': return { key: this.key(block), type: 'space', size: oneOf(block['size'], SPACE_SIZES, 'medium') };
@@ -137,8 +158,8 @@ class ViewBuilder {
     const align = oneOf(block['align'], BLOCK_ALIGNS, 'left');
     switch (block['type']) {
       case 'text': {
-        const html = this.html(block);
-        return html ? { key: this.key(block), type: 'text', html, align } : undefined;
+        const html = drawnHtml(block['html']);
+        return html ? { key: this.key(block), type: 'text', html: this.replace(html), align } : undefined;
       }
       case 'image': {
         const image = drawnImage(block['image']);
@@ -154,19 +175,13 @@ class ViewBuilder {
 
   private columnsView(block: Loose): ColumnsBlockView | undefined {
     const columns = objects(block['columns']);
-    if (columns.length === 0) return undefined;
+    const stored = columns.map((column) => blocksOf(column['blocks']));
+    const drawn = stored.map((blocks) => blocks.map((b) => this.contentView(b)).filter((view) => view !== undefined));
+    if (drawn.every((blocks) => blocks.length === 0)) return undefined;
     return {
       key: this.key(block), type: 'columns', template: columnsTemplate(columns.map((c) => c['size'])), stackReverse: block['stackReverse'] === true,
-      columns: columns.map((column) => {
-        const blocks = blocksOf(column['blocks']);
-        return { blocks: blocks.map((b) => this.contentView(b)).filter((view) => view !== undefined), holdsText: blocks.some((b) => b['type'] === 'text') };
-      }),
+      headerColumn: headerColumnOf(stored, drawn), columns: drawn.map((blocks) => ({ blocks })),
     };
-  }
-
-  private html(block: Loose): string {
-    const html = drawnHtml(block['html']);
-    return html ? this.replace(html) : '';
   }
 
   private key(block: Loose): string {
@@ -200,16 +215,12 @@ export function undrawnBlockTypes(blocks: ArticleBlock[] | undefined): string[] 
 }
 
 /**
- * Where the header of a free article is drawn (spec 1.173 §9.1), decided by its first block: one image beside one text in
- * an article with its own background carries the header in the text column; a slideshow carries title and subtitle on
- * its images; anything else has it above.
+ * Where the header of a free article is drawn (spec 1.173 §9.1), decided by its first block that is drawn, as on the
+ * websites: one image beside one text in an article with its own background carries the header in the text column; a
+ * slideshow carries title and subtitle on its images; anything else has it above.
  */
 export function articleHeaderPlace(blocks: ArticleBlock[] | undefined, hasBackground: boolean): ArticleHeaderPlace {
-  const first = blocksOf(blocks)[0];
-  if (first?.['type'] === 'gallery') return galleryView(first, '')?.type === 'slideshow' ? 'slideshow' : 'card';
-  if (first?.['type'] !== 'columns' || !hasBackground) return 'card';
-  const columns = objects(first['columns']).map((c) => blocksOf(c['blocks']).map((b) => b['type']));
-  if (columns.length !== 2 || columns.some((types) => types.length !== 1)) return 'card';
-  const types = columns.flat();
-  return types.includes('image') && types.includes('text') ? 'column' : 'card';
+  const first = new ViewBuilder((html) => html).firstView(blocks);
+  if (first?.type === 'slideshow') return 'slideshow';
+  return hasBackground && first?.type === 'columns' && first.headerColumn !== undefined ? 'column' : 'card';
 }

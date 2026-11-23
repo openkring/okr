@@ -23,6 +23,10 @@ describe('articleBlockViews', () => {
     expect(result).toMatchObject([{ type: 'text', html: 'Kring', align: 'left' }, { type: 'callout', html: 'Kring', tone: 'primary' }]);
   });
 
+  it('the replacement does not decide what is drawn (the header place is decided without it)', () => {
+    expect(articleBlockViews([text('@APP@')] as ArticleBlock[], () => '')).toMatchObject([{ type: 'text', html: '' }]);
+  });
+
   it.each(['', ' ', '<p></p>', '<p> &nbsp;<br></p>', '<p> </p>', undefined, null, 7, {}])('an empty text draws nothing: %j', (html) => {
     expect(views({ ...text(), html }, { id: 'n', type: 'callout', html, tone: 'primary' })).toEqual([]);
   });
@@ -104,15 +108,22 @@ describe('articleBlockViews', () => {
   });
 
   describe('columns', () => {
-    it('two columns: sizes, content, which one holds the text', () => {
+    it('two columns: sizes, content, which one carries the header', () => {
       expect(first(columns([{ size: 4, blocks: [image()] }, { size: 8, blocks: [text(), { id: 'b', type: 'button', cta }] }], { stackReverse: true }))).toMatchObject({
-        type: 'columns', template: 'minmax(0, 4fr) minmax(0, 8fr)', stackReverse: true,
-        columns: [{ holdsText: false, blocks: [{ type: 'image' }] }, { holdsText: true, blocks: [{ type: 'text' }, { type: 'button' }] }],
+        type: 'columns', template: 'minmax(0, 4fr) minmax(0, 8fr)', stackReverse: true, headerColumn: undefined,
+        columns: [{ blocks: [{ type: 'image' }] }, { blocks: [{ type: 'text' }, { type: 'button' }] }],
       });
+      expect(first(columns([{ size: 4, blocks: [image()] }, { size: 8, blocks: [text()] }]))).toMatchObject({ headerColumn: 1 });
+      expect(first(columns([{ size: 4, blocks: [text()] }, { size: 8, blocks: [image()] }]))).toMatchObject({ headerColumn: 0 });
     });
 
     it('an empty text still counts as the text column', () => {
-      expect(first(columns([{ size: 6, blocks: [image()] }, { size: 6, blocks: [text('')] }]))).toMatchObject({ columns: [{ holdsText: false }, { holdsText: true, blocks: [] }] });
+      expect(first(columns([{ size: 6, blocks: [image()] }, { size: 6, blocks: [text('')] }]))).toMatchObject({ headerColumn: 1, columns: [{ blocks: [{ type: 'image' }] }, { blocks: [] }] });
+    });
+
+    it('columns that draw nothing are no view, as on the websites', () => {
+      expect(views(columns([{ size: 6, blocks: [text('')] }, { size: 6, blocks: [image('')] }]))).toEqual([]);
+      expect(views(columns([{ size: 6 }, { size: 6, blocks: [{ type: 'video' }] }]))).toEqual([]);
     });
 
     it('a column holds only texts, images and buttons', () => {
@@ -122,8 +133,8 @@ describe('articleBlockViews', () => {
 
     it('malformed columns', () => {
       for (const bad of [undefined, null, 'x', [], [null, 3]]) expect(views(columns(bad))).toEqual([]);
-      expect(first(columns([{ size: 6 }, { size: 'x', blocks: [null, 3, {}] }, { blocks: 'x' }]))).toMatchObject({
-        template: 'minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr)', columns: [{ blocks: [] }, { blocks: [] }, { blocks: [] }],
+      expect(first(columns([{ size: 6 }, { size: 'x', blocks: [null, 3, {}] }, { blocks: 'x' }, { blocks: [text()] }]))).toMatchObject({
+        template: 'minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr)', columns: [{ blocks: [] }, { blocks: [] }, { blocks: [] }, { blocks: [{ type: 'text' }] }],
       });
     });
   });
@@ -202,6 +213,70 @@ describe('articleHeaderPlace', () => {
     expect(place(false, gallery(['a', ''], { slideshow: show }))).toBe('card');
     expect(place(false, gallery(['a', 'b']))).toBe('card');
     expect(place(false, text(), gallery(['a', 'b'], { slideshow: show }))).toBe('card');
+  });
+});
+
+describe('articleHeaderPlace: the first block that is drawn decides, as on the websites', () => {
+  const place = (background: boolean, ...blocks: unknown[]) => articleHeaderPlace(blocks as ArticleBlock[], background);
+  const show1 = gallery(['a', 'b'], { slideshow: show });
+  const beside = columns([{ size: 6, blocks: [image()] }, { size: 6, blocks: [text()] }]);
+  /** stored blocks that draw nothing */
+  const undrawn: [string, unknown][] = [
+    ['an empty text', text('')], ['an unknown type', { id: 'v', type: 'video' }], ['an image without a path', image('')],
+    ['a gallery without images', gallery([''], { slideshow: show })], ['a half button', { id: 'b', type: 'button', cta: { label: 'x', url: '' } }],
+    ['an empty callout', { id: 'n', type: 'callout', html: '<p></p>' }], ['empty columns', columns([{ size: 6, blocks: [text('')] }, { size: 6, blocks: [image('')] }])], ['null', null],
+  ];
+
+  it.each(undrawn)('%s before a slideshow', (_name, block) => {
+    expect(place(false, block, show1, text())).toBe('slideshow');
+    expect(place(true, block, show1)).toBe('slideshow');
+    expect(place(false, block, block, show1)).toBe('slideshow');
+  });
+
+  it.each(undrawn)('%s before coloured columns', (_name, block) => {
+    expect(place(true, block, beside)).toBe('column');
+    expect(place(false, block, beside)).toBe('card');
+  });
+
+  it.each(undrawn)('%s before a text', (_name, block) => {
+    expect(place(true, block, text(), show1)).toBe('card');
+    expect(place(true, block, text(), beside)).toBe('card');
+    expect(place(true, block)).toBe('card');
+  });
+
+  it('a divider and a space are drawn', () => {
+    for (const block of [{ id: 'd', type: 'divider' }, { id: 's', type: 'space', size: 'small' }]) {
+      expect(place(true, block, show1)).toBe('card');
+      expect(place(true, block, beside)).toBe('card');
+    }
+  });
+
+  it('a column counts what it draws', () => {
+    const col = (...blocks: unknown[]) => ({ size: 6, blocks });
+    expect(place(true, columns([col(image(), { type: 'video' }), col(text(''), text())]))).toBe('column');
+    expect(place(true, columns([col(image(), text('')), col(text())]))).toBe('column');
+    expect(place(true, columns([col(image()), col(text(''))]))).toBe('column');
+    expect(place(true, columns([col(image('')), col(text())]))).toBe('card');
+    expect(place(true, columns([col(image()), col(text(''), { id: 'b', type: 'button' })]))).toBe('card');
+  });
+
+  it('the title is drawn exactly once, whatever the blocks are', () => {
+    const col = (...blocks: unknown[]) => ({ size: 6, blocks });
+    const pool = [
+      ...undrawn.map(([, block]) => block), text(), image(), gallery(['a', 'b']), gallery(['a'], { slideshow: show }), show1, { id: 'd', type: 'divider' }, beside,
+      columns([col(text()), col(image(), text(''))]), columns([col(text('')), col(image())]), columns([col(text()), col(text())]), columns([col(image()), col(text(), text())]),
+      columns([col(image('')), col(text())]), columns([col(image()), col(text()), col(text())]),
+    ];
+    for (const background of [true, false]) {
+      for (const a of pool) for (const b of pool) for (const c of [undefined, show1, beside]) {
+        const blocks = [a, b, c] as ArticleBlock[];
+        const header = articleHeaderPlace(blocks, background);
+        // what okr-article-blocks does with it
+        const inBlocks = articleBlockViews(blocks).filter((view, i) => i === 0
+          && ((header === 'slideshow' && view.type === 'slideshow') || (header === 'column' && view.type === 'columns' && view.columns.some((_c, j) => j === view.headerColumn))));
+        expect(inBlocks.length + (header === 'card' ? 1 : 0), JSON.stringify(blocks)).toBe(1);
+      }
+    }
   });
 });
 

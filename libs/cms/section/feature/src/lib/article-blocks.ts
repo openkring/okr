@@ -111,7 +111,7 @@ export type ArticlePreviewDevice = 'auto' | 'mobile' | 'tablet' | 'desktop';
           <div class="columns" [class]="columnsForm()" [style.--columns]="block.template">
             @for (column of block.columns; track $index) {
               <div class="column" [style.--stack-order]="block.stackReverse ? -$index : null">
-                @if (first && column.holdsText && headerPlace() === 'column') {
+                @if (first && headerPlace() === 'column' && block.headerColumn === $index) {
                   <div class="header">
                     <okr-optional-card-header [intro]="intro()?.text" [introPosition]="intro()?.position" [title]="title()" [subTitle]="subTitle()" />
                   </div>
