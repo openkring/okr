@@ -170,10 +170,12 @@ import { MembershipI18n, MemberNewFormModel, memberNewFormValidations } from '@o
                 </ion-col>
               </ion-row>
               <ion-row>
-                <ion-col size="12">
-                  <okr-cat-select [category]="membershipCategories()" [selectedItemName]="currentMembershipCategoryItem()" (selectedItemNameChange)="onFieldChange('category', $event)" [readOnly]="isReadOnly()" />
-                  <okr-error-note [errors]="categoryErrors()" />
-                </ion-col>
+                @if(membershipCategories(); as categories) {
+                  <ion-col size="12">
+                    <okr-cat-select [category]="categories" [selectedItemName]="currentMembershipCategoryItem()" (selectedItemNameChange)="onFieldChange('category', $event)" [readOnly]="isReadOnly()" />
+                    <okr-error-note [errors]="categoryErrors()" />
+                  </ion-col>
+                }
                 <ion-col size="12">
                   <okr-date-input [i18n]="dateOfEntryI18n()" [storeDate]="dateOfEntry()" (storeDateChange)="onFieldChange('dateOfEntry', $event)" [readOnly]="isReadOnly()" />
                   <okr-error-note [errors]="dateOfEntryErrors()" />
@@ -218,7 +220,8 @@ export class MemberNewForm {
   public readonly locale = input<string>(DEFAULT_LOCALE);
   public readonly readOnly = input(true);
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
-  public membershipCategories = input.required<CategoryListModel>();
+  // optional: a tenant without the list gets no category picker, the same as in membership.form
+  public membershipCategories = input<CategoryListModel | undefined>();
   
   // signals
   public dirty = output<boolean>();

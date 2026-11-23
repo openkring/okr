@@ -52,7 +52,7 @@ export class MemberNewModal {
 
   // inputs
   public currentUser = input.required<UserModel>();
-  public mcat = input.required<CategoryListModel>();
+  public mcat = input<CategoryListModel | undefined>(); // undefined for a tenant without a membership category list
   public tags = input<string>('');
   /** When set, the tag vocabulary is read live, so a value added via «Werte bearbeiten» validates at once. */
   public tagModel = input<string>('');
@@ -123,7 +123,8 @@ export class MemberNewModal {
           ...vm,
           orgKey: data.okey,
           orgName: data.name,
-          category: getDefaultCategoryName(this.selectedMembershipCategory()),
+          // without a list keep the current category: an empty one would silently skip the membership on save
+          category: getDefaultCategoryName(this.selectedMembershipCategory()) || vm.category,
         }));
       }
     }

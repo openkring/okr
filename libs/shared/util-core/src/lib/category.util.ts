@@ -8,9 +8,9 @@ import { addIndexElement } from "./base-model.util";
  * @param itemName the item name
  * @returns the label of the item
  */
-export function getItemLabel(category: CategoryListModel, itemName?: string): string {
+export function getItemLabel(category: CategoryListModel | undefined, itemName?: string): string {
   if (!itemName) return '';
-  if (!category.i18n || category.i18n.length === 0 || !category.translateItems) return itemName;
+  if (!category?.i18n || category.i18n.length === 0 || !category.translateItems) return itemName;
   // `category.i18n` already carries the leading '@' scope prefix (e.g. '@task/feature') — that is
   // the convention in every production category document and in the okr-category-select component.
   // Pass it through unchanged; do NOT prepend another '@'. Prepending doubled it to

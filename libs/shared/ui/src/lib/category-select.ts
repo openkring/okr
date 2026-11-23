@@ -119,7 +119,8 @@ export class CategorySelect {
   private readonly helperVisibility = inject(HelperVisibility);
   // inputs
   public selectedItemName = model.required<string>(); // mandatory view model
-  public category = input.required<CategoryListModel>(); // mandatory view model
+  // undefined: the tenant has no such list, or it is not loaded yet — the select then shows the stored name only
+  public category = input.required<CategoryListModel | undefined>();
   public withAll = input(false); // if true, the first item in the list is 'All' and the user can select it. This is useful for filtering.
   protected showWithAll = computed(() => coerceBoolean(this.withAll()));
   public readOnly = input.required<boolean>();
@@ -137,16 +138,15 @@ export class CategorySelect {
   public label = input('');
   protected shouldShowIcons = computed(() => coerceBoolean(this.showIcons()));
 
-  protected name = computed(() => this.category().name);
-  protected helper = computed(() => `${this.category().i18n}.${this.name()}.helper`);
+  protected helper = computed(() => {
+    const category = this.category();
+    return category ? `${category.i18n}.${category.name}.helper` : '';
+  });
   protected hovered = '';
 
   protected items = computed(() => {
-    if (this.withAll()) {
-      const _item = new CategoryItemModel('all', 'radio-button-on');
-      return [_item, ...this.category().items];
-    }
-    return this.category().items;
+    const items = this.category()?.items ?? [];
+    return this.withAll() ? [new CategoryItemModel('all', 'radio-button-on'), ...items] : items;
   });
 
   protected readonly popoverId = contextMenuId('select-cat');
@@ -158,8 +158,7 @@ export class CategorySelect {
     ),
     { initialValue: '' }
   );
-  // a missing/unloaded category yields an empty item list (AppStore.getCategory degrades to an
-  // empty CategoryListModel) — fall back to the stored name so the control renders instead of crashing
+  // a missing/unloaded category yields an empty item list — fall back to the stored name so the control renders instead of crashing
   protected selectedItem = computed(() => this.items().find(item => item.name === this.selectedItemName())
     ?? this.items()[0] ?? new CategoryItemModel(this.selectedItemName() ?? '', ''));
 

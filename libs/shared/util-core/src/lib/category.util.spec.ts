@@ -21,6 +21,12 @@ describe('category.util', () => {
   } as CategoryListModel);
 
   describe('getItemLabel', () => {
+    // a tenant without the list (e.g. no 'mcat'): AppStore.tryGetCategory answers undefined (LA21STAEFA-3)
+    it('should return the item name when there is no category list', () => {
+      expect(getItemLabel(undefined, 'active')).toBe('active');
+      expect(getItemLabel(undefined, undefined)).toBe('');
+    });
+
     it('should return empty string when itemName is not provided', () => {
       const category = createCategoryModel('testCategory', 'base', true);
       
