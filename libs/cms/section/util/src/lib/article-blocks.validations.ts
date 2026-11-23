@@ -3,7 +3,7 @@ import { enforce, test } from 'vest';
 import { ARTICLE_BLOCK_TYPES, ArticleConfig, ImageConfig, SECTION_CTA_STYLES, SLIDESHOW_EFFECTS } from '@okr/shared-models';
 import { resolveImageStyle } from '@okr/shared-util-core';
 
-import { BLOCK_ALIGNS, CALLOUT_TONES, COLUMN_BLOCK_TYPES, SPACE_SIZES, isObject } from './article-block.util';
+import { BLOCK_ALIGNS, CALLOUT_TONES, COLUMN_BLOCK_TYPES, SPACE_SIZES, hasVisibleText, isObject } from './article-block.util';
 import { imageConfigValidations, imageStyleValidations } from './image.validations';
 import { isImageLayoutId } from './image-layout.util';
 import { isSectionCtaUrl } from './section-cta.util';
@@ -45,13 +45,23 @@ function checkSlideshow(field: string, slideshow: unknown): void {
     && inRange(s['duration'], SLIDESHOW_DURATION_MIN, SLIDESHOW_DURATION_MAX));
 }
 
-/** label and url both set, url a safe target, style known. */
+/** label and url each set, url a safe target, style known; a translated label needs the German one. */
 function checkCta(field: string, cta: unknown): void {
   const c = isObject(cta) ? cta : {};
   const label = typeof c['label'] === 'string' ? c['label'].trim() : '';
   const url = typeof c['url'] === 'string' ? c['url'].trim() : '';
-  check(field, isObject(cta) && label !== '' && url !== '' && isSectionCtaUrl(url)
-    && (c['style'] === undefined || (SECTION_CTA_STYLES as readonly string[]).includes(c['style'] as string)));
+  check(`${field}.label`, isObject(cta) && label !== '');
+  check(`${field}.url`, isObject(cta) && url !== '' && isSectionCtaUrl(url));
+  checkOneOf(`${field}.style`, c['style'], SECTION_CTA_STYLES);
+}
+
+/** A text may be empty; but translations without German text are incomplete (the reader falls back to German). */
+function checkHtml(field: string, block: Record<string, unknown>): void {
+  const translations = isObject(block['htmlI18n']) ? block['htmlI18n'] : {};
+  const translated = Object.entries(translations).some(([lang, value]) => lang !== 'de' && hasVisibleText(value));
+  test(field, 'required', () => {
+    enforce(!translated || hasVisibleText(block['html'])).isTruthy();
+  });
 }
 
 /** The ids of all blocks, the ones inside columns included. */
@@ -76,14 +86,17 @@ function checkBlock(block: unknown, index: number, inColumn: boolean): void {
   const f = (name: string) => `blocks.${id}.${name}`;
   const type = block['type'];
 
-  check(f('type'), typeof type === 'string' && (ARTICLE_BLOCK_TYPES as readonly string[]).includes(type)
-    && (!inColumn || COLUMN_BLOCK_TYPES.includes(type)));
+  // a block of a type this app does not know (stored by a newer app) is shown as «Unbekannter Block», never validated
+  if (typeof type !== 'string' || !(ARTICLE_BLOCK_TYPES as readonly string[]).includes(type)) return;
+  check(f('type'), !inColumn || COLUMN_BLOCK_TYPES.includes(type));
 
   switch (type) {
     case 'text':
       checkOneOf(f('align'), block['align'], BLOCK_ALIGNS);
+      checkHtml(f('html'), block);
       break;
     case 'callout':
+      checkHtml(f('html'), block);
       check(f('tone'), typeof block['tone'] === 'string' && (CALLOUT_TONES as readonly string[]).includes(block['tone']));
       break;
     case 'image':
@@ -92,7 +105,7 @@ function checkBlock(block: unknown, index: number, inColumn: boolean): void {
       break;
     case 'gallery': {
       const images = block['images'];
-      if (!Array.isArray(images)) check(f('images'), false);
+      if (!Array.isArray(images) || images.length === 0) check(f('images'), false);
       else images.forEach((image, i) => checkImage(f(`images[${i}]`), image));
       const layout = block['layout'];
       check(f('layout'), layout === undefined || isImageLayoutId(layout));

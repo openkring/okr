@@ -1,4 +1,6 @@
-import { SectionType } from '@okr/shared-models';
+import { ArticleBlock, SectionType } from '@okr/shared-models';
+
+import { isObject } from './article-block.util';
 
 /** Vest field name → error messages, as returned by `result.getErrors()`. */
 export type SectionErrors = Record<string, string[]>;
@@ -242,4 +244,71 @@ export function getJournalInlineErrorFields(type: SectionType): string[] {
     default:
       return ['title'];
   }
+}
+
+// ---- the article editor (spec 1.175 §7.8): errors by block ----
+
+const BLOCKS_PREFIX = 'blocks.';
+
+/** The ids of all blocks, columns' content included, in reading order (a columns block before its content). */
+function blockIdsInOrder(blocks: ArticleBlock[] | undefined): string[] {
+  const ids: string[] = [];
+  const walk = (list: unknown): void => {
+    if (!Array.isArray(list)) return;
+    for (const block of list) {
+      if (!isObject(block)) continue;
+      if (typeof block['id'] === 'string' && block['id'] !== '') ids.push(block['id']);
+      if (Array.isArray(block['columns'])) {
+        for (const column of block['columns']) if (isObject(column)) walk(column['blocks']);
+      }
+    }
+  };
+  walk(blocks);
+  return ids;
+}
+
+/** The longest of `ids` that owns `key` (`blocks.<id>.<field>`); ids may contain dots, so the key is never split. */
+function ownerOf(key: string, ids: string[]): { id: string; field: string } | undefined {
+  if (!key.startsWith(BLOCKS_PREFIX)) return undefined;
+  let owner: string | undefined;
+  for (const id of ids) {
+    if (key.startsWith(`${BLOCKS_PREFIX}${id}.`) && (owner === undefined || id.length > owner.length)) owner = id;
+  }
+  return owner === undefined ? undefined : { id: owner, field: key.slice(BLOCKS_PREFIX.length + owner.length + 1) };
+}
+
+/**
+ * The errors of one block under its field names: `blocks.<id>.x` becomes `x`. The flat names the existing parts
+ * look for are added: `imageStyle.width` also as `width`, `image.url` also as `images[0].url`. Pass `blocks` so an id
+ * that is a prefix of another (`a` and `a.b`) does not take the other's errors.
+ */
+export function blockErrors(errors: SectionErrors | undefined, id: string, blocks?: ArticleBlock[]): SectionErrors {
+  const ids = blocks ? [...new Set([...blockIdsInOrder(blocks), id])] : [id];
+  const out: SectionErrors = {};
+  for (const [key, messages] of Object.entries(errors ?? {})) {
+    if (!messages?.length) continue;
+    const owned = ownerOf(key, ids);
+    if (owned?.id !== id) continue;
+    out[owned.field] = messages;
+    if (owned.field.startsWith('imageStyle.')) out[owned.field.slice('imageStyle.'.length)] = messages;
+    if (owned.field.startsWith('image.')) out[`images[0].${owned.field.slice('image.'.length)}`] = messages;
+  }
+  return out;
+}
+
+/** The ids of the blocks that have an error, in reading order. */
+export function blockIdsWithErrors(errors: SectionErrors | undefined, blocks: ArticleBlock[]): string[] {
+  const ids = blockIdsInOrder(blocks);
+  const withErrors = new Set<string>();
+  for (const [key, messages] of Object.entries(errors ?? {})) {
+    if (!messages?.length) continue;
+    const owned = ownerOf(key, ids);
+    if (owned) withErrors.add(owned.id);
+  }
+  return ids.filter((id) => withErrors.has(id));
+}
+
+/** Everything that is not a block's: the article's own fields and the `blocks` count / id errors. */
+export function articleOwnErrors(errors: SectionErrors | undefined): SectionErrors {
+  return Object.fromEntries(Object.entries(errors ?? {}).filter(([key]) => !key.startsWith(BLOCKS_PREFIX)));
 }

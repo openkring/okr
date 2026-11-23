@@ -1,9 +1,8 @@
 import {
   ARTICLE_BLOCK_TYPES, IMAGE_CONFIG_SHAPE, type ArticleBlock, type ArticleBlockType, type ArticleColumn, type ColumnsBlock, type I18nString, type TextBlock,
 } from '@okr/shared-models';
-import { stripHtml } from '@okr/shared-util-core';
 
-import { COLUMN_BLOCK_TYPES, isObject } from './article-block.util';
+import { COLUMN_BLOCK_TYPES, hasVisibleText, isObject } from './article-block.util';
 import { ARTICLE_BLOCKS_MAX } from './article-blocks.validations';
 
 /**
@@ -183,8 +182,8 @@ export function setColumnSizes(block: ColumnsBlock, sizes: number[]): ColumnsBlo
 
 const filled = (value: unknown): value is string => typeof value === 'string' && value !== '';
 const isEmptyText = (block: ArticleBlock): boolean =>
-  block.type === 'text' && stripHtml(typeof block.html === 'string' ? block.html : '').trim() === ''
-  && Object.values(isObject(block.htmlI18n) ? block.htmlI18n : {}).every((v) => stripHtml(typeof v === 'string' ? v : '').trim() === '');
+  block.type === 'text' && !hasVisibleText(block.html)
+  && Object.values(isObject(block.htmlI18n) ? block.htmlI18n : {}).every((v) => !hasVisibleText(v));
 
 /** The languages of two texts joined; a language one side lacks is filled with that side's German. */
 function joinI18n(upper: { html: string; htmlI18n?: I18nString }, lower: { html: string; htmlI18n?: I18nString }): I18nString | undefined {

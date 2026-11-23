@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { ARTICLE_IMAGES_SEGMENT_FIELDS, ARTICLE_TAB_FIELDS, getErrorSegments, getFieldErrors, HERO_SEGMENT_FIELDS, LOGO_SEGMENT_FIELDS, getImageErrors, getInlineErrorFields, getJournalInlineErrorFields, getRemainingErrors, getUnrenderedFixedKeys, isInlineErrorField } from './section-errors';
+import { ARTICLE_IMAGES_SEGMENT_FIELDS, ARTICLE_TAB_FIELDS, getErrorSegments, getFieldErrors, HERO_SEGMENT_FIELDS, LOGO_SEGMENT_FIELDS, getImageErrors, getInlineErrorFields, getJournalInlineErrorFields, getRemainingErrors, getUnrenderedFixedKeys, isInlineErrorField, blockErrors, blockIdsWithErrors, articleOwnErrors } from './section-errors';
 
 describe('getInlineErrorFields', () => {
   it('always offers the base fields of section-configuration', () => {
@@ -225,5 +225,36 @@ describe('ARTICLE_TAB_FIELDS (spec 1.171)', () => {
   it('files the look and the image style under «Darstellung»', () => {
     expect(getErrorSegments({ background: ['invalid'] }, ARTICLE_TAB_FIELDS, tabs)).toEqual(['appearance']);
     expect(getErrorSegments({ width: ['notString'], 'slideshow.interval': ['tooBig'] }, ARTICLE_TAB_FIELDS, tabs)).toEqual(['appearance']);
+  });
+});
+
+describe('block errors of the article editor', () => {
+  const blocks = [
+    { id: 'a', type: 'text', html: '' },
+    { id: 'c', type: 'columns', columns: [{ size: 6, blocks: [{ id: 'in', type: 'image' }] }, { size: 6, blocks: [{ id: 'a.b', type: 'text', html: '' }] }] },
+    { id: 'z', type: 'space', size: 'small' },
+  ] as never;
+  const errors = {
+    title: ['t'], blocks: ['count'],
+    'blocks.a.html': ['h'], 'blocks.a.b.align': ['al'], 'blocks.in.image.url': ['u'], 'blocks.in.imageStyle.width': ['w'],
+    'blocks.c.columns': ['cols'],
+  };
+
+  it('maps a block\'s keys to field names, with the aliases for images and style', () => {
+    expect(blockErrors(errors, 'a', blocks)).toEqual({ html: ['h'] });
+    expect(blockErrors(errors, 'in', blocks)).toEqual({
+      'image.url': ['u'], 'images[0].url': ['u'], 'imageStyle.width': ['w'], width: ['w'],
+    });
+    expect(blockErrors(errors, 'a.b', blocks)).toEqual({ align: ['al'] });
+    expect(blockErrors(errors, 'z', blocks)).toEqual({});
+  });
+
+  it('lists the ids with errors in reading order', () => {
+    expect(blockIdsWithErrors(errors, blocks)).toEqual(['a', 'c', 'in', 'a.b']);
+    expect(blockIdsWithErrors({}, blocks)).toEqual([]);
+  });
+
+  it('keeps what is not a block\'s', () => {
+    expect(articleOwnErrors(errors)).toEqual({ title: ['t'], blocks: ['count'] });
   });
 });

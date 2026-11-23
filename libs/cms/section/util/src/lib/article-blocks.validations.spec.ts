@@ -47,8 +47,39 @@ describe('article blocks validations', () => {
     expect(run([text('')]).hasErrors('blocks')).toBe(true);
   });
 
-  it('flags an unknown type', () => {
-    expect(run([{ id: 'x', type: 'video' }]).hasErrors('blocks.x.type')).toBe(true);
+  it('skips blocks of an unknown or missing type, in columns too, but their ids still count', () => {
+    expect(run([{ id: 'x', type: 'video' }]).getErrors()).toEqual({});
+    expect(run([{ id: 'x' }]).getErrors()).toEqual({});
+    expect(run([columns([col(6, [{ id: 'u', type: 'video' }]), col(6)])]).getErrors()).toEqual({});
+    expect(run([text('a'), { id: 'a', type: 'video' }]).hasErrors('blocks')).toBe(true);
+  });
+
+  it('requires German text when only translations exist, for text and callout', () => {
+    expect(run([text('t', { html: '<p> </p>', htmlI18n: { en: '<p>Hi</p>' } })]).hasErrors('blocks.t.html')).toBe(true);
+    expect(run([{ id: 'k', type: 'callout', tone: 'neutral', html: '', htmlI18n: { en: '<p>Hi</p>' } }]).hasErrors('blocks.k.html')).toBe(true);
+    expect(run([text('t', { html: '<p>Hallo</p>', htmlI18n: { en: '<p>Hi</p>' } })]).hasErrors('blocks.t.html')).toBe(false);
+    expect(run([text('t', { html: '' })]).getErrors()).toEqual({});
+    expect(run([text('t', { html: '', htmlI18n: { en: '<p></p>' } })]).getErrors()).toEqual({});
+  });
+
+  it('reports the label and the url of a button separately', () => {
+    const e = (c: unknown) => run([{ id: 'b', type: 'button', cta: c }]);
+    expect(e({ ...cta, label: '' }).hasErrors('blocks.b.cta.label')).toBe(true);
+    expect(e({ ...cta, label: '' }).hasErrors('blocks.b.cta.url')).toBe(false);
+    expect(e({ ...cta, url: '' }).hasErrors('blocks.b.cta.url')).toBe(true);
+    expect(e({ ...cta, url: 'javascript:alert(1)' }).hasErrors('blocks.b.cta.url')).toBe(true);
+    expect(e({ ...cta, label: '', labelI18n: { en: 'Go' } }).hasErrors('blocks.b.cta.label')).toBe(true);
+    expect(e({ ...cta, style: 'nope' }).hasErrors('blocks.b.cta.style')).toBe(true);
+    expect(e(undefined).hasErrors('blocks.b.cta.label')).toBe(true);
+  });
+
+  it('flags an image block without image url and an empty gallery', () => {
+    expect(run([{ id: 'i', type: 'image' }]).hasErrors('blocks.i.image.url')).toBe(true);
+    expect(run([{ id: 'g', type: 'gallery', images: [] }]).hasErrors('blocks.g.images')).toBe(true);
+  });
+
+  it('works for ids with dots', () => {
+    expect(run([text('a.b', { align: 'x' })]).hasErrors('blocks.a.b.align')).toBe(true);
   });
 
   it('flags unknown align, tone, size, layout', () => {
@@ -63,8 +94,8 @@ describe('article blocks validations', () => {
   });
 
   it('flags a button without label or with an unsafe url', () => {
-    expect(run([{ id: 'b', type: 'button', cta: { ...cta, label: '' } }]).hasErrors('blocks.b.cta')).toBe(true);
-    expect(run([{ id: 'b', type: 'button', cta: { ...cta, url: 'javascript:alert(1)' } }]).hasErrors('blocks.b.cta')).toBe(true);
+    expect(run([{ id: 'b', type: 'button', cta: { ...cta, label: '' } }]).hasErrors('blocks.b.cta.label')).toBe(true);
+    expect(run([{ id: 'b', type: 'button', cta: { ...cta, url: 'javascript:alert(1)' } }]).hasErrors('blocks.b.cta.url')).toBe(true);
   });
 
   it('flags a broken image url and cover', () => {
@@ -84,7 +115,7 @@ describe('article blocks validations', () => {
 
   it('validates column content with the block rules', () => {
     expect(run([columns([col(6, [text('t', { align: 'justify' })]), col(6)])]).hasErrors('blocks.t.align')).toBe(true);
-    expect(run([columns([col(6, [{ id: 'k', type: 'divider' }]), col(6)])]).hasErrors('blocks.k.type')).toBe(true);
+    expect(run([columns([col(6, [{ id: 'k', type: 'divider' }]), col(6)])]).hasErrors('blocks.k.type')).toBe(true);   // known, but not allowed in a column
   });
 
   it('validates the image style of image and gallery blocks, also in columns', () => {
