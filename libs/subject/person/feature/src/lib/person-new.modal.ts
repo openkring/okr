@@ -28,6 +28,7 @@ import { PersonStore } from './person.store';
     <ion-content class="ion-no-padding">
       @if(formData(); as formData) {
         <okr-person-new-form
+          [hiddenFields]="hiddenFields()"
           [i18n]="store.i18n"
           [formData]="formData"
           (formDataChange)="onFormDataChange($event)"
@@ -67,6 +68,8 @@ export class PersonNewModal {
   protected membershipEnabled = computed(() => (this.store.membershipCategory()?.items.length ?? 0) > 0);
   protected tags = computed(() => this.store.getTags());
   protected tenantId = computed(() => this.store.tenantId());
+  /** fields this tenant hides in the person forms */
+  protected readonly hiddenFields = computed(() => this.store.appStore.hiddenFields('person'));
   protected genders = computed(() => this.store.appStore.getCategory('gender'));
   protected personLookupEnabled = computed(() => this.store.appStore.appConfig().personLookupEnabled ?? false);
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());

@@ -5,13 +5,15 @@ import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTi
 import { BexioIdMask, ChSsnMask } from '@okr/shared-config';
 import { CategoryListModel, City, RoleName, UserModel } from '@okr/shared-models';
 import { CategorySelect, Chips, DateInput, DateInputI18n, EmailInput, EmailInputI18n, ErrorNote, TextareaInput, TextareaInputI18n, PhoneInput, PhoneInputI18n, TextInput, TextInputI18n, ImgDirective } from '@okr/shared-ui';
-import { coerceBoolean, getTodayStr, hasRole } from '@okr/shared-util-core';
+import { coerceBoolean, getTodayStr, hasRole, isFieldShown } from '@okr/shared-util-core';
 import { CITY_LENGTH, DEFAULT_DATE, DEFAULT_EMAIL, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_KEY, DEFAULT_LOCALE, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PHONE, DEFAULT_TAGS, DEFAULT_URL, DESCRIPTION_LENGTH, EMAIL_LENGTH, NUMBER_LENGTH, PHONE_LENGTH, SHORT_NAME_LENGTH, ZIP_LENGTH } from '@okr/shared-constants';
 import { AhvFormat, formatAhv, validateVestTree, vestErrors } from '@okr/shared-util-angular';
 
 import { AvatarPipe } from '@okr/avatar-ui';
 import { CitySearch } from '@okr/subject-swisscities-ui';
 import { MembershipI18n, MemberNewFormModel, memberNewFormValidations } from '@okr/relationship-membership-util';
+
+const NO_HIDDEN_FIELDS: ReadonlySet<string> = new Set<string>();
 
 @Component({
   selector: 'okr-member-new-form',
@@ -53,17 +55,23 @@ import { MembershipI18n, MemberNewFormModel, memberNewFormValidations } from '@o
               </ion-col>
             </ion-row>
 
+            @if(isShown('dateOfBirth') || isShown('dateOfDeath')) {
             <ion-row>
+              @if(isShown('dateOfBirth')) {
               <ion-col size="12" size-md="6">
                 <okr-date-input [i18n]="dateOfBirthI18n()" [storeDate]="dateOfBirth()" (storeDateChange)="onFieldChange('dateOfBirth', $event)" [locale]="locale()" [readOnly]="isReadOnly()" autocomplete="bday" [allowPartial]="true" />
                 <okr-error-note [errors]="dateOfBirthErrors()" />
               </ion-col>
+              }
 
+              @if(isShown('dateOfDeath')) {
               <ion-col size="12" size-md="6">
                 <okr-date-input [i18n]="dateOfDeathI18n()" [storeDate]="dateOfDeath()" (storeDateChange)="onFieldChange('dateOfDeath', $event)" [locale]="locale()" [readOnly]="isReadOnly()" [allowPartial]="true" />
                 <okr-error-note [errors]="dateOfDeathErrors()" />
               </ion-col>
+              }
             </ion-row>
+            }
           </ion-grid>
         </ion-card-content>
       </ion-card>
@@ -128,6 +136,7 @@ import { MembershipI18n, MemberNewFormModel, memberNewFormValidations } from '@o
       } <!-- end of address inputs -->
 
       <!-------------------------------------- OTHER ------------------------------------->
+      @if(isShown('ssnId') || isShown('bexioId')) {
       <ion-card>
         <ion-card-header>
           <ion-card-title>{{ i18n().person_misc() }}</ion-card-title>
@@ -135,17 +144,22 @@ import { MembershipI18n, MemberNewFormModel, memberNewFormValidations } from '@o
         <ion-card-content class="ion-no-padding">
           <ion-grid>
             <ion-row>
+              @if(isShown('ssnId')) {
               <ion-col size="12" size-md="6">
                 <okr-text-input [i18n]="ssnIdI18n()" [value]="ssnId()" (valueChange)="onFieldChange('ssnId', $event)" [maxLength]=16 [mask]="ssnMask" [showHelper]=true [readOnly]="isReadOnly()" [copyable]=true />
               </ion-col>
+              }
+              @if(isShown('bexioId')) {
               <ion-col size="12" size-md="6">
                 <okr-text-input [i18n]="bexioIdI18n()" [value]="bexioId()" (valueChange)="onFieldChange('bexioId', $event)" [maxLength]="shortNameLength" [mask]="bexioMask" [showHelper]=true [readOnly]="isReadOnly()" />                                        
                 <okr-error-note [errors]="bexioIdErrors()" />
               </ion-col>
+              }
             </ion-row>
           </ion-grid>
         </ion-card-content>
       </ion-card>
+      }
 
       <!-------------------------------------- MEMBERSHIP ------------------------------------->
       <ion-card>
@@ -185,7 +199,9 @@ import { MembershipI18n, MemberNewFormModel, memberNewFormValidations } from '@o
         </ion-card-content>
       </ion-card>
     
-      <okr-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [allChips]="allTags()" [readOnly]="isReadOnly()" />
+      @if(isShown('tags')) {
+        <okr-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [allChips]="allTags()" [readOnly]="isReadOnly()" />
+      }
       @if(hasRole('admin')) {
         <okr-textarea-input variant="card" [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [maxLength]="descriptionLength" [readOnly]="isReadOnly()" [errors]="notesErrors()" />
       }
@@ -219,6 +235,8 @@ export class MemberNewForm {
   public readonly genders = input.required<CategoryListModel>();
   public readonly locale = input<string>(DEFAULT_LOCALE);
   public readonly readOnly = input(true);
+  /** fields the tenant hides; a hidden field with a validation error is still shown */
+  public readonly hiddenFields = input<ReadonlySet<string>>(NO_HIDDEN_FIELDS);
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
   // optional: a tenant without the list gets no category picker, the same as in membership.form
   public membershipCategories = input<CategoryListModel | undefined>();
@@ -313,6 +331,10 @@ export class MemberNewForm {
   protected onFieldChange(fieldName: string, fieldValue: string | string[] | number | boolean): void {
     this.dirty.emit(true);
     this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
+  }
+
+  protected isShown(field: string): boolean {
+    return isFieldShown(field, this.hiddenFields(), this.validationResult().getErrors(field));
   }
 
   protected hasRole(role: RoleName): boolean {

@@ -50,6 +50,7 @@ import { EmailSignatureAccordion } from './email-signature.accordion';
             @if(personFormData(); as personFormData) {
               @if(currentUser(); as currentUser) {
                 <okr-profile-data-accordion
+                  [hiddenFields]="hiddenFields()"
                   [formData]="personFormData" (formDataChange)="onPersonChange($event)"
                   [currentUser]="currentUser"
                   [genders]="genders()"
@@ -127,6 +128,8 @@ export class ProfileEditModal {
   protected currentUser = computed(() => this.store.currentUser());
   protected currentPerson = computed(() => this.store.person());
   protected personKey = computed(() => this.currentUser()?.personKey ?? '');
+  /** fields this tenant hides in the person forms */
+  protected readonly hiddenFields = computed(() => this.store.appStore.hiddenFields('person'));
   protected genders = computed(() => this.store.appStore.getCategory('gender'));
   protected tenantId = computed(() => this.store.tenantId());
   protected availableLanguages = computed(() =>

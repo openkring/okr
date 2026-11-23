@@ -51,6 +51,7 @@ import { PersonStore } from './person.store';
 
       @if(formData(); as formData) {
         <okr-person-form
+          [hiddenFields]="hiddenFields()"
           [formData]="formData"
           (formDataChange)="onFormDataChange($event)"
           [i18n]="store.i18n"
@@ -119,6 +120,8 @@ export class PersonEditPage implements ViewWillEnter   {
   protected headerTitle = computed(() => this.getTitleLabel(this.isReadOnly(), this.person()?.okey ?? ''));
   protected toolbarTitle = computed(() => getFullName(this.person()?.firstName, this.person()?.lastName, this.currentUser()?.nameDisplay, this.person()?.maidenName));
   protected parentKey = computed(() => PersonModelName + '.' + this.personKey());
+  /** fields this tenant hides in the person forms */
+  protected readonly hiddenFields = computed(() => this.store.appStore.hiddenFields('person'));
   protected priv = computed(() => this.store.privacySettings());
   protected currentUser = computed(() => this.store.currentUser());
   protected person = computed(() => this.store.person());

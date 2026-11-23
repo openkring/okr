@@ -5,7 +5,7 @@ import { IonAvatar, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTi
 import { BexioIdMask, ChSsnMask } from '@okr/shared-config';
 import { CategoryListModel, City, RoleName, UserModel } from '@okr/shared-models';
 import { CategorySelect, Checkbox, CheckboxI18n, Chips, CountrySelect, CountrySelectI18n, DateInput, DateInputI18n, EmailInput, EmailInputI18n, ErrorNote, TextareaInput, TextareaInputI18n, PhoneInput, PhoneInputI18n, TextInput, TextInputI18n, ImgDirective } from '@okr/shared-ui';
-import { coerceBoolean, getTodayStr, hasRole } from '@okr/shared-util-core';
+import { coerceBoolean, getTodayStr, hasRole, isFieldShown } from '@okr/shared-util-core';
 import { CITY_LENGTH, DEFAULT_DATE, DEFAULT_EMAIL, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_KEY, DEFAULT_LOCALE, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PHONE, DEFAULT_TAGS, DEFAULT_URL, DESCRIPTION_LENGTH, EMAIL_LENGTH, NUMBER_LENGTH, PHONE_LENGTH, SHORT_NAME_LENGTH, ZIP_LENGTH } from '@okr/shared-constants';
 import { AhvFormat, formatAhv, validateVestTree, vestErrors } from '@okr/shared-util-angular';
 
@@ -15,6 +15,8 @@ import { CitySearch } from '@okr/subject-swisscities-ui';
 import { PersonNewFormModel, personNewFormValidations, PersonI18n, PersonDirectoryResult, mergeDirectoryResultIntoForm } from '@okr/subject-person-util';
 
 import { PersonLookup } from './person-lookup';
+
+const NO_HIDDEN_FIELDS: ReadonlySet<string> = new Set<string>();
 
 @Component({
   selector: 'okr-person-new-form',
@@ -80,17 +82,23 @@ import { PersonLookup } from './person-lookup';
               </ion-col>
             </ion-row>
 
+            @if(isShown('dateOfBirth') || isShown('dateOfDeath')) {
             <ion-row>
+              @if(isShown('dateOfBirth')) {
               <ion-col size="12" size-md="6">
                 <okr-date-input [i18n]="dateOfBirthI18n()" [storeDate]="dateOfBirth()" (storeDateChange)="onFieldChange('dateOfBirth', $event)" [locale]="locale()" [readOnly]="isReadOnly()" autocomplete="bday" [allowPartial]="true" />
                 <okr-error-note [errors]="dateOfBirthErrors()" />
               </ion-col>
+              }
 
+              @if(isShown('dateOfDeath')) {
               <ion-col size="12" size-md="6">
                 <okr-date-input [i18n]="dateOfDeathI18n()" [storeDate]="dateOfDeath()" (storeDateChange)="onFieldChange('dateOfDeath', $event)" [locale]="locale()" [readOnly]="isReadOnly()" [allowPartial]="true" />
                 <okr-error-note [errors]="dateOfDeathErrors()" />
               </ion-col>
+              }
             </ion-row>
+            }
           </ion-grid>
         </ion-card-content>
       </ion-card>
@@ -192,6 +200,7 @@ import { PersonLookup } from './person-lookup';
       } <!-- end of address inputs -->
 
       <!-------------------------------------- OTHER ------------------------------------->
+      @if(isShown('ssnId') || isShown('bexioId')) {
       <ion-card>
         <ion-card-header>
           <ion-card-title>{{ i18n().misc() }}</ion-card-title>
@@ -199,6 +208,7 @@ import { PersonLookup } from './person-lookup';
         <ion-card-content class="ion-no-padding">
           <ion-grid>
             <ion-row>
+              @if(isShown('ssnId')) {
               <ion-col size="12" size-md="6">
                 <okr-text-input
                   [i18n]="ssnIdI18n()"
@@ -209,7 +219,10 @@ import { PersonLookup } from './person-lookup';
                   [readOnly]="isReadOnly()"
                   [copyable]=true
                 />
+                <okr-error-note [errors]="ssnIdErrors()" />
               </ion-col>
+              }
+              @if(isShown('bexioId')) {
               <ion-col size="12" size-md="6">
                 <okr-text-input
                   [i18n]="bexioIdI18n()"
@@ -221,10 +234,12 @@ import { PersonLookup } from './person-lookup';
                 />
                 <okr-error-note [errors]="bexioIdErrors()" />
               </ion-col>
+              }
             </ion-row>
           </ion-grid>
         </ion-card-content>
       </ion-card>
+      }
 
       <!-------------------------------------- MEMBERSHIP (optional) ------------------------------------->
       @if(membershipEnabled()) {
@@ -271,7 +286,9 @@ import { PersonLookup } from './person-lookup';
       </ion-card>
       }
 
-      <okr-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [allChips]="allTags()" [readOnly]="isReadOnly()" />
+      @if(isShown('tags')) {
+        <okr-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [allChips]="allTags()" [readOnly]="isReadOnly()" />
+      }
       @if(hasRole('admin')) {
         <okr-textarea-input variant="card" [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [maxLength]="descriptionLength" [readOnly]="isReadOnly()" [errors]="notesErrors()" />
       }
@@ -303,6 +320,8 @@ export class PersonNewForm {
   public readonly genders = input.required<CategoryListModel>();
   public readonly locale = input<string>(DEFAULT_LOCALE);
   public readonly readOnly = input(true);
+  /** fields the tenant hides; a hidden field with a validation error is still shown */
+  public readonly hiddenFields = input<ReadonlySet<string>>(NO_HIDDEN_FIELDS);
   public readonly personLookupEnabled = input(false);
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
@@ -349,6 +368,7 @@ export class PersonNewForm {
   protected dateOfEntryErrors = computed(() => this.validationResult().getErrors('dateOfEntry'));
   protected genderErrors = computed(() => this.validationResult().getErrors('gender'));
   protected membershipCategoryErrors = computed(() => this.validationResult().getErrors('membershipCategory'));
+  protected ssnIdErrors = computed(() => this.validationResult().getErrors('ssn'));
   protected bexioIdErrors = computed(() => this.validationResult().getErrors('bexioId'));
   protected cityErrors = computed(() => this.validationResult().getErrors('city'));
   protected notesErrors = computed(() => this.validationResult().getErrors('notes'));
@@ -417,6 +437,11 @@ export class PersonNewForm {
   protected onFieldChange(fieldName: string, fieldValue: string | string[] | number | boolean): void {
     this.dirty.emit(true);
     this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
+  }
+
+  /** the new-person suite files the AHV number's errors under `ssn`, not `ssnId` */
+  protected isShown(field: string): boolean {
+    return isFieldShown(field, this.hiddenFields(), this.validationResult().getErrors(field === 'ssnId' ? 'ssn' : field));
   }
 
   protected hasRole(role: RoleName): boolean {

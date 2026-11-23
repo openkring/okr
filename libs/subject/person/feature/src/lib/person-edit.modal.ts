@@ -53,6 +53,7 @@ import { AppStore } from '@okr/shared-feature';
         />
         @if(formData(); as formData) {
             <okr-person-form
+              [hiddenFields]="hiddenFields()"
                 [formData]="formData"
                 (formDataChange)="onFormDataChange($event)"
                 [i18n]="store.i18n"
@@ -124,6 +125,8 @@ export class PersonEditModal {
   protected readonly parentKey = computed(() => PersonModelName + '.' + this.personKey());
   protected path = computed(() => getDocumentStoragePath(this.tenantId(), 'person', this.person()?.okey));
   protected listId = computed(() => 'p_' + this.personKey());
+  /** fields this tenant hides in the person forms */
+  protected readonly hiddenFields = computed(() => this.appStore.hiddenFields('person'));
   protected priv = computed(() => this.store.privacySettings());
   protected accountingTenantIds = computed(() => this.store.accountingTenantIds());
   protected defaultResource = computed(() => this.store.defaultResource());

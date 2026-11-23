@@ -163,7 +163,8 @@ export class PersonList {
   protected readonly visiblePersons = computed(() => this.filteredPersons().slice(0, this.visibleCount()));
   protected readonly hasMore = computed(() => this.visibleCount() < this.filteredPersons().length);
   protected isLoading = computed(() => this.store.isLoading());
-  protected readonly tags = computed(() => this.store.getTags());
+  /** an empty string hides the tag filter; a tenant that hides person tags has none to filter by */
+  protected readonly tags = computed(() => this.store.appStore.hiddenFields('person').has('tags') ? '' : this.store.getTags());
   protected readonly types = computed(() => this.store.appStore.getCategory('gender'));
   protected readonly currentUser = computed(() => this.store.appStore.currentUser());
   protected readonly nameDisplay = computed(() => this.currentUser()?.nameDisplay ?? NameDisplay.FirstLast);

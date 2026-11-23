@@ -5,10 +5,12 @@ import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular
 import { BexioIdMask, ChSsnMask } from '@okr/shared-config';
 import { BaseProperty, CategoryListModel, PrivacyAccessor, PrivacySettings, RoleName, UserModel } from '@okr/shared-models';
 import { CategorySelect, Chips, DateInput, DateInputI18n, TextareaInput, TextareaInputI18n, PropertyList, PropertyListI18n, TextInput, TextInputI18n , ErrorNote} from '@okr/shared-ui';
-import { areNotesVisible, areTagsVisible, coerceBoolean, hasRole, isVaultFieldVisible, isVisibleToUser } from '@okr/shared-util-core';
+import { areNotesVisible, areTagsVisible, coerceBoolean, hasRole, isFieldShown, isVaultFieldVisible, isVisibleToUser } from '@okr/shared-util-core';
 import { externalIdKeyOptions, fromProperties, PersonFormModel, personValidations, PersonI18n, toProperties } from '@okr/subject-person-util';
 import { BEXIO_ID_LENGTH, DEFAULT_DATE, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_TAGS, DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { AhvFormat, formatAhv, validateVestTree, vestErrors } from '@okr/shared-util-angular';
+
+const NO_HIDDEN_FIELDS: ReadonlySet<string> = new Set<string>();
 
 @Component({
   selector: 'okr-person-form',
@@ -33,12 +35,14 @@ import { AhvFormat, formatAhv, validateVestTree, vestErrors } from '@okr/shared-
                 </ion-col>
               </ion-row>
             }
-            <ion-row>
-              <ion-col size="12" size-md="6">
-                <okr-text-input [i18n]="titleI18n()" [value]="title()" (valueChange)="onFieldChange('title', $event)" autocomplete="honorific-prefix" [maxLength]="shortNameLength" [readOnly]="isReadOnly()" />
-                <okr-error-note [errors]="titleErrors()" />
-              </ion-col>
-            </ion-row>
+            @if(isShown('title')) {
+              <ion-row>
+                <ion-col size="12" size-md="6">
+                  <okr-text-input [i18n]="titleI18n()" [value]="title()" (valueChange)="onFieldChange('title', $event)" autocomplete="honorific-prefix" [maxLength]="shortNameLength" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="titleErrors()" />
+                </ion-col>
+              </ion-row>
+            }
 
             <ion-row>
               <ion-col size="12" size-md="6">
@@ -52,28 +56,34 @@ import { AhvFormat, formatAhv, validateVestTree, vestErrors } from '@okr/shared-
               </ion-col>
             </ion-row>
 
-            <ion-row>
-              <ion-col size="12" size-md="6">
-                <okr-text-input [i18n]="nicknameI18n()" [value]="nickname()" (valueChange)="onFieldChange('nickname', $event)" [maxLength]="shortNameLength" [readOnly]="isReadOnly()" />
-                <okr-error-note [errors]="nicknameErrors()" />
-              </ion-col>
-
-              <ion-col size="12" size-md="6">
-                <okr-text-input [i18n]="maidenNameI18n()" [value]="maidenName()" (valueChange)="onFieldChange('maidenName', $event)" [maxLength]="shortNameLength" [readOnly]="isReadOnly()" />
-                <okr-error-note [errors]="maidenNameErrors()" />
-              </ion-col>
-            </ion-row>
-
-            @if(isVaultFieldVisible('dob') || isVaultFieldVisible('dod')) {
+            @if(isShown('nickname') || isShown('maidenName')) {
               <ion-row>
-                @if(isVaultFieldVisible('dob')) {
+                @if(isShown('nickname')) {
+                  <ion-col size="12" size-md="6">
+                    <okr-text-input [i18n]="nicknameI18n()" [value]="nickname()" (valueChange)="onFieldChange('nickname', $event)" [maxLength]="shortNameLength" [readOnly]="isReadOnly()" />
+                    <okr-error-note [errors]="nicknameErrors()" />
+                  </ion-col>
+                }
+
+                @if(isShown('maidenName')) {
+                  <ion-col size="12" size-md="6">
+                    <okr-text-input [i18n]="maidenNameI18n()" [value]="maidenName()" (valueChange)="onFieldChange('maidenName', $event)" [maxLength]="shortNameLength" [readOnly]="isReadOnly()" />
+                    <okr-error-note [errors]="maidenNameErrors()" />
+                  </ion-col>
+                }
+              </ion-row>
+            }
+
+            @if(isDateOfBirthShown() || isDateOfDeathShown()) {
+              <ion-row>
+                @if(isDateOfBirthShown()) {
                   <ion-col size="12" size-md="6"> 
                     <okr-date-input [i18n]="dateOfBirthI18n()" [storeDate]="dateOfBirth()" (storeDateChange)="onFieldChange('dateOfBirth', $event)" autocomplete="bday" [readOnly]="isReadOnly()" [allowPartial]="true" />
                     <okr-error-note [errors]="dateOfBirthErrors()" />
                   </ion-col>
                 }
 
-                @if(isDeathDateVisible()) {
+                @if(isDateOfDeathShown()) {
                   <ion-col size="12" size-md="6">
                     <okr-date-input [i18n]="dateOfDeathI18n()" [storeDate]="dateOfDeath()" (storeDateChange)="onFieldChange('dateOfDeath', $event)" [readOnly]="isReadOnly()" [allowPartial]="true" />
                     <okr-error-note [errors]="dateOfDeathErrors()" />
@@ -90,13 +100,13 @@ import { AhvFormat, formatAhv, validateVestTree, vestErrors } from '@okr/shared-
                 </ion-col>
               }
       
-              @if(isVaultFieldVisible('ssn')) {
+              @if(isShown('ssnId') && isVaultFieldVisible('ssn')) {
                 <ion-col size="12" size-md="6">
                   <okr-text-input [i18n]="ssnIdI18n()" [value]="ssnId()" (valueChange)="onFieldChange('ssnId', $event)" [maxLength]=16 [mask]="ssnMask" [showHelper]=true [copyable]=true [readOnly]="isReadOnly()" />
                   <okr-error-note [errors]="ssnIdErrors()" />
                 </ion-col>
               }
-              @if(isVisibleToUser('bexioId', priv().showBexioId)) {
+              @if(isShown('bexioId') && isVisibleToUser('bexioId', priv().showBexioId)) {
                 <ion-col size="12" size-md="6">
                   <okr-text-input [i18n]="bexioIdI18n()" [value]="bexioId()" (valueChange)="onFieldChange('bexioId', $event)" [maxLength]="bexioIdLength" [mask]="bexioMask" [showHelper]=true [readOnly]="isReadOnly()" />
                   <okr-error-note [errors]="bexioIdErrors()" />
@@ -107,7 +117,7 @@ import { AhvFormat, formatAhv, validateVestTree, vestErrors } from '@okr/shared-
         </ion-card-content>
       </ion-card>
 
-      @if(areExternalIdsVisible()) {
+      @if(isShown('externalIds') && areExternalIdsVisible()) {
         <okr-property-list
           [properties]="externalIdProperties()"
           (propertiesChange)="onExternalIdsChange($event)"
@@ -118,11 +128,11 @@ import { AhvFormat, formatAhv, validateVestTree, vestErrors } from '@okr/shared-
         <okr-error-note [errors]="externalIdsErrors()" />
       }
 
-      @if(areTagsVisible()) {
+      @if(isShown('tags') && areTagsVisible()) {
         <okr-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [allChips]="allTags()" [readOnly]="isReadOnly()" />
       }
       
-      @if(hasRole('admin')) {
+      @if(isShown('notes') && hasRole('admin')) {
         <okr-textarea-input variant="card" [i18n]="notesI18n()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [maxLength]="descriptionLength" [readOnly]="isReadOnly()" [errors]="notesErrors()" />
       }
     </form>
@@ -160,6 +170,8 @@ export class PersonForm {
   /** the books (accountingTenantIds) a scoped external id, e.g. a bexio contact, can belong to */
   public readonly accountingTenantIds = input<string[]>([]);
   public readonly readOnly = input(true);
+  /** fields the tenant hides; a hidden field with a validation error is still shown */
+  public readonly hiddenFields = input<ReadonlySet<string>>(NO_HIDDEN_FIELDS);
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
   
   // signals
@@ -264,6 +276,18 @@ export class PersonForm {
    */
   protected isVaultFieldVisible(channel: string): boolean {
     return isVaultFieldVisible(channel, this.formData(), this.priv(), this.currentUser());
+  }
+
+  protected isShown(field: string): boolean {
+    return isFieldShown(field, this.hiddenFields(), this.validationResult().getErrors(field));
+  }
+
+  protected isDateOfBirthShown(): boolean {
+    return this.isShown('dateOfBirth') && this.isVaultFieldVisible('dob');
+  }
+
+  protected isDateOfDeathShown(): boolean {
+    return this.isShown('dateOfDeath') && this.isDeathDateVisible();
   }
 
   protected isDeathDateVisible(): boolean {
