@@ -87,7 +87,9 @@ export const AocTagStore = signalStore(
     copyStatus: computed((): ListCopyStatus<TagDocument> | undefined => {
       const tag = store.selectedTag();
       if (!tag) return undefined;
-      const others = (store.appStore.allTags() as TagDocument[]).filter(t => t.tagModel === tag.tagModel && t.okey !== tag.okey);
+      // a shared definition is shared, even while allTags() still holds a copy that was just given up
+      const others = isOwnedBy(tag, store.appStore.tenantId())
+        ? (store.appStore.allTags() as TagDocument[]).filter(t => t.tagModel === tag.tagModel && t.okey !== tag.okey) : [];
       return copyStatus([tag as TagDocument, ...others], store.appStore.tenantId(), t => string2stringArray(t.tags ?? ''));
     }),
   })),
@@ -172,7 +174,7 @@ export const AocTagStore = signalStore(
     async backToShared(): Promise<void> {
       const tag = store.selectedTag();
       const status = store.copyStatus();
-      if (!tag || status?.kind !== 'copy') return;
+      if (!tag || !isOwnedBy(tag, store.appStore.tenantId()) || status?.kind !== 'copy') return;
       if (!await confirm(store.alertController, store.copyI18n.restore_confirm(), store.i18n.ok(), store.i18n.cancel(), true)) return;
       const key = await store.firestoreService.deleteModel<TagItem>(TagCollection, { ...tag }, store.copyI18n.restore_conf(), store.copyI18n.restore_error(), store.appStore.currentUser());
       if (!key) return;

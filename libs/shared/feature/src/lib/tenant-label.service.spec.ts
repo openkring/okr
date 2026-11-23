@@ -1,23 +1,26 @@
 import { Injector, runInInjectionContext } from '@angular/core';
-import { of } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { CategoryListModel } from '@okr/shared-models';
 import { getItemLabel, getSystemQuery, toI18nRef } from '@okr/shared-util-core';
 
 vi.mock('@okr/shared-data-access', () => ({ FirestoreService: class {} }));
+vi.mock('@okr/shared-i18n', () => ({ I18nService: class {} }));
 vi.mock('./app.store', () => ({ AppStore: class {} }));
 
 import { FirestoreService } from '@okr/shared-data-access';
+import { I18nService } from '@okr/shared-i18n';
 import { AppStore } from './app.store';
 import { TenantLabelService } from './tenant-label.service';
 
 const user = { okey: 'u1' };
-const firestore = { searchData: vi.fn(), createModel: vi.fn(), updateModel: vi.fn() };
+const i18n = { lacksTranslation: vi.fn() };
+const firestore = { getDataOnce: vi.fn(), createModel: vi.fn(), updateModel: vi.fn() };
 
 function service(): TenantLabelService {
   const injector = Injector.create({ providers: [
     { provide: FirestoreService, useValue: firestore },
+    { provide: I18nService, useValue: i18n },
     { provide: AppStore, useValue: { currentUser: () => user } },
   ] });
   return runInInjectionContext(injector, () => new TenantLabelService());
@@ -34,14 +37,14 @@ function refOfItem(name: string) {
 describe('TenantLabelService', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    firestore.searchData.mockReturnValue(of([]));
+    firestore.getDataOnce.mockResolvedValue([]);
   });
 
   it('looks the row up by module and key within the tenant', async () => {
     const row = { okey: 'r1' };
-    firestore.searchData.mockReturnValue(of([row]));
+    firestore.getDataOnce.mockResolvedValue([row]);
     expect(await service().findOverride('tag', 'ezs', 'scs')).toBe(row);
-    expect(firestore.searchData).toHaveBeenCalledWith('i18nTenantOverride',
+    expect(firestore.getDataOnce).toHaveBeenCalledWith('i18nTenantOverride',
       [...getSystemQuery('scs'), { key: 'module', operator: '==', value: 'tag' }, { key: 'key', operator: '==', value: 'ezs' }], 'key', 'asc');
   });
 
@@ -67,5 +70,26 @@ describe('TenantLabelService', () => {
     await service().saveOverride('tag', 'x', 'scs', { de: '  ' });
     expect(firestore.createModel).not.toHaveBeenCalled();
     expect(firestore.updateModel).not.toHaveBeenCalled();
+  });
+
+  describe('lacksLabel', () => {
+    const key = '@subject/address/feature.address_channel.pager.label';
+    it('is true when neither the bundle nor a row names the key', async () => {
+      i18n.lacksTranslation.mockResolvedValue(true);
+      expect(await service().lacksLabel(key, 'scs')).toBe(true);
+    });
+    it('is false when the bundle names it', async () => {
+      i18n.lacksTranslation.mockResolvedValue(false);
+      expect(await service().lacksLabel(key, 'scs')).toBe(false);
+    });
+    it('is false when the tenant already has a row', async () => {
+      i18n.lacksTranslation.mockResolvedValue(true);
+      firestore.getDataOnce.mockResolvedValue([{ okey: 'r1' }]);
+      expect(await service().lacksLabel(key, 'scs')).toBe(false);
+    });
+    it('is false for a raw name', async () => {
+      i18n.lacksTranslation.mockResolvedValue(true);
+      expect(await service().lacksLabel('pager', 'scs')).toBe(false);
+    });
   });
 });

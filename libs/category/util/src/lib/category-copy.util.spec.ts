@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { CategoryItemModel, CategoryListModel } from '@okr/shared-models';
 
-import { categoryCopyStatus, withSharedItem } from './category-copy.util';
+import { categoryCopyStatus, itemLabelKey, newItemLabels, withSharedItem } from './category-copy.util';
 import { missingProtectedItems } from './category-protection.util';
 
 function list(okey: string, name: string, tenants: string[], ...items: string[]): CategoryListModel {
@@ -38,9 +38,56 @@ describe('categoryCopyStatus', () => {
     expect(categoryCopyStatus(copy, [copy, system], 'scs').missing).toEqual(['female', 'other']);
     expect(categoryCopyStatus(copy, [copy, system], 'scs', edited).missing).toEqual(['other']);
   });
+  it('keeps the shared list unedited while the first own item is added', () => {
+    const edited = [...system.items, new CategoryItemModel('pager', 'x')];
+    const status = categoryCopyStatus(system, [system], 'scs', edited);
+    expect(status.kind).toBe('shared');
+    expect(status.shared?.items.map(i => i.name)).toEqual(['male', 'female', 'other']);
+  });
+  it('judges a loaded shared list as shared, also while the app still holds an archived copy', () => {
+    const stale = list('c', 'gender', ['scs'], 'male');
+    expect(categoryCopyStatus(system, [stale, system], 'scs').kind).toBe('shared');
+  });
   it('copes with a list stored without items', () => {
     const bare = { ...list('c', 'gender', ['scs']), items: undefined } as unknown as CategoryListModel;
     expect(categoryCopyStatus(bare, [system], 'scs').missing).toEqual(['male', 'female', 'other']);
+  });
+});
+
+const translated = Object.assign(list('t', 'address_channel', ['system'], 'email', 'phone'), { i18n: '@subject/address/feature', translateItems: true });
+const PAGER_KEY = '@subject/address/feature.address_channel.pager.label';
+
+describe('itemLabelKey', () => {
+  it('asks for the label of an item added to a shared list', () => {
+    const edited = { ...translated, items: [...translated.items, new CategoryItemModel('pager', 'x')] };
+    const { shared } = categoryCopyStatus(translated, [translated], 'scs', edited.items);
+    expect(itemLabelKey(edited, 'pager', shared)).toBe(PAGER_KEY);
+  });
+  it('does not ask for an item of the shared list', () => {
+    expect(itemLabelKey(translated, 'email', translated)).toBeUndefined();
+  });
+  it('does not ask in a list without translated items', () => {
+    expect(itemLabelKey({ ...translated, translateItems: false }, 'pager', undefined)).toBeUndefined();
+    expect(itemLabelKey({ ...translated, i18n: 'raw' }, 'pager', undefined)).toBeUndefined();
+  });
+});
+
+describe('newItemLabels', () => {
+  const edited = { ...translated, items: [...translated.items, new CategoryItemModel('pager', 'x'), new CategoryItemModel('fax', 'y')] };
+  it('labels the added items only, with the name where nothing was entered', () => {
+    const labels = newItemLabels(edited, translated, translated, { pager: { de: 'Funk', en: '', fr: '', es: '', it: '' } });
+    expect(labels).toEqual([
+      { key: PAGER_KEY, labels: { de: 'Funk', en: 'Funk', fr: 'Funk', es: 'Funk', it: 'Funk' } },
+      { key: PAGER_KEY.replace('pager', 'fax'), labels: { de: 'fax', en: 'fax', fr: 'fax', es: 'fax', it: 'fax' } },
+    ]);
+  });
+  it('keeps a label entered for an item that was removed and added again', () => {
+    const own = { ...edited, okey: 'o', tenants: ['scs'] };
+    expect(newItemLabels(own, own, undefined, {})).toEqual([]);
+    expect(newItemLabels(own, own, undefined, { fax: { de: 'Fax', en: '', fr: '', es: '', it: '' } }).map(l => l.labels['it'])).toEqual(['Fax']);
+  });
+  it('drops the label of an item that is gone again', () => {
+    expect(newItemLabels(translated, translated, translated, { pager: { de: 'Funk', en: '', fr: '', es: '', it: '' } })).toEqual([]);
   });
 });
 

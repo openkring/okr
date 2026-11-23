@@ -7,7 +7,7 @@ import { selectLanguage } from './i18n.util';
 import { isPageUnloading, reportI18nIssue } from './i18n-sentry';
 
 import { AvailableLanguages, CategoryListModel, DefaultLanguageCode } from '@okr/shared-models';
-import { getItemLabel } from '@okr/shared-util-core';
+import { getItemLabel, toI18nRef } from '@okr/shared-util-core';
 
 /**
  * How often to re-attempt a failed scope load before treating the scope as broken, and how long
@@ -162,14 +162,10 @@ export class I18nService {
    * Sentry. False when the scope cannot be loaded: then nothing is known about the key.
    */
   public async lacksTranslation(key: string): Promise<boolean> {
-    if (!key.startsWith('@')) return false;
-    const translationKey = key.substring(1);
-    const dotIndex = translationKey.indexOf('.');
-    const prefix = dotIndex === -1 ? translationKey : translationKey.substring(0, dotIndex);
+    const ref = toI18nRef(key);
+    if (!ref) return false;
     const lang = this.translocoService.getActiveLang();
-    const [path, pathKey] = prefix.includes('/')
-      ? [`${prefix}/${lang}`, translationKey.substring(prefix.length + 1)]
-      : [lang, translationKey];
+    const [path, pathKey] = ref.module.includes('/') ? [`${ref.module}/${lang}`, ref.key] : [lang, `${ref.module}.${ref.key}`];
     try {
       await firstValueFrom(this.translocoService.load(path));
     } catch {

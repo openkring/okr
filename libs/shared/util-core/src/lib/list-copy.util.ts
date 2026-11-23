@@ -38,6 +38,7 @@ export const LIST_COPY_I18N_KEYS = {
   restore_confirm: PFX + 'restore_confirm',
   restore_conf:    PFX + 'restore_conf',
   restore_error:   PFX + 'restore_error',
+  restore_none:    PFX + 'restore_none',
 } satisfies Record<string, string>;
 
 /** Which of the texts names this status; `copy_many` holds a `{n}` for the number of missing entries. */

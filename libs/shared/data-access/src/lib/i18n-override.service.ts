@@ -3,7 +3,7 @@ import { toObservable } from '@angular/core/rxjs-interop';
 import { TranslocoService } from '@jsverse/transloco';
 import type { User } from 'firebase/auth';
 import { EMPTY, Observable, combineLatest } from 'rxjs';
-import { distinctUntilChanged, map, switchMap, tap } from 'rxjs/operators';
+import { catchError, distinctUntilChanged, map, switchMap, tap } from 'rxjs/operators';
 
 import type { OkrEnvironment } from '@okr/shared-config';
 import { AppConfig, GroupModel, I18nTenantOverrideCollection, I18nTenantOverrideModel, PersonModel, UserModel } from '@okr/shared-models';
@@ -55,7 +55,13 @@ export class I18nOverrideService {
       // for a signed-in user of a tenant that HAS override documents, which is why it surfaced
       // only once the per-tenant CMS texts were seeded.
       distinctUntilChanged(),
-      switchMap(lang => lang ? this.overrides(lang) : EMPTY),
+      switchMap(lang => !lang ? EMPTY : this.overrides(lang).pipe(
+        // a failing read must not end this stream: the next language or sign-in tries again
+        catchError(error => {
+          console.error('I18nOverrideService: cannot read the overrides', error);
+          return EMPTY;
+        }),
+      )),
     ).subscribe();
   }
 
@@ -98,14 +104,18 @@ export class I18nOverrideService {
     for (const override of overrides) {
       const value = (override as unknown as Record<string, unknown>)[lang] as string | undefined;
       if (!value) continue;
-      applied++;
 
       // A path scope is addressed through the language ('subject/address/feature/de').
       // Limit: a row for a key of a bundle that loads later loses against that bundle; keys the bundle lacks stay.
-      const [row, path] = override.module.includes('/')
-        ? [{ [override.key]: value }, `${override.module}/${lang}`]
-        : [{ [`${override.module}.${override.key}`]: value }, lang];
-      this.translocoService.setTranslation(row, path, { merge: true, emitChange: false });
+      try {
+        const [row, path] = override.module.includes('/')
+          ? [{ [override.key]: value }, `${override.module}/${lang}`]
+          : [{ [`${override.module}.${override.key}`]: value }, lang];
+        this.translocoService.setTranslation(row, path, { merge: true, emitChange: false });
+        applied++;
+      } catch (error) {
+        console.error(`I18nOverrideService: row ${override.okey} skipped`, error);
+      }
     }
     // What Transloco would have done after each call — once, and only if something changed.
     if (applied > 0) this.translocoService.setActiveLang(this.translocoService.getActiveLang());

@@ -1,7 +1,7 @@
 import { provideZonelessChangeDetection, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideTransloco, TranslocoService } from '@jsverse/transloco';
-import { firstValueFrom, Observable, of, Subject } from 'rxjs';
+import { firstValueFrom, Observable, of, Subject, throwError } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { FirestoreService } from './firestore.service';
@@ -121,5 +121,31 @@ describe('I18nOverrideService.init', () => {
     // the initial value, then one per snapshot
     expect(emitted).toEqual(['de', 'de', 'de']);
     expect(searchData).toHaveBeenCalledTimes(1);
+  });
+
+  it('skips a broken row, applies the others and goes on', async () => {
+    const log = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const rows$ = new Subject<unknown[]>();
+    const { service, user, searchData, transloco, text } = setup(() => rows$);
+    service.init();
+    user.set({ okey: 'u1' });
+    TestBed.tick();
+    rows$.next([{ key: 'x', de: 'ohne Modul' }, ...ROWS]);
+    expect(await text()).toBe('Pager');
+    transloco.setActiveLang('en');
+    expect(searchData).toHaveBeenCalledTimes(2);
+    expect(log).toHaveBeenCalledTimes(1);
+    log.mockRestore();
+  });
+
+  it('survives a failing read: the next language reads again', () => {
+    const log = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const { service, user, searchData, transloco } = setup(() => throwError(() => new Error('boom')));
+    service.init();
+    user.set({ okey: 'u1' });
+    TestBed.tick();
+    transloco.setActiveLang('en');
+    expect(searchData).toHaveBeenCalledTimes(2);
+    log.mockRestore();
   });
 });

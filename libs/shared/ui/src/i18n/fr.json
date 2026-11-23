@@ -40,7 +40,8 @@
     "restore": "Revenir à la liste commune",
     "restore_confirm": "Tu abandonnes ta propre liste et tu vois de nouveau la liste commune. Les entrées qui ne figurent que dans ta liste ne peuvent plus être choisies. Ce qui est déjà enregistré garde sa valeur.",
     "restore_conf": "Tu utilises de nouveau la liste commune.",
-    "restore_error": "La liste commune n’a pas pu être rétablie."
+    "restore_error": "La liste commune n’a pas pu être rétablie.",
+    "restore_none": "Tu utilises déjà la liste commune, ou il n’y en a pas."
   },
   "color": {
     "select": "Choix de la couleur",

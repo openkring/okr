@@ -1,9 +1,9 @@
 import { inject, Injectable } from '@angular/core';
-import { firstValueFrom } from 'rxjs';
 
 import { FirestoreService } from '@okr/shared-data-access';
+import { I18nService } from '@okr/shared-i18n';
 import { AvailableLanguages, I18nTenantOverrideCollection, I18nTenantOverrideModel } from '@okr/shared-models';
-import { getSystemQuery } from '@okr/shared-util-core';
+import { getSystemQuery, toI18nRef } from '@okr/shared-util-core';
 
 import { AppStore } from './app.store';
 
@@ -15,15 +15,24 @@ import { AppStore } from './app.store';
 export class TenantLabelService {
   private readonly appStore = inject(AppStore);
   private readonly firestoreService = inject(FirestoreService);
+  private readonly i18nService = inject(I18nService);
 
   /** The tenant's override row for a (module, key) pair, if it has one. */
   public async findOverride(module: string, key: string, tenantId: string): Promise<I18nTenantOverrideModel | undefined> {
-    const rows = await firstValueFrom(this.firestoreService.searchData<I18nTenantOverrideModel>(
+    // one consistent read: the first emission of searchData may be an empty cache snapshot
+    const rows = await this.firestoreService.getDataOnce<I18nTenantOverrideModel>(
       I18nTenantOverrideCollection,
       [...getSystemQuery(tenantId), { key: 'module', operator: '==', value: module }, { key: 'key', operator: '==', value: key }],
       'key', 'asc'
-    ));
+    );
     return rows[0];
+  }
+
+  /** Whether neither a bundle nor the tenant names this i18n key, so that the raw key would show. */
+  public async lacksLabel(i18nKey: string, tenantId: string): Promise<boolean> {
+    const ref = toI18nRef(i18nKey);
+    if (!ref || !await this.i18nService.lacksTranslation(i18nKey)) return false;
+    return !await this.findOverride(ref.module, ref.key, tenantId);
   }
 
   /** Create or update the tenant's override row from the per-language values. */
