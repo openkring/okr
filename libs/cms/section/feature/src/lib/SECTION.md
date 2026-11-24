@@ -90,6 +90,31 @@ Spec 1.173, `planning/specs/2026-11-23-article-blocks-design.md`. An article may
 
 **Reading an article:** with blocks, the old fields are empty or out of date. Every reader of the text or the images goes through `withClassicFields(section)` (the old fields filled from the blocks; the same object for an old article), or `articleCover` for the teaser picture — all in `@okr/shared-models`. `node scripts/check-article-readers.mjs` fails for a file that reads the text without it; its header names what it does not see.
 
+## Article Editor
+
+Spec 1.175, `planning/specs/2026-11-23-article-block-editor-design.md`. `ArticleEditorModal` (full screen) edits an article as blocks: the article itself in a canvas, the settings of the selected block at the side.
+
+**When it opens:** `SectionStore.edit()` and `PageIntegrityStore` (`editSection`, `createMissingSection`) ask `usesArticleEditor(section, readOnly, gateOpen)`: an article that is not read-only, has no `journalKey`, and the gate is open or the article already has blocks. Everything else opens `SectionEditModal` as before (also the travel journal and mail pages). Both use `openArticleEditor()`; it loads the modal with `import()`, the editor saves by itself, and the caller only reloads with the returned key.
+
+| Part | Where | What |
+| --- | --- | --- |
+| `article-editor.loader.ts` | feature | `openArticleEditor()`, the only entry; light, in the chunk of readers |
+| `article-editor.modal.ts`, `article-editor-modal.util.ts` | feature | Window: history, devices, saving, questions; its rules are in the util |
+| `article-canvas.ts`, `article-canvas-block.ts`, `article-canvas.util.ts` | feature | Canvas: selecting, keyboard, dragging, text in place |
+| `article-frame.ts`, `article-block.ts` | feature | Card and header, one block: drawn once, for readers and canvas. Whoever draws the frame adds `ARTICLE_FRAME_STYLES` (and `ARTICLE_COLUMNS_STYLES`) to its own styles |
+| `article-block-panel.ts`, `article-panel.ts`, `article-block-library.ts`, `article-image-pick.modal.ts` | ui | Side panel. They hold no form: the modal runs `articleSectionValidations` once and passes the errors |
+| `article-editor*.util.ts`, `article-panel.util.ts` | util | Pure operations: blocks, history (100 steps, typing run 1 s), opening, comparing, translations, errors |
+| `okr-rich-text-inline` | `shared-ui-editor` | One text edited in place, toolbar outside |
+| `ArticleBlocksGate`, `ArticleSaveService` | data-access | Gate and save, see below |
+
+**Keep readers light.** The editor, ProseMirror and `article-editor-i18n.ts` are in chunks that only the editor loads. Export none of `article-editor.modal`, `article-canvas*` from the feature barrel, and import `article-editor-open.util`, `article-editor-history.util` and the panels only from editor files. What readers' stores need is in `article-editor-entry.util.ts`. Check with a production build (`lazy-loading` skill); the probe of `scripts/bundle-closure.mjs` matches packages and folders, not file names, so look for the files in the source maps.
+
+**Gate** (`ArticleBlocksGate`): blocks may be stored only when the global `app-version.minVersion` is at least `ARTICLE_BLOCKS_MIN_VERSION` (`version` skill). It is `undefined` until the owner's release step, so the gate is closed. `open` / `load()`: the editor may open. `mayWrite` / `loadMayWrite()`: blocks may be stored; code that creates articles uses only this one, through `articlesToWrite()`.
+
+**Trial mode** (development builds only): `localStorage.setItem('okr.articleEditor', 'trial')` and reload. The editor opens although the gate is closed, shows a notice, and a save writes nothing (`{ status: 'saved', trial: true }`; never store that key). Uploads are off. `mayWrite` stays false. Remember that a development app reads the production database; everything outside the editor writes as usual.
+
+**Saving** (`ArticleSaveService.save`): reads, compares and writes in one transaction (`SectionService.saveChecked`, `FirestoreService.writeChecked`). Results: `saved`, `conflict` (somebody else changed it), `gone`, `offline`, `failed`. The window stays open until it is saved. The old fields (`content`, `properties.images` …) are left as they are.
+
 ## Section Dispatcher
 
 `SectionDispatcher` (`bk-section-dispatcher`) is a pure presentational switch-component. It receives:
@@ -112,7 +137,7 @@ The `SectionStore` (NgRx Signal Store, `providedIn: 'root'`) holds:
 Notable store actions:
 
 - `add()` — presents a card-select modal to choose a section type, then opens the edit modal
-- `edit()` — opens `SectionEditModalComponent`; creates or updates on confirm
+- `edit()` — opens the article editor (see Article Editor) or `SectionEditModalComponent`; the form creates or updates on confirm
 - `delete()` — confirmation-guarded deletion
 - `uploadImage(section)` — picks a file, uploads to Firebase Storage at `tenant/<tid>/section/<id>/image/<name>`, updates the section's `properties.images` array (not for an article with blocks), and creates a `DocumentModel`
 - `uploadFile(section)` — same flow for button-section file downloads
@@ -128,6 +153,9 @@ Notable store actions:
 | `SectionEditModalComponent` | (modal, full) | Full-screen edit modal for any section type |
 | `ArticleSectionComponent` | `bk-article-section` | Rich-text + images |
 | `ArticleBlocks` | `okr-article-blocks` | The blocks of a free article (lazy, not exported) |
+| `ArticleBlockComponent` | `okr-article-block` | One block, except columns; for readers and canvas (not exported) |
+| `ArticleFrame` | `okr-article-frame` | Card, banner, colour and header of an article (not exported) |
+| `ArticleEditorModal` | `okr-article-editor-modal` | Block editor (lazy, not exported; open it with `openArticleEditor`) |
 | `AlbumSectionComponent` | `bk-album-section` | Photo/video gallery |
 | `CalendarSectionComponent` | `bk-calendar-section` | FullCalendar |
 | `OrgchartSectionComponent` | `bk-orgchart-section` | Organization chart |
@@ -144,6 +172,7 @@ Notable store actions:
 - `read(id)` — real-time stream for a single section
 - `searchByKeys(keys)` — one-time fetch of multiple sections by key (used by `PageSortModal`)
 - `create / update / delete` — write operations
+- `saveChecked` — reads, compares and writes in one transaction (article editor)
 
 ## Content State Visibility
 
