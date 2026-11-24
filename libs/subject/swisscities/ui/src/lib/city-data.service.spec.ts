@@ -14,7 +14,7 @@ describe('CityDataService', () => {
     return TestBed.inject(CityDataService);
   }
 
-  it('returns the in-bundle Swiss array for CH without fetching', async () => {
+  it('returns the Swiss array for CH without fetching', async () => {
     const fetchSpy = vi.spyOn(globalThis, 'fetch');
     const cities = await make().load('CH');
     expect(cities.length).toBeGreaterThan(1000);
