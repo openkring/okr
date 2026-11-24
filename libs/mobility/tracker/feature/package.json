@@ -16,6 +16,7 @@
     "@angular/core": "*",
     "@capacitor/core": "*",
     "@ngrx/signals": "*",
+    "@sentry/angular": "*",
     "@okr/mobility-tracker-ui": "*",
     "@okr/shared-pipes": "*",
     "@okr/shared-util-angular": "*",

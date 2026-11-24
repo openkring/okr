@@ -5,6 +5,7 @@ import { ToastController } from '@ionic/angular';
 import { Capacitor, type PluginListenerHandle } from '@capacitor/core';
 import { PushNotifications } from '@capacitor/push-notifications';
 import { patchState, signalStore, withMethods, withProps, withState } from '@ngrx/signals';
+import { captureException } from '@sentry/angular';
 import { distinctUntilChanged, filter } from 'rxjs';
 
 import { AvatarInfo, TransportMode, TripModel } from '@okr/shared-models';
@@ -745,7 +746,7 @@ export const TrackerStore = signalStore(
           await refreshWarning();
         }
         if (store.warning() === 'notNative' || store.warning() === 'locationDenied') return;
-        await enqueue(async () => {
+        const begin = async (): Promise<void> => {
           const busy = store.active();
           if (busy && busy.state !== 'done') return;
           await store.db.open();
@@ -786,7 +787,13 @@ export const TrackerStore = signalStore(
             void linkTrack(track.key); // not awaited: it queues its own write behind this task
           }
           await syncCalibration();
-        });
+        };
+        // the queue swallows errors: without this a database that does not open makes the Start button do nothing at all
+        await enqueue(() => begin().catch((error: unknown) => {
+          captureException(error, { tags: { feature: 'tracker.start' } });
+          patchState(store, { warning: 'startFailed' });
+          throw error;
+        }));
       },
 
       /**
