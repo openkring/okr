@@ -3,8 +3,8 @@ import { Injectable, computed, inject, isDevMode, signal, type Signal } from '@a
 import { FirestoreService } from '@okr/shared-data-access';
 import { AppVersionCollection, compareAppVersions } from '@okr/shared-util-angular';
 
-/** The first version in which every app can read blocks (1.173). undefined = not released yet, the gate is closed. Set by the owner's release step (design §11). */
-export const ARTICLE_BLOCKS_MIN_VERSION: string | undefined = undefined;
+/** The first version in which every app can read blocks (1.173). undefined = not released yet, the gate is closed. The gate opens once `minVersion` reaches it (design §11). */
+export const ARTICLE_BLOCKS_MIN_VERSION: string | undefined = '7.63.0';
 
 /** How long `load()` keeps somebody waiting who wants to open an article. */
 export const ARTICLE_GATE_TIMEOUT_MS = 3000;
