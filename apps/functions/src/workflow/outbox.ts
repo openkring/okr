@@ -18,8 +18,8 @@ import { logger } from 'firebase-functions/v2';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
 
-import { getAppEmailConfig } from '../auth/email-templates';
-import { effectiveProvider, sendEmailViaProvider } from '../auth/email-transport';
+import { getAppEmailConfig, getEmailProvider } from '../auth/email-templates';
+import { sendEmailViaProvider } from '../auth/email-transport';
 import { activeGroupMemberKeys, ensurePersonInRoom, MATRIX_HOMESERVER, matrixAdminToken, resolveChatRoomForPerson } from '../matrix-simple/shared';
 import { logWorkflowActivity } from './activity';
 import { matrixBotToken, postGroupChatMessage, sendBotDirectMessage } from './matrix-bot';
@@ -45,12 +45,6 @@ export interface OutboxDoc {
 }
 
 const EMAIL_SECRETS = ['MAILGUN_SMTP_PASSWORD', 'MAILTRAP_APIKEY', 'NETZONE_SMTP_PASSWORD', 'MAILTRAP_TEST_USER', 'MAILTRAP_TEST_PASS'];
-
-/** The tenant's configured provider, same lookup the privacy erasure mails use. */
-async function providerFor(tenantId: string): Promise<string> {
-  const snap = await getFirestore().collection('app-config').doc(tenantId).get();
-  return effectiveProvider(snap.data()?.['emailProvider']);
-}
 
 /**
  * Refuse rather than invent a room.
@@ -92,7 +86,7 @@ export async function dispatch(doc: OutboxDoc): Promise<void> {
   switch (doc.kind) {
     case 'sendEmail': {
       const from = (await getAppEmailConfig(tenantId)).from;
-      await sendEmailViaProvider(await providerFor(tenantId), {
+      await sendEmailViaProvider(await getEmailProvider(tenantId), {
         from,
         to: [p['to']],
         subject: p['subject'],

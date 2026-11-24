@@ -31,6 +31,20 @@ function isPlainPath(value: string): boolean {
 }
 
 /**
+ * `appName` as the display name of a sender, '' when nothing is left. It is placed in quotes, so a quote, a backslash,
+ * an angle bracket or a control character could end the name early or start another header. Checked here because the
+ * Firestore rules do not check the value.
+ */
+function senderName(appName: string): string {
+  return appName
+    .replace(/["\\<>]/g, '')
+    // eslint-disable-next-line no-control-regex
+    .replace(/[\u0000-\u001f\u007f-\u009f\u2028\u2029]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/**
  * Resolve the per-tenant email config from the `app-config/{appId}` Firestore document.
  *
  * Multi-tenant by design: the sender domain is ALWAYS derived from `appDomain` (never hardcoded
@@ -89,11 +103,12 @@ export async function getAppEmailConfig(appId: string): Promise<AppEmailConfig> 
   const senderDomain = emailDomain || appDomain;
 
   const replyTo = `app@${senderDomain}`;
+  const name = senderName(appName);
 
   return {
     appName,
     appDomain,
-    from: `"${appName}" <app@${senderDomain}>`,
+    from: name ? `"${name}" <${replyTo}>` : replyTo,
     senderDomain,
     replyTo,
     continueUrl: `https://${appDomain}${loginPath}`,

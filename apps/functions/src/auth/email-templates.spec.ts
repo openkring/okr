@@ -54,6 +54,29 @@ describe('getAppEmailConfig', () => {
     expect((await getAppEmailConfig('t')).continueUrl).toBe('https://app.kring.ch/auth/login');
     expect(reported).toHaveLength(1);
   });
+
+  it('keeps an ordinary name in the sender', async () => {
+    cfg({ appName: 'Seeclub Stäfa & Co. (SCS)', appDomain: 'app.kring.ch', emailDomain: 'kring.ch' });
+    expect((await getAppEmailConfig('t')).from).toBe('"Seeclub Stäfa & Co. (SCS)" <app@kring.ch>');
+  });
+
+  // the rules do not check the value, and the settings form is not the only writer
+  it.each([
+    ['a quote', 'A" <x@evil.ch>, "B', 'A x@evil.ch, B'],
+    ['a trailing backslash', 'Club\\', 'Club'],
+    ['a line break', 'A\r\nBcc: x@evil.ch', 'A Bcc: x@evil.ch'],
+    ['other control characters', 'A\u0000B\u0085C\u2028D\u2029E\u007fF', 'A B C D E F'],
+  ])('strips %s from the name in the sender', async (_what, appName, name) => {
+    cfg({ appName, appDomain: 'app.kring.ch', emailDomain: 'kring.ch' });
+    expect((await getAppEmailConfig('t')).from).toBe(`"${name}" <app@kring.ch>`);
+  });
+
+  it('sends from the bare address when no name is left', async () => {
+    for (const appName of ['', ' ', '"\\<>', '\n']) {
+      cfg({ appName, appDomain: 'app.kring.ch', emailDomain: 'kring.ch' });
+      expect((await getAppEmailConfig('t')).from, JSON.stringify(appName)).toBe('app@kring.ch');
+    }
+  });
 });
 
 describe('getEmailProvider', () => {
