@@ -15,7 +15,7 @@ import {
 import { privateBucket } from '../_storage/private-bucket';
 import { appBaseUrl } from '../alias/tenant-domains';
 import { getAppEmailConfig } from '../auth/email-templates';
-import { DEFAULT_EMAIL_PROVIDER, sendEmailViaProvider } from '../auth/email-transport';
+import { effectiveProvider, sendEmailViaProvider } from '../auth/email-transport';
 import {
   activeGroupMemberKeys, getJoinedMemberIds, matrixAdminToken, resolveGroupRoom, resolvePersonDisplayName, serverHostname,
 } from '../matrix-simple/shared';
@@ -335,7 +335,7 @@ async function notifyRecipients(
   baseUrl: string,
 ): Promise<number> {
   const cfg = (await getFirestore().collection(AppConfigCollection).doc(tenantId).get()).data();
-  const provider = String(cfg?.['emailProvider'] ?? DEFAULT_EMAIL_PROVIDER);
+  const provider = effectiveProvider(cfg?.['emailProvider']);
   const appName = String(cfg?.['appName'] ?? '');
   const channels = new Map([...persons].map(([k, p]) => [k, p.channels]));
   const emails = new Map([...persons].map(([k, p]) => [k, p.email]));
