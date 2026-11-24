@@ -499,6 +499,8 @@
       "widen": "Con questa modifica più persone potranno vedere queste informazioni.",
       "rebuild": "L'elenco degli indirizzi verrà poi ricostruito. Può richiedere alcuni minuti.",
       "policy": "Tutte le persone che usano questa app dovranno poi accettare di nuovo l'informativa sulla privacy.",
+      "domain": "L'indirizzo dell'app compare nei link per reimpostare la password, e le passkey valgono solo per questo indirizzo. Dopo la modifica le passkey esistenti non funzionano più.",
+      "login": "Un percorso errato della pagina di accesso blocca l'accesso all'app a tutti.",
       "ask": "Vuoi salvare?"
     },
     "title": "Impostazioni",
@@ -724,7 +726,7 @@
       },
       "appDomain": {
         "label": "Indirizzo dell'app",
-        "helper": "Usato nei link, per esempio per reimpostare la password."
+        "helper": "Compare nei link per reimpostare la password, e le passkey valgono solo per questo indirizzo. Dopo una modifica le passkey esistenti non funzionano più. Senza indirizzo i link portano all'indirizzo del gestore e non ci sono passkey."
       },
       "emailDomain": {
         "label": "Dominio e-mail",
@@ -748,11 +750,11 @@
       },
       "logoUrl": {
         "label": "Logo",
-        "helper": "Il logo dell'app e la base della sua icona. Dopo una modifica le immagini vanno generate di nuovo."
+        "helper": "Percorso del logo, anche base dell'icona dell'app. Dopo una modifica le immagini vanno generate di nuovo. Vuoto: nella pagina di accesso manca il logo."
       },
       "ownerOrgId": {
         "label": "Organizzazione",
-        "helper": "L'organizzazione dietro questa app, per esempio come beneficiaria delle fatture QR."
+        "helper": "L'organizzazione dietro a questa app, per esempio come beneficiaria sulle QR-fatture. Vuoto: sulle QR-fatture vale l'organizzazione con l'identificativo dell'app."
       },
       "ownerUserId": {
         "label": "Account responsabile",
@@ -760,7 +762,7 @@
       },
       "defaultAccountingTenantId": {
         "label": "Contabilità",
-        "helper": "Questa contabilità si apre dal menu. Vuoto: le voci di contabilità sono nascoste."
+        "helper": "Deve essere l'identificativo di una contabilità esistente. Si apre dal menu. Vuoto: le voci della contabilità sono nascoste."
       },
       "integrations": {
         "label": "Servizi collegati",
@@ -803,10 +805,11 @@
       "languagesNone": "Scegli almeno una lingua.",
       "languagesUnknown": "Una delle lingue scelte non esiste nell'app.",
       "mailFromDomain": "L'indirizzo deve appartenere al dominio e-mail o all'indirizzo dell'app.",
-      "domain": "Questo non è un dominio valido.",
-      "positive": "Il numero deve essere maggiore di 0.",
+      "domain": "Scrivi il dominio in minuscolo e senza https://, per esempio app.esempio.ch.",
       "path": "Deve essere un percorso nell'app, per esempio /auth/login.",
-      "emailProvider": "Scegli uno dei servizi e-mail proposti."
+      "emailProvider": "Scegli uno dei servizi e-mail proposti.",
+      "domainTaken": "Questo indirizzo appartiene già a un'altra app.",
+      "weatherHours": "Inserisci un numero intero da 1 a 168."
     },
     "fallback": "Predefinito",
     "country_remove": "Rimuovi il paese",
@@ -836,6 +839,8 @@
       "archived": "archiviata"
     },
     "integration_unknown": "Questo servizio non è tra le scelte. Il valore salvato viene mantenuto.",
-    "processors_note": "Queste voci non si possono modificare qui."
+    "processors_note": "Queste voci non si possono modificare qui.",
+    "provider_test": "servizio di prova, non viene recapitato nulla",
+    "integrations_note": "Solo per l'elenco dei destinatari dei dati: l'interruttore non collega né scollega alcun servizio."
   }
 }

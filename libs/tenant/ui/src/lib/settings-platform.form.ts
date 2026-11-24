@@ -4,7 +4,9 @@ import { IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonLabel, IonNote, I
 import { INT_LENGTH, LONG_NAME_LENGTH, URL_LENGTH } from '@okr/shared-constants';
 import { Checkbox, ErrorNote, NumberInput, StringSelect, TextInput } from '@okr/shared-ui';
 import type { CheckboxI18n } from '@okr/shared-ui';
-import { integrationRows, processorNames, SETTINGS_DOMAIN_LENGTH, SETTINGS_EMAIL_PROVIDERS, withIntegration, withStored } from '@okr/tenant-util';
+import {
+  emailProviderLabel, integrationRows, processorNames, SETTINGS_DOMAIN_LENGTH, SETTINGS_EMAIL_PROVIDERS, SETTINGS_MAX_WEATHER_HOURS, withIntegration, withStored,
+} from '@okr/tenant-util';
 import type { IntegrationOption } from '@okr/tenant-util';
 
 import { SettingsFormBase } from './settings-form.base';
@@ -34,20 +36,30 @@ import { SettingsPublicNote } from './settings-public-note';
                   <ion-col size="12" size-md="6">
                     <okr-text-input [i18n]="fields()[item.field]" [value]="values()[item.field]"
                       (valueChange)="onFieldChange(item.field, $event)"
-                      [autofocus]="first" [maxLength]="item.maxLength" [showHelper]="true" [readOnly]="isReadOnly()" />
+                      [autofocus]="first" [maxLength]="item.maxLength" [showHelper]="!item.isNoted" [readOnly]="isReadOnly()" />
                     <okr-error-note [errors]="errors()[item.field]" />
+                    @if (item.isNoted) {
+                      <!-- always shown, whatever the helper setting: a wrong value locks people out -->
+                      <ion-item lines="none" [button]="false">
+                        <ion-note class="ion-text-wrap">{{ fields()[item.field].helper }}</ion-note>
+                      </ion-item>
+                    }
                   </ion-col>
                 }
                 <ion-col size="12" size-md="6">
                   <okr-string-select [i18n]="fields()['emailProvider']" [selectedString]="values()['emailProvider']"
                     (selectedStringChange)="onFieldChange('emailProvider', $event)"
-                    [stringList]="providers()" [labels]="providerLabels()" [readOnly]="isReadOnly()" />
+                    [stringList]="providers()" [labels]="providerLabels()" [showHelper]="false" [readOnly]="isReadOnly()" />
                   <okr-error-note [errors]="errors()['emailProvider']" />
+                  <!-- always shown: the wrong service stops the mails -->
+                  <ion-item lines="none" [button]="false">
+                    <ion-note class="ion-text-wrap">{{ fields()['emailProvider'].helper }}</ion-note>
+                  </ion-item>
                 </ion-col>
                 <ion-col size="12" size-md="6">
                   <okr-number-input [i18n]="fields()['weatherIntervalHours']" [value]="weatherIntervalHours()"
                     (valueChange)="onFieldChange('weatherIntervalHours', $event)"
-                    [maxLength]="numberLength" [min]="0" [showHelper]="true" [readOnly]="isReadOnly()" />
+                    [maxLength]="numberLength" [integer]="true" [min]="1" [max]="maxWeatherHours" [showHelper]="true" [readOnly]="isReadOnly()" />
                   <okr-error-note [errors]="errors()['weatherIntervalHours']" />
                 </ion-col>
                 @for (item of switches(); track item.field) {
@@ -91,6 +103,10 @@ import { SettingsPublicNote } from './settings-public-note';
                       }
                     }
                   </div>
+                  <!-- always shown: the switch does less than it looks like -->
+                  <ion-item lines="none" [button]="false">
+                    <ion-note class="ion-text-wrap">{{ text('integrations_note') }}</ion-note>
+                  </ion-item>
                   @if (helperVisibility.showHelpers()) {
                     <ion-item lines="none" [button]="false">
                       <ion-note class="ion-text-wrap">{{ fields()['integrations'].helper }}</ion-note>
@@ -126,28 +142,29 @@ export class SettingsPlatformForm extends SettingsFormBase {
   /** the services that can be switched on (the register's catalogue); any other stored key is shown and kept */
   public readonly integrationOptions = input<readonly IntegrationOption[]>([]);
 
-  /** kept in step with the caps the Vest suite enforces on these fields */
+  /** `maxLength` is kept in step with the caps of the Vest suite; `isNoted`: the helper text is always shown, not only on request */
   protected readonly texts = [
-    { field: 'appDomain', maxLength: SETTINGS_DOMAIN_LENGTH },
-    { field: 'emailDomain', maxLength: SETTINGS_DOMAIN_LENGTH },
-    { field: 'mailtrapPasswordResetTemplate', maxLength: LONG_NAME_LENGTH },
-    { field: 'loginUrl', maxLength: URL_LENGTH },
-    { field: 'passwordResetUrl', maxLength: URL_LENGTH },
-    { field: 'logoUrl', maxLength: URL_LENGTH },
-    { field: 'ownerOrgId', maxLength: LONG_NAME_LENGTH },
-    { field: 'ownerUserId', maxLength: LONG_NAME_LENGTH },
-    { field: 'defaultAccountingTenantId', maxLength: LONG_NAME_LENGTH },
-    { field: 'gitRepo', maxLength: LONG_NAME_LENGTH },
-    { field: 'gitOrg', maxLength: LONG_NAME_LENGTH },
+    { field: 'appDomain', maxLength: SETTINGS_DOMAIN_LENGTH, isNoted: true },
+    { field: 'emailDomain', maxLength: SETTINGS_DOMAIN_LENGTH, isNoted: false },
+    { field: 'mailtrapPasswordResetTemplate', maxLength: LONG_NAME_LENGTH, isNoted: false },
+    { field: 'loginUrl', maxLength: URL_LENGTH, isNoted: true },
+    { field: 'passwordResetUrl', maxLength: URL_LENGTH, isNoted: false },
+    { field: 'logoUrl', maxLength: URL_LENGTH, isNoted: false },
+    { field: 'ownerOrgId', maxLength: LONG_NAME_LENGTH, isNoted: false },
+    { field: 'ownerUserId', maxLength: LONG_NAME_LENGTH, isNoted: false },
+    { field: 'defaultAccountingTenantId', maxLength: LONG_NAME_LENGTH, isNoted: false },
+    { field: 'gitRepo', maxLength: LONG_NAME_LENGTH, isNoted: false },
+    { field: 'gitOrg', maxLength: LONG_NAME_LENGTH, isNoted: false },
   ] as const;
   protected readonly numberLength = INT_LENGTH;
+  protected readonly maxWeatherHours = SETTINGS_MAX_WEATHER_HOURS;
 
-  /** A stored unknown service stays a choice; «not set» only while nothing is stored, since an emptied one stops the mails. */
+  /** A stored unknown service stays a choice; «not set» is one only while nothing is stored, the operator names a service otherwise. */
   protected readonly providers = computed(() => {
     const stored = this.context().before.emailProvider;
     return stored === '' ? ['', ...SETTINGS_EMAIL_PROVIDERS] : withStored(SETTINGS_EMAIL_PROVIDERS, stored);
   });
-  protected readonly providerLabels = computed(() => this.providers().map((provider) => provider || this.text('empty')));
+  protected readonly providerLabels = computed(() => this.providers().map((provider) => emailProviderLabel(provider, this.text('provider_test')) || this.text('empty')));
 
   /** an emptied number field holds '' until a number is typed; the suite refuses it, the field shows nothing */
   protected readonly weatherIntervalHours = computed(() => {

@@ -47,10 +47,14 @@ export const SETTINGS_DEFAULT_NUMBERS: Readonly<Record<'avatarUsage' | 'nameDisp
 
 /**
  * The mail services `app-config.emailProvider` can name: `VALID_PROVIDERS` in `apps/functions/src/auth/email-transport.ts`,
- * whose spec compares the two. The empty value is not among them: several functions read '' as an unknown service and then
- * send nothing.
+ * whose spec compares the two. Empty means the default of the functions; the form does not offer it as a choice.
  */
 export const SETTINGS_EMAIL_PROVIDERS: readonly string[] = ['mailgun_smtp', 'mailtrap_api', 'netzone_smtp', 'mailtrap_test'];
+
+/** The groups `/operator/settings` offers to edit; everything else belongs to the tenant. */
+export const OPERATOR_FORM_GROUPS: readonly SettingsGroupId[] = ['platform'];
+/** The groups `/tenant/settings` offers to edit: never the platform group, not even to the operator, who has a page for it. */
+export const TENANT_FORM_GROUPS: readonly SettingsGroupId[] = (Object.keys(SETTINGS_GROUPS) as SettingsGroupId[]).filter((group) => !OPERATOR_FORM_GROUPS.includes(group));
 
 /** The fields only the operator (`isOperator()`, admin of exactly `bka`) may change; mirrors `firestore.rules`. */
 export const OPERATOR_SETTINGS: readonly (keyof AppConfig)[] = SETTINGS_GROUPS.platform;

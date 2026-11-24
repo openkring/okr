@@ -17,9 +17,9 @@ import { SvgIconPipe } from '@okr/shared-pipes';
 import { Spinner } from '@okr/shared-ui';
 import { AlertService, resourceParams } from '@okr/shared-util-angular';
 import { DateFormat, getCountryName, getTodayStr, resolveMimeType } from '@okr/shared-util-core';
-import { SettingsCards, SettingsEditModal, TENANT_FORM_GROUPS } from '@okr/tenant-ui';
+import { SettingsCards, SettingsEditModal } from '@okr/tenant-ui';
 import {
-  FEATURE_BLOCKS, SETTINGS_I18N_KEYS, SETTINGS_IMAGE_MIMETYPES, settingsCards, settingsImageExtension, settingsImagePath, settingsImageTooBig,
+  FEATURE_BLOCKS, SETTINGS_I18N_KEYS, SETTINGS_IMAGE_MIMETYPES, TENANT_FORM_GROUPS, settingsCards, settingsImageExtension, settingsImagePath, settingsImageTooBig,
   settingsPageName, settingsPageOptions, startOptions, startTargets,
 } from '@okr/tenant-util';
 import type { SettingsChoice, SettingsDisplayContext, SettingsGroupId, TenantSettings } from '@okr/tenant-util';

@@ -81,7 +81,8 @@ export const TenantSettingsStore = signalStore(
       const needed = settingsConfirmations(changes, before);
       if (needed.length > 0) {
         const message = confirmationMessage(needed, {
-          widen: store._texts.widen(), rebuild: store._texts.rebuild(), policy: store._texts.policy(), ask: store._texts.ask(),
+          widen: store._texts.widen(), rebuild: store._texts.rebuild(), policy: store._texts.policy(),
+          domain: store._texts.domain(), login: store._texts.login(), ask: store._texts.ask(),
         });
         if (!await store._alertService.confirm(message, true)) return false;
       }

@@ -92,6 +92,16 @@ describe('TenantSettingsStore.save', () => {
     expect(patch).not.toHaveBeenCalled();
   });
 
+  it('asks before another app domain or login path is written, for another tenant too', async () => {
+    const { store, patch, confirm } = await setup({ tenantId: 'bka', user: OPERATOR });
+    expect(await store.save('platform', t({ appDomain: 'app.a.ch', loginUrl: '/auth/login' }), t({ appDomain: 'app.b.ch', loginUrl: '/in' }), 'kwa')).toBe(true);
+    expect(confirm).toHaveBeenCalledTimes(1);
+    expect(confirm).toHaveBeenCalledWith('t:domain t:login t:ask', true);
+    confirm.mockResolvedValue(false);
+    expect(await store.save('platform', t({ appDomain: 'app.a.ch' }), t({ appDomain: 'app.b.ch' }), 'kwa')).toBe(false);
+    expect(patch).toHaveBeenCalledTimes(1);
+  });
+
   it('returns false and logs nothing when the write fails', async () => {
     const { store, patch, log } = await setup();
     patch.mockResolvedValue(undefined);

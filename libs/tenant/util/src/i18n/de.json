@@ -499,6 +499,8 @@
       "widen": "Mit dieser Änderung können mehr Personen diese Angaben sehen.",
       "rebuild": "Die Adressliste wird danach neu aufgebaut. Das kann einige Minuten dauern.",
       "policy": "Alle, die diese App nutzen, werden danach gebeten, die Datenschutzerklärung erneut zu bestätigen.",
+      "domain": "Die Adresse der App steht in den Links zum Zurücksetzen des Passworts, und Passkeys gelten nur für diese Adresse. Nach der Änderung funktionieren bestehende Passkeys nicht mehr.",
+      "login": "Ein falscher Pfad der Anmeldeseite sperrt alle aus der App aus.",
       "ask": "Möchtest du speichern?"
     },
     "title": "Einstellungen",
@@ -724,7 +726,7 @@
       },
       "appDomain": {
         "label": "Adresse der App",
-        "helper": "Steht in Links, zum Beispiel beim Zurücksetzen des Passworts."
+        "helper": "Steht in den Links zum Zurücksetzen des Passworts, und Passkeys gelten nur für diese Adresse. Nach einer Änderung funktionieren bestehende Passkeys nicht mehr. Fehlt die Adresse, zeigen die Links auf die Adresse des Betreibers, und es gibt keine Passkeys."
       },
       "emailDomain": {
         "label": "Mail-Domain",
@@ -748,11 +750,11 @@
       },
       "logoUrl": {
         "label": "Logo",
-        "helper": "Das Logo der App und die Grundlage ihres Symbols. Nach einer Änderung müssen die Bilder neu erzeugt werden."
+        "helper": "Pfad des Logos, zugleich die Grundlage des App-Symbols. Nach einer Änderung müssen die Bilder neu erzeugt werden. Leer: Auf der Anmeldeseite fehlt das Logo."
       },
       "ownerOrgId": {
         "label": "Organisation",
-        "helper": "Die Organisation hinter dieser App, zum Beispiel als Empfängerin auf QR-Rechnungen."
+        "helper": "Die Organisation hinter dieser App, zum Beispiel als Empfängerin auf QR-Rechnungen. Leer: Auf QR-Rechnungen gilt die Organisation mit der Kennung der App."
       },
       "ownerUserId": {
         "label": "Verantwortliches Konto",
@@ -760,7 +762,7 @@
       },
       "defaultAccountingTenantId": {
         "label": "Buchhaltung",
-        "helper": "Diese Buchhaltung öffnet sich aus dem Menü. Leer: Die Einträge der Buchhaltung sind ausgeblendet."
+        "helper": "Muss die Kennung einer bestehenden Buchhaltung sein. Sie öffnet sich aus dem Menü. Leer: Die Einträge der Buchhaltung sind ausgeblendet."
       },
       "integrations": {
         "label": "Angebundene Dienste",
@@ -803,10 +805,11 @@
       "languagesNone": "Wähle mindestens eine Sprache.",
       "languagesUnknown": "Eine der gewählten Sprachen gibt es in der App nicht.",
       "mailFromDomain": "Die Adresse muss zur Mail-Domain oder zur Adresse der App gehören.",
-      "domain": "Das ist keine gültige Domain.",
-      "positive": "Die Zahl muss grösser als 0 sein.",
+      "domain": "Schreibe die Domain klein und ohne https://, zum Beispiel app.beispiel.ch.",
       "path": "Das muss ein Pfad in der App sein, zum Beispiel /auth/login.",
-      "emailProvider": "Wähle einen der angebotenen Mail-Dienste."
+      "emailProvider": "Wähle einen der angebotenen Mail-Dienste.",
+      "domainTaken": "Diese Adresse gehört schon zu einer anderen App.",
+      "weatherHours": "Gib eine ganze Zahl von 1 bis 168 ein."
     },
     "fallback": "Standard",
     "country_remove": "Land entfernen",
@@ -836,6 +839,8 @@
       "archived": "archiviert"
     },
     "integration_unknown": "Dieser Dienst steht nicht zur Wahl. Der gespeicherte Wert bleibt erhalten.",
-    "processors_note": "Diese Einträge kannst du hier nicht ändern."
+    "processors_note": "Diese Einträge kannst du hier nicht ändern.",
+    "provider_test": "Testdienst, es wird nichts zugestellt",
+    "integrations_note": "Nur für das Verzeichnis der Datenempfänger: Der Schalter verbindet oder trennt keinen Dienst."
   }
 }

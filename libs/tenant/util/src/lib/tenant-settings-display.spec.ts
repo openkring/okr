@@ -52,6 +52,10 @@ describe('settingsDisplayValue', () => {
     expect(settingsDisplayValue('integrations', { bexio: true, deepsign: false, matrix: true }, CTX)).toBe('bexio, matrix');
     expect(settingsDisplayValue('additionalProcessors', [{ name: 'Treuhand' }, {}], CTX)).toBe('Treuhand');
   });
+  it('marks the test mail service', () => {
+    expect(settingsDisplayValue('emailProvider', 'mailtrap_test', CTX)).toBe('mailtrap_test (t:provider_test)');
+    expect(settingsDisplayValue('emailProvider', '', CTX)).toBe('');
+  });
   it('shows a plain number', () => expect(settingsDisplayValue('weatherIntervalHours', 4, CTX)).toBe('4'));
 });
 

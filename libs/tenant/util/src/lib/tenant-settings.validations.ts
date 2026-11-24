@@ -13,6 +13,8 @@ export interface SettingsContext {
   before: TenantSettings;
   emailDomain: string;
   appDomain: string;
+  /** App domains of the other tenants (`takenAppDomains`): the host decides whose app a link opens. Only the operator page knows them. */
+  takenAppDomains?: readonly string[];
 }
 
 const COLOR = /^#[0-9a-fA-F]{6}$/;
@@ -25,6 +27,8 @@ export const SETTINGS_EMAIL_LENGTH = 100;
 const HAS_SPACE = /\s/;
 /** A path inside the app, never another host; the same rule as `isPlainPath` in apps/functions/src/auth/email-templates.ts. */
 const PLAIN_PATH = /^\/(?![/\\])[^\s\\@]*$/;
+/** Longest pause between two weather fetches: a week. */
+export const SETTINGS_MAX_WEATHER_HOURS = 168;
 /** Longest host name; `bareHostname` refuses a longer one. */
 export const SETTINGS_DOMAIN_LENGTH = 253;
 
@@ -156,9 +160,10 @@ const defaultsSuite = staticSuite((m: TenantSettings, context: SettingsContext) 
   deliveryChannelsValidations('invoiceDelivery', m.invoiceDelivery);
 });
 
-function domainOrEmpty(field: string, value: unknown): void {
+/** A bare host name exactly as the readers compare it: lower case, no port, no path, no dot at the end. */
+function domain(field: string, value: unknown, isMandatory: boolean): void {
   test(field, '@tenant/util.settings.validation.domain', () => {
-    enforce(typeof value === 'string' && (value === '' || (value === value.trim() && bareHostname(value) !== undefined))).isTruthy();
+    enforce((!isMandatory && value === '') || (typeof value === 'string' && value === bareHostname(value))).isTruthy();
   });
 }
 
@@ -171,8 +176,12 @@ function path(field: string, value: unknown, isMandatory: boolean): void {
 
 const platformSuite = staticSuite((m: TenantSettings, context: SettingsContext) => {
   skipUnchanged('platform', m, context);
-  domainOrEmpty('appDomain', m.appDomain);
-  domainOrEmpty('emailDomain', m.emailDomain);
+  // never emptied: the reset links would open another host, and passkeys would stop
+  domain('appDomain', m.appDomain, true);
+  test('appDomain', '@tenant/util.settings.validation.domainTaken', () => {
+    enforce((context?.takenAppDomains ?? []).includes(text(m.appDomain))).isFalsy();
+  });
+  domain('emailDomain', m.emailDomain, false);
   test('emailProvider', '@tenant/util.settings.validation.emailProvider', () => {
     enforce(SETTINGS_EMAIL_PROVIDERS.includes(text(m.emailProvider))).isTruthy();
   });
@@ -187,8 +196,9 @@ const platformSuite = staticSuite((m: TenantSettings, context: SettingsContext) 
   stringValidations('defaultAccountingTenantId', m.defaultAccountingTenantId, LONG_NAME_LENGTH);
   stringValidations('gitRepo', m.gitRepo, LONG_NAME_LENGTH);
   stringValidations('gitOrg', m.gitOrg, LONG_NAME_LENGTH);
-  test('weatherIntervalHours', '@tenant/util.settings.validation.positive', () => {
-    enforce(typeof m.weatherIntervalHours === 'number' && Number.isFinite(m.weatherIntervalHours) && m.weatherIntervalHours > 0).isTruthy();
+  test('weatherIntervalHours', '@tenant/util.settings.validation.weatherHours', () => {
+    const hours = m.weatherIntervalHours;
+    enforce(typeof hours === 'number' && Number.isInteger(hours) && hours >= 1 && hours <= SETTINGS_MAX_WEATHER_HOURS).isTruthy();
   });
   booleanValidations('personLookupEnabled', m.personLookupEnabled);
   booleanValidations('isArchived', m.isArchived);

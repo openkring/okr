@@ -102,11 +102,23 @@ describe('platform', () => {
     defaultAccountingTenantId: '', gitRepo: 'okr', gitOrg: 'openkring',
     weatherIntervalHours: 4, personLookupEnabled: false, isArchived: false, showDebugInfo: false,
   };
-  it('accepts a normal set and empty domains', () => {
+  it('accepts a normal set and an empty mail domain', () => {
     expect(settingsValidations.platform(ok, CTX).isValid()).toBe(true);
-    expect(settingsValidations.platform({ ...ok, appDomain: '', emailDomain: '' }, CTX).isValid()).toBe(true);
+    expect(settingsValidations.platform({ ...ok, emailDomain: '' }, CTX).isValid()).toBe(true);
   });
-  it.each(['https://kring.ch', 'kring.ch/x', 'kring', 'a b.ch', 'user@kring.ch'])('refuses %j as a domain', (appDomain) => {
+  it('refuses an emptied app domain, and lets a stored empty one pass while it is not changed', () => {
+    expect(settingsValidations.platform({ ...ok, appDomain: '' }, { ...CTX, before: ok }).hasErrors('appDomain')).toBe(true);
+    expect(settingsValidations.platform({ ...ok, appDomain: '' }, CTX).hasErrors('appDomain')).toBe(true);
+    expect(settingsValidations.platform({ ...ok, appDomain: '', gitOrg: 'x' }, { ...CTX, before: { ...ok, appDomain: '' } }).hasErrors('appDomain')).toBe(false);
+  });
+  it('refuses an app domain another app uses, the own one excepted', () => {
+    const context = { ...CTX, takenAppDomains: ['app.kring.ch'] };
+    expect(settingsValidations.platform(ok, context).hasErrors('appDomain')).toBe(true);
+    expect(settingsValidations.platform({ ...ok, appDomain: 'app.frei.ch' }, context).hasErrors('appDomain')).toBe(false);
+    // unchanged: a stored double must not block the rest of the card
+    expect(settingsValidations.platform({ ...ok, gitOrg: 'x' }, { ...context, before: ok }).hasErrors()).toBe(false);
+  });
+  it.each(['https://kring.ch', 'kring.ch/x', 'kring', 'a b.ch', 'user@kring.ch', 'App.kring.ch', 'KRING.CH', 'kring.ch.', ' kring.ch'])('refuses %j as a domain', (appDomain) => {
     expect(settingsValidations.platform({ ...ok, appDomain }, CTX).hasErrors('appDomain')).toBe(true);
     expect(settingsValidations.platform({ ...ok, emailDomain: appDomain }, CTX).hasErrors('emailDomain')).toBe(true);
   });
@@ -130,8 +142,11 @@ describe('platform', () => {
       expect(settingsValidations.platform(loose({ ...ok, [field]: 'x'.repeat(100) }), CTX).hasErrors(field), field).toBe(false);
     }
   });
-  it('wants a positive weather interval', () => {
-    for (const weatherIntervalHours of [0, -1, Number.NaN]) {
+  it('wants a weather interval of whole hours, up to a week', () => {
+    for (const weatherIntervalHours of [1, 24, 168]) {
+      expect(settingsValidations.platform({ ...ok, weatherIntervalHours }, CTX).hasErrors('weatherIntervalHours')).toBe(false);
+    }
+    for (const weatherIntervalHours of [0, -1, 0.5, 4.5, 169, Number.NaN, Number.POSITIVE_INFINITY, '' as unknown as number]) {
       expect(settingsValidations.platform({ ...ok, weatherIntervalHours }, CTX).hasErrors('weatherIntervalHours')).toBe(true);
     }
   });

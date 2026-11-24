@@ -4,6 +4,7 @@ import { forkKeyFor } from '@okr/shared-util-core';
 import { SETTINGS_GROUPS, type SettingsGroupId, type TenantSettings } from './tenant-settings';
 import { SETTINGS_GROUP_IDS, settingsAudienceKey, settingsFieldKey, settingsGroupKey, settingsLocaleKey } from './tenant-settings-i18n';
 import { settingsImageName } from './tenant-settings-image';
+import { emailProviderLabel } from './tenant-settings-operator';
 
 /** What the settings page needs to show a stored value as a person would say it. A lookup answers '' for an unknown key. */
 export interface SettingsDisplayContext {
@@ -76,6 +77,7 @@ export function settingsDisplayValue(field: string, value: unknown, ctx: Setting
     case 'privacyPolicyPageKey': return nameOr(text, ctx.pageName);
     case 'ownerLocationId': return nameOr(text, ctx.locationName);
     case 'defaultResourceId': return nameOr(text, ctx.resourceName);
+    case 'emailProvider': return emailProviderLabel(text.trim(), ctx.text('provider_test'));
     case 'ownerOrgId': return nameOr(text, ctx.orgName);
     default: return text.trim();
   }

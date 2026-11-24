@@ -499,6 +499,8 @@
       "widen": "Con este cambio, más personas podrán ver esta información.",
       "rebuild": "Después se volverá a generar la lista de direcciones. Puede tardar unos minutos.",
       "policy": "Todas las personas que usan esta aplicación tendrán que aceptar de nuevo la política de privacidad.",
+      "domain": "La dirección de la app se usa en los enlaces para restablecer la contraseña, y las passkeys solo valen para esta dirección. Después del cambio, las passkeys existentes dejan de funcionar.",
+      "login": "Una ruta errónea de la página de inicio de sesión impide a todos entrar en la app.",
       "ask": "¿Quieres guardar?"
     },
     "title": "Ajustes",
@@ -724,7 +726,7 @@
       },
       "appDomain": {
         "label": "Dirección de la app",
-        "helper": "Se usa en los enlaces, por ejemplo al restablecer la contraseña."
+        "helper": "Se usa en los enlaces para restablecer la contraseña, y las passkeys solo valen para esta dirección. Después de un cambio, las passkeys existentes dejan de funcionar. Sin dirección, los enlaces llevan a la dirección del operador y no hay passkeys."
       },
       "emailDomain": {
         "label": "Dominio de correo",
@@ -748,11 +750,11 @@
       },
       "logoUrl": {
         "label": "Logotipo",
-        "helper": "El logotipo de la app y la base de su icono. Después de un cambio hay que volver a generar las imágenes."
+        "helper": "Ruta del logotipo, también la base del icono de la app. Después de un cambio hay que volver a generar las imágenes. Vacío: falta el logotipo en la página de inicio de sesión."
       },
       "ownerOrgId": {
         "label": "Organización",
-        "helper": "La organización que está detrás de esta app, por ejemplo como beneficiaria en las facturas QR."
+        "helper": "La organización detrás de esta app, por ejemplo como beneficiaria en las facturas QR. Vacío: en las facturas QR se usa la organización con el identificador de la app."
       },
       "ownerUserId": {
         "label": "Cuenta responsable",
@@ -760,7 +762,7 @@
       },
       "defaultAccountingTenantId": {
         "label": "Contabilidad",
-        "helper": "Esta contabilidad se abre desde el menú. Vacío: las entradas de contabilidad están ocultas."
+        "helper": "Debe ser el identificador de una contabilidad existente. Se abre desde el menú. Vacío: las entradas de la contabilidad están ocultas."
       },
       "integrations": {
         "label": "Servicios conectados",
@@ -803,10 +805,11 @@
       "languagesNone": "Elige al menos un idioma.",
       "languagesUnknown": "Uno de los idiomas elegidos no existe en la app.",
       "mailFromDomain": "La dirección debe pertenecer al dominio de correo o a la dirección de la app.",
-      "domain": "Este no es un dominio válido.",
-      "positive": "El número debe ser mayor que 0.",
+      "domain": "Escribe el dominio en minúsculas y sin https://, por ejemplo app.ejemplo.ch.",
       "path": "Debe ser una ruta dentro de la app, por ejemplo /auth/login.",
-      "emailProvider": "Elige uno de los servicios de correo ofrecidos."
+      "emailProvider": "Elige uno de los servicios de correo ofrecidos.",
+      "domainTaken": "Esta dirección ya pertenece a otra app.",
+      "weatherHours": "Introduce un número entero de 1 a 168."
     },
     "fallback": "Predeterminado",
     "country_remove": "Quitar el país",
@@ -836,6 +839,8 @@
       "archived": "archivada"
     },
     "integration_unknown": "Este servicio no está disponible para elegir. El valor guardado se conserva.",
-    "processors_note": "Estas entradas no se pueden cambiar aquí."
+    "processors_note": "Estas entradas no se pueden cambiar aquí.",
+    "provider_test": "servicio de prueba, no se entrega nada",
+    "integrations_note": "Solo para el registro de destinatarios de datos: el interruptor no conecta ni desconecta ningún servicio."
   }
 }

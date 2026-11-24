@@ -54,6 +54,12 @@ describe('settingsConfirmations', () => {
   it('a changed policy version asks for policy', () => {
     expect(settingsConfirmations({ privacyPolicyVersion: '2' } as TenantSettings, before)).toEqual(['policy']);
   });
+  it('a changed app domain and a changed login path ask, the mail domain does not', () => {
+    expect(settingsConfirmations({ appDomain: 'app.x.ch' } as TenantSettings, before)).toEqual(['domain']);
+    expect(settingsConfirmations({ loginUrl: '/auth/in' } as TenantSettings, before)).toEqual(['login']);
+    expect(settingsConfirmations({ loginUrl: '/auth/in', appDomain: 'app.x.ch' } as TenantSettings, before)).toEqual(['domain', 'login']);
+    expect(settingsConfirmations({ emailDomain: 'x.ch', gitOrg: 'x', isArchived: true } as TenantSettings, before)).toEqual([]);
+  });
   it('combines in a fixed order', () => {
     expect(settingsConfirmations({ privacyPolicyVersion: '2', showEmail: 'public' } as TenantSettings, before)).toEqual(['widen', 'rebuild', 'policy']);
   });
@@ -64,9 +70,10 @@ describe('settingsConfirmations', () => {
 
 describe('confirmationMessage', () => {
   it('joins the sentences and adds the question; empty for nothing', () => {
-    const t = { widen: 'W.', rebuild: 'R.', policy: 'P.', ask: 'Q?' };
+    const t = { widen: 'W.', rebuild: 'R.', policy: 'P.', domain: 'D.', login: 'L.', ask: 'Q?' };
     expect(confirmationMessage([], t)).toBe('');
     expect(confirmationMessage(['rebuild', 'policy'], t)).toBe('R. P. Q?');
+    expect(confirmationMessage(['domain', 'login'], t)).toBe('D. L. Q?');
   });
 });
 

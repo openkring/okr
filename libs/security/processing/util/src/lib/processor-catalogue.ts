@@ -544,10 +544,14 @@ export const INTEGRATION_KEYS: readonly string[] = PROCESSOR_CATALOGUE
   .map((p) => p.key);
 
 /**
- * The services a tenant is connected to through `AppConfig.integrations`: their key and name. Not the same list as
- * {@link INTEGRATION_KEYS}: an entry that belongs to a feature block ignores the key, so a switch for it would promise
- * something it does not do. Asked of the predicates themselves, so a new entry joins automatically.
+ * The services that only their key of `AppConfig.integrations` puts into the register: their key and name. Not the same
+ * list as {@link INTEGRATION_KEYS}: an entry that a feature block or a flag of its own (`personLookupEnabled`) turns on
+ * would stay listed with its key off, so a switch for it would not say the truth. Asked of the predicates themselves.
  */
 export const INTEGRATION_SWITCHES: readonly { readonly key: string; readonly name: string }[] = PROCESSOR_CATALOGUE
-  .filter((p) => !p.alwaysOn && p.enabledWhen?.({ integrations: { [p.key]: true }, enabledFeatures: [] as string[] } as unknown as AppConfig) === true)
+  .filter((p) => {
+    const isOn = (config: Partial<AppConfig>): boolean => p.enabledWhen?.(config as AppConfig) === true;
+    // on by its key alone, and off without it while every block (no `enabledFeatures`) and the one other flag are on
+    return !p.alwaysOn && isOn({ integrations: { [p.key]: true }, enabledFeatures: [] }) && !isOn({ integrations: {}, personLookupEnabled: true });
+  })
   .map(({ key, name }) => ({ key, name }));

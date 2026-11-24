@@ -18,17 +18,10 @@ import { SettingsPlatformForm } from './settings-platform.form';
 import { SettingsPrivacyForm } from './settings-privacy.form';
 import { SettingsStartForm } from './settings-start.form';
 
-/** The groups this modal has a form for. One entry per `@case` below. */
-export const SETTINGS_FORM_GROUPS: readonly SettingsGroupId[] = ['app', 'images', 'language', 'start', 'operator', 'mail', 'privacy', 'defaults', 'platform'];
-/** What `/operator/settings` offers to edit; everything else belongs to the tenant. */
-export const OPERATOR_FORM_GROUPS: readonly SettingsGroupId[] = SETTINGS_FORM_GROUPS.filter((group) => group === 'platform');
-/** What `/tenant/settings` offers to edit: never the platform group, not even to the operator, who has a page for it. */
-export const TENANT_FORM_GROUPS: readonly SettingsGroupId[] = SETTINGS_FORM_GROUPS.filter((group) => group !== 'platform');
-
 /**
  * Edits one group of `/tenant/settings`, or of a chosen tenant on `/operator/settings` (spec 1.174 §9.2). It writes nothing
  * itself: `onSave` (from the page) does, and the modal closes only when that answers true. After a cancelled confirmation
- * or a failed write it stays open with its values.
+ * or a failed write it stays open with its values. Every settings group has a form here, one `@case` each.
  */
 @Component({
   selector: 'okr-settings-edit-modal',
@@ -115,6 +108,8 @@ export class SettingsEditModal {
   public readonly onPickResource = input<() => Promise<SettingsChoice | undefined>>(() => Promise.resolve(undefined));
   /** The name of a stored location or resource id, '' when unknown. */
   public readonly nameOf = input<(field: string, id: string) => string>(() => '');
+  /** The app domains of the other tenants, for the platform group. */
+  public readonly takenAppDomains = input<readonly string[]>([]);
   /** The services the platform group can switch on. */
   public readonly integrationOptions = input<readonly IntegrationOption[]>([]);
   /** Saves the values; true closes the modal. */
@@ -133,7 +128,7 @@ export class SettingsEditModal {
     return this.subject() ? `${name}: ${this.subject()}` : name;
   });
   protected readonly context = computed((): SettingsContext => ({
-    before: this.before(), emailDomain: this.emailDomain(), appDomain: this.appDomain(),
+    before: this.before(), emailDomain: this.emailDomain(), appDomain: this.appDomain(), takenAppDomains: this.takenAppDomains(),
   }));
   /** a value typed and taken back is no change: there would be nothing to save */
   private readonly hasChanges = computed(() => Object.keys(settingsDiff(this.before(), this.formData())).length > 0);

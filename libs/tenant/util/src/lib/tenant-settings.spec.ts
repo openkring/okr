@@ -5,7 +5,7 @@ import { AppConfig, DEFAULT_DELIVERY_CHANNELS } from '@okr/shared-models';
 import { describe, expect, it } from 'vitest';
 
 import { SETTINGS_I18N_KEYS } from './tenant-settings-i18n';
-import { OPERATOR_SETTINGS, SETTINGS_DEFAULT_NUMBERS, SETTINGS_GROUPS, settingsDiff, settingsOf, type SettingsGroupId } from './tenant-settings';
+import { OPERATOR_FORM_GROUPS, OPERATOR_SETTINGS, SETTINGS_DEFAULT_NUMBERS, SETTINGS_GROUPS, TENANT_FORM_GROUPS, settingsDiff, settingsOf, type SettingsGroupId } from './tenant-settings';
 
 const NOT_OFFERED = [
   'osiLogoUrl', 'minYear', 'maxYear', 'showImages', 'showArchivedData', 'showName', 'showMemberships',
@@ -142,5 +142,13 @@ describe('SETTINGS_DEFAULT_NUMBERS', () => {
     for (const [field, numbers] of Object.entries(SETTINGS_DEFAULT_NUMBERS)) {
       for (const n of numbers) expect(SETTINGS_I18N_KEYS[`${field}_${n}`], `${field}_${n}`).toBeTruthy();
     }
+  });
+});
+
+describe('form groups', () => {
+  it('the tenant page never offers the platform group, the operator page nothing else', () => {
+    expect(TENANT_FORM_GROUPS).not.toContain('platform');
+    expect(OPERATOR_FORM_GROUPS).toEqual(['platform']);
+    expect([...TENANT_FORM_GROUPS, ...OPERATOR_FORM_GROUPS].sort()).toEqual(Object.keys(SETTINGS_GROUPS).sort());
   });
 });

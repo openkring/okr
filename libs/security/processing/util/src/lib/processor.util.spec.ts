@@ -88,14 +88,15 @@ describe('PROCESSOR_CATALOGUE', () => {
     expect([...INTEGRATION_KEYS].sort()).toEqual(gated.sort());
   });
 
-  it('offers a switch for every entry a key of `integrations` turns on, and for no other', () => {
+  it('offers a switch for every entry that only its key of `integrations` turns on', () => {
     const keys = INTEGRATION_SWITCHES.map((s) => s.key);
-    expect(keys).toEqual(expect.arrayContaining(['bexio', 'deepsign', 'matrix', 'regasoft', 'searchch']));
-    for (const key of ['firebase', 'stripe', 'youtube', 'pingen', 'swisstopo']) expect(keys).not.toContain(key);
+    expect(keys).toEqual(expect.arrayContaining(['bexio', 'deepsign', 'matrix', 'regasoft']));
+    // always on, or switched by a feature block (youtube, pingen, swisstopo) or a flag of its own (searchch)
+    for (const key of ['firebase', 'stripe', 'youtube', 'pingen', 'swisstopo', 'searchch']) expect(keys).not.toContain(key);
     for (const { key, name } of INTEGRATION_SWITCHES) {
       expect(name).toBe(PROCESSOR_CATALOGUE.find((p) => p.key === key)?.name);
       expect(activeProcessors(config({ integrations: { [key]: true }, enabledFeatures: [] })).map((p) => p.key)).toContain(key);
-      expect(activeProcessors(config({ integrations: {}, enabledFeatures: [] })).map((p) => p.key)).not.toContain(key);
+      expect(activeProcessors(config({ integrations: {}, personLookupEnabled: true })).map((p) => p.key)).not.toContain(key);
     }
   });
 });

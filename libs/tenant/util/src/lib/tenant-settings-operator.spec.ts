@@ -1,7 +1,7 @@
 import type { AppConfig } from '@okr/shared-models';
 import { describe, expect, it } from 'vitest';
 
-import { integrationRows, processorNames, tenantChoices, withIntegration } from './tenant-settings-operator';
+import { emailProviderLabel, integrationRows, processorNames, takenAppDomains, tenantChoices, withIntegration } from './tenant-settings-operator';
 
 const doc = (okey: string, patch: Record<string, unknown> = {}) => ({ okey, ...patch }) as Partial<AppConfig> & { okey: string };
 
@@ -16,6 +16,21 @@ describe('tenantChoices', () => {
   });
   it('lists an archived tenant with the mark, and nothing without an id', () => {
     expect(tenantChoices([doc('x', { appName: 'X', isArchived: true }), doc('')], 'archiviert')).toEqual([{ id: 'x', label: 'X (x), archiviert' }]);
+  });
+});
+
+describe('takenAppDomains', () => {
+  it('lists the domains of the other tenants, comparable, archived ones too', () => {
+    const configs = [doc('a', { appDomain: 'app.a.ch' }), doc('b', { appDomain: ' App.B.ch ', isArchived: true }), doc('c', { appDomain: '' }), doc('d'), doc('e', { appDomain: 3 })];
+    expect(takenAppDomains(configs, 'a')).toEqual(['app.b.ch']);
+    expect(takenAppDomains(configs, 'x')).toEqual(['app.a.ch', 'app.b.ch']);
+  });
+});
+
+describe('emailProviderLabel', () => {
+  it('marks the test service', () => {
+    expect(emailProviderLabel('mailtrap_test', 'Test')).toBe('mailtrap_test (Test)');
+    expect(emailProviderLabel('mailtrap_api', 'Test')).toBe('mailtrap_api');
   });
 });
 

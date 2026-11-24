@@ -499,6 +499,8 @@
       "widen": "With this change, more people can see this information.",
       "rebuild": "The address list will be rebuilt afterwards. This can take a few minutes.",
       "policy": "Everyone who uses this app will afterwards be asked to accept the privacy policy again.",
+      "domain": "The address of the app is used in the links for resetting the password, and passkeys are only valid for this address. After the change, existing passkeys no longer work.",
+      "login": "A wrong path of the sign-in page locks everybody out of the app.",
       "ask": "Do you want to save?"
     },
     "title": "Settings",
@@ -724,7 +726,7 @@
       },
       "appDomain": {
         "label": "Address of the app",
-        "helper": "Used in links, for example when resetting the password."
+        "helper": "Used in the links for resetting the password, and passkeys are only valid for this address. After a change, existing passkeys no longer work. Without an address, the links point to the address of the operator and there are no passkeys."
       },
       "emailDomain": {
         "label": "Mail domain",
@@ -748,11 +750,11 @@
       },
       "logoUrl": {
         "label": "Logo",
-        "helper": "The logo of the app and the basis of its icon. After a change the images have to be generated again."
+        "helper": "Path of the logo, also the basis of the app icon. After a change the images have to be generated again. Empty: the logo is missing on the sign-in page."
       },
       "ownerOrgId": {
         "label": "Organisation",
-        "helper": "The organisation behind this app, for example as the payee on QR bills."
+        "helper": "The organisation behind this app, for example as the payee on QR invoices. Empty: on QR invoices, the organisation with the id of the app applies."
       },
       "ownerUserId": {
         "label": "Responsible account",
@@ -760,7 +762,7 @@
       },
       "defaultAccountingTenantId": {
         "label": "Accounting",
-        "helper": "These books open from the menu. Empty: the accounting entries are hidden."
+        "helper": "Must be the id of an existing set of books. It opens from the menu. Empty: the accounting entries are hidden."
       },
       "integrations": {
         "label": "Connected services",
@@ -803,10 +805,11 @@
       "languagesNone": "Choose at least one language.",
       "languagesUnknown": "One of the chosen languages does not exist in the app.",
       "mailFromDomain": "The address must belong to the mail domain or to the address of the app.",
-      "domain": "This is not a valid domain.",
-      "positive": "The number must be greater than 0.",
+      "domain": "Write the domain in lower case and without https://, for example app.example.ch.",
       "path": "This must be a path in the app, for example /auth/login.",
-      "emailProvider": "Choose one of the offered mail services."
+      "emailProvider": "Choose one of the offered mail services.",
+      "domainTaken": "This address already belongs to another app.",
+      "weatherHours": "Enter a whole number from 1 to 168."
     },
     "fallback": "Default",
     "country_remove": "Remove country",
@@ -836,6 +839,8 @@
       "archived": "archived"
     },
     "integration_unknown": "This service is not available for selection. The stored value is kept.",
-    "processors_note": "You cannot change these entries here."
+    "processors_note": "You cannot change these entries here.",
+    "provider_test": "test service, nothing is delivered",
+    "integrations_note": "Only for the list of data recipients: the switch does not connect or disconnect a service."
   }
 }

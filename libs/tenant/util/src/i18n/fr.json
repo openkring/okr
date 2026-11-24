@@ -499,6 +499,8 @@
       "widen": "Avec cette modification, davantage de personnes pourront voir ces informations.",
       "rebuild": "La liste d'adresses sera ensuite reconstruite. Cela peut prendre quelques minutes.",
       "policy": "Toutes les personnes qui utilisent cette application devront ensuite accepter à nouveau la politique de confidentialité.",
+      "domain": "L'adresse de l'app figure dans les liens de réinitialisation du mot de passe, et les passkeys ne valent que pour cette adresse. Après la modification, les passkeys existants ne fonctionnent plus.",
+      "login": "Un chemin erroné de la page de connexion bloque l'accès à l'app pour tout le monde.",
       "ask": "Veux-tu enregistrer ?"
     },
     "title": "Réglages",
@@ -724,7 +726,7 @@
       },
       "appDomain": {
         "label": "Adresse de l'app",
-        "helper": "Utilisée dans les liens, par exemple pour réinitialiser le mot de passe."
+        "helper": "Figure dans les liens de réinitialisation du mot de passe, et les passkeys ne valent que pour cette adresse. Après une modification, les passkeys existants ne fonctionnent plus. Sans adresse, les liens mènent à l'adresse de l'exploitant et il n'y a pas de passkeys."
       },
       "emailDomain": {
         "label": "Domaine e-mail",
@@ -748,11 +750,11 @@
       },
       "logoUrl": {
         "label": "Logo",
-        "helper": "Le logo de l'app et la base de son icône. Après une modification, les images doivent être générées à nouveau."
+        "helper": "Chemin du logo, aussi la base de l'icône de l'app. Après une modification, les images doivent être générées à nouveau. Vide : le logo manque sur la page de connexion."
       },
       "ownerOrgId": {
         "label": "Organisation",
-        "helper": "L'organisation derrière cette app, par exemple comme bénéficiaire des factures QR."
+        "helper": "L'organisation derrière cette app, par exemple comme bénéficiaire sur les QR-factures. Vide : sur les QR-factures, l'organisation portant l'identifiant de l'app s'applique."
       },
       "ownerUserId": {
         "label": "Compte responsable",
@@ -760,7 +762,7 @@
       },
       "defaultAccountingTenantId": {
         "label": "Comptabilité",
-        "helper": "Cette comptabilité s'ouvre depuis le menu. Vide : les entrées de comptabilité sont masquées."
+        "helper": "Doit être l'identifiant d'une comptabilité existante. Elle s'ouvre depuis le menu. Vide : les entrées de la comptabilité sont masquées."
       },
       "integrations": {
         "label": "Services connectés",
@@ -803,10 +805,11 @@
       "languagesNone": "Choisis au moins une langue.",
       "languagesUnknown": "Une des langues choisies n'existe pas dans l'app.",
       "mailFromDomain": "L'adresse doit appartenir au domaine e-mail ou à l'adresse de l'app.",
-      "domain": "Ce n'est pas un domaine valable.",
-      "positive": "Le nombre doit être supérieur à 0.",
+      "domain": "Écris le domaine en minuscules et sans https://, par exemple app.exemple.ch.",
       "path": "Il doit s'agir d'un chemin dans l'app, par exemple /auth/login.",
-      "emailProvider": "Choisis un des services e-mail proposés."
+      "emailProvider": "Choisis un des services e-mail proposés.",
+      "domainTaken": "Cette adresse appartient déjà à une autre app.",
+      "weatherHours": "Saisis un nombre entier de 1 à 168."
     },
     "fallback": "Par défaut",
     "country_remove": "Supprimer le pays",
@@ -836,6 +839,8 @@
       "archived": "archivée"
     },
     "integration_unknown": "Ce service n'est pas proposé. La valeur enregistrée est conservée.",
-    "processors_note": "Tu ne peux pas modifier ces entrées ici."
+    "processors_note": "Tu ne peux pas modifier ces entrées ici.",
+    "provider_test": "service de test, rien n'est distribué",
+    "integrations_note": "Uniquement pour le registre des destinataires de données : le commutateur ne connecte ni ne déconnecte aucun service."
   }
 }

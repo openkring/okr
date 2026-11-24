@@ -72,7 +72,7 @@ describe('SETTINGS_I18N_KEYS', () => {
   it.each(LANGS)('has a text for every validation message of the suites in %s', (lang) => {
     const source = readFileSync(join(__dirname, 'tenant-settings.validations.ts'), 'utf8');
     const keys = [...source.matchAll(/'(@tenant\/util\.settings\.validation\.\w+)'/g)].map((m) => m[1]);
-    expect(new Set(keys).size).toBe(11);
+    expect(new Set(keys).size).toBe(12);
     for (const key of keys) expect(typeof lookup(key, lang), `${lang}: ${key}`).toBe('string');
   });
 });

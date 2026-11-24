@@ -11,8 +11,8 @@ import { I18nService } from '@okr/shared-i18n';
 import { Spinner, StringSelect } from '@okr/shared-ui';
 import type { StringSelectI18n } from '@okr/shared-ui';
 import { getCountryName } from '@okr/shared-util-core';
-import { OPERATOR_FORM_GROUPS, SettingsCards, SettingsEditModal } from '@okr/tenant-ui';
-import { SETTINGS_I18N_KEYS, settingsCards, settingsOf, tenantChoices } from '@okr/tenant-util';
+import { SettingsCards, SettingsEditModal } from '@okr/tenant-ui';
+import { OPERATOR_FORM_GROUPS, SETTINGS_I18N_KEYS, settingsCards, settingsOf, takenAppDomains, tenantChoices } from '@okr/tenant-util';
 import type { SettingsDisplayContext, SettingsGroupId, TenantSettings } from '@okr/tenant-util';
 
 import { TenantSettingsStore } from './tenant-settings.store';
@@ -136,6 +136,7 @@ export class OperatorSettingsContent {
           before: structuredClone(before),
           emailDomain: platform.emailDomain ?? '',
           appDomain: platform.appDomain ?? '',
+          takenAppDomains: takenAppDomains(this.configs() ?? [], tenantId),
           integrationOptions: INTEGRATION_SWITCHES,
           onSave: (after: TenantSettings) => this.save(group, before, after, tenantId),
         },

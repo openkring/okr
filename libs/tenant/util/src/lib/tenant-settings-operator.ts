@@ -15,6 +15,18 @@ export function tenantChoices(configs: readonly (Partial<AppConfig> & { okey: st
   }).sort((a, b) => a.label.localeCompare(b.label));
 }
 
+/** The app domains of all tenants but `tenantId`, lower case and trimmed: what `SettingsContext.takenAppDomains` wants. Archived tenants count. */
+export function takenAppDomains(configs: readonly (Partial<AppConfig> & { okey: string })[], tenantId: string): string[] {
+  return configs.filter((config) => config.okey !== tenantId)
+    .map((config) => (typeof config.appDomain === 'string' ? config.appDomain.trim().toLowerCase() : ''))
+    .filter((domain) => domain !== '');
+}
+
+/** A mail service as the operator reads it: its id, with a note on the one that delivers nothing. */
+export function emailProviderLabel(provider: string, testText: string): string {
+  return provider === 'mailtrap_test' ? `${provider} (${testText})` : provider;
+}
+
 /** A service a tenant can be connected to: the key of `AppConfig.integrations` and the name of the service. */
 export interface IntegrationOption { key: string; name: string; }
 
@@ -36,7 +48,8 @@ export function integrationRows(stored: unknown, options: readonly IntegrationOp
 }
 
 /**
- * The integrations after one was switched; every other stored key stays as it is. A key that was not stored when the form
+ * The integrations after one was switched; every other stored key stays as it is. The whole map is written (the key may hold
+ * anything, so no field path is built from it): another session's change of another key between opening and saving is lost. A key that was not stored when the form
  * opened is removed again when it is switched back off, so that nothing has changed then.
  */
 export function withIntegration(current: unknown, before: unknown, key: string, on: boolean): Record<string, boolean> {

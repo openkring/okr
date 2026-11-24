@@ -6,13 +6,15 @@ import { SETTINGS_AUDIENCES, type TenantSettings } from './tenant-settings';
 const PFX = '@tenant/util.settings.confirm.';
 
 /** What a save of the settings has to ask the user about first (spec 1.174 §7.4). */
-export type SettingsConfirmation = 'widen' | 'rebuild' | 'policy';
+export type SettingsConfirmation = 'widen' | 'rebuild' | 'policy' | 'domain' | 'login';
 
 /** Text keys of the combined confirmation: one sentence per confirmation, and the closing question. */
 export const SETTINGS_CONFIRM_I18N_KEYS: Record<SettingsConfirmation | 'ask', string> = {
   widen: PFX + 'widen',
   rebuild: PFX + 'rebuild',
   policy: PFX + 'policy',
+  domain: PFX + 'domain',
+  login: PFX + 'login',
   ask: PFX + 'ask',
 };
 
@@ -40,7 +42,7 @@ export function isWidening(before: unknown, after: unknown): boolean {
 }
 
 /**
- * The confirmations a save needs, in the fixed order widen, rebuild, policy. `changes` is the diff, `before`
+ * The confirmations a save needs, in the fixed order widen, rebuild, policy, domain, login. `changes` is the diff, `before`
  * the settings at opening time. The rebuild hint applies to ANY change of an address-directory field, the
  * widening confirmation only to a widening of an audience field.
  */
@@ -52,6 +54,8 @@ export function settingsConfirmations(changes: TenantSettings, before: TenantSet
   if (fields.some((f) => f.startsWith('show') && isWidening(b[f], c[f]))) out.push('widen');
   if (fields.some((f) => REBUILD_FIELDS.has(f))) out.push('rebuild');
   if (fields.includes('privacyPolicyVersion')) out.push('policy');
+  if (fields.includes('appDomain')) out.push('domain');
+  if (fields.includes('loginUrl')) out.push('login');
   return out;
 }
 

@@ -70,6 +70,8 @@ const STATIC_KEYS = {
   operator_page_choose: PFX + 'operator_page.choose',
   operator_page_none: PFX + 'operator_page.none',
   operator_page_archived: PFX + 'operator_page.archived',
+  provider_test: PFX + 'provider_test',
+  integrations_note: PFX + 'integrations_note',
   integration_unknown: PFX + 'integration_unknown',
   processors_note: PFX + 'processors_note',
   save: '@tenant/util.picker.save',
