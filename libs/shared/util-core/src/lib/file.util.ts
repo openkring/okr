@@ -323,15 +323,15 @@ export function isZip(pathOrExtension: string): boolean {
 }
 
 /**
- * Detects whether an error thrown by the Capacitor Camera plugin is a benign
- * user cancellation (the user opened the photo picker / camera and then cancelled).
- * The native iOS message is "User cancelled photos app"; web and Android use
- * similar "cancel"-containing messages. Such cancellations are normal control
+ * Detects whether an error thrown by a Capacitor picker (Camera or FilePicker plugin) is a
+ * benign user cancellation (the user opened the picker / camera and then cancelled).
+ * The native iOS messages are "User cancelled photos app" and "pickFiles canceled."; web and
+ * Android use similar "cancel"-containing messages. Such cancellations are normal control
  * flow, not errors, and must not be reported to Sentry.
- * @param error the rejection thrown by Camera.getPhoto
+ * @param error the rejection thrown by Camera.getPhoto or FilePicker.pickFiles
  * @returns true if the error represents a user cancellation
  */
-export function isPhotoCancellation(error: unknown): boolean {
+export function isPickerCancellation(error: unknown): boolean {
   const message = typeof error === 'string'
     ? error
     : (error as { message?: unknown })?.message;

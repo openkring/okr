@@ -6,8 +6,32 @@ import {
 export const ALLOWED_CURRENCIES = ['CHF', 'EUR', 'USD', 'GBP'] as const;
 export type AllowedCurrency = (typeof ALLOWED_CURRENCIES)[number];
 
+/** Room for 9'999'999.99 with a currency around it: a shorter field would cut digits off a pasted amount. */
+export const AMOUNT_INPUT_LENGTH = 20;
+
+/** Electronic format: no blanks and no dashes — the separators the IBAN validation ignores as well. */
 export function normalizeIban(iban: string): string {
-  return iban.replace(/\s/g, '').toUpperCase();
+  return iban.replace(/[\s-]/g, '').toUpperCase();
+}
+
+/**
+ * The amount a user typed, in the currency's major unit; 0 when the text is not an amount.
+ * Accepts a point or a comma as the decimal separator, the usual thousands separators
+ * (1'200.50, 1’200.50, 1 200,50, 1,200.50, 1.200,50), «24.-» and a currency before or after it.
+ * Never guesses: a separator followed by three digits (1,200) could mean either, so it is not an
+ * amount — the form then shows «Betrag muss grösser als 0 sein» instead of saving a wrong one.
+ */
+export function parseAmount(text: string): number {
+  let t = (text ?? '')
+    .replace(/['’‘`\s]/g, '')
+    .replace(/^(CHF|EUR|USD|GBP|Fr\.?)/i, '')
+    .replace(/(CHF|EUR|USD|GBP|Fr\.?)$/i, '')
+    .replace(/[.,][-–—]+$/, '');
+  // with both separators present the last one is the decimal separator, the other one groups thousands
+  if (/^\d{1,3}(,\d{3})+\.\d{0,2}$/.test(t)) t = t.replace(/,/g, '');
+  else if (/^\d{1,3}(\.\d{3})+,\d{0,2}$/.test(t)) t = t.replace(/\./g, '');
+  if (!/^(\d+([.,]\d{0,2})?|[.,]\d{1,2})$/.test(t)) return 0;
+  return Number(t.replace(',', '.'));
 }
 
 export function chfToCents(chf: number): number {

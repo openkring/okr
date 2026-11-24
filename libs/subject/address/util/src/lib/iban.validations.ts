@@ -1,4 +1,4 @@
-import { IBAN_LENGTH } from '@okr/shared-constants';
+import { IBAN_INPUT_LENGTH } from '@okr/shared-constants';
 import { enforce, omitWhen, test } from 'vest';
 
 import { checkIban } from '@okr/shared-util-angular';
@@ -6,7 +6,8 @@ import { stringValidations } from '@okr/shared-util-core';
 
 export function ibanValidations(fieldName: string, iban: unknown) {
 
-  stringValidations(fieldName, iban, IBAN_LENGTH, IBAN_LENGTH);
+  // not IBAN_LENGTH: that is the Swiss friendly format, and a foreign IBAN is longer (DE: 27)
+  stringValidations(fieldName, iban, IBAN_INPUT_LENGTH);
 
   omitWhen(iban === '', () => {
     test(fieldName, '@validation.validIban', () => {

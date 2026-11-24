@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { normalizeIban, chfToCents, centsToCHF, newExpenseModel, newExpenseDocumentModel, canDeleteExpense, canRedoOcr, canOpenBooking, canViewExpense, canEditExpense, filterExpenses, mergeExpenses, sortExpenses, getExpenseEditStateCategory, getExpenseTransferCategory, EXPENSE_EDIT_STATES, expenseStatusColor, nextExpenseStateFilter, expenseDoneRecipient, escapeHtml, fillName, buildExpenseDoneMessage, ExpenseDoneTexts } from './expense.util';
+import { normalizeIban, parseAmount, chfToCents, centsToCHF, newExpenseModel, newExpenseDocumentModel, canDeleteExpense, canRedoOcr, canOpenBooking, canViewExpense, canEditExpense, filterExpenses, mergeExpenses, sortExpenses, getExpenseEditStateCategory, getExpenseTransferCategory, EXPENSE_EDIT_STATES, expenseStatusColor, nextExpenseStateFilter, expenseDoneRecipient, escapeHtml, fillName, buildExpenseDoneMessage, ExpenseDoneTexts } from './expense.util';
 import { CategoryItemModel, CategoryListModel } from '@okr/shared-models';
 import { ExpenseModel, UserModel } from '@okr/shared-models';
 
@@ -7,8 +7,25 @@ describe('normalizeIban', () => {
   it('strips whitespace and uppercases', () => {
     expect(normalizeIban('ch67 0070 0110 4044 7417 6')).toBe('CH6700700110404474176');
   });
+  it('strips the dashes the validation ignores', () => {
+    expect(normalizeIban('CH67-0070-0110-4044-7417-6')).toBe('CH6700700110404474176');
+  });
   it('already normalized iban stays the same', () => {
     expect(normalizeIban('CH6700700110404474176')).toBe('CH6700700110404474176');
+  });
+});
+
+describe('parseAmount', () => {
+  it.each([
+    ['34.15', 34.15], ['24,60', 24.6], ['24', 24], ['24.', 24], ['24,', 24], ['.5', 0.5], [' 24.60 ', 24.6],
+    ["1'200.50", 1200.5], ['1’200.50', 1200.5], ['1 200,50', 1200.5], ['1\u00a0200.50', 1200.5],
+    ['1,200.50', 1200.5], ['1.200,50', 1200.5], ['1,234,567.80', 1234567.8],
+    ['24.-', 24], ['24.–', 24], ['CHF 24.60', 24.6], ['24,60 EUR', 24.6], ['Fr. 24.60', 24.6],
+  ])('reads %j as %d', (text, expected) => {
+    expect(parseAmount(text)).toBe(expected);
+  });
+  it.each(['', 'abc', '-5', '1,200', '1.200', '24.605', '1,2,3', '12abc', '1.2.3'])('never guesses: %j is 0', text => {
+    expect(parseAmount(text)).toBe(0);
   });
 });
 

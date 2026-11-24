@@ -49,6 +49,7 @@ describe('constants exports', () => {
       'EMAIL_LENGTH',
       'PHONE_LENGTH',
       'IBAN_LENGTH',
+      'IBAN_INPUT_LENGTH',
       'BEXIO_ID_LENGTH',
       'TAX_ID_LENGTH',
       'SSN_LENGTH',

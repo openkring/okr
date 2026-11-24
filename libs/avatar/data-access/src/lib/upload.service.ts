@@ -2,13 +2,13 @@ import { HttpClient } from "@angular/common/http";
 import { inject, Injectable } from "@angular/core";
 import { Camera, CameraResultType, CameraSource, Photo } from "@capacitor/camera";
 import { Capacitor } from "@capacitor/core";
-import { FilePicker } from "@capawesome/capacitor-file-picker";
+import { FilePicker, PickedFile } from "@capawesome/capacitor-file-picker";
 import { firstValueFrom } from "rxjs";
 
 import { attestAppCheck, ENV, isAttested, StorageBucket } from "@okr/shared-config";
 import { DocumentModel, DocumentModelName, IMAGE_STYLE_SHAPE, UserModel } from "@okr/shared-models";
 import { UPLOAD_PRESENTER, UploadEntry } from "@okr/shared-util-angular";
-import { extractCredit, getImgixJsonUrl, ImageCreditMetaData, isPhotoCancellation, sanitizeFileName, warn, withResolvedMimeType } from "@okr/shared-util-core";
+import { extractCredit, getImgixJsonUrl, ImageCreditMetaData, isPickerCancellation, sanitizeFileName, warn, withResolvedMimeType } from "@okr/shared-util-core";
 import { buildDocumentModel } from "@okr/content-document-util";
 import { DocumentService } from "@okr/content-document-data-access";
 import { DEFAULT_MIMETYPES } from "@okr/shared-constants";
@@ -118,18 +118,7 @@ export class UploadService {
     if (!Capacitor.isNativePlatform()) {
       return this.pickFilesNative(mimeTypes, false).then(files => files[0]);
     }
-    return FilePicker.pickFiles({ types: mimeTypes, limit: 1 }).then(result => {
-      if (result.files.length !== 1) {
-        warn('UploadService.pickFile: expected 1 file, got ' + result.files.length);
-        return undefined;
-      }
-      const blob = result.files[0].blob;
-      if (!blob) {
-        warn('UploadService.pickFile: blob is mandatory.');
-        return undefined;
-      }
-      return new File([blob], result.files[0].name, { type: result.files[0].mimeType });
-    });
+    return this.pickFilesPlugin(mimeTypes, 1).then(files => files[0]);
   }
 
   /**
@@ -142,11 +131,37 @@ export class UploadService {
     if (!Capacitor.isNativePlatform()) {
       return this.pickFilesNative(mimeTypes, true);
     }
-    return FilePicker.pickFiles({ types: mimeTypes }).then(result =>
-      result.files
-        .filter(f => !!f.blob)
-        .map(f => new File([f.blob!], f.name, { type: f.mimeType }))
-    );
+    return this.pickFilesPlugin(mimeTypes);
+  }
+
+  /**
+   * The picker of the iOS and Android apps. The plugin fills `blob` on the web only; in the apps a
+   * picked file is a `webPath` that the web view loads (the same way takePhoto's callers do).
+   * A failed load rejects: dropping the file silently is what made choosing a file do nothing.
+   * @param limit the maximum number of files, 0 = no limit
+   */
+  private async pickFilesPlugin(mimeTypes: string[], limit = 0): Promise<File[]> {
+    let picked: PickedFile[];
+    try {
+      picked = (await FilePicker.pickFiles({ types: mimeTypes, limit })).files;
+    } catch (ex) {
+      // cancelling the picker rejects in the apps («pickFiles canceled.») — normal control flow, not an error
+      if (isPickerCancellation(ex)) return [];
+      throw ex;
+    }
+    return Promise.all(picked.map(f => this.loadPickedFile(f)));
+  }
+
+  private async loadPickedFile(picked: PickedFile): Promise<File> {
+    const blob = picked.blob ?? await this.loadWebPath(picked);
+    return new File([blob], picked.name, { type: picked.mimeType });
+  }
+
+  private async loadWebPath(picked: PickedFile): Promise<Blob> {
+    if (!picked.webPath) throw new Error('UploadService.loadWebPath: the picked file has neither blob nor webPath');
+    const response = await fetch(picked.webPath);
+    if (!response.ok) throw new Error(`UploadService.loadWebPath: the picked file could not be read (${response.status})`);
+    return response.blob();
   }
 
   // input.click() is intentionally outside the Promise constructor so it runs in
@@ -226,7 +241,7 @@ export class UploadService {
       });
     } catch (ex) {
       // user cancelling the picker is normal control flow, not an error
-      if (isPhotoCancellation(ex)) return undefined;
+      if (isPickerCancellation(ex)) return undefined;
       throw ex;
     }
   }
