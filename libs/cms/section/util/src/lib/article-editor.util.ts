@@ -211,7 +211,7 @@ export function joinWithAbove(blocks: ArticleBlock[], id: string): { blocks: Art
     const upperHtml = typeof above.html === 'string' ? above.html : '';
     const html = upperHtml + (typeof lower.html === 'string' ? lower.html : '');
     const htmlI18n = joinI18n({ html: upperHtml, htmlI18n: above.htmlI18n }, { html: typeof lower.html === 'string' ? lower.html : '', htmlI18n: lower.htmlI18n });
-    const { htmlI18n: _drop, ...rest } = above;
+    const { htmlI18n: _old, ...rest } = above;
     const joinedBlock = { ...rest, html, ...(htmlI18n ? { htmlI18n } : {}) };
     const next = removeBlock(replaceBlock(blocks, joinedBlock), id);
     return { blocks: next, id: above.id, upperHtml, joined: true };

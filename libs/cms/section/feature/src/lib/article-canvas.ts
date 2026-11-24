@@ -50,6 +50,8 @@ let canvases = 0;
  *   emitted, and a text being typed must get its own html back with the next rendering.
  * - `caret`: `{ id: change.selectedId, at: change.caret }` for a change that has one; it stays while typing. Undefined on undo, redo and `selectBlock`.
  * - After undo or redo it calls `focusSelected()`.
+ * - Any other change of the blocks (an upload that ends, undo) must be rendered before the canvas emits again: until the next rendering
+ *   the canvas goes on from the blocks it emitted last, so a second emission in the same frame overwrites such a change.
  *
  * Only reachable through the lazily loaded editor: not exported from the lib, never imported by what readers load.
  */
