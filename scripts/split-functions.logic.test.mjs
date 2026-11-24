@@ -4,7 +4,8 @@ import { createRequire } from 'node:module';
 import { readFileSync, rmSync, mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { comparableManifest, dispatcherSource, entryName, entrySource, INIT, inputDifference, internalImportsToRequire, lostEffects, planSplit, topLevelEffects } from './split-functions.logic.mjs';
+import { build, transformSync } from 'esbuild';
+import { cjsEntries, comparableManifest, dispatcherSource, entryName, entrySource, INIT, inputDifference, INTEROP, internalImportsToRequire, interopSource, lostEffects, planSplit, topLevelEffects } from './split-functions.logic.mjs';
 
 const MAIN = 'apps/functions/src/main.ts';
 const has = (f) => ['apps/functions/src/auth/index.ts', 'apps/functions/src/news.ts', 'apps/functions/src/a/b.ts', 'apps/functions/src/a-b.ts'].includes(f);
@@ -60,9 +61,42 @@ test('only dynamic imports of own files become a lazy require', () => {
   assert.equal(internalImportsToRequire('a(import("./fn-chunk-AB12.cjs"));import("pdfkit")'), 'a(Promise.resolve().then(()=>require("./fn-chunk-AB12.cjs")));import("pdfkit")');
 });
 
+test('a dynamic import of a bundled CommonJS package keeps its names', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'split-'));
+  try {
+    writeFileSync(join(dir, 'plain.cjs'), 'exports.PNG = class PNG {}; exports.n = 1;');
+    writeFileSync(join(dir, 'esm.cjs'), 'Object.defineProperty(exports, "__esModule", { value: true }); exports.default = () => 2; exports.x = 3;');
+    writeFileSync(join(dir, 'own.js'), 'export const y = 4; export default 5;');
+    writeFileSync(join(dir, 'a.js'), 'export const run = async () => [await import("./plain.cjs"), await import("./esm.cjs"), await import("./own.js")];');
+    const result = await build({ entryPoints: [join(dir, 'a.js')], outdir: dir, entryNames: 'fn-[name]', chunkNames: 'fn-chunk-[hash]', outExtension: { '.js': '.cjs' },
+      bundle: true, splitting: true, format: 'esm', platform: 'node', metafile: true, logLevel: 'error' });
+    const cjs = cjsEntries(result.metafile);
+    assert.equal(cjs.size, 2);
+    writeFileSync(join(dir, INTEROP), interopSource);
+    for (const o of Object.keys(result.metafile.outputs)) {
+      const path = join(dir, o.split('/').pop());
+      writeFileSync(path, internalImportsToRequire(transformSync(readFileSync(path, 'utf8'), { format: 'cjs', platform: 'node' }).code, cjs));
+    }
+    const [plain, esm, own] = await createRequire(import.meta.url)(join(dir, 'fn-a.cjs')).run();
+    assert.equal(typeof plain.PNG, 'function');
+    assert.equal(plain.default.n, 1);
+    assert.deepEqual([esm.default(), esm.x], [2, 3]);
+    assert.deepEqual([own.y, own.default], [4, 5]);
+  } finally { rmSync(dir, { recursive: true }); }
+});
+
 test('topLevelEffects finds calls, loops and conditions, not declarations', () => {
   assert.deepEqual(topLevelEffects(`'use strict'; import './x'; const a = f(); export function g() { h(); } class C {}`), []);
   assert.equal(topLevelEffects('register(1); if (x) y(); for (const a of b) c(a); try { d(); } catch {}').length, 4);
+});
+
+test('topLevelEffects finds effects hidden in declarations', () => {
+  for (const code of ['export const x = registerThing();', 'const _ = bindPort(p);', 'class A { static { go(); } }', 'class A { static r = installIt(); }', 'export default a.use(b);', "import 'polyfill';"]) {
+    assert.equal(topLevelEffects(code).length, 1, code);
+  }
+  for (const code of ['export const f = onCall(() => 1);', 'const s = defineSecret("X");', 'const u = settings.map(x);', "import './own';", 'class A { static r = 1; }']) {
+    assert.equal(topLevelEffects(code).length, 0, code);
+  }
 });
 
 test('lostEffects reports an unknown effect and a user without the file that sets it up', () => {
@@ -75,6 +109,9 @@ test('lostEffects reports an unknown effect and a user without the file that set
   assert.match(call(inputs([port]), { [binding]: { port } })[0], /user\.ts imports .*port\.ts but not/);
   assert.deepEqual(call(inputs([port, binding]), { [binding]: { port } }), []);
   assert.deepEqual(lostEffects({ inputs: inputs([port, binding]), emits: () => false, readFile: (f) => files[f], known: {} }), []);
+  assert.match(call(inputs([port, binding]), { [binding]: { port: 'renamed.ts' } })[0], /renamed\.ts, which is not in the bundle/);
+  assert.match(call(inputs([port, binding]), { [binding]: 'own', 'gone.ts': 'own' })[0], /gone\.ts, which is not in the bundle/);
+  assert.match(call(inputs([port, binding]), { [binding]: 'own', [port]: 'own' })[0], /no effect any more/);
 });
 
 test('comparisons ignore order but not content', () => {

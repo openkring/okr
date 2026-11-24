@@ -37,8 +37,7 @@ const DEFAULT_ALLOWED_ORIGINS = [
   'https://scs-app-54aef.web.app',
   'https://scs-app-54aef.firebaseapp.com',
   // Production custom domains of the tenant marketing sites that call this API
-  // from the browser (their bundled /web pages). Mirrors the trusted domains in
-  // main.ts. Additional/temporary origins can still be added via PUBLIC_API_ALLOWED_ORIGINS.
+  // from the browser (their bundled /web pages). Additional/temporary origins can still be added via PUBLIC_API_ALLOWED_ORIGINS.
   'https://seeclub.org',
   // Die eigene Hosting-Site der scs-Website (1.153): Domain www.seeclub.org und die
   // Firebase-Default-URLs (zum Testen, bevor die Domain gemappt ist).

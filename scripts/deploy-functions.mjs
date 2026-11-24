@@ -58,6 +58,7 @@ const verifiedPath = join(repoRoot, 'scripts/functions-pnpm-verified.json');
 const MAIN = 'apps/functions/src/main.ts';
 const PROJECT = JSON.parse(readFileSync(join(repoRoot, '.firebaserc'), 'utf8')).projects?.default;
 const STATE = 'function-deploy-state';
+const SPLIT_FILES = ['scripts/split-functions.mjs', 'scripts/split-functions.logic.mjs'];   // they shape every deployed file
 
 // Silence the DEP0040 "punycode is deprecated" warning from firebase-tools. Node >= 21.3.
 process.env.NODE_OPTIONS = ['--disable-warning=DEP0040', process.env.NODE_OPTIONS].filter(Boolean).join(' ');
@@ -242,7 +243,7 @@ const globalHash = sha(stableStringify({
   pin, node: distPkg.engines?.node,
   firebase: JSON.parse(readFile('firebase.json')).functions,
   assets: dirHash(join(repoRoot, 'apps/functions/src/assets')),
-  split: ['scripts/split-functions.mjs', 'scripts/split-functions.logic.mjs'].map((f) => sha(transformSync(readFile(f), { loader: 'js', minifyWhitespace: true, legalComments: 'none' }).code)),
+  split: SPLIT_FILES.map((f) => sha(transformSync(readFile(f), { loader: 'js', minifyWhitespace: true, legalComments: 'none' }).code)),
   params: manifest.params ?? [], requiredAPIs: manifest.requiredAPIs ?? [],
 }));
 
@@ -286,7 +287,7 @@ const record = (name, liveFn, extra = {}) => ({
 if (ADOPT) {
   const times = new Map();
   let current = null;
-  for (const line of capture('git', ['log', '--format=%x01%cI', '--name-only', '--', 'apps/functions', 'libs', 'pnpm-lock.yaml', 'scripts/functions-pnpm-verified.json']).split('\n')) {
+  for (const line of capture('git', ['log', '--format=%x01%cI', '--name-only', '--', 'apps/functions', 'libs', 'pnpm-lock.yaml', 'scripts/functions-pnpm-verified.json', ...SPLIT_FILES]).split('\n')) {
     if (line.startsWith('\x01')) current = line.slice(1);
     else if (line && !times.has(line)) times.set(line, current);
   }
@@ -297,7 +298,7 @@ if (ADOPT) {
   plan.deploy = plan.deploy.filter(({ name, reasons }) => {
     if (named.length || ALL || !reasons.every((r) => SOFT.has(r))) return true;
     // Files that emit no code (types, tree-shaken) cannot make a deployed revision stale.
-    const files = [...closures[name]].filter((f) => f !== MAIN && fileHash(f) !== 'no-runtime-code').concat(['scripts/functions-pnpm-verified.json']);
+    const files = [...closures[name]].filter((f) => f !== MAIN && fileHash(f) !== 'no-runtime-code').concat(['scripts/functions-pnpm-verified.json', ...SPLIT_FILES]);
     if (!adoptable({ updateTime: live[name]?.updateTime, files, lastChange, dirty: new Set([...dirtyFiles].filter((f) => f !== MAIN)) })) return true;
     adopted[name] = record(name, live[name], { adopted: true });
     plan.adopted.push(name);

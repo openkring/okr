@@ -32,8 +32,8 @@ let h5: H5Module | undefined;
 let projection: { key: string; value: RadarProjection } | undefined;
 
 /**
- * Loaded on first use, never at module scope: every Cloud Function shares one `main.cjs`, and
- * h5wasm carries a 4 MB embedded WebAssembly build that no other function needs. The package is
+ * Loaded on first use, never at module scope: h5wasm carries a 4 MB embedded WebAssembly build that
+ * no other function needs. The package is
  * also `external` in apps/functions/project.json, so it is not bundled at all.
  */
 async function loadH5(): Promise<H5Module> {

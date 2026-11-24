@@ -2,7 +2,8 @@
 //
 // Binds the Postversand credit port (credit-port.ts) to the real prepaid credit of spec 1.149. Kept apart from
 // credit-port.ts on purpose: this file pulls in firebase-admin and the credit ledger, which the pure port and its
-// specs must stay free of. Imported once, for its side effect, from pingen/index.ts.
+// specs must stay free of. Imported, for its side effect, by every file that calls `getCreditPort()`: a function loads only
+// its own modules, and scripts/split-functions.mjs checks it.
 import { getFirestore } from 'firebase-admin/firestore';
 import type { Firestore } from 'firebase-admin/firestore';
 import { CreditAccountCollection } from '@okr/shared-models';

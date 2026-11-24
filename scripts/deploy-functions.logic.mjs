@@ -1,6 +1,6 @@
 // Pure logic for scripts/deploy-functions.mjs: which Cloud Functions changed since their last deploy.
 //
-// All functions ship as ONE esbuild bundle, so firebase-tools' own "skip unchanged" hash (whole
+// All functions ship in ONE directory, so firebase-tools' own "skip unchanged" hash (whole
 // packaged source) changes for every function on every edit. Instead we hash, per exported
 // function, only what that function can reach:
 //
@@ -12,8 +12,7 @@
 //   - a global part every function shares (init.ts closure, main.ts outside its export lines,
 //     build options, pnpm pin, assets).
 //
-// Top-level code in a module runs in every function instance (one bundle). Code there that
-// changes the behaviour of OTHER functions belongs in init.ts (part of the global hash).
+// Each function loads its own modules only (split-functions.mjs): code for all functions belongs in init.ts.
 import { createHash } from 'node:crypto';
 import ts from 'typescript';
 

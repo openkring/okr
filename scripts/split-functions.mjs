@@ -9,7 +9,8 @@ import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
 import { build, transformSync } from 'esbuild';
 import { stableStringify } from './deploy-functions.logic.mjs';
-import { comparableManifest, dispatcherSource, entryName, entrySource, INIT, inputDifference, internalImportsToRequire, lostEffects, planSplit, PREFIX } from './split-functions.logic.mjs';
+import { cjsEntries, comparableManifest, dispatcherSource, entryName, entrySource, INIT, inputDifference, INTEROP, internalImportsToRequire, interopSource, lostEffects,
+  planSplit, PREFIX } from './split-functions.logic.mjs';
 
 const MAIN = 'apps/functions/src/main.ts';
 const run = promisify(execFile);
@@ -47,9 +48,13 @@ async function loadAlone(distDir, modules, project) {
 
 /**
  * Replaces distDir/main.cjs by the split files. `manifest` = what the one bundle reported; the split must report the same.
- * Throws (leaving nothing deployable) when anything differs.
+ * Throws when anything differs, and then removes main.cjs so that nothing can be deployed by hand either.
  */
-export async function splitFunctions({ repoRoot, distDir, meta, manifest, project }) {
+export async function splitFunctions(options) {
+  try { return await split(options); } catch (e) { rmSync(join(options.distDir, 'main.cjs'), { force: true }); throw e; }
+}
+
+async function split({ repoRoot, distDir, meta, manifest, project }) {
   const readFile = (f) => readFileSync(join(repoRoot, f), 'utf8');
   const has = (f) => f in meta.inputs;
   const outputInputs = Object.values(meta.outputs)[0]?.inputs ?? {};
@@ -83,22 +88,26 @@ export async function splitFunctions({ repoRoot, distDir, meta, manifest, projec
 
   // The same source files as in the one bundle, or the change detection would look at the wrong ones.
   const bundled = new Set(Object.keys(outputInputs).filter((f) => f !== MAIN && outputInputs[f].bytesInOutput));
-  const split = new Set();
-  for (const o of Object.values(result.metafile.outputs)) for (const [f, i] of Object.entries(o.inputs)) if (i.bytesInOutput && !f.startsWith('split:')) split.add(f);
+  const inFiles = new Set();
+  for (const o of Object.values(result.metafile.outputs)) for (const [f, i] of Object.entries(o.inputs)) if (i.bytesInOutput && !f.startsWith('split:')) inFiles.add(f);
   // Packages may differ: esbuild keeps more of a CommonJS package when it is shared between files.
-  const diff = inputDifference(bundled, split);
+  const diff = inputDifference(bundled, inFiles);
   const own = [...diff.missing, ...diff.extra].filter((f) => !f.includes('node_modules/'));
   if (own.length || diff.missing.length) throw new Error(`The split files are not built from the same sources as the one bundle: ${[...new Set([...own, ...diff.missing])].slice(0, 10).join(', ')}`);
 
-  // ESM is the only format esbuild can split; the functions stay CommonJS.
+  // ESM is the only format esbuild can split; the functions stay CommonJS, and strict as ESM and the one bundle are.
+  const cjs = cjsEntries(result.metafile);
   const files = readdirSync(distDir).filter((f) => f.startsWith(PREFIX) && f.endsWith('.cjs'));
   for (const f of files) {
     const path = join(distDir, f);
-    const { code } = transformSync(readFileSync(path, 'utf8'), { format: 'cjs', platform: 'node', target: 'node22', loader: 'js', minifyWhitespace: true, legalComments: 'none' });
-    const out = internalImportsToRequire(code);
+    const { code } = transformSync(readFileSync(path, 'utf8'), { format: 'cjs', platform: 'node', target: 'node22', loader: 'js', minifyWhitespace: true, legalComments: 'none',
+      tsconfigRaw: { compilerOptions: { alwaysStrict: true } } });
+    if (!code.startsWith('"use strict"')) throw new Error(`${f} is not strict`);
+    const out = internalImportsToRequire(code, cjs);
     if (/\bimport\(["']\.\//.test(out)) throw new Error(`${f}: a dynamic import of an own file is left`);
     writeFileSync(path, out);
   }
+  writeFileSync(join(distDir, INTEROP), interopSource);
   writeFileSync(join(distDir, 'main.cjs'), dispatcherSource(modules));
 
   // Same functions, same settings.

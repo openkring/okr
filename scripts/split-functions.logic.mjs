@@ -71,22 +71,59 @@ export function dispatcherSource(modules) {
     ...lines.map(([, l]) => l), ''].join('\n');
 }
 
+/** File of the helper that internalImportsToRequire uses. */
+export const INTEROP = `${PREFIX}interop.cjs`;
+
+/** What a dynamic import of a bundled CommonJS package hands out in one bundle: its exports as names, plus `default`. */
+export const interopSource = `"use strict";
+module.exports = (mod) => {
+  const ns = Object.create(mod == null ? {} : Object.getPrototypeOf(mod));
+  if (!mod || !mod.__esModule) Object.defineProperty(ns, "default", { value: mod, enumerable: true });
+  if (mod && (typeof mod === "object" || typeof mod === "function")) for (const key of Object.getOwnPropertyNames(mod)) {
+    if (!Object.prototype.hasOwnProperty.call(ns, key)) Object.defineProperty(ns, key, { get: () => mod[key], enumerable: Object.getOwnPropertyDescriptor(mod, key).enumerable });
+  }
+  return ns;
+};
+`;
+
 /**
  * Inside our own files a dynamic import must stay what it was in one bundle: a lazy require. Node's import() of a
  * CommonJS file would hand out `module.exports` as `default`. Imports of packages stay import().
+ * cjsFiles: the files that hold a bundled CommonJS package; esbuild gives them a `default` export only.
  */
-export function internalImportsToRequire(code) {
-  return code.replace(/\bimport\((["'])(\.\/fn-[^"']+\.cjs)\1\)/g, 'Promise.resolve().then(()=>require("$2"))');
+export function internalImportsToRequire(code, cjsFiles = new Set()) {
+  return code.replace(/\bimport\((["'])\.\/(fn-[^"']+\.cjs)\1\)/g, (_, _quote, file) => (cjsFiles.has(file)
+    ? `Promise.resolve().then(()=>require("./${INTEROP}")(require("./${file}").default))`
+    : `Promise.resolve().then(()=>require("./${file}"))`));
 }
 
-/** Top-level statements that do something (calls, loops, conditions), not declarations. */
+/** The files of a split metafile that are the target of a dynamic import of a CommonJS package. */
+export function cjsEntries({ outputs, inputs }) {
+  return new Set(Object.entries(outputs).filter(([, o]) => o.entryPoint && inputs[o.entryPoint]?.format === 'cjs').map(([path]) => path.split('/').pop()));
+}
+
+/** Names of functions that set something up elsewhere: `const unused = registerX()` is as much an effect as `registerX()`. */
+const SETS_UP = /^(register|bind|install|extend|configure|patch|set|use)([A-Z]|$)/;
+
+/** Top-level code that does something, not only declares: calls, loops, conditions, static blocks, bare package imports. */
 export function topLevelEffects(text, file = 'x.ts') {
   const sf = ts.createSourceFile(file, text, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
-  const harmless = (st) => ts.isExpressionStatement(st) && ts.isStringLiteral(st.expression); // 'use strict'
-  return sf.statements
-    .filter((st) => (ts.isExpressionStatement(st) || ts.isIfStatement(st) || ts.isTryStatement(st) || ts.isBlock(st) || ts.isSwitchStatement(st)
-      || ts.isIterationStatement(st, false)) && !harmless(st))
-    .map((st) => st.getText(sf).replace(/\s+/g, ' ').slice(0, 100));
+  const callee = (e) => {
+    while (e && (ts.isParenthesizedExpression(e) || ts.isAsExpression(e) || ts.isNonNullExpression(e) || ts.isSatisfiesExpression(e))) e = e.expression;
+    return e && ts.isCallExpression(e) ? e.expression.getText(sf).split('.').pop() : undefined;
+  };
+  const setsUp = (e) => SETS_UP.test(callee(e) ?? '');
+  const isEffect = (st) => {
+    if (ts.isExpressionStatement(st)) return !ts.isStringLiteral(st.expression); // 'use strict'
+    if (ts.isIfStatement(st) || ts.isTryStatement(st) || ts.isBlock(st) || ts.isSwitchStatement(st) || ts.isIterationStatement(st, false)) return true;
+    if (ts.isImportDeclaration(st)) return !st.importClause && !st.moduleSpecifier.text.startsWith('.');
+    if (ts.isExportAssignment(st)) return setsUp(st.expression);
+    if (ts.isVariableStatement(st)) return st.declarationList.declarations.some((d) => setsUp(d.initializer));
+    if (ts.isClassDeclaration(st)) return st.members.some((m) => ts.isClassStaticBlockDeclaration(m) || (ts.isPropertyDeclaration(m)
+      && m.modifiers?.some((x) => x.kind === ts.SyntaxKind.StaticKeyword) && setsUp(m.initializer)));
+    return false;
+  };
+  return sf.statements.filter(isEffect).map((st) => st.getText(sf).replace(/\s+/g, ' ').slice(0, 100));
 }
 
 /**
@@ -101,7 +138,11 @@ export function lostEffects({ inputs, emits, readFile, known = TOP_LEVEL_EFFECTS
     if (effects.length && !known[file]) problems.push(`${file} has an effect when it is loaded (${effects[0]}). A function that does not import it misses it.`);
   }
   for (const [file, kind] of Object.entries(known)) {
-    if (typeof kind !== 'object' || !inputs[file]) continue;
+    // A renamed file would silently switch its check off.
+    if (!inputs[file]) { problems.push(`TOP_LEVEL_EFFECTS lists ${file}, which is not in the bundle.`); continue; }
+    if (!topLevelEffects(readFile(file), file).length) problems.push(`TOP_LEVEL_EFFECTS lists ${file}, which has no effect any more.`);
+    if (typeof kind !== 'object') continue;
+    if (!inputs[kind.port]) { problems.push(`TOP_LEVEL_EFFECTS lists ${kind.port}, which is not in the bundle.`); continue; }
     for (const [user, { imports = [] }] of Object.entries(inputs)) {
       if (user === file || !imports.some((i) => i.path === kind.port)) continue;
       if (!imports.some((i) => i.path === file)) problems.push(`${user} imports ${kind.port} but not ${file}, which sets it up.`);
