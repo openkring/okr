@@ -1,7 +1,4 @@
 import './init'; // Import the initialization logic to ensure Firebase Admin SDK is initialized
-import express, { Express } from 'express';
-import cors from 'cors';
-import * as functions from 'firebase-functions'; // needed for logger
 
 import * as Test from './test';
 import * as Address from './address';
@@ -66,42 +63,10 @@ import * as Content from './content';
 import * as Contract from './contract';
 import * as Journal from './journal';
 
-// firebase app hosting requires a webserver. It does not automatically discover exported functions.
-//      the webserver is started in apphosting.yaml
-//      nx build functions; firebase deploy  
-//      the functions are available under https://<your-project-id>.web.app/echo
-// firebase emulator and traditional firebase deploy --only functions automatically discover exported functions.
-//      for local development:   firebase emulators:start --only functions
+// For local development: firebase emulators:start --only functions
 
-// in AppHosting, we start an Express server
-const app: Express = express();
-
-// Enable CORS for requests from your local development server and hosting domains
-app.use(cors({ 
-  origin: [
-    'http://localhost:4200',
-    'http://localhost:4201',
-    'https://scs-app-54aef.web.app',
-    'https://scs-app-54aef.firebaseapp.com',
-    'https://bkaiser-org.web.app',
-    'https://bkaiser-org.firebaseapp.com',
-    'https://seeclub.org',
-    'https://www.seeclub.org',
-    'https://scs-website-54aef.web.app',
-    'https://scs-website-54aef.firebaseapp.com',
-    'https://bkaiser.ch',
-    'https://bkaiser.com',
-    'https://bkaiser.org',
-    'https://p13.ch',
-    'https://kwa.ch',
-    'https://silcrest7.ch'
-  ] 
-}));
-
-
-export { app };
-
-functions.logger.info('[Emulator/Direct] functions are exported directly.');
+// This file only imports and re-exports: each function loads its own modules only (scripts/split-functions.mjs).
+// Code that every function needs belongs in init.ts.
 
 // auth
 export const createCustomToken = Auth.createCustomToken; // uid

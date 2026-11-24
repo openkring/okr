@@ -2,7 +2,7 @@
 // Deploy Cloud Functions through the Cloud Build buildpack — only those whose code changed since
 // their last deploy — with a pnpm-pin safety canary and a per-function result.
 //
-// WHAT IS DEPLOYED. All functions ship as one esbuild bundle, so firebase-tools' own skip hash
+// WHAT IS DEPLOYED. All functions ship in one directory, so firebase-tools' own skip hash
 // changes for every function on every edit. scripts/deploy-functions.logic.mjs hashes each
 // function's own closure instead (defining file + everything it imports, static or dynamic;
 // external package versions; its endpoint config; the shared init/build setup). A function is
@@ -10,6 +10,11 @@
 // `function-deploy-state/{name}`), when it is new, not ACTIVE, has no record, was deployed by
 // something else since (firebase's own hash label moved), or pins an older version of a secret
 // than the latest. Live functions missing from the source are listed, never deleted.
+//
+// LOADING. After the build, scripts/split-functions.mjs replaces the one bundle by one file per function module, so an
+// instance loads only what its function needs (115 instead of 220 MB). It compares the endpoints with those of the one
+// bundle, loads every module on its own, and stops the deploy when anything differs. The hashes below are computed from
+// the metafile of the one bundle.
 //
 // HOW. Batches (default 20) with a pause in between; after each batch the live functions are read
 // back and only those with a fresh ACTIVE revision count as deployed (the CLI exits 0 even when
@@ -43,6 +48,7 @@ import { existsSync, readdirSync, readFileSync, renameSync, statSync, writeFileS
 import { fileURLToPath } from 'node:url';
 import { dirname, join, relative } from 'node:path';
 import { transformSync } from 'esbuild';
+import { readManifest, splitFunctions } from './split-functions.mjs';
 import { adoptable, batches, closure, deployedSince, functionHash, globalRoots, mainSkeleton, planDeploy, resolveDefinition,
   resolveSpecifier, runtimeHash, sha, stableStringify, parseExports } from './deploy-functions.logic.mjs';
 
@@ -194,16 +200,13 @@ try {
 // ---- 2. Hash every function ---------------------------------------------------------------------
 console.log('\nAnalysing which functions changed…');
 const manifestPath = join(repoRoot, 'dist/functions-manifest.json');
-run('node', [join(distDir, 'node_modules/firebase-functions/lib/bin/firebase-functions.js'), '.'], {
-  cwd: distDir, stdio: ['ignore', 'ignore', 'pipe'],
-  env: { ...process.env, GCLOUD_PROJECT: PROJECT, FUNCTIONS_MANIFEST_OUTPUT_PATH: manifestPath },
-});
-const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
-const { inputs } = JSON.parse(readFileSync(metaPath, 'utf8'));
+const manifest = readManifest(distDir, manifestPath, PROJECT);
+const meta = JSON.parse(readFileSync(metaPath, 'utf8'));
+const { inputs } = meta;
 const has = (f) => f in inputs;
 const readFile = (f) => readFileSync(join(repoRoot, f), 'utf8');
 
-const outputInputs = Object.values(JSON.parse(readFileSync(metaPath, 'utf8')).outputs)[0]?.inputs ?? {};
+const outputInputs = Object.values(meta.outputs)[0]?.inputs ?? {};
 const transform = (text, path) => transformSync(text, {
   loader: path.endsWith('.tsx') ? 'tsx' : path.endsWith('.ts') ? 'ts' : 'js', minifyWhitespace: true, legalComments: 'none',
   tsconfigRaw: { compilerOptions: { experimentalDecorators: true } },
@@ -239,8 +242,15 @@ const globalHash = sha(stableStringify({
   pin, node: distPkg.engines?.node,
   firebase: JSON.parse(readFile('firebase.json')).functions,
   assets: dirHash(join(repoRoot, 'apps/functions/src/assets')),
+  split: ['scripts/split-functions.mjs', 'scripts/split-functions.logic.mjs'].map((f) => sha(transformSync(readFile(f), { loader: 'js', minifyWhitespace: true, legalComments: 'none' }).code)),
   params: manifest.params ?? [], requiredAPIs: manifest.requiredAPIs ?? [],
 }));
+
+// ---- 2b. One file per function module -----------------------------------------------------------
+console.log('Splitting the bundle and loading every module on its own…');
+let split;
+try { split = await splitFunctions({ repoRoot, distDir, meta, manifest, project: PROJECT }); } catch (e) { abort(e.message); }
+console.log(`  ${split.modules} modules, ${split.files} files, ${(split.bytes / 1048576).toFixed(1)} MB; highest memory after loading: ${split.max.rss} MB (${split.max.file})`);
 
 const local = {};
 const closures = {};
