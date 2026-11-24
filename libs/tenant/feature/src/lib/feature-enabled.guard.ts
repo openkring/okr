@@ -1,4 +1,4 @@
-import { inject } from '@angular/core';
+import { computed, inject } from '@angular/core';
 import { toObservable } from '@angular/core/rxjs-interop';
 import { Router, type CanActivateFn } from '@angular/router';
 import { race, timer } from 'rxjs';
@@ -15,6 +15,8 @@ import { FeatureStore } from './feature.store';
  * distinction, which would leak which features exist to a tenant that may not have them.
  * A rootUrl whose own block is off redirected to itself for ever: `featureOffUrl` opens the welcome
  * page instead, and the «page not found» screen when the block behind the welcome page is off too.
+ * A signed-out visitor at that rootUrl goes to the login and comes back after it: a block the operator opened for
+ * this tenant only (`beta`) is off for them because they cannot read the rollouts, not because it is off.
  *
  * WHY THIS WAITS. `FeatureStore.effective()` is derived from two asynchronous sources
  * (`app-config`'s `enabledFeatures` and the `feature-rollout` stream) and answers even before
@@ -24,6 +26,10 @@ import { FeatureStore } from './feature.store';
  * reload that lands during the load window. `FeatureStore.settled` says when the set is real,
  * and this guard holds activation until it is. Same shape as `isAppReadyGuard`
  * (`@okr/auth-feature`), deliberately: an Observable that emits exactly once and completes.
+ *
+ * WHY A REFUSED VISITOR WAITS FOR `app-config` TOO. `settled` does not (see there), so a signed-out reload of the start
+ * page would be compared with the class default of `rootUrl` and open the welcome page. Only the refusal needs the
+ * config; an open page stays immediate.
  *
  * WHY THE `race` WITH A TIMER — and why `AppStore.readinessTimedOut` is NOT enough on its own.
  * That watchdog arms only while `authed && !isDataReady()` and RESETS to false the moment
@@ -55,14 +61,17 @@ export function isFeatureEnabledGuard(blockId: string): CanActivateFn {
     const appStore = inject(AppStore);
     const router = inject(Router);
 
+    const isVerdictKnown = computed(() => featureStore.settled()
+      && (featureStore.effective().has(blockId) || appStore.fbUser() !== null || appStore.isAppConfigSettled()));
+
     return race(
-      toObservable(featureStore.settled).pipe(filter(Boolean), take(1)),
+      toObservable(isVerdictKnown).pipe(filter(Boolean), take(1)),
       timer(READINESS_TIMEOUT_MS),
     ).pipe(
       take(1),
       map(() => featureStore.effective().has(blockId)
         ? true
-        : router.parseUrl(featureOffUrl(normalizedRootUrl(router, appStore.appConfig()?.rootUrl), state.url))),
+        : router.parseUrl(featureOffUrl(normalizedRootUrl(router, appStore.appConfig()?.rootUrl), state.url, appStore.fbUser() === null))),
     );
   };
 }

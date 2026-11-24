@@ -120,6 +120,9 @@ export const WELCOME_URL = '/public/welcome';
  */
 export const UNKNOWN_PAGE_URL = '/notfound';
 
+/** Where a signed-out visitor signs in; reads `returnUrl` (`getSafeReturnUrl`). The same page `isAuthenticatedGuard` opens. */
+export const LOGIN_URL = '/auth/login';
+
 /** The path of an in-app url, decoded (the router hands out encoded urls), without query, fragment and trailing slash; '' for '/'. */
 function pathOf(url: string | undefined | null): string {
   const path = (url ?? '').trim().split(/[?#]/)[0].replace(/\/+$/, '');
@@ -157,7 +160,17 @@ export function safeRootUrl(rootUrl: string | undefined | null, currentUrl?: str
  * Where the feature guard sends a url whose block is off: the tenant's `rootUrl`, the welcome page when that is the url
  * itself, and from the welcome page always `UNKNOWN_PAGE_URL`. The last rule ends the chain: going back to a `rootUrl`
  * whose block is off too would be a loop of two.
+ *
+ * A signed-out visitor is refused a `beta` block that is on for the tenant, so at the start page they get the login
+ * instead of the welcome page, and come back after it. Not from the login itself (its block may be off too): that one
+ * goes on to the welcome page, never back to the start page which would ask for the login again.
  */
-export function featureOffUrl(rootUrl: string | undefined | null, currentUrl: string | undefined | null): string {
-  return pathOf(currentUrl) === WELCOME_URL ? UNKNOWN_PAGE_URL : safeRootUrl(rootUrl, currentUrl);
+export function featureOffUrl(rootUrl: string | undefined | null, currentUrl: string | undefined | null, isSignedOut = false): string {
+  const path = pathOf(currentUrl);
+  if (path === WELCOME_URL) return UNKNOWN_PAGE_URL;
+  if (isSignedOut && path === LOGIN_URL) return WELCOME_URL;
+  const url = safeRootUrl(rootUrl, currentUrl);
+  // a usable start page that only the current url rules out: the current page is the start page, or below it
+  const isStartPage = url === WELCOME_URL && safeRootUrl(rootUrl) !== WELCOME_URL;
+  return isSignedOut && isStartPage ? `${LOGIN_URL}?returnUrl=${encodeURIComponent(currentUrl ?? '')}` : url;
 }

@@ -1,9 +1,13 @@
 import { computed, inject } from '@angular/core';
 import { signalStore, withComputed, withProps } from '@ngrx/signals';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { catchError, map, of, switchMap, type Observable } from 'rxjs';
 import { AppStore } from '@okr/shared-feature';
+import type { FeatureRolloutModel } from '@okr/shared-models';
 import { FeatureRolloutService } from '@okr/tenant-data-access';
 import { FEATURE_BLOCKS, effectiveFeatures, hiddenKeySet } from '@okr/tenant-util';
+
+interface RolloutRead { uid: string; rollouts: FeatureRolloutModel[]; }
 
 /**
  * The runtime answer to "is this block on for this tenant?" — catalogue ∩ rollout ∩
@@ -26,11 +30,43 @@ export const FeatureStore = signalStore(
   { providedIn: 'root' },
   withProps(() => ({
     _appStore: inject(AppStore),
-    // `initialValue: undefined`, NOT `[]`: `[]` is a legitimate loaded value ("no rollout doc
-    // exists, use every block's catalogue default") and cannot be told apart from "the stream
-    // has not emitted yet". `settled` below needs exactly that distinction, so the
-    // not-yet-emitted state gets its own value and `effective` coalesces it away.
-    _rollouts: toSignal(inject(FeatureRolloutService).list(), { initialValue: undefined }),
+    _rolloutService: inject(FeatureRolloutService),
+  })),
+  withComputed(store => ({
+    _uid: computed(() => store._appStore.fbUser()?.uid),
+  })),
+  withProps(store => ({
+    /**
+     * The rollout list, and WHOSE read it is. Read per signed-in user, never for a visitor: the collection is
+     * `signedIn()`-only, and a listen attached before the sign-in is denied, settles on `[]`, ends, and is not
+     * re-attached — so a `beta` block stayed off until a reload (1.174).
+     *
+     * The uid travels with the list so that `_rollouts` below knows a list of somebody else (or of nobody) for what it
+     * is in the very moment the user changes. Re-reading alone would not do: the stream switches in an effect, and a
+     * guard that runs before it would still decide on the old list.
+     */
+    _rolloutRead: toSignal(
+      toObservable(store._uid).pipe(
+        switchMap((uid): Observable<RolloutRead | undefined> => uid === undefined ? of(undefined) : store._rolloutService.list().pipe(
+          // `FirestoreService` settles a failed listen on `[]` itself; an error that comes through all the same must
+          // neither re-throw in every read of this store nor end the reading for the next user.
+          catchError(err => {
+            console.error('FeatureStore: cannot read the rollouts', err);
+            return of<FeatureRolloutModel[]>([]);
+          }),
+          map(rollouts => ({ uid, rollouts })),
+        )),
+      ),
+      { initialValue: undefined },
+    ),
+  })),
+  withComputed(store => ({
+    // `undefined` = not read yet, NOT `[]`: `[]` is a legitimate loaded value ("no rollout doc exists, use every
+    // block's catalogue default"). `settled` below needs exactly that distinction.
+    _rollouts: computed(() => {
+      const read = store._rolloutRead();
+      return read !== undefined && read.uid === store._uid() ? read.rollouts : undefined;
+    }),
   })),
   withComputed(store => ({
     effective: computed(() => effectiveFeatures({
@@ -55,12 +91,9 @@ export const FeatureStore = signalStore(
      *
      * ANONYMOUS IS SETTLED BY DEFINITION — the first clause, and load-bearing.
      * `firestore.rules` allows reading `feature-rollout` only `if signedIn()`, so a signed-out
-     * visitor's rollout read is denied; it reaches this store as `[]` only because
-     * `FirestoreService.searchData` swallows stream errors — i.e. after a failed round trip,
-     * or never if the device is offline. Waiting on that source would hang every PUBLIC
+     * visitor's rollouts are not read at all. Waiting on that source would hang every PUBLIC
      * route (this guard is prepended to every block's fragments, including `core: true` ones).
-     * This clause therefore converts today's ACCIDENTAL anonymous fail-open into a DOCUMENTED
-     * decision: rollout documents have no effect on public routes. Changing that would mean relaxing
+     * It is a decision: rollout documents have no effect on public routes. Changing that would mean relaxing
      * `firestore.rules`' `feature-rollout` read to allow anonymous reads, which would make the
      * operator-authored `reason` prose world-readable — an owner decision, not this store's.
      * App-config is not waited for here either, although `AppStore.appConfigResource` loads it
@@ -69,6 +102,8 @@ export const FeatureStore = signalStore(
      *
      * `fbUser()` is tri-state: `undefined` while auth is still restoring (NOT settled — a
      * returning user's session is about to resolve), `null` signed out, a `User` signed in.
+     * Signing in inside the app therefore UNsettles the store until that user's rollouts are read
+     * (and app-config has settled); signing out settles it at once, on the catalogue defaults.
      *
      * The `readinessTimedOut` clause is the same watchdog `isAppReady` uses, and it covers
      * exactly one case: the whole session is stalled (the user doc never loaded either), the

@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { StartPage } from '@okr/shared-models';
 
 import {
-  featureOffUrl, isDepartureEmergencyAvailable, isOnDepartureTrip, isStartPageAvailable, resolveStartUrl, resolveUserStartUrl, safeRootUrl,
+  featureOffUrl, isDepartureEmergencyAvailable, isOnDepartureTrip, isStartPageAvailable, LOGIN_URL, resolveStartUrl, resolveUserStartUrl, safeRootUrl,
   shouldJumpToEmergency, START_PAGE_URLS, UNKNOWN_PAGE_URL, WELCOME_URL,
 } from './start-page.util';
 
@@ -164,5 +164,62 @@ describe('featureOffUrl', () => {
       for (let hop = 0; hop < 4 && url !== UNKNOWN_PAGE_URL; hop++) url = featureOffUrl(root, url);
       expect(url).toBe(UNKNOWN_PAGE_URL);
     }
+  });
+
+  describe('for a signed-out visitor', () => {
+    const STARTS = ['/diary/all/c-diary', '/private/dashboard/c-contentpage', '/public/welcome_la21staefa', '/person/all/c-persons?filters=search'];
+
+    it('opens the login instead of the welcome page when the start page itself is refused, and comes back to it', () => {
+      for (const root of STARTS) {
+        expect(featureOffUrl(root, root, true), root).toBe(`${LOGIN_URL}?returnUrl=${encodeURIComponent(root)}`);
+        expect(featureOffUrl(root, root, false), root).toBe(WELCOME_URL);
+        expect(featureOffUrl(root, root), root).toBe(WELCOME_URL);
+      }
+    });
+    it('keeps the query and the deeper page that was asked for', () => {
+      expect(featureOffUrl('/a', '/a/b?x=1&y=/z', true)).toBe('/auth/login?returnUrl=%2Fa%2Fb%3Fx%3D1%26y%3D%2Fz');
+    });
+    it('still goes to the start page from any other page', () => {
+      expect(featureOffUrl('/a/b', '/quiz', true)).toBe('/a/b');
+      expect(featureOffUrl('/private/a', '/private/ab', true)).toBe('/private/a');
+      expect(featureOffUrl(undefined, '/quiz', true)).toBe(WELCOME_URL);
+    });
+    it('does not ask for a sign-in on the welcome page, which is off for everyone then', () => {
+      expect(featureOffUrl('/public/welcome', '/public/welcome', true)).toBe(UNKNOWN_PAGE_URL);
+      expect(featureOffUrl('/a/b', '/public/welcome', true)).toBe(UNKNOWN_PAGE_URL);
+      expect(featureOffUrl(undefined, '/public/welcome/c-contentpage', true)).toBe(WELCOME_URL);
+    });
+    it('leaves the login page when that one is off too, never back to the start page', () => {
+      for (const current of ['/auth/login', '/auth/login/', '/auth/login?returnUrl=%2Fa%2Fb']) {
+        for (const root of ['/a/b', '/auth/login', '/auth', undefined]) expect(featureOffUrl(root, current, true), `${root}`).toBe(WELCOME_URL);
+      }
+    });
+  });
+
+  // the router in small: the pages that are off redirect, a private page sends a signed-out visitor to the login
+  it('ends for every start page, whatever is off and whoever asks', () => {
+    const roots = [
+      undefined, '/', '/diary/all/c-diary', '/private/dashboard/c-contentpage', '/public/welcome_la21staefa', '/person/all/c-persons?filters=search',
+      '/public/welcome', '/public/welcome/c-contentpage', '/auth/login', '/auth', '/auth/logout', '/accounting/report',
+    ];
+    const starts = ['/', '/quiz', '/diary/day/1', '/private/x', '/public/welcome', '/auth/login', '/accounting/report/c-report'];
+    const blocks = ['diary', 'private', 'public', 'person', 'auth', 'quiz', 'accounting'];
+    for (const root of roots) for (const start of [...starts, ...(root ? [root] : [])]) for (const signedOut of [true, false]) {
+      for (let mask = 0; mask < 1 << blocks.length; mask++) {
+        const off = blocks.filter((_, i) => mask & (1 << i));
+        let url = start;
+        let open = false;
+        for (let hop = 0; hop < 6 && !open; hop++) {
+          if (url === UNKNOWN_PAGE_URL) { open = true; break; }
+          if (url === '/') { url = safeRootUrl(safeRootUrl(root), '/'); continue; }
+          const block = url.split(/[/?]/)[1];
+          if (off.includes(block)) url = featureOffUrl(safeRootUrl(root), url, signedOut);
+          else if (signedOut && !['public', 'auth'].includes(block)) url = `${LOGIN_URL}?returnUrl=${encodeURIComponent(url)}`;
+          else open = true;
+        }
+        if (!open) throw new Error(`loop: root ${root}, start ${start}, signed out ${signedOut}, off ${off.join()}`);
+      }
+    }
+    expect(true).toBe(true);
   });
 });

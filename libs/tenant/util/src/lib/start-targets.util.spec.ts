@@ -91,14 +91,14 @@ describe('startTargets, menu rows', () => {
     expect(urls([row('mine', '/private/about/c-contentpage')], only('cms'))).toEqual(['/private/about/c-contentpage']);
     expect(urls([row('mine', '/elsewhere')], only('cms'))).toEqual(['/elsewhere']);
   });
-  // signed-out visitors cannot read the rollouts: for them such a block is off, and the start page would be the welcome page
-  it('offers no row of a block that is not open to everyone, though it is on here', () => {
-    for (const availability of ['beta', 'internal', 'disabled'] as const) {
+  // signed-out visitors cannot read the rollouts: the guard sends them to the sign-in and back, like any page behind one
+  it('offers the rows of a staged block that is on here, and none of one that is not', () => {
+    for (const availability of ['beta', 'internal'] as const) {
       const blocks = [...BLOCKS, block('staged', [{ name: 'staged', url: '/staged/all' }], availability)];
-      expect(urls([row('staged', '/staged/all'), row('mine', '/staged/mine')], { blocks }), availability).toEqual([]);
+      const rows = [row('staged', '/staged/all'), row('mine', '/staged/mine')];
+      expect(urls(rows, { blocks }), availability).toEqual(['/staged/all', '/staged/mine']);
+      expect(urls(rows, { blocks, isEnabled: (id) => id !== 'staged' }), availability).toEqual([]);
     }
-    const alsoOpen = [...BLOCKS, block('staged', [{ name: 'quiz', url: '/quiz' }], 'beta')];
-    expect(urls([row('quiz', '/quiz')], { blocks: alsoOpen })).toEqual(['/quiz']);
   });
   it('resolves the tenant, and offers no url that needs more than that', () => {
     expect(urls([row('x', '/album/@TID@-album/c-album')])).toEqual(['/album/scs-album/c-album']);
@@ -115,11 +115,11 @@ describe('startTargets, menu rows', () => {
   it('lists a url once', () => {
     expect(urls([row('x', '/x'), row('x2', 'x')])).toEqual(['/x']);
   });
-  it('offers the live kinds of start pages from the real catalogue, the diary (not ga) excepted', () => {
+  it('offers the live kinds of start pages from the real catalogue, the diary (beta) among them', () => {
     expect(urls([
       row('diary', '/diary/all/c-diary'), row('dashboard', '/private/dashboard/c-contentpage'), row('person-contacts', '/person/all/c-persons'),
       row('logout', '/auth/logout'),
-    ], { blocks: FEATURE_BLOCKS })).toEqual(['/private/dashboard/c-contentpage', '/person/all/c-persons']);
+    ], { blocks: FEATURE_BLOCKS })).toEqual(['/diary/all/c-diary', '/private/dashboard/c-contentpage', '/person/all/c-persons']);
   });
 });
 

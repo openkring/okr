@@ -2,7 +2,6 @@ import { FOOTPRINT_PAGE_TYPE, type MenuItemModel, type PageModel } from '@okr/sh
 import { forkKeyFor, getSafeReturnUrl } from '@okr/shared-util-core';
 
 import type { FeatureBlock } from './feature-catalogue.types';
-import { resolveAvailability } from './feature-rollout.util';
 import { blockOwnersOfMenuKey } from './feature-routes.util';
 import type { SettingsPageOption } from './tenant-settings-display';
 
@@ -59,13 +58,6 @@ function blocksOfUrl(url: string, declared: readonly DeclaredPaths[]): string[] 
   return owners.map((block) => block.id);
 }
 
-/** The blocks that are on here AND for visitors who are not signed in: those cannot read the rollouts, for them the catalogue default counts. */
-function blocksOpenToAll(input: StartTargetsInput): Set<string> {
-  return new Set(input.blocks
-    .filter((block) => input.isEnabled(block.id) && resolveAvailability(block, undefined, input.tenantId).offered)
-    .map((block) => block.id));
-}
-
 /** Can every signed-in person see the row: its own role, hidden key and block, and at least one way down to it? */
 function isRowOpen(row: MenuItemModel, input: StartTargetsInput, visiting: ReadonlySet<string> = new Set()): boolean {
   if (visiting.has(row.name)) return false;
@@ -81,17 +73,20 @@ function isRowOpen(row: MenuItemModel, input: StartTargetsInput, visiting: Reado
  * The pages a tenant can start with (spec 1.174 §7.4): the rows of its menus that every signed-in person can open, and
  * its pages that are visible without signing in. A row is judged by its own role and by the menus it hangs under: one
  * of them must be open all the way up; a row in no menu is judged by itself. The blocks that declare the row, and those
- * behind its url (which catches a row the tenant made itself), must be open to visitors too: a `beta` or `internal` block is
- * closed to them, they would get the welcome page. Each url is listed once, rows first.
+ * behind its url (which catches a row the tenant made itself), must be on. That includes a `beta` block the operator opened
+ * for this tenant: a visitor cannot read that, but the feature guard sends them to the login and back (`featureOffUrl`),
+ * as any page for members does. Each url is listed once, rows first.
  */
 export function startTargets(input: StartTargetsInput): StartTarget[] {
-  const open = blocksOpenToAll(input);
   const declared = declaredPaths(input);
-  const isAnyOpen = (ids: string[]): boolean => ids.length === 0 || ids.some((id) => open.has(id));
+  const isUrlOpen = (url: string): boolean => {
+    const owners = blocksOfUrl(url, declared);
+    return owners.length === 0 || owners.some((id) => input.isEnabled(id));
+  };
   const rows = input.menuDocs
-    .filter((row) => row.action === 'navigate' && isAnyOpen(blockOwnersOfMenuKey(input.blocks, row.name)) && isRowOpen(row, input))
+    .filter((row) => row.action === 'navigate' && isRowOpen(row, input))
     .map((row) => ({ url: targetUrl(row.url, input.tenantId), label: row.label }))
-    .filter((target) => target.url !== '' && isAnyOpen(blocksOfUrl(target.url, declared)));
+    .filter((target) => target.url !== '' && isUrlOpen(target.url));
   const pageKeys = new Set(input.pages.map((p) => p.okey));
   const pages = input.pages
     .filter((p) => !p.isPrivate && !p.isArchived && p.type !== FOOTPRINT_PAGE_TYPE && p.type !== 'error')

@@ -40,7 +40,7 @@ async function appFor(effective: string[]): Promise<ApplicationRef> {
       provideZonelessChangeDetection(),
       { provide: Router, useValue: { parseUrl: (url: string): UrlTree => serializer.parse(url) } },
       { provide: FeatureStore, useValue: { settled: signal(true), effective: signal(new Set(effective)) } },
-      { provide: AppStore, useValue: { appConfig: () => ({ rootUrl: ROOT_URL }) } },
+      { provide: AppStore, useValue: { fbUser: signal({ uid: 'u1' }), appConfig: () => ({ rootUrl: ROOT_URL }) } },
     ],
   });
 }
