@@ -39,7 +39,7 @@ export interface SettingsChoice { id: string; name: string; }
 const ENUM_FIELDS: ReadonlySet<string> = new Set(['avatarUsage', 'nameDisplay', 'personSortCriteria']);
 /** Fields that another value stands in for while they are empty, as their helper says. Every other empty field means: nothing. */
 const FALLBACK_FIELDS: ReadonlySet<string> = new Set([
-  'brandColor', 'notfoundBannerUrl', 'rootUrl', 'mailFrom', 'dpoEmail',
+  'brandColor', 'rootUrl', 'mailFrom', 'dpoEmail',
   'emailDomain', 'emailProvider', 'mailtrapPasswordResetTemplate', 'loginUrl', 'passwordResetUrl',
 ]);
 const COLOR = /^#[0-9a-fA-F]{6}$/;

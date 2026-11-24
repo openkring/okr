@@ -1,8 +1,9 @@
 import { Component, computed } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonItem, IonNote, IonRow } from '@ionic/angular';
 
+import { EMAIL_LENGTH } from '@okr/shared-constants';
 import { EmailInput, ErrorNote } from '@okr/shared-ui';
-import { allowedSenderDomains, SETTINGS_EMAIL_LENGTH } from '@okr/tenant-util';
+import { allowedSenderDomains } from '@okr/tenant-util';
 
 import { SettingsFormBase } from './settings-form.base';
 import { SettingsPublicNote } from './settings-public-note';
@@ -41,7 +42,7 @@ import { SettingsPublicNote } from './settings-public-note';
 })
 export class SettingsMailForm extends SettingsFormBase {
   /** kept in step with the cap the Vest suite enforces on this field */
-  protected readonly emailLength = SETTINGS_EMAIL_LENGTH;
+  protected readonly emailLength = EMAIL_LENGTH;
 
   /** The domains the suite accepts, or the hint that the operator has to set one first. */
   protected readonly domainsText = computed(() => {

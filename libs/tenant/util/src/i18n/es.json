@@ -506,7 +506,7 @@
     "title": "Ajustes",
     "missing": "No se han podido cargar los ajustes de esta app. Vuelve a intentarlo más tarde o ponte en contacto con el operador.",
     "public_note": "Estos datos se pueden leer públicamente.",
-    "operator_only": "Esto lo cambia el operador.",
+    "operator_only": "Estos datos los cambia el operador.",
     "empty": "Sin definir",
     "edit": "Editar",
     "yes": "Sí",
@@ -590,7 +590,7 @@
       },
       "notfoundBannerUrl": {
         "label": "Imagen de la página «No encontrado»",
-        "helper": "Se muestra en la página «No encontrado». Formato JPG o PNG. Sin imagen propia se muestra la imagen predeterminada de la app."
+        "helper": "Se muestra en la página «No encontrado». Formato JPG o PNG. Vacío: ninguna imagen."
       },
       "locale": {
         "label": "Formato de fecha y hora",
@@ -638,7 +638,7 @@
       },
       "mailFrom": {
         "label": "Dirección del remitente",
-        "helper": "Al escribir un correo, la app usa esta dirección como remitente, como destinatario al enviar a varias personas, y la indica como contacto al pie del correo. Vacío: app@ y el dominio desde el que la app envía correos."
+        "helper": "Al escribir un correo, la app usa esta dirección como remitente, como destinatario al enviar a varias personas, y la indica como contacto al pie del correo. Si no pertenece al dominio de correo, la app envía el correo desde app@ y el dominio de correo, y la dirección solo sirve como destinatario y contacto. Vacío: app@ y el dominio desde el que la app envía correos."
       },
       "dpoName": {
         "label": "Contacto de protección de datos: nombre",
@@ -646,7 +646,7 @@
       },
       "dpoEmail": {
         "label": "Contacto de protección de datos: correo",
-        "helper": "Recibe un mensaje cuando alguien hace borrar sus datos. Vacío: el mensaje va al correo del operador."
+        "helper": "Aparece en el perfil, junto a los propios datos, y en los datos que alguien descarga. Recibe un mensaje cuando alguien hace borrar sus datos. Vacío: el mensaje va al correo del operador."
       },
       "privacyPolicyPageKey": {
         "label": "Página de la política de privacidad",
@@ -750,7 +750,7 @@
       },
       "logoUrl": {
         "label": "Logotipo",
-        "helper": "Ruta del logotipo, también la base del icono de la app. Después de un cambio hay que volver a generar las imágenes. Vacío: falta el logotipo en la página de inicio de sesión."
+        "helper": "Ruta del logotipo, también la base del icono de la app. Después de un cambio hay que volver a generar las imágenes. Vacío: la página de inicio de sesión muestra un icono estándar en lugar del logotipo."
       },
       "ownerOrgId": {
         "label": "Organización",
@@ -800,7 +800,7 @@
     "validation": {
       "email": "Esta no es una dirección de correo válida.",
       "https": "La dirección debe empezar por https:// y no puede contener espacios.",
-      "appNameChars": "No se pueden usar comillas, corchetes angulares ni saltos de línea.",
+      "appNameChars": "No se pueden usar comillas, corchetes angulares, barras invertidas ni saltos de línea.",
       "brandColor": "Este no es un color válido.",
       "languagesNone": "Elige al menos un idioma.",
       "languagesUnknown": "Uno de los idiomas elegidos no existe en la app.",
@@ -820,7 +820,7 @@
     "image_uploading": "La imagen se está subiendo.",
     "image_type_error": "Elige una imagen en formato JPG o PNG.",
     "image_failed": "No se pudo subir la imagen. Inténtalo de nuevo.",
-    "mail_domains": "Se permiten direcciones que terminen en:",
+    "mail_domains": "Solo una dirección del dominio de correo aparece como remitente, cualquier otra sirve como destinatario y contacto. Se permiten direcciones que terminen en:",
     "mail_domains_none": "Primero, el operador tiene que definir el dominio para los correos. Solo entonces podrás introducir aquí una dirección.",
     "image_too_big": "La imagen es demasiado grande. Debe ocupar menos de 25 MB.",
     "location_pick": "Elegir ubicación",

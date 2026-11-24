@@ -84,7 +84,7 @@ export class AppConfigService {
    * document back: the caller holds an `AppConfig` hydrated from a live stream, and writing all
    * of it would push whatever else that snapshot happens to carry. Here exactly one field moves.
    *
-   * Client-writable on purpose. `firestore.rules` lets a privileged user of their OWN tenant
+   * Client-writable on purpose. `firestore.rules` lets an admin of their OWN tenant
    * update `app-config` as long as `enabledFeatures` is untouched, because that field is the
    * billing boundary. `hiddenMenuKeys` is not: it can only hide rows of blocks the tenant has
    * already enabled, never enable anything. So this needs no callable and no functions deploy.

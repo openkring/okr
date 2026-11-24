@@ -506,7 +506,7 @@
     "title": "Impostazioni",
     "missing": "Non è stato possibile caricare le impostazioni di questa app. Riprova più tardi o rivolgiti al gestore.",
     "public_note": "Questi dati sono leggibili pubblicamente.",
-    "operator_only": "Questo lo modifica il gestore.",
+    "operator_only": "Questi dati li modifica il gestore.",
     "empty": "Non impostato",
     "edit": "Modifica",
     "yes": "Sì",
@@ -590,7 +590,7 @@
       },
       "notfoundBannerUrl": {
         "label": "Immagine della pagina «Non trovato»",
-        "helper": "Mostrata nella pagina «Non trovato». Formato JPG o PNG. Senza un'immagine propria viene mostrata l'immagine predefinita dell'app."
+        "helper": "Mostrata nella pagina «Non trovato». Formato JPG o PNG. Vuoto: nessuna immagine."
       },
       "locale": {
         "label": "Formato di data e ora",
@@ -638,7 +638,7 @@
       },
       "mailFrom": {
         "label": "Indirizzo del mittente",
-        "helper": "Quando scrivi un'e-mail, l'app usa questo indirizzo come mittente, come destinatario per l'invio a più persone, e lo indica come contatto in fondo al messaggio. Vuoto: app@ e il dominio da cui l'app invia le e-mail."
+        "helper": "Quando scrivi un'e-mail, l'app usa questo indirizzo come mittente, come destinatario per l'invio a più persone, e lo indica come contatto in fondo al messaggio. Se non appartiene al dominio e-mail, l'app invia l'e-mail da app@ e il dominio e-mail, e l'indirizzo serve solo come destinatario e contatto. Vuoto: app@ e il dominio da cui l'app invia le e-mail."
       },
       "dpoName": {
         "label": "Contatto protezione dei dati: nome",
@@ -646,7 +646,7 @@
       },
       "dpoEmail": {
         "label": "Contatto protezione dei dati: e-mail",
-        "helper": "Riceve un messaggio quando qualcuno fa cancellare i propri dati. Vuoto: il messaggio va all'e-mail del gestore."
+        "helper": "Compare nel profilo, accanto ai propri dati, e nei dati che qualcuno scarica. Riceve un messaggio quando qualcuno fa cancellare i propri dati. Vuoto: il messaggio va all'e-mail del gestore."
       },
       "privacyPolicyPageKey": {
         "label": "Pagina della politica sulla privacy",
@@ -750,7 +750,7 @@
       },
       "logoUrl": {
         "label": "Logo",
-        "helper": "Percorso del logo, anche base dell'icona dell'app. Dopo una modifica le immagini vanno generate di nuovo. Vuoto: nella pagina di accesso manca il logo."
+        "helper": "Percorso del logo, anche base dell'icona dell'app. Dopo una modifica le immagini vanno generate di nuovo. Vuoto: la pagina di accesso mostra un'icona standard al posto del logo."
       },
       "ownerOrgId": {
         "label": "Organizzazione",
@@ -800,7 +800,7 @@
     "validation": {
       "email": "Questo non è un indirizzo e-mail valido.",
       "https": "L'indirizzo deve iniziare con https:// e non può contenere spazi.",
-      "appNameChars": "Virgolette, parentesi angolari e interruzioni di riga non sono possibili.",
+      "appNameChars": "Virgolette, parentesi angolari, barre rovesciate e interruzioni di riga non sono possibili.",
       "brandColor": "Questo non è un colore valido.",
       "languagesNone": "Scegli almeno una lingua.",
       "languagesUnknown": "Una delle lingue scelte non esiste nell'app.",
@@ -820,8 +820,8 @@
     "image_uploading": "L'immagine è in caricamento.",
     "image_type_error": "Scegli un'immagine in formato JPG o PNG.",
     "image_failed": "Non è stato possibile caricare l'immagine. Riprova.",
-    "mail_domains": "Sono consentiti indirizzi che terminano con:",
-    "mail_domains_none": "Prima l'operatore deve impostare il dominio per le e-mail. Solo dopo potrai inserire qui un indirizzo.",
+    "mail_domains": "Solo un indirizzo del dominio e-mail appare come mittente, ogni altro serve come destinatario e contatto. Sono consentiti indirizzi che terminano con:",
+    "mail_domains_none": "Prima il gestore deve impostare il dominio per le e-mail. Solo dopo potrai inserire qui un indirizzo.",
     "image_too_big": "L'immagine è troppo grande. Deve essere inferiore a 25 MB.",
     "location_pick": "Scegli la ubicazione",
     "location_change": "Scegli un'altra ubicazione",

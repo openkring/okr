@@ -5,8 +5,8 @@ import { switchMap } from 'rxjs';
 
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { Header, ImgDirective } from '@okr/shared-ui';
-import { DEFAULT_BANNER_URL } from '@okr/shared-constants';
 import { I18nService } from '@okr/shared-i18n';
+import { getConfigImageUrl } from '@okr/shared-util-core';
 
 import { PageStore } from './page.store';
 import { PFX } from './scope';
@@ -86,7 +86,9 @@ const ERROR_I18N_BLOCK: Record<string, string> = {
     <okr-header [i18n]="{ title: title() }" [showCloseButton]="false" />
     <ion-content>
       <div class="error-container">
-        <img class="error-image" [src]="bannerUrl()" alt="Background" />
+        @if (bannerUrl(); as bannerUrl) {
+          <img class="error-image" [src]="bannerUrl" alt="Background" />
+        }
         <ion-grid class="error-form">
           @if (logoUrl(); as logoUrl) {
             <ion-row>
@@ -132,11 +134,11 @@ export class ErrorPage {
 
   protected page = computed(() => this.store.page());
   // the error page is reached exactly when no page doc could be resolved, so it must not depend on
-  // one: app-config carries a per-tenant logo and not-found banner. tenant/default/app/banner.jpg
-  // does not exist in the bucket, it is only the last resort before an empty src.
+  // one: app-config carries a per-tenant logo and not-found banner. Without a banner no image is shown:
+  // there is no default one (tenant/default/app/banner.jpg does not exist in the bucket).
   protected logoUrl = computed(() => this.store.getImgixUrl(this.page()?.logoUrl || this.store.getConfigAttribute('logoUrl')) ?? '');
-  protected bannerUrl = computed(() => this.store.getImgixUrl(
-    this.page()?.bannerUrl || this.store.getConfigAttribute('notfoundBannerUrl') || DEFAULT_BANNER_URL));
+  protected bannerUrl = computed(() => getConfigImageUrl(
+    this.store.imgixBaseUrl(), this.page()?.bannerUrl || this.store.getConfigAttribute('notfoundBannerUrl')));
 
   constructor() {
     effect(() => {

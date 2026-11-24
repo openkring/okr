@@ -1,4 +1,4 @@
-import { CITY_LENGTH, COUNTRY_LENGTH, DESCRIPTION_LENGTH, LONG_NAME_LENGTH, NAME_LENGTH, SHORT_NAME_LENGTH, STREET_LENGTH, URL_LENGTH } from '@okr/shared-constants';
+import { CITY_LENGTH, COUNTRY_LENGTH, DESCRIPTION_LENGTH, EMAIL_LENGTH, LONG_NAME_LENGTH, NAME_LENGTH, SHORT_NAME_LENGTH, STREET_LENGTH, URL_LENGTH } from '@okr/shared-constants';
 import { AvailableLanguages } from '@okr/shared-models';
 import { bareHostname, booleanValidations, deliveryChannelsValidations, numberValidations, stringsValidations, stringValidations } from '@okr/shared-util-core';
 import { enforce, skip, staticSuite, test } from 'vest';
@@ -18,12 +18,13 @@ export interface SettingsContext {
 }
 
 const COLOR = /^#[0-9a-fA-F]{6}$/;
-const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-// quotes and angle brackets, and every control character (C0, DEL, C1, line and paragraph separator)
+// One plain address: no part may hold a character `effectiveSender` (apps/functions/src/auth/email-templates.ts) refuses,
+// because a mail server reads it as a name, a quoted part or a second address. The host may hold any letter (müller.ch).
+const ADDRESS_CHAR = '[^\\s@<>,;:"\\\\()\\[\\]\\x00-\\x1f\\x7f\\u2028\\u2029]';
+const EMAIL = new RegExp(`^${ADDRESS_CHAR}+@${ADDRESS_CHAR}+\\.${ADDRESS_CHAR}{2,}$`);
+// quotes, angle brackets and backslashes (the name stands in quotes in the sender), and every control character (C0, DEL, C1, line and paragraph separator)
 // eslint-disable-next-line no-control-regex
-const APP_NAME_FORBIDDEN = /["<>\u0000-\u001f\u007f-\u009f\u2028\u2029]/;
-/** Longest e-mail address a settings field takes; the forms bind it as [maxLength]. */
-export const SETTINGS_EMAIL_LENGTH = 100;
+const APP_NAME_FORBIDDEN = /["<>\\\u0000-\u001f\u007f-\u009f\u2028\u2029]/;
 const HAS_SPACE = /\s/;
 /** A path inside the app, never another host; the same rule as `isPlainPath` in apps/functions/src/auth/email-templates.ts. */
 const PLAIN_PATH = /^\/(?![/\\])[^\s\\@]*$/;
@@ -37,7 +38,7 @@ function text(value: unknown): string {
 }
 
 function emailOrEmpty(field: string, value: unknown): void {
-  stringValidations(field, value, SETTINGS_EMAIL_LENGTH);
+  stringValidations(field, value, EMAIL_LENGTH);
   test(field, '@tenant/util.settings.validation.email', () => {
     enforce(text(value) === '' || EMAIL.test(text(value))).isTruthy();
   });
@@ -126,7 +127,7 @@ const operatorSuite = staticSuite((m: TenantSettings, context: SettingsContext) 
 
 const mailSuite = staticSuite((m: TenantSettings, context: SettingsContext) => {
   skipUnchanged('mail', m, context);
-  stringValidations('mailFrom', m.mailFrom, SETTINGS_EMAIL_LENGTH);
+  stringValidations('mailFrom', m.mailFrom, EMAIL_LENGTH);
   // the raw value: what is validated is what settingsDiff writes
   const from = text(m.mailFrom);
   test('mailFrom', '@tenant/util.settings.validation.email', () => {

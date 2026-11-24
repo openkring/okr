@@ -96,6 +96,7 @@ describe('settingsRows, empty fields', () => {
     expect(emptyText('mail', 'mailFrom')).toBe('fallback');
     expect(emptyText('privacy', 'dpoEmail')).toBe('fallback');
     expect(emptyText('start', 'rootUrl')).toBe('fallback');
+    expect(emptyText('images', 'notfoundBannerUrl')).toBe('empty');
     expect(emptyText('app', 'appTitle')).toBe('empty');
     expect(emptyText('privacy', 'privacyPolicyPageKey')).toBe('empty');
   });

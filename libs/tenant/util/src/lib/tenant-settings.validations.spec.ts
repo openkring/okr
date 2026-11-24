@@ -1,3 +1,4 @@
+import { EMAIL_LENGTH } from '@okr/shared-constants';
 import { AvailableLanguages } from '@okr/shared-models';
 import { describe, expect, it } from 'vitest';
 
@@ -17,7 +18,7 @@ describe('app', () => {
     expect(settingsValidations.app({ ...ok, appName: '' }, CTX).hasErrors('appName')).toBe(true);
     expect(settingsValidations.app({ ...ok, appName: '  ' }, CTX).hasErrors('appName')).toBe(true);
   });
-  it.each(['a"b', 'a<b', 'a>b', 'a\nb'])('refuses %j in appName', (appName) => {
+  it.each(['a"b', 'a<b', 'a>b', 'a\nb', 'a\\b', 'a\\'])('refuses %j in appName', (appName) => {
     expect(settingsValidations.app({ ...ok, appName }, CTX).hasErrors('appName')).toBe(true);
   });
   it('takes #rrggbb or nothing as brandColor', () => {
@@ -48,6 +49,18 @@ describe('operator', () => {
     expect(r.hasErrors('opWebUrl')).toBe(true);
   });
   it('refuses a broken email', () => expect(settingsValidations.operator({ ...ok, opEmail: 'nope' }, CTX).hasErrors('opEmail')).toBe(true));
+  it.each(['a,b@x.ch', 'a<b@x.ch', 'a>b@x.ch', '"a"@x.ch', 'a\\b@x.ch', 'a;b@x.ch', 'a:b@x.ch', 'a(b)@x.ch', 'a[b]@x.ch', 'a\u0001b@x.ch', 'a@x>.ch', 'a@x.ch>'])(
+    'refuses %j, which a mail server reads as something else than one address',
+    (opEmail) => expect(settingsValidations.operator({ ...ok, opEmail }, CTX).hasErrors('opEmail')).toBe(true),
+  );
+  it.each(['a.b+c@x.ch', "o'brien@x-y.ch", 'a_b@müller.ch'])('takes %j', (opEmail) => {
+    expect(settingsValidations.operator({ ...ok, opEmail }, CTX).hasErrors('opEmail')).toBe(false);
+  });
+  it('takes an email up to the shared length', () => {
+    const of = (length: number) => `${'a'.repeat(length - '@x.ch'.length)}@x.ch`;
+    expect(settingsValidations.operator({ ...ok, opEmail: of(EMAIL_LENGTH) }, CTX).hasErrors('opEmail')).toBe(false);
+    expect(settingsValidations.operator({ ...ok, opEmail: of(EMAIL_LENGTH + 1) }, CTX).hasErrors('opEmail')).toBe(true);
+  });
 });
 
 describe('mail', () => {

@@ -53,7 +53,8 @@ export function settingsConfirmations(changes: TenantSettings, before: TenantSet
   const out: SettingsConfirmation[] = [];
   if (fields.some((f) => f.startsWith('show') && isWidening(b[f], c[f]))) out.push('widen');
   if (fields.some((f) => REBUILD_FIELDS.has(f))) out.push('rebuild');
-  if (fields.includes('privacyPolicyVersion')) out.push('policy');
+  // without a version nobody is asked to accept anything (`needsPolicyAcceptance`)
+  if (String(c['privacyPolicyVersion'] ?? '').trim() !== '') out.push('policy');
   if (fields.includes('appDomain')) out.push('domain');
   if (fields.includes('loginUrl')) out.push('login');
   return out;

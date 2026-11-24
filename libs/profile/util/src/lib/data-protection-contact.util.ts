@@ -6,8 +6,8 @@ export interface DataProtectionContact {
   email: string;
 }
 
-/** One address without spaces or mail parameters — the value becomes a `mailto:` link. */
-const ADDRESS = /^[^\s@?&]+@[^\s@?&]+$/;
+/** One address without spaces, mail parameters, encoded characters or markup — the value becomes a `mailto:` link. */
+const ADDRESS = /^[^\s@?&#%<>,;:"\\()[\]]+@[^\s@?&#%<>,;:"\\()[\]]+$/;
 
 function text(value: unknown): string {
   return typeof value === 'string' ? value.trim() : '';
@@ -29,4 +29,13 @@ export function dataProtectionContact(
   const email = address(config?.dpoEmail);
   if (!name && !email) return undefined;
   return { name, email: email || address(config?.opEmail) };
+}
+
+/**
+ * The introduction of the profile as markup: `intro`, then the operator as a mail link, or as plain text when the tenant
+ * names no usable address (`opEmail`). Rendered through `innerHTML`, hence only a plain address ever becomes a link.
+ */
+export function profileIntroHtml(intro: string, config: Pick<AppConfig, 'opEmail'> | undefined): string {
+  const email = address(config?.opEmail);
+  return `${intro.trimEnd()} ${email ? `<a href="mailto:${email}">Website Admin</a>` : 'Website Admin'}.`;
 }

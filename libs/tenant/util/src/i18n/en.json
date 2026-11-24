@@ -506,7 +506,7 @@
     "title": "Settings",
     "missing": "The settings of this app could not be loaded. Try again later or contact the operator.",
     "public_note": "This information can be read by anyone.",
-    "operator_only": "This is changed by the operator.",
+    "operator_only": "The operator changes these details.",
     "empty": "Not set",
     "edit": "Edit",
     "yes": "Yes",
@@ -590,7 +590,7 @@
       },
       "notfoundBannerUrl": {
         "label": "Image of the page «Not found»",
-        "helper": "Shown on the page «Not found». JPG or PNG format. Without an own image the default image of the app is shown."
+        "helper": "Shown on the page «Not found». JPG or PNG format. Empty: no image."
       },
       "locale": {
         "label": "Format of date and time",
@@ -638,7 +638,7 @@
       },
       "mailFrom": {
         "label": "Sender address",
-        "helper": "When you write an e-mail, the app uses this address as the sender, as the recipient when sending to several people, and names it as the contact at the bottom of the mail. Empty: app@ and the domain from which the app sends e-mails."
+        "helper": "When you write an e-mail, the app uses this address as the sender, as the recipient when sending to several people, and names it as the contact at the bottom of the mail. If it does not belong to the mail domain, the app sends the e-mail from app@ and the mail domain, and the address only serves as recipient and contact. Empty: app@ and the domain from which the app sends e-mails."
       },
       "dpoName": {
         "label": "Privacy contact: name",
@@ -646,7 +646,7 @@
       },
       "dpoEmail": {
         "label": "Privacy contact: e-mail",
-        "helper": "Gets a message when someone has their own data deleted. Empty: the message goes to the e-mail of the operator."
+        "helper": "Appears in the profile with the own data and in the data someone downloads. Gets a message when someone has their own data deleted. Empty: the message goes to the e-mail of the operator."
       },
       "privacyPolicyPageKey": {
         "label": "Page of the privacy policy",
@@ -750,7 +750,7 @@
       },
       "logoUrl": {
         "label": "Logo",
-        "helper": "Path of the logo, also the basis of the app icon. After a change the images have to be generated again. Empty: the logo is missing on the sign-in page."
+        "helper": "Path of the logo, also the basis of the app icon. After a change the images have to be generated again. Empty: the sign-in page shows a default icon instead of the logo."
       },
       "ownerOrgId": {
         "label": "Organisation",
@@ -800,7 +800,7 @@
     "validation": {
       "email": "This is not a valid e-mail address.",
       "https": "The address must start with https:// and must not contain spaces.",
-      "appNameChars": "Quotation marks, angle brackets and line breaks are not possible.",
+      "appNameChars": "Quotation marks, angle brackets, backslashes and line breaks are not possible.",
       "brandColor": "This is not a valid colour.",
       "languagesNone": "Choose at least one language.",
       "languagesUnknown": "One of the chosen languages does not exist in the app.",
@@ -820,7 +820,7 @@
     "image_uploading": "The image is being uploaded.",
     "image_type_error": "Choose an image in JPG or PNG format.",
     "image_failed": "The image could not be uploaded. Please try again.",
-    "mail_domains": "Allowed are addresses ending in:",
+    "mail_domains": "Only an address of the mail domain appears as the sender, any other serves as recipient and contact. Allowed are addresses ending in:",
     "mail_domains_none": "The operator has to set the domain for e-mails first. Only then can you enter an address here.",
     "image_too_big": "The image is too large. It must be smaller than 25 MB.",
     "location_pick": "Choose location",

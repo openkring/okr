@@ -1,9 +1,9 @@
 import { Component, computed, input } from '@angular/core';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/angular';
 
-import { NAME_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
+import { EMAIL_LENGTH, NAME_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 import { EmailInput, ErrorNote, StringSelect, TextInput } from '@okr/shared-ui';
-import { SETTINGS_AUDIENCES, SETTINGS_EMAIL_LENGTH, SETTINGS_GROUPS, settingsAudienceKey } from '@okr/tenant-util';
+import { SETTINGS_AUDIENCES, SETTINGS_GROUPS, settingsAudienceKey } from '@okr/tenant-util';
 import type { SettingsPageOption } from '@okr/tenant-util';
 
 import { SettingsFormBase } from './settings-form.base';
@@ -84,7 +84,7 @@ export class SettingsPrivacyForm extends SettingsFormBase {
 
   /** kept in step with the caps the Vest suite enforces on these fields */
   protected readonly nameLength = NAME_LENGTH;
-  protected readonly emailLength = SETTINGS_EMAIL_LENGTH;
+  protected readonly emailLength = EMAIL_LENGTH;
   protected readonly versionLength = SHORT_NAME_LENGTH;
 
   protected readonly audienceFields = SETTINGS_GROUPS.privacy.filter((field) => field.startsWith('show'));

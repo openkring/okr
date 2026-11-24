@@ -1,10 +1,9 @@
 import { Component, computed } from '@angular/core';
 import { IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular';
 
-import { CITY_LENGTH, LONG_NAME_LENGTH, SHORT_NAME_LENGTH, STREET_LENGTH, URL_LENGTH } from '@okr/shared-constants';
+import { CITY_LENGTH, EMAIL_LENGTH, LONG_NAME_LENGTH, SHORT_NAME_LENGTH, STREET_LENGTH, URL_LENGTH } from '@okr/shared-constants';
 import { CountrySelect, EmailInput, ErrorNote, TextInput, UrlInput } from '@okr/shared-ui';
 import type { CountrySelectI18n } from '@okr/shared-ui';
-import { SETTINGS_EMAIL_LENGTH } from '@okr/tenant-util';
 
 import { SettingsFormBase } from './settings-form.base';
 import { SettingsPublicNote } from './settings-public-note';
@@ -87,7 +86,7 @@ import { SettingsPublicNote } from './settings-public-note';
 export class SettingsOperatorForm extends SettingsFormBase {
   /** kept in step with the caps the Vest suite enforces on these fields */
   protected readonly longNameLength = LONG_NAME_LENGTH;
-  protected readonly emailLength = SETTINGS_EMAIL_LENGTH;
+  protected readonly emailLength = EMAIL_LENGTH;
   protected readonly streetLength = STREET_LENGTH;
   protected readonly zipLength = SHORT_NAME_LENGTH;
   protected readonly cityLength = CITY_LENGTH;

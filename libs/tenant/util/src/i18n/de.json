@@ -506,7 +506,7 @@
     "title": "Einstellungen",
     "missing": "Die Einstellungen dieser App konnten nicht geladen werden. Versuche es später noch einmal oder wende dich an den Betreiber.",
     "public_note": "Diese Angaben sind öffentlich lesbar.",
-    "operator_only": "Das ändert der Betreiber.",
+    "operator_only": "Diese Angaben ändert der Betreiber.",
     "empty": "Nicht gesetzt",
     "edit": "Bearbeiten",
     "yes": "Ja",
@@ -590,7 +590,7 @@
       },
       "notfoundBannerUrl": {
         "label": "Bild der Seite «Nicht gefunden»",
-        "helper": "Wird auf der Seite «Nicht gefunden» gezeigt. Format JPG oder PNG. Ohne eigenes Bild wird das Standardbild der App gezeigt."
+        "helper": "Wird auf der Seite «Nicht gefunden» gezeigt. Format JPG oder PNG. Leer: kein Bild."
       },
       "locale": {
         "label": "Darstellung von Datum und Uhrzeit",
@@ -638,7 +638,7 @@
       },
       "mailFrom": {
         "label": "Absenderadresse",
-        "helper": "Die App setzt diese Adresse beim Schreiben einer E-Mail als Absender ein, beim Versand an mehrere Personen auch als Empfänger, und nennt sie unten in der Mail als Kontakt. Leer: app@ und die Domain, von der die App E-Mails verschickt."
+        "helper": "Die App setzt diese Adresse beim Schreiben einer E-Mail als Absender ein, beim Versand an mehrere Personen auch als Empfänger, und nennt sie unten in der Mail als Kontakt. Gehört sie nicht zur Mail-Domain, verschickt die App die E-Mail von app@ und der Mail-Domain, und die Adresse dient nur als Empfänger und Kontakt. Leer: app@ und die Domain, von der die App E-Mails verschickt."
       },
       "dpoName": {
         "label": "Datenschutzkontakt: Name",
@@ -646,7 +646,7 @@
       },
       "dpoEmail": {
         "label": "Datenschutzkontakt: E-Mail",
-        "helper": "Bekommt eine Nachricht, wenn jemand die eigenen Daten löschen lässt. Leer: Die Nachricht geht an die E-Mail des Betreibers."
+        "helper": "Steht im Profil bei den eigenen Daten und in den Daten, die jemand herunterlädt. Bekommt eine Nachricht, wenn jemand die eigenen Daten löschen lässt. Leer: Die Nachricht geht an die E-Mail des Betreibers."
       },
       "privacyPolicyPageKey": {
         "label": "Seite der Datenschutzerklärung",
@@ -750,7 +750,7 @@
       },
       "logoUrl": {
         "label": "Logo",
-        "helper": "Pfad des Logos, zugleich die Grundlage des App-Symbols. Nach einer Änderung müssen die Bilder neu erzeugt werden. Leer: Auf der Anmeldeseite fehlt das Logo."
+        "helper": "Pfad des Logos, zugleich die Grundlage des App-Symbols. Nach einer Änderung müssen die Bilder neu erzeugt werden. Leer: Die Anmeldeseite zeigt statt des Logos ein Standardsymbol."
       },
       "ownerOrgId": {
         "label": "Organisation",
@@ -800,7 +800,7 @@
     "validation": {
       "email": "Das ist keine gültige E-Mail-Adresse.",
       "https": "Die Adresse muss mit https:// beginnen und darf keine Leerzeichen enthalten.",
-      "appNameChars": "Anführungszeichen, spitze Klammern und Zeilenumbrüche sind nicht möglich.",
+      "appNameChars": "Anführungszeichen, spitze Klammern, umgekehrte Schrägstriche und Zeilenumbrüche sind nicht möglich.",
       "brandColor": "Das ist keine gültige Farbe.",
       "languagesNone": "Wähle mindestens eine Sprache.",
       "languagesUnknown": "Eine der gewählten Sprachen gibt es in der App nicht.",
@@ -820,7 +820,7 @@
     "image_uploading": "Das Bild wird hochgeladen.",
     "image_type_error": "Wähle ein Bild im Format JPG oder PNG.",
     "image_failed": "Das Bild konnte nicht hochgeladen werden. Versuche es noch einmal.",
-    "mail_domains": "Erlaubt sind Adressen mit der Endung:",
+    "mail_domains": "Als Absender erscheint nur eine Adresse der Mail-Domain, jede andere dient als Empfänger und Kontakt. Erlaubt sind Adressen mit der Endung:",
     "mail_domains_none": "Zuerst muss der Betreiber die Domain für E-Mails festlegen. Erst danach kannst du hier eine Adresse eintragen.",
     "image_too_big": "Das Bild ist zu gross. Es darf weniger als 25 MB haben.",
     "location_pick": "Standort wählen",

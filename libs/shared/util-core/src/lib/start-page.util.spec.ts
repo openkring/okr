@@ -125,6 +125,24 @@ describe('safeRootUrl', () => {
     expect(safeRootUrl('/a/ü', '/a/%C3%BC')).toBe(WELCOME_URL);
     expect(safeRootUrl('/a/%', '/a/%')).toBe(WELCOME_URL);
   });
+  // a route that redirects: the guard sees the deeper url it ends at, never the stored one
+  it('opens the welcome page when the current page is below the url', () => {
+    expect(safeRootUrl('/private/a', '/private/a/b')).toBe(WELCOME_URL);
+    expect(safeRootUrl('/private/a/', '/private/a/b/c?x=1#top')).toBe(WELCOME_URL);
+    expect(safeRootUrl('/accounting/report', '/accounting/report/c-report')).toBe(WELCOME_URL);
+    expect(safeRootUrl('/a/ü', '/a/%C3%BC/b')).toBe(WELCOME_URL);
+  });
+  it('keeps the url when the current page only starts with the same letters, or lies above it', () => {
+    expect(safeRootUrl('/private/a', '/private/ab')).toBe('/private/a');
+    expect(safeRootUrl('/private/a', '/private/ab/c')).toBe('/private/a');
+    expect(safeRootUrl('/private/a/b', '/private/a')).toBe('/private/a/b');
+  });
+  it('keeps the start pages in use when the app is opened at its root', () => {
+    for (const url of ['/diary/all/c-diary', '/private/dashboard/c-contentpage', '/public/welcome_p13', '/person/all/c-persons?filters=search']) {
+      expect(safeRootUrl(url, '/'), url).toBe(url);
+      expect(safeRootUrl(url, ''), url).toBe(url);
+    }
+  });
 });
 
 describe('featureOffUrl', () => {
@@ -136,6 +154,9 @@ describe('featureOffUrl', () => {
   it('leaves the welcome page for a page no block gates', () => {
     expect(featureOffUrl('/a/b', '/public/welcome?x=1')).toBe(UNKNOWN_PAGE_URL);
     expect(featureOffUrl('/public/welcome', '/public/welcome/')).toBe(UNKNOWN_PAGE_URL);
+  });
+  it('ends for a root url whose route redirects to a deeper page', () => {
+    expect(featureOffUrl('/accounting/report', '/accounting/report/c-report')).toBe(WELCOME_URL);
   });
   it('ends from every start when every block is off', () => {
     for (const root of ['/a/b?x=1', '/', '/public/welcome', '/public/welcome/c-contentpage']) {

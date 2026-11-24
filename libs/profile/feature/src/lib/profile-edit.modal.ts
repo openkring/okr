@@ -1,7 +1,6 @@
 import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { Photo } from '@capacitor/camera';
 import { IonAccordionGroup, IonCard, IonCardContent, IonContent, IonItem, IonLabel, ModalController } from '@ionic/angular';
-import { AsyncPipe } from '@angular/common';
 
 import { Languages } from '@okr/shared-categories';
 import { PersonModel, PersonModelName, UserModel } from '@okr/shared-models';
@@ -13,6 +12,7 @@ import { AddressesAccordion } from '@okr/subject-address-feature';
 import { ProfileDataAccordion, ProfilePrivacyAccordion, ProfileSettingsAccordion } from '@okr/profile-ui';
 import { dismissOverlay } from '@okr/shared-util-angular';
 
+import { profileIntroHtml } from '@okr/profile-util';
 import { ProfileStore } from './profile.store';
 import { EmailSignatureAccordion } from './email-signature.accordion';
 
@@ -20,7 +20,6 @@ import { EmailSignatureAccordion } from './email-signature.accordion';
   selector: 'okr-profile-edit-modal',
   standalone: true,
   imports: [
-    AsyncPipe,
     Header, ChangeConfirmation, AvatarToolbar, AddressesAccordion,
     ProfileDataAccordion, ProfileSettingsAccordion, ProfilePrivacyAccordion, EmailSignatureAccordion,
     IonContent, IonAccordionGroup, IonCard, IonCardContent, IonItem, IonLabel
@@ -43,7 +42,7 @@ import { EmailSignatureAccordion } from './email-signature.accordion';
             (imageSelected)="onImageSelected($event)"
         />
       <ion-item lines="none">
-        <ion-label><div [innerHTML]="introHtml() | async"></div></ion-label>    
+        <ion-label><div [innerHTML]="introHtml()"></div></ion-label>    
       </ion-item>
       <ion-card>
         <ion-card-content class="ion-no-padding">
@@ -141,7 +140,7 @@ export class ProfileEditModal {
   });
   protected parentKey = computed(() => `${PersonModelName}.${this.personKey()}`);
   protected avatarTitle = computed(() => this.currentPerson()?.firstName + ' ' + this.currentPerson()?.lastName);
-  protected introHtml = computed(async () => this.store.i18n.intro() + ' <a href=mailto:"' + this.store.appStore.appConfig().opEmail + '">Website Admin</a>.');
+  protected introHtml = computed(() => profileIntroHtml(this.store.i18n.intro(), this.store.appStore.appConfig()));
   protected tags = computed(() => this.store.getTags());
   protected priv = computed(() => this.store.privacySettings());
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());

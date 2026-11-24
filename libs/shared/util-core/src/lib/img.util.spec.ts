@@ -20,6 +20,7 @@ import {
     getImgixUrl,
     getPosterStyle,
     getImgixUrlWithAutoParams,
+    getConfigImageUrl,
     getSizedImgixParamsByExtension,
     toPixelNumber,
     getThumbnailUrl,
@@ -352,6 +353,19 @@ describe('img.util', () => {
       const result = getImgixUrlWithAutoParams(path);
       
       expect(result).toBe('tenant/images/photo.jpg?auto=format,compress,enhance&fit=crop');
+    });
+  });
+
+  describe('getConfigImageUrl', () => {
+    it('builds the full url of a stored image', () => {
+      mockIsImage.mockReturnValue(true);
+      mockIsPdf.mockReturnValue(false);
+      expect(getConfigImageUrl('https://img.example', ' tenant/scs/app/welcome.jpg '))
+        .toBe('https://img.example/tenant/scs/app/welcome.jpg?auto=format,compress,enhance&fit=crop');
+    });
+
+    it('is empty without an image, never the bare host, which answers with a page', () => {
+      for (const path of [undefined, null, '', '  ', 'not-a-path', 3]) expect(getConfigImageUrl('https://img.example', path as string), String(path)).toBe('');
     });
   });
 

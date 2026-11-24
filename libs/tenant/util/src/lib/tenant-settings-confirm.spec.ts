@@ -54,6 +54,11 @@ describe('settingsConfirmations', () => {
   it('a changed policy version asks for policy', () => {
     expect(settingsConfirmations({ privacyPolicyVersion: '2' } as TenantSettings, before)).toEqual(['policy']);
   });
+  it('an emptied policy version asks nobody to accept anything, so it does not ask', () => {
+    expect(settingsConfirmations({ privacyPolicyVersion: '' } as TenantSettings, before)).toEqual([]);
+    expect(settingsConfirmations({ privacyPolicyVersion: ' ' } as TenantSettings, before)).toEqual([]);
+    expect(settingsConfirmations({ privacyPolicyVersion: undefined } as unknown as TenantSettings, before)).toEqual([]);
+  });
   it('a changed app domain and a changed login path ask, the mail domain does not', () => {
     expect(settingsConfirmations({ appDomain: 'app.x.ch' } as TenantSettings, before)).toEqual(['domain']);
     expect(settingsConfirmations({ loginUrl: '/auth/in' } as TenantSettings, before)).toEqual(['login']);

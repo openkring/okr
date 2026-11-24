@@ -506,7 +506,7 @@
     "title": "Réglages",
     "missing": "Les réglages de cette app n'ont pas pu être chargés. Réessaie plus tard ou adresse-toi à l'exploitant.",
     "public_note": "Ces informations sont lisibles publiquement.",
-    "operator_only": "C'est l'exploitant qui modifie cela.",
+    "operator_only": "C'est l'exploitant qui modifie ces indications.",
     "empty": "Non défini",
     "edit": "Modifier",
     "yes": "Oui",
@@ -590,7 +590,7 @@
       },
       "notfoundBannerUrl": {
         "label": "Image de la page « Introuvable »",
-        "helper": "Affichée sur la page « Introuvable ». Format JPG ou PNG. Sans image propre, l'image par défaut de l'app s'affiche."
+        "helper": "Affichée sur la page « Introuvable ». Format JPG ou PNG. Vide : aucune image."
       },
       "locale": {
         "label": "Affichage de la date et de l'heure",
@@ -638,7 +638,7 @@
       },
       "mailFrom": {
         "label": "Adresse d'expédition",
-        "helper": "Quand tu écris un e-mail, l'app utilise cette adresse comme expéditeur, comme destinataire pour un envoi à plusieurs personnes, et la mentionne comme contact en bas du message. Vide : app@ et le domaine depuis lequel l'app envoie des e-mails."
+        "helper": "Quand tu écris un e-mail, l'app utilise cette adresse comme expéditeur, comme destinataire pour un envoi à plusieurs personnes, et la mentionne comme contact en bas du message. Si elle n'appartient pas au domaine e-mail, l'app envoie l'e-mail depuis app@ et le domaine e-mail, et l'adresse ne sert que de destinataire et de contact. Vide : app@ et le domaine depuis lequel l'app envoie des e-mails."
       },
       "dpoName": {
         "label": "Contact protection des données : nom",
@@ -646,7 +646,7 @@
       },
       "dpoEmail": {
         "label": "Contact protection des données : e-mail",
-        "helper": "Reçoit un message quand quelqu'un fait supprimer ses données. Vide : le message va à l'e-mail de l'exploitant."
+        "helper": "Figure dans le profil, avec les propres données, et dans les données que quelqu'un télécharge. Reçoit un message quand quelqu'un fait supprimer ses données. Vide : le message va à l'e-mail de l'exploitant."
       },
       "privacyPolicyPageKey": {
         "label": "Page de la politique de confidentialité",
@@ -750,7 +750,7 @@
       },
       "logoUrl": {
         "label": "Logo",
-        "helper": "Chemin du logo, aussi la base de l'icône de l'app. Après une modification, les images doivent être générées à nouveau. Vide : le logo manque sur la page de connexion."
+        "helper": "Chemin du logo, aussi la base de l'icône de l'app. Après une modification, les images doivent être générées à nouveau. Vide : la page de connexion affiche une icône standard à la place du logo."
       },
       "ownerOrgId": {
         "label": "Organisation",
@@ -800,7 +800,7 @@
     "validation": {
       "email": "Ce n'est pas une adresse e-mail valable.",
       "https": "L'adresse doit commencer par https:// et ne doit pas contenir d'espaces.",
-      "appNameChars": "Les guillemets, les chevrons et les sauts de ligne ne sont pas possibles.",
+      "appNameChars": "Les guillemets, les chevrons, les barres obliques inversées et les sauts de ligne ne sont pas possibles.",
       "brandColor": "Ce n'est pas une couleur valable.",
       "languagesNone": "Choisis au moins une langue.",
       "languagesUnknown": "Une des langues choisies n'existe pas dans l'app.",
@@ -820,7 +820,7 @@
     "image_uploading": "L'image est en cours de téléversement.",
     "image_type_error": "Choisis une image au format JPG ou PNG.",
     "image_failed": "L'image n'a pas pu être téléversée. Réessaie.",
-    "mail_domains": "Les adresses autorisées se terminent par :",
+    "mail_domains": "Seule une adresse du domaine e-mail apparaît comme expéditeur, toute autre sert de destinataire et de contact. Les adresses autorisées se terminent par :",
     "mail_domains_none": "L'exploitant doit d'abord définir le domaine pour les e-mails. Ensuite seulement, tu pourras saisir une adresse ici.",
     "image_too_big": "L'image est trop grande. Elle doit faire moins de 25 Mo.",
     "location_pick": "Choisir l'emplacement",
