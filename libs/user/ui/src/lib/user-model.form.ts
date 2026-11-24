@@ -8,7 +8,7 @@ import { validateVestTree, vestErrors } from "@okr/shared-util-angular";
 import { coerceBoolean, hasRole } from "@okr/shared-util-core";
 
 import { USER_FORM_SHAPE, UserI18n, UserModelFormModel, userModelFormValidations } from "@okr/user-util";
-import { DESCRIPTION_LENGTH, NAME_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
+import { DESCRIPTION_LENGTH, EMAIL_LENGTH, NAME_LENGTH } from '@okr/shared-constants';
 
 @Component({
   selector: 'okr-user-model-form',
@@ -46,14 +46,14 @@ import { DESCRIPTION_LENGTH, NAME_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-
                 <okr-error-note [errors]="lastNameErrors()" />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <okr-email [i18n]="loginEmailI18n()" [value]="loginEmail()" (valueChange)="onFieldChange('loginEmail', $event)" [maxLength]="shortNameLength" [readOnly]="true" />
+                <okr-email [i18n]="loginEmailI18n()" [value]="loginEmail()" (valueChange)="onFieldChange('loginEmail', $event)" [maxLength]="emailLength" [readOnly]="true" />
                 <okr-error-note [errors]="loginEmailErrors()" />
               </ion-col>
               <ion-col size="12" size-md="6">
                 <okr-text-input [i18n]="loginIdI18n()" [value]="loginId()" (valueChange)="onFieldChange('loginId', $event)" [readOnly]="true" [copyable]=true />
               </ion-col>
               <ion-col size="12" size-md="6">
-                <okr-email [i18n]="gravatarEmailI18n()" [value]="gravatarEmail()" (valueChange)="onFieldChange('gravatarEmail', $event)" [maxLength]="shortNameLength" [readOnly]="isReadOnly()" />
+                <okr-email [i18n]="gravatarEmailI18n()" [value]="gravatarEmail()" (valueChange)="onFieldChange('gravatarEmail', $event)" [maxLength]="emailLength" [readOnly]="isReadOnly()" />
                 <okr-error-note [errors]="gravatarEmailErrors()" />
               </ion-col>
               <ion-col size="12" size-md="6">
@@ -71,7 +71,7 @@ import { DESCRIPTION_LENGTH, NAME_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-
 })
 export class UserModelForm {
   /** kept in step with the cap the Vest suite enforces on this field */
-  protected readonly shortNameLength = SHORT_NAME_LENGTH;
+  protected readonly emailLength = EMAIL_LENGTH;
   /** kept in step with the cap the Vest suite enforces on this field */
   protected readonly nameLength = NAME_LENGTH;
   /** kept in step with the cap the Vest suite enforces on this field */

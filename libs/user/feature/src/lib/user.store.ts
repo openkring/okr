@@ -211,12 +211,6 @@ export const UserStore = signalStore(
       },
 
       /******************************* actions *************************************** */
-      async add(): Promise<void> {
-        // not sure whether we should implement this
-        // AOC function ? only depending on an existing person and/or firebase account ?
-        console.log('UserStore.add() is not yet implemented.');
-      },
-
       async edit(user: UserModel, readOnly = true): Promise<void> {
         const { UserEditModal } = await import('./user-edit.modal');
         const modal = await store.modalController.create({

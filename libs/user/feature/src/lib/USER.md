@@ -95,6 +95,12 @@ Loads all users for the current tenant ordered by `loginEmail`.
 | `UserEditModal` | Edit modal for one user (segments Profil · Rollen · Einstellungen) |
 | `FbuserEditModal` | Ionic modal to view/edit raw Firebase Auth account fields |
 
+## «Neuen User hinzufügen» (context menu)
+
+`UserAccountActions.add` picks a person of the tenant (persons with a working account are left out)
+and opens the account through `openPersonAccount`. A person without an email gets the check below,
+where the email can be added. A user always belongs to a person: create the person first.
+
 ## «Zugang prüfen» (row action «Berechtigung prüfen»)
 
 The report (`accountCheckFindings`) repairs what it finds: a missing email gets «E-Mail erfassen»
