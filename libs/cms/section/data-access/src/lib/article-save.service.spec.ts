@@ -134,6 +134,7 @@ const foreign = (path = A1) => { server.state.docs[path] = { ...docOf(path), tit
 
 const SHARED = { tenants: ['scs', tenantId] };
 const SYSTEM = { tenants: ['system'] };
+const SYSTEM_AND_OWN = { tenants: ['system', tenantId] };
 
 const gate = { trial: false, mayWrite: () => mayWrite };
 let mayWrite: boolean;
@@ -449,14 +450,19 @@ describe('ArticleSaveService', () => {
     });
   });
 
-  describe.each([['shared', SHARED], ['system', SYSTEM]])('a %s article', (_label, tenants) => {
+  // the rules refuse the detach of a tenant that reads through `system` only, and the whole save with it
+  describe.each([
+    ['shared', SHARED, [['set', FORK], ['update', A1]]],
+    ['system', SYSTEM, [['set', FORK]]],
+    ['system article that lists the tenant,', SYSTEM_AND_OWN, [['set', FORK], ['update', A1]]],
+  ])('a %s article', (_label, tenants, writes) => {
     const rest = tenants.tenants.filter((tenant) => tenant !== tenantId);
     const saveShared = (force = false) => save({ section: edited(tenants), loaded: loadedOf(tenants), force });
     beforeEach(() => { server.state.docs[A1] = stored(tenants); });
 
-    it('is forked when there is no fork and nothing changed: copy and detach in one transaction', async () => {
+    it('is forked when there is no fork and nothing changed: the copy, and the detach of a listed tenant, in one transaction', async () => {
       await expect(saveShared()).resolves.toMatchObject({ status: 'saved', key: FORK_KEY });
-      expect(server.state.writes.map(({ kind, path }) => [kind, path])).toEqual([['set', FORK], ['update', A1]]);
+      expect(server.state.writes.map(({ kind, path }) => [kind, path])).toEqual(writes);
       expect(docOf(FORK)).toMatchObject({ title: 'Neuer Titel', tenants: [tenantId] });
       expect(docOf(A1)).toEqual(stored({ tenants: rest }));
       expect(server.state.reads).toEqual([A1, FORK]);

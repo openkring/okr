@@ -1086,14 +1086,24 @@ describe('FirestoreService.writeChecked', () => {
     expect(captureMessageMock).toHaveBeenCalledTimes(1);
   });
 
-  it('forks: replaces the copy and detaches the tenant, no toast and no comment', async () => {
-    const result = await service.writeChecked<Doc, string>('sections', async () => ({ kind: 'fork', key: 'a1_scs', model: { ...MODEL, tenants: ['scs', 'p13'] }, original: 'a1' }), isSame, MESSAGES, user);
-    await settled();
-    expect(result).toMatchObject({ status: 'written', key: 'a1_scs', kind: 'fork' });
-    expect(set.mock.calls).toEqual([[{ path: 'sections/a1_scs' }, STORED]]);
-    expect(transactionUpdate.mock.calls).toEqual([[{ path: 'sections/a1' }, { tenants: { arrayRemove: ['scs'] } }]]);
-    expect(toast).not.toHaveBeenCalled();
-    expect(setDocMock).not.toHaveBeenCalled();
+  it.each([[['scs', 'p13'], true], [['system', 'scs'], true], [['system'], false], [['p13'], false], ['scs', false], [undefined, false]])(
+    'forks: replaces the copy, and detaches a tenant that the original lists (%j: %s), no toast and no comment', async (tenants, detaches) => {
+      get.mockResolvedValue({ exists: () => true, data: () => ({ ...STORED, tenants }) });
+      const result = await service.writeChecked<Doc, string>('sections', async () => ({ kind: 'fork', key: 'a1_scs', model: { ...MODEL, tenants: ['scs', 'p13'] }, original: 'a1' }), isSame, MESSAGES, user);
+      await settled();
+      expect(result).toMatchObject({ status: 'written', key: 'a1_scs', kind: 'fork' });
+      expect(set.mock.calls).toEqual([[{ path: 'sections/a1_scs' }, STORED]]);
+      expect(transactionUpdate.mock.calls).toEqual(detaches ? [[{ path: 'sections/a1' }, { tenants: { arrayRemove: ['scs'] } }]] : []);
+      expect(toast).not.toHaveBeenCalled();
+      expect(setDocMock).not.toHaveBeenCalled();
+    });
+
+  it('reads the original of a fork before it writes, once', async () => {
+    get.mockResolvedValue({ exists: () => true, data: () => STORED });
+    set.mockImplementationOnce(() => { expect(get).toHaveBeenCalledTimes(1); });
+    await service.writeChecked<Doc, string>('sections', async (read) => { await read('a1'); return { kind: 'fork', key: 'a1_scs', model: MODEL, original: 'a1' }; }, isSame, MESSAGES);
+    expect(get).toHaveBeenCalledTimes(1);
+    expect(set).toHaveBeenCalledTimes(1);
   });
 
   it('reads each document once per attempt, as stored', async () => {
@@ -1328,6 +1338,12 @@ describe('FirestoreService.forkModel', () => {
     expect(batch.update).not.toHaveBeenCalled();
     expect(batch.commit).toHaveBeenCalledTimes(1);
     expect(key).toHaveLength(20);
+  });
+
+  it('leaves a source with malformed tenants alone', async () => {
+    await makeService().forkModel<OkrModel>('categories', { okey: 'c1', name: 'N', tenants: 'scs' } as never, {});
+    expect(batch.set).toHaveBeenCalledTimes(1);
+    expect(batch.update).not.toHaveBeenCalled();
   });
 
   it.each([[['system', 'scs']], [['scs', 'bka']]])('also detaches the tenant from a source listing it (%j)', async (tenants) => {

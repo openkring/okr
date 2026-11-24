@@ -31,7 +31,7 @@ import { catchError, concat, defer, delay, firstValueFrom, from, map, MonoTypeOp
 
 import { attestAppCheck, AUTH, ENV, FIRESTORE, isAttested, isFirestoreInitializedCheck, type AppCheckOutcome } from '@okr/shared-config';
 import { OkrModel, CommentCollection, CommentModel, DbQuery, PersonCollection, PersonModel, UserModel } from "@okr/shared-models";
-import { type BadgeSourceMeta, debugData, debugMessage, generateRandomString, getDeletePatch, getFullName, getQuery, isBrowser, removeKeyFromOkrModel, removeUndefinedFields, SYSTEM_TENANT } from '@okr/shared-util-core';
+import { type BadgeSourceMeta, canWriteTenant, debugData, debugMessage, generateRandomString, getDeletePatch, getFullName, getQuery, isBrowser, removeKeyFromOkrModel, removeUndefinedFields, SYSTEM_TENANT } from '@okr/shared-util-core';
 import { TOAST_LENGTH } from '@okr/shared-constants';
 import { I18nService } from "@okr/shared-i18n";
 
@@ -59,7 +59,7 @@ export type CheckedWrite<T extends OkrModel> =
   | { kind: 'create'; key: string; model: T }
   /** Merged into the document, as `updateModel`. */
   | { kind: 'update'; key: string; model: T }
-  /** The tenant's own copy, replaced as a whole, and the tenant is removed from `original`, as `forkModel`. */
+  /** The tenant's own copy, replaced as a whole; the tenant is removed from `original` when that lists it, as `forkModel`. */
   | { kind: 'fork'; key: string; model: T; original: string };
 
 /** `refuse` is an answer for the caller (`reason`); `fail` is a failed save (error toast). */
@@ -1346,7 +1346,7 @@ export class FirestoreService {
     try {
       const batch = this.getBatch();
       batch.set(doc(this.firestore, `${collectionName}/${forkKey}`), forked);
-      if ((source.tenants ?? []).includes(tenantId)) {
+      if (canWriteTenant(source, tenantId)) {
         batch.update(doc(this.firestore, `${collectionName}/${source.okey}`), { tenants: arrayRemove(tenantId) });
       }
       await batch.commit();
@@ -1429,13 +1429,15 @@ export class FirestoreService {
         const path = `${collectionName}/${decision.key}`;
         const data = this.checkedData(decision);
         if (decision.kind === 'create' && await read(decision.key) !== null) throw new DocumentExistsError(path);
+        // the rule of forkModel; read before anything is written, as a transaction demands
+        const detaches = decision.kind === 'fork' && canWriteTenant(await read(decision.original), this.env.tenantId);
 
         if (decision.kind === 'update') {
           transaction.update(doc(this.firestore, path), { ...data } as Record<string, unknown>);
         } else {
           transaction.set(doc(this.firestore, path), { ...data });
         }
-        if (decision.kind === 'fork') {
+        if (decision.kind === 'fork' && detaches) {
           transaction.update(doc(this.firestore, `${collectionName}/${decision.original}`), { tenants: arrayRemove(this.env.tenantId) });
         }
         run.sent = { write: decision, data };
