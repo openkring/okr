@@ -1403,6 +1403,8 @@ export const SECTION_I18N_KEYS = {
   // an article with blocks (spec 1.173)
   article_blocks_readonly:                  PFX + 'article.blocks.readonly',
   article_not_linked:                       PFX + 'article.editor.notLinked',
+  // here and not in ARTICLE_EDITOR_I18N_KEYS: shown when the editor's chunk is not there
+  article_openFailed:                       PFX + 'article.editor.openFailed',
 
   error_save:                               PFX + 'error.save',
   error_load:                               PFX + 'error.load',

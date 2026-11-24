@@ -1,4 +1,4 @@
-import { computed, inject, Injectable, Injector, Signal } from '@angular/core';
+import { computed, ErrorHandler, inject, Injectable, Injector, Signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController, ToastController } from '@ionic/angular';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
@@ -22,7 +22,7 @@ import { ArticleBlocksGate, SectionService } from '@okr/cms-section-data-access'
 import { createSection, narrowSection, newArticleFrom, SECTION_I18N_KEYS, usesArticleEditor } from '@okr/cms-section-util';
 import { allowedSectionTypesForPage } from '@okr/cms-website-render';
 
-import { openArticleEditor } from './article-editor.loader';
+import { openArticleEditor, type OpenedArticleEditor } from './article-editor.loader';
 
 export type Coordinates = {
   latitude: number;
@@ -64,6 +64,7 @@ export const _SectionStore = signalStore(
     alertController: inject(AlertController),
     chatStatus: inject(ChatStatusService),
     toastController: inject(ToastController),
+    errorHandler: inject(ErrorHandler),
     firestoreService: inject(FirestoreService),
     i18nService: inject(I18nService)
   })),
@@ -231,33 +232,39 @@ export const _SectionStore = signalStore(
         const roles = this.getRoles();
         const states = store.appStore.getCategory('content_state');
         opening = true;
-        let modal: HTMLIonModalElement;
+        let modal: HTMLIonModalElement | undefined;
+        let editor: OpenedArticleEditor | undefined;
         try {
           if (section.type === 'article' && !readOnly) await store.articleBlocksGate.load();
           // the article editor saves by itself (spec 1.175 §7.1)
           if (usesArticleEditor(section, readOnly, store.articleBlocksGate.open())) {
             const isNew = !section.okey;
             const article = isNew ? newArticleFrom(section, store.tenantId(), generateRandomString(20)) : section as ArticleSection;
-            const sectionId = await openArticleEditor(store.modalController, article, { isNew, currentUser: store.currentUser(), roles, states, tagModel: 'section' });
-            if (sectionId) this.reload();
-            return sectionId;
+            const host = { modalController: store.modalController, toastController: store.toastController, errorHandler: store.errorHandler, openFailed: store.i18n.article_openFailed };
+            editor = await openArticleEditor(host, article, { isNew, currentUser: store.currentUser(), roles, states, tagModel: 'section' });
+          } else {
+            const { SectionEditModal } = await import('./section-edit.modal');
+            modal = await store.modalController.create({
+              component: SectionEditModal,
+              cssClass: 'modal-fullscreen',
+              componentProps: {
+                section,
+                currentUser: store.currentUser(),
+                tagModel: 'section',
+                roles,
+                states,
+                readOnly
+              }
+            });
+            modal.present();
           }
-          const { SectionEditModal } = await import('./section-edit.modal');
-          modal = await store.modalController.create({
-            component: SectionEditModal,
-            cssClass: 'modal-fullscreen',
-            componentProps: {
-              section,
-              currentUser: store.currentUser(),
-              tagModel: 'section',
-              roles,
-              states,
-              readOnly
-            }
-          });
-          modal.present();
         } finally {
           opening = false;
+        }
+        if (!modal) {
+          const sectionId = await editor?.closed;
+          if (sectionId) this.reload();
+          return sectionId;
         }
         const { data, role } = await modal.onWillDismiss();
         if (role === 'confirm' && data && !readOnly) {

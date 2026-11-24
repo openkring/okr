@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { ApplicationRef, signal } from '@angular/core';
+import { ApplicationRef, ErrorHandler, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { AlertController, ModalController, ToastController } from '@ionic/angular';
 import { of } from 'rxjs';
@@ -208,7 +208,10 @@ describe('SectionStore.edit of an article (1.175)', () => {
     return { store, gate, modalController, sectionService, reload };
   }
 
-  beforeEach(() => vi.mocked(openArticleEditor).mockReset().mockResolvedValue(undefined));
+  /** the editor was shown and then closed, after a save with `key` */
+  const closedWith = (key?: string) => ({ closed: Promise.resolve(key) });
+
+  beforeEach(() => vi.mocked(openArticleEditor).mockReset().mockResolvedValue(closedWith()));
 
   it('gate closed: the form of today opens and the store saves', async () => {
     const { store, gate, modalController, sectionService, reload } = setup(false, article({ title: 'U' }));
@@ -232,12 +235,12 @@ describe('SectionStore.edit of an article (1.175)', () => {
 
   it('gate open: the article editor opens, its key is passed on, the store reloads once and writes nothing', async () => {
     const { store, modalController, sectionService, reload } = setup(true);
-    vi.mocked(openArticleEditor).mockResolvedValue('a1_p13');
+    vi.mocked(openArticleEditor).mockResolvedValue(closedWith('a1_p13'));
     const section = article();
     expect(await store.edit(section, false)).toBe('a1_p13');
     expect(openArticleEditor).toHaveBeenCalledTimes(1);
-    const [controller, passed, options] = vi.mocked(openArticleEditor).mock.calls[0];
-    expect(controller).toBe(modalController);
+    const [host, passed, options] = vi.mocked(openArticleEditor).mock.calls[0];
+    expect(host).toEqual({ modalController, toastController: TestBed.inject(ToastController), errorHandler: TestBed.inject(ErrorHandler), openFailed: expect.any(Function) });
     expect(passed).toBe(section);   // raw, as read
     expect(options).toEqual(expect.objectContaining({ isNew: false, currentUser: user, tagModel: 'section' }));
     expect(reload).toHaveBeenCalledTimes(1);
@@ -274,12 +277,37 @@ describe('SectionStore.edit of an article (1.175)', () => {
     expect(openArticleEditor).toHaveBeenCalledTimes(2);
   });
 
-  it('a failed opening does not block the next one', async () => {
-    const { store } = setup(true);
-    vi.mocked(openArticleEditor).mockRejectedValueOnce(new Error('chunk'));
-    await expect(store.edit(article(), false)).rejects.toThrow('chunk');
+  it('a failed opening (told by the opener) returns no key and does not block the next one', async () => {
+    const { store, reload, modalController } = setup(true);
+    vi.mocked(openArticleEditor).mockResolvedValueOnce(undefined);
+    expect(await store.edit(article(), false)).toBeUndefined();
+    expect(reload).not.toHaveBeenCalled();
+    expect(modalController.create).not.toHaveBeenCalled();
     await store.edit(article(), false);
     expect(openArticleEditor).toHaveBeenCalledTimes(2);
+  });
+
+  it('a press while the editor is being shown is ignored', async () => {
+    const { store } = setup(true);
+    let shown: () => void = () => undefined;
+    vi.mocked(openArticleEditor).mockReturnValueOnce(new Promise((resolve) => { shown = () => resolve(closedWith()); }));
+    const first = store.edit(article(), false);
+    await vi.waitFor(() => expect(openArticleEditor).toHaveBeenCalledTimes(1));
+    expect(await store.edit(article(), false)).toBeUndefined();
+    shown();
+    await first;
+    expect(openArticleEditor).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([['article', 2, 0], ['button', 1, 1]])('an editor whose closing is never told does not block the next opening (%s)', async (type, editors, forms) => {
+    const { store, modalController } = setup(true);
+    vi.mocked(openArticleEditor).mockResolvedValueOnce({ closed: new Promise(() => undefined) });
+    void store.edit(article(), false);
+    await vi.waitFor(() => expect(openArticleEditor).toHaveBeenCalledTimes(1));
+    await new Promise((resolve) => setTimeout(resolve));
+    await store.edit(article({ type }), false);
+    expect(openArticleEditor).toHaveBeenCalledTimes(editors);
+    expect(modalController.create).toHaveBeenCalledTimes(forms);
   });
 
   it('a save of the form that never ends does not block the next opening', async () => {

@@ -1,4 +1,4 @@
-import { computed, inject } from '@angular/core';
+import { computed, ErrorHandler, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController, ToastController } from '@ionic/angular';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
@@ -21,7 +21,7 @@ import { MenuService } from '@okr/cms-menu-data-access';
 import { MenuModal } from '@okr/cms-menu-feature';
 import { PageService } from '@okr/cms-page-data-access';
 import { ArticleBlocksGate, SectionService } from '@okr/cms-section-data-access';
-import { loadSectionEditModal, openArticleEditor } from '@okr/cms-section-feature';
+import { loadSectionEditModal, openArticleEditor, type ArticleEditorHost, type OpenedArticleEditor } from '@okr/cms-section-feature';
 import { SECTION_I18N_KEYS, isImageLinked, newArticleFrom, usesArticleEditor } from '@okr/cms-section-util';
 
 import { PAGE_I18N_KEYS } from '@okr/cms-page-util';
@@ -100,11 +100,12 @@ export const PageIntegrityStore = signalStore(
     modalController: inject(ModalController),
     alertController: inject(AlertController),
     toastController: inject(ToastController),
+    errorHandler: inject(ErrorHandler),
     i18nService: inject(I18nService)
   })),
   withProps(store => ({
     i18n: store.i18nService.translateAll(PAGE_I18N_KEYS),
-    sectionI18n: store.i18nService.translateAll({ article_not_linked: SECTION_I18N_KEYS.article_not_linked }),
+    sectionI18n: store.i18nService.translateAll({ article_not_linked: SECTION_I18N_KEYS.article_not_linked, article_openFailed: SECTION_I18N_KEYS.article_openFailed }),
 
     dataResource: rxResource({
       params: () => ({
@@ -136,6 +137,9 @@ export const PageIntegrityStore = signalStore(
   withMethods(store => {
     /** a section is being opened: a second press meanwhile is ignored */
     let opening = false;
+    const articleEditorHost: ArticleEditorHost = {
+      modalController: store.modalController, toastController: store.toastController, errorHandler: store.errorHandler, openFailed: store.sectionI18n.article_openFailed,
+    };
     return {
       /******************************** setters (filter) ******************************************* */
       setModelType(modelType: string | undefined): void {
@@ -195,30 +199,35 @@ export const PageIntegrityStore = signalStore(
         const roles = store.appStore.getCategory('roles');
         const states = store.appStore.getCategory('content_state');
         opening = true;
-        let modal: HTMLIonModalElement;
+        let modal: HTMLIonModalElement | undefined;
+        let editor: OpenedArticleEditor | undefined;
         try {
           if (section.type === 'article') await store.articleBlocksGate.load();
           // the article editor saves by itself (spec 1.175 §7.1)
           if (usesArticleEditor(section, false, store.articleBlocksGate.open())) {
             const options = { isNew: false, currentUser, roles, states, tagModel: 'section_default' };
-            if (await openArticleEditor(store.modalController, section as ArticleSection, options)) this.findOrphanedSections();
-            return;
+            editor = await openArticleEditor(articleEditorHost, section as ArticleSection, options);
+          } else {
+            modal = await store.modalController.create({
+              component: await loadSectionEditModal(),
+              cssClass: 'modal-fullscreen',
+              componentProps: {
+                section,
+                currentUser,
+                tagModel: 'section_default',
+                roles,
+                states,
+                readOnly: false
+              },
+            });
+            await modal.present();
           }
-          modal = await store.modalController.create({
-            component: await loadSectionEditModal(),
-            cssClass: 'modal-fullscreen',
-            componentProps: { 
-              section, 
-              currentUser, 
-              tagModel: 'section_default',
-              roles,
-              states,
-              readOnly: false
-            },
-          });
-          await modal.present();
         } finally {
           opening = false;
+        }
+        if (!modal) {
+          if (await editor?.closed) this.findOrphanedSections();
+          return;
         }
         const { data, role } = await modal.onWillDismiss();
         if (role === 'confirm' && data) {
@@ -347,26 +356,31 @@ export const PageIntegrityStore = signalStore(
         const states = store.appStore.getCategory('content_state');
         const newSection = { okey: '', type: 'article', state: 'active', name: ref.resolvedKey, title: '', tenants: [store.appStore.env.tenantId] } as unknown as SectionModel;
         opening = true;
-        let modal: HTMLIonModalElement;
+        let modal: HTMLIonModalElement | undefined;
+        let editor: OpenedArticleEditor | undefined;
         try {
           await store.articleBlocksGate.load();
           if (usesArticleEditor(newSection, false, store.articleBlocksGate.open())) {
             const article = newArticleFrom(newSection, store.appStore.env.tenantId, generateRandomString(20));
-            const savedKey = await openArticleEditor(store.modalController, article, { isNew: true, currentUser, roles, states, tagModel: 'section_default' });
-            if (savedKey) {
-              await this.replaceSectionKey(ref, savedKey);
-              this.findMissingSections();
-            }
-            return;
+            editor = await openArticleEditor(articleEditorHost, article, { isNew: true, currentUser, roles, states, tagModel: 'section_default' });
+          } else {
+            modal = await store.modalController.create({
+              component: await loadSectionEditModal(),
+              cssClass: 'modal-fullscreen',
+              componentProps: { section: newSection, currentUser, tagModel: 'section_default', roles, states, readOnly: false, isNew: true },
+            });
+            await modal.present();
           }
-          modal = await store.modalController.create({
-            component: await loadSectionEditModal(),
-            cssClass: 'modal-fullscreen',
-            componentProps: { section: newSection, currentUser, tagModel: 'section_default', roles, states, readOnly: false, isNew: true },
-          });
-          await modal.present();
         } finally {
           opening = false;
+        }
+        if (!modal) {
+          const savedKey = await editor?.closed;
+          if (savedKey) {
+            await this.replaceSectionKey(ref, savedKey);
+            this.findMissingSections();
+          }
+          return;
         }
         const { data, role } = await modal.onWillDismiss();
         if (role !== 'confirm' || !data) return;

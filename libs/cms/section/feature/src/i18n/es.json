@@ -301,7 +301,6 @@
         "delete": "Eliminar"
       },
       "add": {
-        "label": "Insertar un bloque",
         "below": "Insertar un bloque debajo",
         "atEnd": "Insertar un bloque al final",
         "inColumn": "Insertar un bloque en esta columna",

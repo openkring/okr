@@ -101,7 +101,6 @@ export const ARTICLE_EDITOR_I18N_KEYS = {
   article_editor_frame_down:                    PFX + 'article.editor.frame.down',
   article_editor_frame_duplicate:               PFX + 'article.editor.frame.duplicate',
   article_editor_frame_delete:                  PFX + 'article.editor.frame.delete',
-  article_editor_add_label:                     PFX + 'article.editor.add.label',
   article_editor_add_below:                     PFX + 'article.editor.add.below',
   article_editor_add_atEnd:                     PFX + 'article.editor.add.atEnd',
   article_editor_add_inColumn:                  PFX + 'article.editor.add.inColumn',
@@ -131,7 +130,6 @@ export const ARTICLE_EDITOR_I18N_KEYS = {
   article_editor_discard_message:               PFX + 'article.editor.discard.message',
   article_editor_discard_confirm:               PFX + 'article.editor.discard.confirm',
   article_editor_discard_keep:                  PFX + 'article.editor.discard.keep',
-  article_editor_openFailed:                    PFX + 'article.editor.openFailed',
 } satisfies Record<string, string>;
 
 /** What panel, canvas and modal are given: the texts of the editor and those of the section forms whose parts they reuse. */

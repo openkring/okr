@@ -301,7 +301,6 @@
         "delete": "Löschen"
       },
       "add": {
-        "label": "Block einfügen",
         "below": "Block darunter einfügen",
         "atEnd": "Block am Ende einfügen",
         "inColumn": "Block in diese Spalte einfügen",

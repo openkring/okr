@@ -301,7 +301,6 @@
         "delete": "Delete"
       },
       "add": {
-        "label": "Insert a block",
         "below": "Insert a block below",
         "atEnd": "Insert a block at the end",
         "inColumn": "Insert a block in this column",
