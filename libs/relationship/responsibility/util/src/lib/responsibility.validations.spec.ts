@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { EMAIL_LENGTH } from '@okr/shared-constants';
 import { ResponsibilityModel } from '@okr/shared-models';
 
 import { responsibilityValidations } from './responsibility.validations';
@@ -25,6 +26,6 @@ describe('responsibilityValidations – email', () => {
   });
 
   it('flags an address over the length cap', () => {
-    expect(responsibilityValidations(withEmail('a'.repeat(60) + '@club.ch'), 'scs').hasErrors('email')).toBe(true);
+    expect(responsibilityValidations(withEmail('a'.repeat(EMAIL_LENGTH) + '@club.ch'), 'scs').hasErrors('email')).toBe(true);
   });
 });
