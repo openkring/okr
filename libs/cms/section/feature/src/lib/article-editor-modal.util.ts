@@ -1,5 +1,5 @@
 import {
-  blocksInOrder, findBlock, record, redo, replaceBlock, replacePresent, resizeColumn, setColumnSizes, undo, withUpload, withValidSelection,
+  blocksInOrder, findBlock, isArticleChanged, record, redo, replaceBlock, replacePresent, resizeColumn, setColumnSizes, undo, withUpload, withValidSelection,
   type ArticleEditorState, type ArticlePreviewDevice, type ArticleUpload, type EditorHistory,
 } from '@okr/cms-section-util';
 import { ARTICLE_SECTION_SHAPE, isSameValue, type ArticleBlock, type ArticleSection, type ColumnsBlock } from '@okr/shared-models';
@@ -72,18 +72,25 @@ export function selectIn(history: History, id: string | undefined): History {
   return next === history.present ? history : replacePresent(history, next);
 }
 
-/** Undo. Selects the block that changes by it (§7.7). When one only goes away, what was selected before the step is selected again. */
+/**
+ * Undo. Selects the block that changes by it (§7.7). When one only goes away, what was selected before the step is selected again.
+ * Steps that change nothing (typed and deleted again) are passed over.
+ */
 export function stepBack(history: History): History {
-  return stepped(history, undo(history), true);
+  return stepped(history, undo, true);
 }
 
-/** Redo. Selects the block that changes by it; nothing when one only goes away. */
+/** Redo. Selects the block that changes by it; nothing when one only goes away. Steps that change nothing are passed over. */
 export function stepForward(history: History): History {
-  return stepped(history, redo(history), false);
+  return stepped(history, redo, false);
 }
 
-function stepped(from: History, to: History, backToRecorded: boolean): History {
+function stepped(from: History, step: (history: History) => History, backToRecorded: boolean): History {
+  const changes = (to: History): boolean => isArticleChanged(from.present.section, to.present.section);
+  let to = step(from);
   if (to === from) return from;
+  for (let next = step(to); next !== to && !changes(to); next = step(to)) to = next;
+  if (!changes(to)) return replacePresent(to, withSelection(to.present, from.present.selectedId));
   const [before, after] = [blocksOf(from.present), blocksOf(to.present)];
   const affected = affectedBlocks(before, after);
   const recorded = to.present.selectedId;

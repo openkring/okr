@@ -261,6 +261,50 @@ describe('undo and redo select what changes (§7.7)', () => {
   });
 });
 
+describe('undo and redo over steps that change nothing (§7.7)', () => {
+  const one = section([text('a', '1'), text('b')]);
+  const two = section([text('a', '2'), text('b')]);
+  /** typed and deleted again within a run: a step, with another object of the same value */
+  const same = (s: ArticleSection): ArticleSection => structuredClone(s);
+  const start = (): EditorHistory<EditorState> => createHistory({ section: one, copiedFrom: {}, selectedId: 'a' });
+
+  it('undo goes on to the step that changes something', () => {
+    const h = selectIn(changeSection(changeSection(changeSection(start(), two), same(two)), same(two)), 'b');
+    const undone = stepBack(h);
+    expect(undone.present).toMatchObject({ section: one, selectedId: 'a' });
+    expect(undone.past).toEqual([]);
+    expect(undone.future).toHaveLength(3);
+  });
+
+  it('redo goes on as well', () => {
+    const h = changeSection(changeSection(start(), same(one)), two);
+    const undone = stepBack(stepBack(h));
+    expect(undone.present.section).toBe(one);
+    const redone = stepForward(selectIn(undone, 'b'));
+    expect(redone.present).toMatchObject({ section: two, selectedId: 'a' });
+    expect(redone.future).toEqual([]);
+  });
+
+  it('when there is none, what is selected stays selected and nothing is left to undo', () => {
+    const undone = stepBack(selectIn(changeSection(changeSection(start(), same(one)), same(one)), 'b'));
+    expect(undone.present).toMatchObject({ section: one, selectedId: 'b' });
+    expect(undone.past).toEqual([]);
+    const redone = stepForward(undone);
+    expect(redone.present).toMatchObject({ section: one, selectedId: 'b' });
+    expect(redone.future).toEqual([]);
+  });
+
+  it('a step with another selection only is none either', () => {
+    const h = record(start(), { section: one, copiedFrom: {}, selectedId: 'b' });
+    expect(stepBack(h).present.selectedId).toBe('b');
+  });
+
+  it('a field that is empty instead of absent is no change', () => {
+    const h = changeSection(changeSection(start(), two), { ...two, subTitle: '' });
+    expect(stepBack(h).present.section).toBe(one);
+  });
+});
+
 describe('withUploadDetails', () => {
   const details = { kind: 'details' as const, details: [{ url: 'u.jpg', documentKey: 'd1' }] };
   const keyOf = (s: EditorState): unknown => (blocksOf(s)[0] as unknown as { image: { documentKey?: string } }).image.documentKey;
