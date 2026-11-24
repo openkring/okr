@@ -9,7 +9,7 @@
  *
  * Each form gets a `form` section on its website page (pages/la21staefa_anmeldung, pages/la21staefa_kontakt).
  * The section is what the website embeds (`data-okr-form` + `data-section`) and carries the board mail
- * recipients. The Anmeldung page's placeholder text («schreib uns per E-Mail…», import-pages FORM_PAGES)
+ * recipients. The Anmeldung page's placeholder text («schreib uns per E-Mail…», import-shared FORM_PAGES)
  * is replaced by the original intro, but only while nobody has edited it.
  *
  * Wording uses «Sie», as on the original site (decided 2026-11-20).
@@ -25,7 +25,7 @@ import { createRequire } from 'node:module';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { assertNoBlocks } from '../lib/block-article-guard.mjs';
-import { FORM_PAGES } from './import-pages.mjs';
+import { FORM_PAGES } from './import-shared.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const rootRequire = createRequire(join(ROOT, 'package.json'));

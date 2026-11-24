@@ -22,7 +22,7 @@ import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { fileNameOf, imageLayoutOf } from './import-pages.mjs';
+import { fileNameOf, imageLayoutOf } from './import-shared.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const rootRequire = createRequire(join(ROOT, 'package.json'));
