@@ -6,12 +6,13 @@ import {
 } from '@ionic/angular';
 
 import { AvatarSelect } from '@okr/avatar-ui';
+import { IBAN_INPUT_LENGTH } from '@okr/shared-constants';
 import { AvatarInfo } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { ErrorNote, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { formatIban, IbanFormat, MODEL_SELECTOR, validateVestTree, vestErrors } from '@okr/shared-util-angular';
 
-import { ALLOWED_CURRENCIES, ExpenseFormValue, expenseValidations } from '@okr/finance-expense-util';
+import { ALLOWED_CURRENCIES, AMOUNT_INPUT_LENGTH, ExpenseFormValue, expenseValidations, parseAmount } from '@okr/finance-expense-util';
 
 export interface ExpenseFormI18n {
   abstract_label: Signal<string>;
@@ -58,8 +59,8 @@ export interface ExpenseFormI18n {
 
         <ion-row>
           <ion-col size="8">
-            <okr-text-input [i18n]="amountI18n()" [value]="amountCHFStr()"
-              (valueChange)="onAmountChange($event)" [maxLength]="10" [readOnly]="false" />
+            <okr-text-input [i18n]="amountI18n()" [value]="amountInput()"
+              (valueChange)="onAmountChange($event)" [maxLength]="amountLength" [readOnly]="false" />
             <okr-error-note [errors]="amountErrors()" />
           </ion-col>
           <ion-col size="4">
@@ -120,7 +121,7 @@ export interface ExpenseFormI18n {
                 <okr-error-note [errors]="ibanErrors()" />
               } @else {
                 <okr-text-input [i18n]="ibanI18n()" [value]="iban()"
-                  (valueChange)="onFieldChange('iban', $event)" [maxLength]="34" [readOnly]="false" />
+                  (valueChange)="onFieldChange('iban', $event)" [maxLength]="ibanLength" [readOnly]="false" />
                 <okr-error-note [errors]="ibanErrors()" />
               }
             </ion-col>
@@ -185,6 +186,9 @@ export class ExpenseForm {
 
   private readonly modelSelector = inject(MODEL_SELECTOR);
   protected readonly currencies = ALLOWED_CURRENCIES;
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly ibanLength = IBAN_INPUT_LENGTH;
+  protected readonly amountLength = AMOUNT_INPUT_LENGTH;
   protected readonly formatIban = (iban: string) => formatIban(iban, IbanFormat.Friendly);
 
   // the suite takes only (model, field?), so the bridge gets it directly
@@ -200,7 +204,6 @@ export class ExpenseForm {
   protected readonly memberErrors   = computed(() => this.result().getErrors('memberKey'));
 
   protected readonly abstract = computed(() => this.formData()?.abstract);
-  protected readonly amountCHF = computed(() => this.formData()?.amountCHF);
   protected readonly currency = computed(() => this.formData()?.currency);
   protected readonly transferTo = computed(() => this.formData()?.transferTo);
   protected readonly iban = computed(() => this.formData()?.iban);
@@ -212,7 +215,8 @@ export class ExpenseForm {
     return { key, name1: '', name2: this.formData()?.memberName ?? '', label: '', modelType: 'person', type: '', subType: '' };
   });
 
-  protected amountCHFStr  = computed(() => this.amountCHF() > 0 ? String(this.amountCHF()) : '');
+  /** The typed text, kept verbatim: re-deriving it from the number would rewrite the field while typing. */
+  protected readonly amountInput = signal('');
   protected readonly hasFavoriteIban = computed(() => this.favoriteIban().trim().length > 0);
   // genuine local UI state (which IBAN widget is shown), not a formData field — stays a signal
   /** True once the user chose to redirect the transfer to a different IBAN than their saved one. */
@@ -250,8 +254,8 @@ export class ExpenseForm {
   }) as TextInputI18n);
 
   protected onAmountChange(v: string): void {
-    const parsed = parseFloat(v);
-    this.onFieldChange('amountCHF', isNaN(parsed) ? 0 : parsed);
+    this.amountInput.set(v);
+    this.onFieldChange('amountCHF', parseAmount(v));
   }
 
   protected onFieldChange(field: string, value: unknown): void {

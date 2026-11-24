@@ -261,7 +261,9 @@ export const DESCRIPTION_LENGTH = 5000;
 export const COMMENT_LENGTH = 500;
 export const EMAIL_LENGTH = 100;
 export const PHONE_LENGTH = 30;
-export const IBAN_LENGTH = 26;
+export const IBAN_LENGTH = 26;  // a Swiss IBAN in its friendly format (21 characters + 5 blanks)
+// any IBAN typed in its friendly format: 34 characters at most + 8 blanks
+export const IBAN_INPUT_LENGTH = 42;
 export const BEXIO_ID_LENGTH = 6;
 export const TAX_ID_LENGTH = 12;
 // 16, not 13: the AHV number is stored and displayed in its dotted notation

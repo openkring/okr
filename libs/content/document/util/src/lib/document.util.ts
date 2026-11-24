@@ -2,7 +2,7 @@ import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { Platform } from '@ionic/angular';
 
 import { DOCUMENT_DIR, DocumentModel, IMAGE_CONFIG_SHAPE, ImageConfig, UserModel } from '@okr/shared-models';
-import { addIndexElement, getFileHash, getFullName, getTodayStr, isPhotoCancellation, resolveMimeType, warn } from '@okr/shared-util-core';
+import { addIndexElement, getFileHash, getFullName, getTodayStr, isPickerCancellation, resolveMimeType, warn } from '@okr/shared-util-core';
 
 import { readAsFile } from '@okr/avatar-util';
 
@@ -23,7 +23,7 @@ export async function pickPhoto(platform: Platform): Promise<File | undefined> {
     });
   } catch (ex) {
     // user cancelling the picker is normal control flow, not an error
-    if (isPhotoCancellation(ex)) return undefined;
+    if (isPickerCancellation(ex)) return undefined;
     throw ex;
   }
   return await readAsFile(photo, platform);

@@ -15,7 +15,7 @@ import { AccountSelect, AccountSelectI18n } from '@okr/finance-account-ui';
 import { CostCenterSelect, CostCenterSelectI18n } from '@okr/finance-cost-center-ui';
 import { ProjectSelect } from '@okr/project-project-ui';
 import {
-  ALLOWED_CURRENCIES, centsToCHF, chfToCents, ExpenseEditFormValue, expenseEditValidations, ExpenseQrBill, ExpenseReceipt,
+  ALLOWED_CURRENCIES, AMOUNT_INPUT_LENGTH, centsToCHF, chfToCents, ExpenseEditFormValue, expenseEditValidations, ExpenseQrBill, ExpenseReceipt, parseAmount,
 } from '@okr/finance-expense-util';
 
 export type { ExpenseEditFormValue };
@@ -135,7 +135,7 @@ export interface ExpenseEditFormI18n {
                 <ion-col size="12" size-md="6">
                   <okr-text-input [i18n]="amountI18n()" [value]="amountInput()"
                     (valueChange)="onAmountChange($event)"
-                    [maxLength]="10" [readOnly]="isFieldReadOnly('amountTotal')" />
+                    [maxLength]="amountLength" [readOnly]="isFieldReadOnly('amountTotal')" />
                   <okr-error-note [errors]="amountErrors()" />
                 </ion-col>
                 <ion-col size="12" size-md="6">
@@ -431,6 +431,7 @@ export class ExpenseEditForm {
    * cents are derived FROM it in onAmountChange, never the other way round while editing.
    */
   protected readonly amountInput = signal('');
+  protected readonly amountLength = AMOUNT_INPUT_LENGTH;
 
   protected readonly isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
@@ -475,8 +476,7 @@ export class ExpenseEditForm {
   /******************************* actions *************************************** */
   protected onAmountChange(value: string): void {
     this.amountInput.set(value);   // keep the typed text verbatim — see the seeding effect
-    const parsed = parseFloat(value.replace(',', '.'));
-    this.onFieldChange('amountTotal', isNaN(parsed) ? 0 : chfToCents(parsed));
+    this.onFieldChange('amountTotal', chfToCents(parseAmount(value)));
   }
 
   protected onFieldChange(fieldName: string, fieldValue: string | number): void {

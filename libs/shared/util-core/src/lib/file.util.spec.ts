@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_ACCEPT_ATTRIBUTE, DEFAULT_MIMETYPES, RAG_ACCEPT_ATTRIBUTE } from '@okr/shared-constants';
-import { baseName, dirName, fileExtension, fileName, fileSizeUnit, isPdf, isPhotoCancellation, isVideo, resolveMimeType, sanitizeFileName, suffixFileName, withResolvedMimeType } from './file.util';
+import { baseName, dirName, fileExtension, fileName, fileSizeUnit, isPdf, isPickerCancellation, isVideo, resolveMimeType, sanitizeFileName, suffixFileName, withResolvedMimeType } from './file.util';
 
 describe('file.util', () => {
 
@@ -128,26 +128,29 @@ describe('file.util', () => {
         expect(result).toEqual('1.000000 GB');
     });
 
-    // isPhotoCancellation
-    it('isPhotoCancellation detects the native iOS cancel message.', () => {
-        expect(isPhotoCancellation({ message: 'User cancelled photos app' })).toBe(true);
+    // isPickerCancellation
+    it('isPickerCancellation detects the native iOS cancel message.', () => {
+        expect(isPickerCancellation({ message: 'User cancelled photos app' })).toBe(true);
     });
-    it('isPhotoCancellation is case-insensitive.', () => {
-        expect(isPhotoCancellation({ message: 'User Cancelled Photos App' })).toBe(true);
+    it('isPickerCancellation detects a cancelled native file picker (SCS-KV).', () => {
+        expect(isPickerCancellation(new Error('pickFiles canceled.'))).toBe(true);
     });
-    it('isPhotoCancellation handles an Error instance.', () => {
-        expect(isPhotoCancellation(new Error('User cancelled photos app'))).toBe(true);
+    it('isPickerCancellation is case-insensitive.', () => {
+        expect(isPickerCancellation({ message: 'User Cancelled Photos App' })).toBe(true);
     });
-    it('isPhotoCancellation handles a plain string.', () => {
-        expect(isPhotoCancellation('User cancelled photos app')).toBe(true);
+    it('isPickerCancellation handles an Error instance.', () => {
+        expect(isPickerCancellation(new Error('User cancelled photos app'))).toBe(true);
     });
-    it('isPhotoCancellation returns false for a genuine error.', () => {
-        expect(isPhotoCancellation({ message: 'No camera available' })).toBe(false);
+    it('isPickerCancellation handles a plain string.', () => {
+        expect(isPickerCancellation('User cancelled photos app')).toBe(true);
     });
-    it('isPhotoCancellation returns false for undefined / null / non-message objects.', () => {
-        expect(isPhotoCancellation(undefined)).toBe(false);
-        expect(isPhotoCancellation(null)).toBe(false);
-        expect(isPhotoCancellation({})).toBe(false);
+    it('isPickerCancellation returns false for a genuine error.', () => {
+        expect(isPickerCancellation({ message: 'No camera available' })).toBe(false);
+    });
+    it('isPickerCancellation returns false for undefined / null / non-message objects.', () => {
+        expect(isPickerCancellation(undefined)).toBe(false);
+        expect(isPickerCancellation(null)).toBe(false);
+        expect(isPickerCancellation({})).toBe(false);
     });
 });
 describe('sanitizeFileName', () => {
