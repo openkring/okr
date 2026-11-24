@@ -17,6 +17,7 @@ import { recipientParentKey } from '@okr/shared-util-core';
 import { isSwissAddress } from '@okr/content-pdf-template-util';
 import { privateBucket } from '../_storage/private-bucket';
 import { getCreditPort } from '../pingen/credit-port';
+import '../pingen/credit-binding'; // binds the port: each function loads only its own modules
 import type { MailingPost } from '../pingen/post-order';
 import { LETTERS_PREFIX, type RenderedLetter } from './mailing-letters';
 

@@ -62,6 +62,7 @@ import { mailingCategory } from './mailing-deliveries.logic';
 import { noticeSenderOf } from './notice-sender.logic';
 import { lettersResult, makePostFanOut, postFanOutDeps } from './mailing-sendings';
 import { getCreditPort } from '../pingen/credit-port';
+import '../pingen/credit-binding'; // binds the port: each function loads only its own modules
 import { answerEventsOf, type MailingPost, type PostLock, type PostOrderDoc, PostOrderCollection, parsePostRequest, postMailingKey, quoteTokenSecret, readCountryCodes, type QuoteEnv, withPostOrder } from '../pingen/post-order';
 
 const REGION = 'europe-west6';

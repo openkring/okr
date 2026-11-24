@@ -16,6 +16,7 @@ import { mailPageBody, parsePageKey, resolveAttachmentBytes, type MailingAttachm
 import { parseCaleventKeys } from '../email/personal-mail.logic';
 import { checkNewsletterGroup } from '../newsletter/signup';
 import { getCreditPort } from './credit-port';
+import './credit-binding'; // binds the port: each function loads only its own modules
 import {
   answerEventsOf, assertMayPost, computeQuote, mayPost, parseOptions, quoteDepsOf, quoteTokenSecret, readCountryCodes, signQuote,
   type QuoteCaller, type QuoteDeps, type QuoteEnv, type QuoteInput,

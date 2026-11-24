@@ -9,6 +9,7 @@ import { DateFormat, getTodayStr } from '@okr/shared-util-core';
 import { privateBucket } from '../_storage/private-bucket';
 import { createFirestoreDeps } from '../workflow/firestore-deps';
 import { getCreditPort } from './credit-port';
+import './credit-binding'; // binds the port: each function loads only its own modules
 import { makePingenClient, PINGEN_ENV, pingenClientId, pingenClientSecret, pingenOrganisationId, type PingenClient } from './pingen-client';
 import { submitSending, type SendingMailing, type SendingRow, type SubmitDeps } from './submit-sending.logic';
 
