@@ -94,7 +94,7 @@ Spec 1.173, `planning/specs/2026-11-23-article-blocks-design.md`. An article may
 
 Spec 1.175, `planning/specs/2026-11-23-article-block-editor-design.md`. `ArticleEditorModal` (full screen) edits an article as blocks: the article itself in a canvas, the settings of the selected block at the side.
 
-**When it opens:** `SectionStore.edit()` and `PageIntegrityStore` (`editSection`, `createMissingSection`) ask `usesArticleEditor(section, readOnly, gateOpen)`: an article that is not read-only, has no `journalKey`, and the gate is open or the article already has blocks. Everything else opens `SectionEditModal` as before (also the travel journal and mail pages). Both use `openArticleEditor()`; it loads the modal with `import()`, the editor saves by itself, and the caller only reloads with the returned key.
+**When it opens:** `SectionStore.edit()` and `PageIntegrityStore` (`editSection`, `createMissingSection`) ask `usesArticleEditor(section, readOnly, gateOpen)`: an article that is not read-only, has no `journalKey`, and the gate is open or the article already has blocks. Everything else opens `SectionEditModal` as before (also the travel journal and mail pages). Both use `openArticleEditor()`; it loads the modal with `import()`, the editor saves by itself. It answers when the window is shown, with `closed`, the promise of the key with which the caller reloads; a failed opening is told by it and answers nothing.
 
 | Part | Where | What |
 | --- | --- | --- |
