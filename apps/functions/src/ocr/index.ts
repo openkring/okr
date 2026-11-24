@@ -518,7 +518,8 @@ async function handleExpenseResult(
   const expenseRef = db.collection(EXPENSE_COLLECTION).doc(correlationKey);
   const expenseSnap = await expenseRef.get();
   const expense = expenseSnap.data();
-  if (!expense) {
+  // deleted meanwhile: by its author, or by a submit whose later receipt could not be uploaded
+  if (!expense || expense['isArchived'] === true) {
     await resultRef.set({ status: 'processed' }, { merge: true });
     return;
   }

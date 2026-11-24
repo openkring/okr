@@ -4,6 +4,8 @@ import { AlertController, ModalController, ToastController } from '@ionic/angula
 import { combineLatest, firstValueFrom, map, of } from 'rxjs';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
+import { captureException } from '@sentry/angular';
+
 import { ENV } from '@okr/shared-config';
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
@@ -29,6 +31,12 @@ export type ExpenseListId = 'all' | 'my';
 
 /** submitError when createExpense refused a 'member' expense because the member has no IBAN on file. */
 export const MEMBER_NO_IBAN = 'member-no-iban';
+
+/** submitError when a receipt could not be uploaded; the expense created for it was deleted again. */
+export const UPLOAD_FAILED = 'upload-failed';
+
+/** submitError when a receipt could not be uploaded AND the empty expense could not be deleted. */
+const UPLOAD_CLEANUP_FAILED = 'upload-cleanup-failed';
 
 export type { ExpenseI18n };
 
@@ -329,12 +337,12 @@ export const ExpenseStore = signalStore(
         }
       } catch (e) {
         console.error('[expense-submit] Upload step failed', e);
-        // The 'expenses' collection is CF-write-only, so the client can no longer flip the
-        // expense's status on failure (that would permission-deny). This leaves the
-        // CF-created 'processing' expense in place — accepted limitation: it has no receipts,
-        // so the pipeline never books it, and there is no client-side cleanup path.
+        // An expense without its receipts is useless to the treasurer, and every retry would add
+        // another one: delete it through the CF, which cancels its review task too.
+        const deleted = await compensateExpense(store.expenseService, expenseKey);
         if (newAddressKey) await compensateAddress(store.addressService, newAddressKey, currentUser);
-        patchState(store, { submitStep: 'error', submitError: 'Upload step failed' });
+        patchState(store, { submitStep: 'error', submitError: deleted ? UPLOAD_FAILED : UPLOAD_CLEANUP_FAILED });
+        store.expensesResource.reload();
         return;
       }
 
@@ -343,6 +351,17 @@ export const ExpenseStore = signalStore(
     },
   }))
 );
+
+/** Delete the expense of a failed submit; false when that failed as well (reported to Sentry). */
+async function compensateExpense(expenseService: ExpenseService, expenseKey: string): Promise<boolean> {
+  try {
+    await expenseService.deleteViaFunction(expenseKey);
+    return true;
+  } catch (e) {
+    captureException(e, { tags: { expenseSubmit: 'cleanup' }, extra: { expenseKey } });
+    return false;
+  }
+}
 
 async function compensateAddress(
   addressService: AddressService,

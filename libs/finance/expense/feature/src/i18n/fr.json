@@ -19,7 +19,8 @@
     "title": "Soumettre des frais",
     "cancel": "Annuler",
     "save": "Enregistrer",
-    "receiptHint": "Veuillez joindre au moins un justificatif."
+    "receiptHint": "Veuillez joindre au moins un justificatif.",
+    "fileUnreadable": "Le fichier « {name} » ne peut pas être lu. Enregistre-le d'abord sur ton appareil, puis sélectionne-le à nouveau."
   },
   "detail": {
     "title": "Débours",
@@ -86,7 +87,8 @@
     "saving": "Le débours est en cours d'enregistrement…",
     "done": "Enregistré — le caissier vérifie le justificatif.",
     "error": "Erreur — l'opération a été annulée",
-    "memberNoIban": "Aucun IBAN n'est enregistré pour ce membre. Ajoute d'abord un compte bancaire dans son profil."
+    "memberNoIban": "Aucun IBAN n'est enregistré pour ce membre. Ajoute d'abord un compte bancaire dans son profil.",
+    "uploadFailed": "Le justificatif n'a pas pu être téléversé. Rien n'a été enregistré. Sélectionne à nouveau le fichier et réessaie."
   },
   "validation": {
     "abstractRequired": "L'objet est obligatoire.",

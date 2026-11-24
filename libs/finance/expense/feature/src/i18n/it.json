@@ -19,7 +19,8 @@
     "title": "Presenta spesa",
     "cancel": "Annulla",
     "save": "Salva",
-    "receiptHint": "Allegare almeno una ricevuta."
+    "receiptHint": "Allegare almeno una ricevuta.",
+    "fileUnreadable": "Il file «{name}» non può essere letto. Salvalo prima sul tuo dispositivo e selezionalo di nuovo."
   },
   "detail": {
     "title": "Esborso",
@@ -86,7 +87,8 @@
     "saving": "L'esborso viene salvato…",
     "done": "Salvato — il cassiere verifica la ricevuta.",
     "error": "Errore — l'operazione è stata annullata",
-    "memberNoIban": "Per questo socio non è registrato alcun IBAN. Aggiungi prima un conto bancario nel suo profilo."
+    "memberNoIban": "Per questo socio non è registrato alcun IBAN. Aggiungi prima un conto bancario nel suo profilo.",
+    "uploadFailed": "Non è stato possibile caricare la ricevuta. Non è stato salvato nulla. Seleziona di nuovo il file e riprova."
   },
   "validation": {
     "abstractRequired": "L'oggetto è obbligatorio.",

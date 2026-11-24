@@ -19,7 +19,8 @@
     "title": "Submit expense",
     "cancel": "Cancel",
     "save": "Save",
-    "receiptHint": "Please attach at least one receipt."
+    "receiptHint": "Please attach at least one receipt.",
+    "fileUnreadable": "The file “{name}” cannot be read. Save it on your device first and then select it again."
   },
   "detail": {
     "title": "Outlay",
@@ -86,7 +87,8 @@
     "saving": "Outlay is being saved…",
     "done": "Saved — the treasurer will check the receipt.",
     "error": "Error — operation was rolled back",
-    "memberNoIban": "This member has no IBAN on file. Add a bank account to the member's profile first."
+    "memberNoIban": "This member has no IBAN on file. Add a bank account to the member's profile first.",
+    "uploadFailed": "The receipt could not be uploaded. Nothing was saved. Select the file again and try once more."
   },
   "validation": {
     "abstractRequired": "Subject is required.",

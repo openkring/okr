@@ -19,7 +19,8 @@
     "title": "Presentar gastos",
     "cancel": "Cancelar",
     "save": "Guardar",
-    "receiptHint": "Adjunte al menos un comprobante."
+    "receiptHint": "Adjunte al menos un comprobante.",
+    "fileUnreadable": "No se puede leer el archivo «{name}». Guárdalo primero en tu dispositivo y selecciónalo de nuevo."
   },
   "detail": {
     "title": "Desembolso",
@@ -86,7 +87,8 @@
     "saving": "Se está guardando el desembolso…",
     "done": "Guardado — el tesorero revisará el comprobante.",
     "error": "Error — la operación se ha revertido",
-    "memberNoIban": "Este socio no tiene ningún IBAN registrado. Añade primero una cuenta bancaria en su perfil."
+    "memberNoIban": "Este socio no tiene ningún IBAN registrado. Añade primero una cuenta bancaria en su perfil.",
+    "uploadFailed": "No se pudo subir el comprobante. No se ha guardado nada. Selecciona de nuevo el archivo e inténtalo otra vez."
   },
   "validation": {
     "abstractRequired": "El asunto es obligatorio.",

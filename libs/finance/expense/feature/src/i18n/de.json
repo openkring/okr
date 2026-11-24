@@ -19,7 +19,8 @@
     "title": "Spesen einreichen",
     "cancel": "Abbrechen",
     "save": "Speichern",
-    "receiptHint": "Bitte mindestens einen Beleg anhängen."
+    "receiptHint": "Bitte mindestens einen Beleg anhängen.",
+    "fileUnreadable": "Die Datei «{name}» kann nicht gelesen werden. Speichere sie zuerst auf deinem Gerät und wähle sie dann nochmals aus."
   },
   "detail": {
     "title": "Auslage",
@@ -86,7 +87,8 @@
     "saving": "Auslage wird gespeichert…",
     "done": "Gespeichert — der Kassier prüft den Beleg.",
     "error": "Fehler — Vorgang wurde zurückgerollt",
-    "memberNoIban": "Für dieses Mitglied ist keine IBAN hinterlegt. Erfasse zuerst eine Bankverbindung im Profil des Mitglieds."
+    "memberNoIban": "Für dieses Mitglied ist keine IBAN hinterlegt. Erfasse zuerst eine Bankverbindung im Profil des Mitglieds.",
+    "uploadFailed": "Der Beleg konnte nicht hochgeladen werden. Es wurde nichts gespeichert. Wähle die Datei neu aus und versuche es nochmals."
   },
   "validation": {
     "abstractRequired": "Betreff ist erforderlich.",

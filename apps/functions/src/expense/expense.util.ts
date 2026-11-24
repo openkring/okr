@@ -88,3 +88,16 @@ export function taskToCompleteOnDone(expense: { status?: string; taskKey?: strin
   if (nextStatus !== 'done' || expense.status === 'done') return '';
   return expense.taskKey ?? '';
 }
+
+/**
+ * The open review tasks to cancel when an expense is deleted. None once the expense is booked: the
+ * treasurer still has to decide that booking, and the task is how they find it.
+ * Looked up by `relatedKey`, not by `expense.taskKey` — that link is written by a trigger and may not
+ * exist yet when a failed submit deletes the expense seconds after creating it.
+ */
+export function tasksToCancelOnDelete<T extends { state?: string; isArchived?: boolean; tenants?: string[] }>(
+  expense: { bookingKey?: string }, tasks: T[], tenantId: string,
+): T[] {
+  if (expense.bookingKey) return [];
+  return tasks.filter(t => !t.isArchived && t.state !== 'done' && t.state !== 'cancelled' && (t.tenants ?? []).includes(tenantId));
+}

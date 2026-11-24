@@ -7,7 +7,7 @@ import { getTodayStr, DateFormat, isProfitAndLossAccountId } from '@okr/shared-u
 import { assertProjectKeyShapes, assertProjectsAssignable } from '../project/project-context';
 import { emitEvent } from '../workflow/emit';
 import type { TaskWrittenEvent } from '../task/task-written-event';
-import { CreateExpenseFields, memberExpenseFields, pickMemberIban, taskToCompleteOnDone } from './expense.util';
+import { CreateExpenseFields, memberExpenseFields, pickMemberIban, tasksToCancelOnDelete, taskToCompleteOnDone } from './expense.util';
 
 const REGION = 'europe-west6';
 const CF_NAME = 'createExpense';
@@ -107,6 +107,8 @@ export const createExpense = onCall(
 /**
  * Soft-delete an expense (isArchived=true). The expenses collection is CF-write-only, so this is the
  * only client-reachable delete. Allowed for the expense's author (userId === caller) or a treasurer.
+ * Cancels the review task of an unbooked expense. The submit flow also calls it when a receipt
+ * could not be uploaded.
  */
 export const deleteExpense = onCall(
   { region: REGION, enforceAppCheck: true, cors: true },
@@ -133,6 +135,7 @@ export const deleteExpense = onCall(
     }
 
     await expSnap.ref.set({ isArchived: true }, { merge: true });
+    await cancelExpenseTasks(db, expenseKey, expense, tenantId);
     return { ok: true };
   },
 );
@@ -278,6 +281,21 @@ async function completeExpenseTask(db: FirebaseFirestore.Firestore, expenseKey: 
   if (!snap.exists || state === 'done' || state === 'cancelled') return;
   await ref.set({ state: 'done', completionDate: getTodayStr() }, { merge: true });
   logger.info(`updateExpense: ${expenseKey} done → task ${taskKey} done`);
+}
+
+/** A deleted, unbooked expense leaves nothing to review: cancel its open task(s). */
+async function cancelExpenseTasks(
+  db: FirebaseFirestore.Firestore, expenseKey: string, expense: FirebaseFirestore.DocumentData, tenantId: string,
+): Promise<void> {
+  const snap = await db.collection(TASK_COLLECTION).where('relatedKey', '==', `expense.${expenseKey}`).get();
+  const tasks = snap.docs.map(d => ({
+    ref: d.ref, state: d.data()['state'] as string | undefined,
+    isArchived: d.data()['isArchived'] as boolean | undefined, tenants: d.data()['tenants'] as string[] | undefined,
+  }));
+  for (const task of tasksToCancelOnDelete({ bookingKey: expense['bookingKey'] as string | undefined }, tasks, tenantId)) {
+    await task.ref.set({ state: 'cancelled' }, { merge: true });
+    logger.info(`deleteExpense: ${expenseKey} → task ${task.ref.id} cancelled`);
+  }
 }
 
 /**

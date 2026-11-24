@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { collectingMessageId, collectingOrderId, expensePaymentId, expensePaymentTransition, memberExpenseFields, pickMemberIban, taskToCompleteOnDone } from './expense.util';
+import { collectingMessageId, collectingOrderId, expensePaymentId, expensePaymentTransition, memberExpenseFields, pickMemberIban, tasksToCancelOnDelete, taskToCompleteOnDone } from './expense.util';
 
 describe('memberExpenseFields', () => {
   const data = {
@@ -83,5 +83,23 @@ describe('taskToCompleteOnDone', () => {
     expect(taskToCompleteOnDone({ status: 'processing', taskKey: 't1' }, 'cancelled')).toBe('');
     expect(taskToCompleteOnDone({ status: 'processing', taskKey: 't1' }, undefined)).toBe('');
     expect(taskToCompleteOnDone({ status: 'processing' }, 'done')).toBe('');
+  });
+});
+
+describe('tasksToCancelOnDelete', () => {
+  const open = { id: 't1', state: 'initial', isArchived: false, tenants: ['scs'] };
+
+  it('cancels the open task of an unbooked expense, also on a legacy doc without bookingKey', () => {
+    expect(tasksToCancelOnDelete({ bookingKey: '' }, [open], 'scs')).toEqual([open]);
+    expect(tasksToCancelOnDelete({}, [open], 'scs')).toEqual([open]);
+  });
+
+  it('keeps the task of a booked expense: the booking still needs a decision', () => {
+    expect(tasksToCancelOnDelete({ bookingKey: 'b1' }, [open], 'scs')).toEqual([]);
+  });
+
+  it('leaves closed, archived and foreign-tenant tasks alone', () => {
+    const others = [{ ...open, state: 'done' }, { ...open, state: 'cancelled' }, { ...open, isArchived: true }, { ...open, tenants: ['p13'] }];
+    expect(tasksToCancelOnDelete({}, others, 'scs')).toEqual([]);
   });
 });

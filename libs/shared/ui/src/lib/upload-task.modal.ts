@@ -20,6 +20,9 @@ export type { UploadEntry };
 /** One retry after a retryable failure (dropped connection, stale App Check token). */
 const MAX_UPLOAD_ATTEMPTS = 2;
 
+/** Failed uploads reported since the app was loaded. */
+let failureCount = 0;
+
 interface UploadState {
   name: string;
   size: number;
@@ -216,7 +219,11 @@ export class UploadTaskModal implements OnInit {
   ): void {
     const { code, message, status, serverResponse } = describeUploadError(ex);
     // A failure we are about to retry is a warning; only the attempt the user sees fail is an error.
-    captureMessage(`Upload failed (${stage}): ${code}`, {
+    // Sentry drops an event whose message equals the previous one (dedupe integration), which hid
+    // every failure after the first (SCS-C0). The running number keeps them apart, the fingerprint
+    // keeps them in one issue.
+    captureMessage(`Upload failed (${stage}): ${code} #${++failureCount}`, {
+      fingerprint: ['upload-failed', stage, code],
       level: willRetry ? 'warning' : 'error',
       tags: {
         uploadStage: stage, uploadErrorCode: code, uploadAttempt: attempt, uploadWillRetry: willRetry,

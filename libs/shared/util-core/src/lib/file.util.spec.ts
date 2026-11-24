@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_ACCEPT_ATTRIBUTE, DEFAULT_MIMETYPES, RAG_ACCEPT_ATTRIBUTE } from '@okr/shared-constants';
-import { baseName, dirName, fileExtension, fileName, fileSizeUnit, isPdf, isPickerCancellation, isVideo, resolveMimeType, sanitizeFileName, suffixFileName, withResolvedMimeType } from './file.util';
+import { baseName, dirName, fileExtension, fileName, FileUnreadableError, fileSizeUnit, isPdf, isPickerCancellation, isVideo, readFileIntoMemory, resolveMimeType, sanitizeFileName, suffixFileName, withResolvedMimeType } from './file.util';
 
 describe('file.util', () => {
 
@@ -260,6 +260,40 @@ describe('withResolvedMimeType', () => {
   it('keeps a file whose extension is unknown', () => {
     const file = new File(['x'], 'README', { type: '' });
     expect(withResolvedMimeType(file)).toBe(file);
+  });
+});
+
+describe('readFileIntoMemory', () => {
+  /** A File handle with the given read behaviour (jsdom's own File need not implement arrayBuffer). */
+  function handle(name: string, type: string, size: number, read: () => Promise<ArrayBuffer>): File {
+    const file = new File(['x'], name, { type, lastModified: 42 });
+    Object.defineProperty(file, 'size', { value: size });
+    Object.defineProperty(file, 'arrayBuffer', { value: read });
+    return file;
+  }
+
+  it('returns a new file with the same name, type, size and date', async () => {
+    const source = handle('rechnung.pdf', 'application/pdf', 3, async () => new Uint8Array([1, 2, 3]).buffer);
+    const result = await readFileIntoMemory(source);
+    expect(result).not.toBe(source);
+    expect([result.name, result.type, result.size, result.lastModified]).toEqual(['rechnung.pdf', 'application/pdf', 3, 42]);
+  });
+
+  it('resolves a missing type from the extension', async () => {
+    const result = await readFileIntoMemory(handle('beleg.heic', '', 1, async () => new Uint8Array([1]).buffer));
+    expect(result.type).toBe('image/heic');
+  });
+
+  it('rejects a file the browser cannot read any more', async () => {
+    const source = handle('rechnung.pdf', 'application/pdf', 3, () => Promise.reject(new Error('gone')));
+    await expect(readFileIntoMemory(source)).rejects.toBeInstanceOf(FileUnreadableError);
+  });
+
+  it('rejects a truncated and an empty read', async () => {
+    const truncated = handle('a.pdf', 'application/pdf', 5, async () => new Uint8Array([1, 2]).buffer);
+    const empty = handle('b.pdf', 'application/pdf', 0, async () => new ArrayBuffer(0));
+    await expect(readFileIntoMemory(truncated)).rejects.toBeInstanceOf(FileUnreadableError);
+    await expect(readFileIntoMemory(empty)).rejects.toBeInstanceOf(FileUnreadableError);
   });
 });
 

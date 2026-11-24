@@ -212,6 +212,33 @@ export function withResolvedMimeType(file: File): File {
   return type ? new File([file], file.name, { type, lastModified: file.lastModified }) : file;
 }
 
+/** A picked file whose bytes the browser can no longer (or not completely) read. */
+export class FileUnreadableError extends Error {
+  public override readonly name = 'FileUnreadableError';
+}
+
+/**
+ * The file with its bytes held in memory, independent of where it was picked from.
+ *
+ * A picked `File` is only a handle. On iOS it may point into iCloud, Mail or a temporary copy that is
+ * gone by the time the form is submitted; the upload then sends a body without its content (SCS-C0:
+ * Storage answered 400 without a text). Call this right after picking, while the handle is still good.
+ * Not for album videos: the whole file is kept in memory.
+ * @throws FileUnreadableError when the file is empty or cannot be read completely
+ */
+export async function readFileIntoMemory(file: File): Promise<File> {
+  let bytes: ArrayBuffer;
+  try {
+    bytes = await file.arrayBuffer();
+  } catch (ex) {
+    throw new FileUnreadableError(`cannot read the file: ${ex instanceof Error ? ex.name : String(ex)}`);
+  }
+  if (bytes.byteLength === 0 || bytes.byteLength !== file.size) {
+    throw new FileUnreadableError(`read ${bytes.byteLength} of ${file.size} bytes`);
+  }
+  return new File([bytes], file.name, { type: resolveMimeType(file.name, file.type), lastModified: file.lastModified });
+}
+
 export function getExtensionFromMimeType(mimeType: string): string {
   return mime.getExtension(mimeType) ?? '';
 }

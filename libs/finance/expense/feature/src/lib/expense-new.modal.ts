@@ -5,6 +5,8 @@ import {
   IonContent,
 } from '@ionic/angular';
 
+import { captureMessage } from '@sentry/angular';
+
 import { PersonModelName } from '@okr/shared-models';
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
@@ -16,7 +18,8 @@ import { AddressService } from '@okr/subject-address-data-access';
 import { ExpenseFormValue } from '@okr/finance-expense-util';
 import { ExpenseForm, ExpenseFormI18n } from '@okr/finance-expense-ui';
 import { dismissOverlay } from '@okr/shared-util-angular';
-import { ExpenseStore, MEMBER_NO_IBAN } from './expense.store';
+import { readFileIntoMemory } from '@okr/shared-util-core';
+import { ExpenseStore, MEMBER_NO_IBAN, UPLOAD_FAILED } from './expense.store';
 import { PFX } from './scope';
 
 const EXPENSE_MIMETYPES = ['application/pdf', 'image/jpeg', 'image/png', 'image/heic'];
@@ -90,6 +93,8 @@ export class ExpenseNewModal {
     toast_success:  PFX + 'submit.done',
     toast_error:    PFX + 'submit.error',
     toast_member_no_iban: PFX + 'submit.memberNoIban',
+    toast_upload_failed: PFX + 'submit.uploadFailed',
+    toast_file_unreadable: PFX + 'new.fileUnreadable',
   });
 
   /** Offer 'an Mitglied' — set by the list only on expense/all (treasurers). */
@@ -162,11 +167,32 @@ export class ExpenseNewModal {
   }
 
   protected async onPickFiles(): Promise<void> {
-    const picked = await this.uploadService.pickMultipleFiles(EXPENSE_MIMETYPES);
+    const picked = await this.readPicked(await this.uploadService.pickMultipleFiles(EXPENSE_MIMETYPES));
     if (picked.length > 0) {
       this.formDirty.set(true);
       this.files.update(fs => [...fs, ...picked].slice(0, 10));
     }
+  }
+
+  /**
+   * The picked files with their bytes in memory. The form is submitted a minute or more after the
+   * picking, and an iOS file handle may be dead by then (SCS-C0): an unreadable file is refused here,
+   * before an expense exists.
+   */
+  private async readPicked(picked: File[]): Promise<File[]> {
+    const readable: File[] = [];
+    for (const file of picked) {
+      try {
+        readable.push(await readFileIntoMemory(file));
+      } catch (ex) {
+        captureMessage('Picked receipt is unreadable', {
+          level: 'warning',
+          extra: { fileSize: file.size, fileType: file.type || '(empty)', message: ex instanceof Error ? ex.message : String(ex) },
+        });
+        await this.showError(this.i18n.toast_file_unreadable().replace('{name}', file.name));
+      }
+    }
+    return readable;
   }
 
   protected async onTakePhoto(): Promise<void> {
@@ -193,13 +219,21 @@ export class ExpenseNewModal {
       await toast.present();
       await dismissOverlay(this.modalController, null, 'confirm');
     } else if (this.store.submitStep() === 'error') {
-      const toast = await this.toastController.create({
-        message: this.store.submitError() === MEMBER_NO_IBAN ? this.i18n.toast_member_no_iban() : this.i18n.toast_error(),
-        duration: 4000,
-        color: 'danger',
-      });
-      await toast.present();
+      await this.showError(this.submitErrorText());
     }
+  }
+
+  private submitErrorText(): string {
+    switch (this.store.submitError()) {
+      case MEMBER_NO_IBAN: return this.i18n.toast_member_no_iban();
+      case UPLOAD_FAILED:  return this.i18n.toast_upload_failed();
+      default:             return this.i18n.toast_error();
+    }
+  }
+
+  private async showError(message: string): Promise<void> {
+    const toast = await this.toastController.create({ message, duration: 6000, color: 'danger' });
+    await toast.present();
   }
 
   protected async dismiss(): Promise<void> {
