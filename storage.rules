@@ -127,10 +127,14 @@ service firebase.storage {
     }
     // `responsibility/` holds the responsibility portraits, published on the tenant website in place of
     // the office holder's photo: written by the privileged only, like /responsibilities in Firestore.
+    // `app/` holds the images the tenant settings page uploads (welcome-*, not-found-*): the sign-in page background
+    // and the «Not found» banner, read by everyone through imgix. Written by an admin only (the settings page is an
+    // admin page); a plain member must not be able to replace what every visitor sees. Reading stays open to the tenant.
+    // No other block grants this path: the album block below only matches `section` and `folder` under `.../album/`.
     match /tenant/{tenantId}/{sub}/{path=**} {
       allow read:           if inTenant(tenantId) && sub != 'private';
-      allow create, update: if inTenant(tenantId) && sub != 'private' && (sub != 'responsibility' || isPrivileged()) && sizeOk() && contentTypeOk();
-      allow delete:         if inTenant(tenantId) && sub != 'private' && (sub != 'responsibility' || isPrivileged());
+      allow create, update: if inTenant(tenantId) && sub != 'private' && (sub != 'responsibility' || isPrivileged()) && (sub != 'app' || hasRole('admin')) && sizeOk() && contentTypeOk();
+      allow delete:         if inTenant(tenantId) && sub != 'private' && (sub != 'responsibility' || isPrivileged()) && (sub != 'app' || hasRole('admin'));
     }
 
     // ---- album video uploads: the one place the 25 MB cap is lifted ----

@@ -7,11 +7,14 @@
   "private": true,
   "dependencies": {
     "tslib": "^2.8.1",
+    "@okr/shared-constants": "*",
     "@okr/shared-i18n": "*",
     "@okr/shared-models": "*",
+    "@okr/shared-pipes": "*",
     "@okr/shared-util-angular": "*",
     "@okr/shared-ui": "*",
     "@okr/tenant-util": "*",
-    "@okr/shared-util-core": "*"
+    "@okr/shared-util-core": "*",
+    "@okr/shared-config": "*"
   }
 }

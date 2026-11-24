@@ -1,7 +1,7 @@
 import type { AppConfig, OutOfReachRow, ProcessorEntry } from '@okr/shared-models';
 import { PROCESSOR_CATALOGUE, type CatalogueEntry } from './processor-catalogue';
 
-export { INTEGRATION_KEYS, PROCESSOR_CATALOGUE } from './processor-catalogue';
+export { INTEGRATION_KEYS, INTEGRATION_SWITCHES, PROCESSOR_CATALOGUE } from './processor-catalogue';
 export type { CatalogueEntry } from './processor-catalogue';
 
 /** Strip the catalogue-only machinery, leaving the plain register row. */

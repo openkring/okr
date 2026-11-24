@@ -196,7 +196,8 @@
     "link": "Read the privacy policy",
     "accept": "Read and accepted",
     "accepted": "You have accepted the privacy policy",
-    "error": "The confirmation could not be saved"
+    "error": "The confirmation could not be saved",
+    "contact": "Contact for privacy questions:"
   },
   "export": {
     "title": "Download my data",

@@ -2,7 +2,10 @@ import { describe, expect, it } from 'vitest';
 
 import { StartPage } from '@okr/shared-models';
 
-import { isDepartureEmergencyAvailable, isOnDepartureTrip, isStartPageAvailable, resolveStartUrl, resolveUserStartUrl, shouldJumpToEmergency, START_PAGE_URLS } from './start-page.util';
+import {
+  featureOffUrl, isDepartureEmergencyAvailable, isOnDepartureTrip, isStartPageAvailable, resolveStartUrl, resolveUserStartUrl, safeRootUrl,
+  shouldJumpToEmergency, START_PAGE_URLS, UNKNOWN_PAGE_URL, WELCOME_URL,
+} from './start-page.util';
 
 describe('resolveStartUrl', () => {
   const root = '/private/dashboard/c-contentpage';
@@ -92,5 +95,74 @@ describe('shouldJumpToEmergency (spec 1.158 §2.3)', () => {
     expect(shouldJumpToEmergency({ uid: 'u1', activeTripKey: 't1' }, user(''))).toBe(false);
     expect(shouldJumpToEmergency({ uid: 'u1', activeTripKey: 't1' }, user('t2'))).toBe(false);
     expect(shouldJumpToEmergency({ uid: 'u1', activeTripKey: '' }, null)).toBe(false);
+  });
+});
+
+describe('safeRootUrl', () => {
+  it('opens the welcome page without a usable url', () => {
+    for (const url of [undefined, null, '', ' ', '/', ' / ', '//', '/?filters=search', '/#top']) expect(safeRootUrl(url)).toBe(WELCOME_URL);
+  });
+  it('opens the welcome page for a foreign or relative url', () => {
+    for (const url of ['https://example.com/x', '//example.com/x', '/\\example.com', 'private/dashboard', 'javascript:alert(1)']) {
+      expect(safeRootUrl(url)).toBe(WELCOME_URL);
+    }
+  });
+  // the router opens '/' for a url it cannot parse, and '/' asks for the root url again
+  it('opens the welcome page for a url that cannot be decoded, wherever the fault is', () => {
+    for (const url of ['/a/%', '/a?b=%', '/a#%', '/a?b=%zz']) expect(safeRootUrl(url, '/'), url).toBe(WELCOME_URL);
+    expect(safeRootUrl('/a?b=100%25', '/')).toBe('/a?b=100%25');
+  });
+  it('keeps a good url, with its query', () => {
+    expect(safeRootUrl('/private/dashboard/c-contentpage')).toBe('/private/dashboard/c-contentpage');
+    expect(safeRootUrl(' /person/all/c-persons?filters=search ', '/')).toBe('/person/all/c-persons?filters=search');
+    expect(safeRootUrl('/diary/all/c-diary', '/diary/all')).toBe('/diary/all/c-diary');
+  });
+  it('opens the welcome page when the url is the current page, whatever query, fragment or slash it carries', () => {
+    for (const current of ['/a/b', '/a/b/', '/a/b?x=1', '/a/b#top']) {
+      expect(safeRootUrl('/a/b', current)).toBe(WELCOME_URL);
+      expect(safeRootUrl('/a/b/?y=2', current)).toBe(WELCOME_URL);
+    }
+    expect(safeRootUrl('/a/ü', '/a/%C3%BC')).toBe(WELCOME_URL);
+    expect(safeRootUrl('/a/%', '/a/%')).toBe(WELCOME_URL);
+  });
+  // a route that redirects: the guard sees the deeper url it ends at, never the stored one
+  it('opens the welcome page when the current page is below the url', () => {
+    expect(safeRootUrl('/private/a', '/private/a/b')).toBe(WELCOME_URL);
+    expect(safeRootUrl('/private/a/', '/private/a/b/c?x=1#top')).toBe(WELCOME_URL);
+    expect(safeRootUrl('/accounting/report', '/accounting/report/c-report')).toBe(WELCOME_URL);
+    expect(safeRootUrl('/a/ü', '/a/%C3%BC/b')).toBe(WELCOME_URL);
+  });
+  it('keeps the url when the current page only starts with the same letters, or lies above it', () => {
+    expect(safeRootUrl('/private/a', '/private/ab')).toBe('/private/a');
+    expect(safeRootUrl('/private/a', '/private/ab/c')).toBe('/private/a');
+    expect(safeRootUrl('/private/a/b', '/private/a')).toBe('/private/a/b');
+  });
+  it('keeps the start pages in use when the app is opened at its root', () => {
+    for (const url of ['/diary/all/c-diary', '/private/dashboard/c-contentpage', '/public/welcome_p13', '/person/all/c-persons?filters=search']) {
+      expect(safeRootUrl(url, '/'), url).toBe(url);
+      expect(safeRootUrl(url, ''), url).toBe(url);
+    }
+  });
+});
+
+describe('featureOffUrl', () => {
+  it('opens the root url, or the welcome page instead of the current page', () => {
+    expect(featureOffUrl('/a/b?x=1', '/quiz')).toBe('/a/b?x=1');
+    expect(featureOffUrl('/a/b', '/a/b?x=1')).toBe(WELCOME_URL);
+    expect(featureOffUrl(undefined, undefined)).toBe(WELCOME_URL);
+  });
+  it('leaves the welcome page for a page no block gates', () => {
+    expect(featureOffUrl('/a/b', '/public/welcome?x=1')).toBe(UNKNOWN_PAGE_URL);
+    expect(featureOffUrl('/public/welcome', '/public/welcome/')).toBe(UNKNOWN_PAGE_URL);
+  });
+  it('ends for a root url whose route redirects to a deeper page', () => {
+    expect(featureOffUrl('/accounting/report', '/accounting/report/c-report')).toBe(WELCOME_URL);
+  });
+  it('ends from every start when every block is off', () => {
+    for (const root of ['/a/b?x=1', '/', '/public/welcome', '/public/welcome/c-contentpage']) {
+      let url = '/quiz';
+      for (let hop = 0; hop < 4 && url !== UNKNOWN_PAGE_URL; hop++) url = featureOffUrl(root, url);
+      expect(url).toBe(UNKNOWN_PAGE_URL);
+    }
   });
 });

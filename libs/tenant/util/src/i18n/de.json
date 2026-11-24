@@ -493,5 +493,354 @@
     "field_resource_key_data": "Eigenschaften",
     "field_resource_key_tags": "Tags",
     "field_resource_key_description": "Beschreibung"
+  },
+  "settings": {
+    "confirm": {
+      "widen": "Mit dieser Änderung können mehr Personen diese Angaben sehen.",
+      "rebuild": "Die Adressliste wird danach neu aufgebaut. Das kann einige Minuten dauern.",
+      "policy": "Alle, die diese App nutzen, werden danach gebeten, die Datenschutzerklärung erneut zu bestätigen.",
+      "domain": "Die Adresse der App steht in den Links zum Zurücksetzen des Passworts, und Passkeys gelten nur für diese Adresse. Nach der Änderung funktionieren bestehende Passkeys nicht mehr.",
+      "login": "Ein falscher Pfad der Anmeldeseite sperrt alle aus der App aus.",
+      "ask": "Möchtest du speichern?"
+    },
+    "title": "Einstellungen",
+    "missing": "Die Einstellungen dieser App konnten nicht geladen werden. Versuche es später noch einmal oder wende dich an den Betreiber.",
+    "public_note": "Diese Angaben sind öffentlich lesbar.",
+    "operator_only": "Diese Angaben ändert der Betreiber.",
+    "empty": "Nicht gesetzt",
+    "edit": "Bearbeiten",
+    "yes": "Ja",
+    "no": "Nein",
+    "color_remove": "Farbe entfernen",
+    "country_search": "Land suchen (z.B. CH oder Schweiz)",
+    "country_empty": "Kein Land gefunden",
+    "page_none": "Keine Seite",
+    "group": {
+      "app": "App",
+      "images": "Bilder",
+      "language": "Sprache",
+      "start": "Startseite",
+      "operator": "Betreiber",
+      "mail": "Mail",
+      "privacy": "Datenschutz",
+      "defaults": "Vorgaben",
+      "platform": "Plattform"
+    },
+    "audience": {
+      "title": "Wer darf was sehen",
+      "public": "Alle, auch ohne Anmeldung",
+      "registered": "Alle mit Anmeldung",
+      "privileged": "Personen mit erweiterten Rechten",
+      "admin": "Nur die Administration"
+    },
+    "locale": {
+      "de_ch": "Deutsch (Schweiz)",
+      "fr_ch": "Französisch (Schweiz)",
+      "it_ch": "Italienisch (Schweiz)",
+      "en": "Englisch",
+      "es": "Spanisch"
+    },
+    "more": {
+      "title": "Weitere Einstellungen",
+      "cookie": {
+        "label": "Cookie-Hinweis",
+        "helper": "Ob der Hinweis erscheint und was darin steht. Du findest ihn unter «Zugang & Datenschutz»."
+      },
+      "task_archive": {
+        "label": "Aufgaben archivieren",
+        "helper": "Nach wie vielen Tagen erledigte Aufgaben ins Archiv gehen. Du findest es im Menü der Aufgabenliste unter «Einstellungen»."
+      },
+      "file_transfer": {
+        "label": "Grenzen der Dateiübertragung",
+        "helper": "Wie gross Dateien sein dürfen und wie lange sie verfügbar bleiben."
+      },
+      "post": {
+        "label": "Vorgaben für den Postversand",
+        "helper": "Wähle in der Liste «Alle Personen» den Menüeintrag «Kommunikation», dann im Schritt «Postversand» «Als Vorgabe speichern»."
+      },
+      "menu_rows": {
+        "label": "Ausgeblendete Menüzeilen",
+        "helper": "Welche Einträge im Menü nicht erscheinen. Du findest sie unter «Menüzeilen»."
+      }
+    },
+    "field": {
+      "appName": {
+        "label": "Name der App",
+        "helper": "Erscheint in der App und als Absender von E-Mails."
+      },
+      "appTitle": {
+        "label": "Titel",
+        "helper": "Steht auf der Anmeldeseite über dem Formular. Leer: Es wird kein Titel angezeigt."
+      },
+      "appSubtitle": {
+        "label": "Untertitel",
+        "helper": "Steht auf der Anmeldeseite unter dem Titel. Leer: Es wird kein Untertitel angezeigt."
+      },
+      "description": {
+        "label": "Beschreibung",
+        "helper": "Eine Notiz zu dieser App. In der App sehen sie nur die Administration und der Betreiber. Leer: keine Notiz."
+      },
+      "brandColor": {
+        "label": "Markenfarbe",
+        "helper": "Farbe von Kopfzeile und Schaltflächen in E-Mails zu Terminen und Kursen. Leer: ein neutrales Blau."
+      },
+      "welcomeBannerUrl": {
+        "label": "Bild der Anmeldeseite",
+        "helper": "Hintergrund der Anmeldeseite und der Seiten zum Zurücksetzen des Passworts. Format JPG oder PNG. Leer: kein Bild."
+      },
+      "notfoundBannerUrl": {
+        "label": "Bild der Seite «Nicht gefunden»",
+        "helper": "Wird auf der Seite «Nicht gefunden» gezeigt. Format JPG oder PNG. Leer: kein Bild."
+      },
+      "locale": {
+        "label": "Darstellung von Datum und Uhrzeit",
+        "helper": "Gilt überall, wo ein Datum oder eine Uhrzeit ausgewählt wird."
+      },
+      "enabledLanguages": {
+        "label": "Sprachen",
+        "helper": "Diese Sprachen stehen in der App zur Wahl. Mindestens eine muss eingeschaltet sein."
+      },
+      "rootUrl": {
+        "label": "Startseite",
+        "helper": "Diese Seite öffnet sich beim Start der App und nach der Anmeldung. Wer im Profil eine eigene Startseite gewählt hat, kommt dorthin. Ohne Startseite, oder wenn ihre Funktion ausgeschaltet ist, öffnet sich die Willkommensseite."
+      },
+      "opName": {
+        "label": "Name",
+        "helper": "Wer für diese App verantwortlich ist. Steht in der Datei mit den eigenen Daten. Leer: Die Angabe fehlt dort."
+      },
+      "opEmail": {
+        "label": "E-Mail",
+        "helper": "Kontaktadresse im Profil und beim Herunterladen der eigenen Daten. Sie gilt auch für den Datenschutz, wenn dort keine E-Mail steht. Leer: Es wird keine Adresse angezeigt."
+      },
+      "opStreet": {
+        "label": "Strasse und Hausnummer",
+        "helper": "Steht in der Datei, die Personen mit ihren eigenen Daten herunterladen. Leer: Die Angabe fehlt dort."
+      },
+      "opZipCode": {
+        "label": "PLZ",
+        "helper": "Steht in der Datei, die Personen mit ihren eigenen Daten herunterladen. Leer: Die Angabe fehlt dort."
+      },
+      "opCity": {
+        "label": "Ort",
+        "helper": "Steht in der Datei, die Personen mit ihren eigenen Daten herunterladen. Leer: Die Angabe fehlt dort."
+      },
+      "opCountryCode": {
+        "label": "Land",
+        "helper": "Steht in der Datei, die Personen mit ihren eigenen Daten herunterladen. Leer: Die Angabe fehlt dort."
+      },
+      "opWebUrl": {
+        "label": "Website",
+        "helper": "Steht in der Datei, die Personen mit ihren eigenen Daten herunterladen. Leer: Die Angabe fehlt dort."
+      },
+      "issueUrl": {
+        "label": "Seite für Fehlermeldungen",
+        "helper": "Diese Seite öffnet sich über den Menüeintrag für Fehlermeldungen. Leer: Der Eintrag erscheint nicht."
+      },
+      "mailFrom": {
+        "label": "Absenderadresse",
+        "helper": "Die App setzt diese Adresse beim Schreiben einer E-Mail als Absender ein, beim Versand an mehrere Personen auch als Empfänger, und nennt sie unten in der Mail als Kontakt. Gehört sie nicht zur Mail-Domain, verschickt die App die E-Mail von app@ und der Mail-Domain, und die Adresse dient nur als Empfänger und Kontakt. Leer: app@ und die Domain, von der die App E-Mails verschickt."
+      },
+      "dpoName": {
+        "label": "Datenschutzkontakt: Name",
+        "helper": "Ansprechperson für den Datenschutz, zusammen mit ihrer E-Mail angezeigt. Leer: Es erscheint kein Name."
+      },
+      "dpoEmail": {
+        "label": "Datenschutzkontakt: E-Mail",
+        "helper": "Steht im Profil bei den eigenen Daten und in den Daten, die jemand herunterlädt. Bekommt eine Nachricht, wenn jemand die eigenen Daten löschen lässt. Leer: Die Nachricht geht an die E-Mail des Betreibers."
+      },
+      "privacyPolicyPageKey": {
+        "label": "Seite der Datenschutzerklärung",
+        "helper": "Der Cookie-Hinweis und die Bitte um Bestätigung im Profil verlinken auf diese Seite. Zur Auswahl stehen die Seiten, die ohne Anmeldung sichtbar sind. Keine Seite: Der Link fehlt."
+      },
+      "privacyPolicyVersion": {
+        "label": "Fassung der Datenschutzerklärung",
+        "helper": "Zum Beispiel 2026-07. Nach einer Änderung werden alle um eine neue Bestätigung gebeten. Leer: Es wird keine Bestätigung verlangt."
+      },
+      "showDateOfBirth": {
+        "label": "Geburtsdatum",
+        "helper": "Wer diese Angabe sehen darf. Hat eine Person für sich strenger gewählt, gilt ihre Wahl. Ohne Anmeldung ist das Datum nie sichtbar."
+      },
+      "showDateOfDeath": {
+        "label": "Todesdatum",
+        "helper": "Wer diese Angabe sehen darf. Auch bei einer offeneren Wahl sehen höchstens Personen mit erweiterten Rechten diese Angabe."
+      },
+      "showEmail": {
+        "label": "E-Mail",
+        "helper": "Wer diese Angabe sehen darf. Hat eine Person für sich strenger gewählt, gilt ihre Wahl."
+      },
+      "showPhone": {
+        "label": "Telefon",
+        "helper": "Wer diese Angabe sehen darf. Hat eine Person für sich strenger gewählt, gilt ihre Wahl."
+      },
+      "showPostalAddress": {
+        "label": "Postadresse",
+        "helper": "Wer diese Angabe sehen darf. Hat eine Person für sich strenger gewählt, gilt ihre Wahl."
+      },
+      "showIban": {
+        "label": "IBAN",
+        "helper": "Wer diese Angabe sehen darf. Auch bei einer offeneren Wahl sehen höchstens Personen mit erweiterten Rechten diese Angabe."
+      },
+      "showTaxId": {
+        "label": "AHV-Nummer",
+        "helper": "Wer diese Angabe sehen darf. Auch bei einer offeneren Wahl sehen höchstens Personen mit erweiterten Rechten diese Angabe."
+      },
+      "showGender": {
+        "label": "Geschlecht",
+        "helper": "Legt fest, wer diese Angabe auf der Seite einer Person sieht."
+      },
+      "showBexioId": {
+        "label": "Bexio-Nummer",
+        "helper": "Legt fest, wer diese Angabe auf der Seite einer Person sieht."
+      },
+      "showTags": {
+        "label": "Tags",
+        "helper": "Legt fest, wer diese Angabe auf der Seite einer Person sieht."
+      },
+      "ownerLocationId": {
+        "label": "Standort",
+        "helper": "Für diesen Ort zeigt die Abfahrtstafel im Logbuch die nächsten Verbindungen. Leer: Die Tafel zeigt keine Verbindungen."
+      },
+      "defaultResourceId": {
+        "label": "Standardressource",
+        "helper": "Diese Ressource wird über das Reservationsformular gebucht. Leer: Das Formular nimmt keine Reservationen an."
+      },
+      "avatarUsage": {
+        "label": "Profilbild",
+        "helper": "Gilt für neue Konten. Bestehende Konten behalten ihre Wahl."
+      },
+      "nameDisplay": {
+        "label": "Anzeige der Namen",
+        "helper": "Gilt für neue Konten. Bestehende Konten behalten ihre Wahl."
+      },
+      "personSortCriteria": {
+        "label": "Sortierung der Personen",
+        "helper": "Gilt für neue Konten. Bestehende Konten behalten ihre Wahl."
+      },
+      "newsDelivery": {
+        "label": "Zustellung von Neuigkeiten",
+        "helper": "Gilt für neue Konten. Bestehende Konten behalten ihre Wahl."
+      },
+      "invoiceDelivery": {
+        "label": "Zustellung von Rechnungen",
+        "helper": "Gilt für neue Konten. Bestehende Konten behalten ihre Wahl."
+      },
+      "appDomain": {
+        "label": "Adresse der App",
+        "helper": "Steht in den Links zum Zurücksetzen des Passworts, und Passkeys gelten nur für diese Adresse. Nach einer Änderung funktionieren bestehende Passkeys nicht mehr. Fehlt die Adresse, zeigen die Links auf die Adresse des Betreibers, und es gibt keine Passkeys."
+      },
+      "emailDomain": {
+        "label": "Mail-Domain",
+        "helper": "Von dieser Domain werden E-Mails verschickt. Leer: die Adresse der App."
+      },
+      "emailProvider": {
+        "label": "Mail-Dienst",
+        "helper": "Über diesen Dienst werden E-Mails verschickt. Ohne Angabe gilt mailtrap_api. Die Mail-Domain muss bei diesem Dienst freigegeben sein."
+      },
+      "mailtrapPasswordResetTemplate": {
+        "label": "Vorlage für das Zurücksetzen des Passworts",
+        "helper": "Leer: eine einfache E-Mail mit dem Namen der App."
+      },
+      "loginUrl": {
+        "label": "Seite der Anmeldung",
+        "helper": "Pfad der Anmeldeseite in der App, üblich ist /auth/login. Ein falscher Pfad verhindert die Anmeldung."
+      },
+      "passwordResetUrl": {
+        "label": "Seite zum Zurücksetzen des Passworts",
+        "helper": "Wird zurzeit nicht verwendet: Die App öffnet immer ihre eigene Seite."
+      },
+      "logoUrl": {
+        "label": "Logo",
+        "helper": "Pfad des Logos, zugleich die Grundlage des App-Symbols. Nach einer Änderung müssen die Bilder neu erzeugt werden. Leer: Die Anmeldeseite zeigt statt des Logos ein Standardsymbol."
+      },
+      "ownerOrgId": {
+        "label": "Organisation",
+        "helper": "Die Organisation hinter dieser App, zum Beispiel als Empfängerin auf QR-Rechnungen. Leer: Auf QR-Rechnungen gilt die Organisation mit der Kennung der App."
+      },
+      "ownerUserId": {
+        "label": "Verantwortliches Konto",
+        "helper": "Das Konto, das für diese App verantwortlich ist. Nur eine Angabe, sie hat keine Wirkung."
+      },
+      "defaultAccountingTenantId": {
+        "label": "Buchhaltung",
+        "helper": "Muss die Kennung einer bestehenden Buchhaltung sein. Sie öffnet sich aus dem Menü. Leer: Die Einträge der Buchhaltung sind ausgeblendet."
+      },
+      "integrations": {
+        "label": "Angebundene Dienste",
+        "helper": "Dienste, die Daten dieser App erhalten. Leer: keine."
+      },
+      "additionalProcessors": {
+        "label": "Weitere Empfänger von Daten",
+        "helper": "Zusätzliche Stellen, die Daten dieser App erhalten. Leer: keine."
+      },
+      "personLookupEnabled": {
+        "label": "Adresssuche",
+        "helper": "Beim Erfassen einer Person lässt sich ihre Adresse im Telefonbuch suchen."
+      },
+      "weatherIntervalHours": {
+        "label": "Wetter: Abstand in Stunden",
+        "helper": "So viele Stunden vergehen, bis die Wetterdaten erneuert werden. Der kürzeste Abstand gilt für alle Apps."
+      },
+      "gitRepo": {
+        "label": "Programmcode: Ablage",
+        "helper": "Angabe für die Wartung der App. Leer: Der Link zum Programmcode fehlt."
+      },
+      "gitOrg": {
+        "label": "Programmcode: Organisation",
+        "helper": "Angabe für die Wartung der App. Leer: Der Link zum Programmcode fehlt."
+      },
+      "isArchived": {
+        "label": "Archiviert",
+        "helper": "Nur eine Markierung für den Betreiber: Die App läuft weiter, und alle können sich weiterhin anmelden."
+      },
+      "showDebugInfo": {
+        "label": "Angaben zur Fehlersuche",
+        "helper": "Zeigt zusätzliche Angaben, die bei der Fehlersuche helfen."
+      }
+    },
+    "validation": {
+      "email": "Das ist keine gültige E-Mail-Adresse.",
+      "https": "Die Adresse muss mit https:// beginnen und darf keine Leerzeichen enthalten.",
+      "appNameChars": "Anführungszeichen, spitze Klammern, umgekehrte Schrägstriche und Zeilenumbrüche sind nicht möglich.",
+      "brandColor": "Das ist keine gültige Farbe.",
+      "languagesNone": "Wähle mindestens eine Sprache.",
+      "languagesUnknown": "Eine der gewählten Sprachen gibt es in der App nicht.",
+      "mailFromDomain": "Die Adresse muss zur Mail-Domain oder zur Adresse der App gehören.",
+      "domain": "Schreibe die Domain klein und ohne https://, zum Beispiel app.beispiel.ch.",
+      "path": "Das muss ein Pfad in der App sein, zum Beispiel /auth/login.",
+      "emailProvider": "Wähle einen der angebotenen Mail-Dienste.",
+      "domainTaken": "Diese Adresse gehört schon zu einer anderen App.",
+      "weatherHours": "Gib eine ganze Zahl von 1 bis 168 ein."
+    },
+    "fallback": "Standard",
+    "country_remove": "Land entfernen",
+    "image_upload": "Bild hochladen",
+    "image_replace": "Anderes Bild hochladen",
+    "image_remove": "Bild entfernen",
+    "image_none": "Kein Bild gesetzt",
+    "image_uploading": "Das Bild wird hochgeladen.",
+    "image_type_error": "Wähle ein Bild im Format JPG oder PNG.",
+    "image_failed": "Das Bild konnte nicht hochgeladen werden. Versuche es noch einmal.",
+    "mail_domains": "Als Absender erscheint nur eine Adresse der Mail-Domain, jede andere dient als Empfänger und Kontakt. Erlaubt sind Adressen mit der Endung:",
+    "mail_domains_none": "Zuerst muss der Betreiber die Domain für E-Mails festlegen. Erst danach kannst du hier eine Adresse eintragen.",
+    "image_too_big": "Das Bild ist zu gross. Es darf weniger als 25 MB haben.",
+    "location_pick": "Standort wählen",
+    "location_change": "Anderen Standort wählen",
+    "location_remove": "Standort entfernen",
+    "resource_pick": "Ressource wählen",
+    "resource_change": "Andere Ressource wählen",
+    "resource_remove": "Ressource entfernen",
+    "operator_page": {
+      "title": "Einstellungen der Apps",
+      "refused": "Diese Seite ist dem Betreiber vorbehalten.",
+      "intro": "Du siehst alle Einstellungen der gewählten App. Ändern kannst du hier nur «Plattform». Alles andere ändert die Administration der App.",
+      "tenant": "App",
+      "choose": "Wähle eine App.",
+      "none": "Es wurden keine Apps gefunden. Vielleicht fehlt die Verbindung zum Internet. Versuche es später noch einmal.",
+      "archived": "archiviert"
+    },
+    "integration_unknown": "Dieser Dienst steht nicht zur Wahl. Der gespeicherte Wert bleibt erhalten.",
+    "processors_note": "Diese Einträge kannst du hier nicht ändern.",
+    "provider_test": "Testdienst, es wird nichts zugestellt",
+    "integrations_note": "Nur für das Verzeichnis der Datenempfänger: Der Schalter verbindet oder trennt keinen Dienst."
   }
 }

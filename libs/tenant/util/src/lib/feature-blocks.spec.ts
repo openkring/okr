@@ -174,14 +174,15 @@ describe('contextMenuChat Wartung rows (1.101 phase 4)', () => {
 describe('aoc-menu hub rows (1.101 phase 5)', () => {
   const aocMenu = FEATURE_BLOCKS.find(b => b.id === 'aoc')?.menu.find(m => m.name === 'aoc-menu');
 
-  it('lists the four hub rows in area order, then the closing divider', () => {
-    expect(aocMenu?.children?.map(c => c.name)).toEqual(['aoc-access', 'aoc-ops', 'aoc-config', 'aoc-data', 'divider_empty']);
+  it('lists the four hub rows in area order with the app settings after their area, then the closing divider', () => {
+    expect(aocMenu?.children?.map(c => c.name)).toEqual(['aoc-access', 'aoc-ops', 'aoc-config', 'tenant-settings', 'aoc-data', 'divider_empty']);
   });
 
   it.each([
     ['aoc-access', '/aoc/access'],
     ['aoc-ops', '/aoc/ops'],
     ['aoc-config', '/aoc/config'],
+    ['tenant-settings', '/tenant/settings'],
     ['aoc-data', '/aoc/data'],
   ])('%s navigates to %s, admin only, with its own menu label', (name, url) => {
     expect(aocMenu?.children?.find(c => c.name === name)).toMatchObject({

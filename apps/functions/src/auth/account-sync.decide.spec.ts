@@ -1,5 +1,6 @@
+import { DeliveryChannel } from '@okr/shared-models';
 import { describe, expect, it } from 'vitest';
-import { decideAccountAction, MembershipDoc, relLogAbbrs, shiftDaysBack } from './account-sync.decide';
+import { decideAccountAction, MembershipDoc, relLogAbbrs, shiftDaysBack, userDefaultsFrom } from './account-sync.decide';
 
 const TENANT = 'scs';
 const TODAY = '20260812';
@@ -111,5 +112,58 @@ describe('shiftDaysBack', () => {
 
   it('pads single-digit months and days', () => {
     expect(shiftDaysBack('20260908', 7)).toBe('20260901');
+  });
+});
+
+describe('userDefaultsFrom', () => {
+  it('gives nothing for a missing config', () => {
+    expect(userDefaultsFrom(undefined)).toEqual({});
+    expect(userDefaultsFrom({})).toEqual({});
+  });
+
+  it('keeps a number that is a value of its enum', () => {
+    expect(userDefaultsFrom({ avatarUsage: 0, nameDisplay: 3, personSortCriteria: 4 })).toEqual({ avatarUsage: 0, nameDisplay: 3, personSortCriteria: 4 });
+  });
+
+  it('drops a number outside the enum, a fraction, a string, null and NaN', () => {
+    expect(userDefaultsFrom({ avatarUsage: 4, nameDisplay: -1, personSortCriteria: 5 })).toEqual({});
+    expect(userDefaultsFrom({ avatarUsage: 1.5, nameDisplay: '1', personSortCriteria: null })).toEqual({});
+    expect(userDefaultsFrom({ avatarUsage: NaN, nameDisplay: Infinity })).toEqual({});
+  });
+
+  it('never offers «no name at all» as a default: the user settings do not either', () => {
+    expect(userDefaultsFrom({ nameDisplay: 4 })).toEqual({});
+  });
+
+  it('keeps a list of known channels', () => {
+    expect(userDefaultsFrom({ newsDelivery: ['email'], invoiceDelivery: ['post', 'chat'] })).toEqual({ newsDelivery: ['email'], invoiceDelivery: ['post', 'chat'] });
+  });
+
+  it('drops the legacy number of eight live tenants', () => {
+    expect(userDefaultsFrom({ newsDelivery: 2, invoiceDelivery: 1 })).toEqual({});
+  });
+
+  it('drops a list with an unknown channel, an empty list, and anything that is no list', () => {
+    expect(userDefaultsFrom({ newsDelivery: ['email', 'x'] })).toEqual({});
+    expect(userDefaultsFrom({ newsDelivery: [] })).toEqual({});
+    expect(userDefaultsFrom({ newsDelivery: [1], invoiceDelivery: 'email' })).toEqual({});
+    expect(userDefaultsFrom({ newsDelivery: null, invoiceDelivery: { 0: 'email' } })).toEqual({});
+  });
+
+  it('keeps one of each channel', () => {
+    expect(userDefaultsFrom({ newsDelivery: ['email', 'email', 'chat'] })).toEqual({ newsDelivery: ['email', 'chat'] });
+  });
+
+  it('copies the list: the config object is never shared', () => {
+    const config = { newsDelivery: ['email'] };
+    const result = userDefaultsFrom(config);
+    expect(result.newsDelivery).not.toBe(config.newsDelivery);
+    result.newsDelivery?.push(DeliveryChannel.Chat);
+    expect(config.newsDelivery).toEqual(['email']);
+  });
+
+  it('ignores every other property of the config, the privacy flags first', () => {
+    const result = userDefaultsFrom({ usageEmail: 2, usageName: 2, roles: { admin: true }, avatarUsage: 2 });
+    expect(result).toEqual({ avatarUsage: 2 });
   });
 });

@@ -1,6 +1,11 @@
+import { readdirSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
+
 import { describe, expect, it } from 'vitest';
 
-import { effectiveProvider, mailtrapBody, safeMailHeaders, type EmailOptions } from './email-transport';
+import { SETTINGS_EMAIL_PROVIDERS } from '@okr/tenant-util';
+
+import { effectiveProvider, mailtrapBody, safeMailHeaders, VALID_PROVIDERS, type EmailOptions } from './email-transport';
 
 const base: EmailOptions = {
   from: 'Verein <app@example.ch>',
@@ -14,7 +19,27 @@ describe('effectiveProvider', () => {
     expect(effectiveProvider(undefined)).toBe('mailtrap_api');
     expect(effectiveProvider('nonsense')).toBe('mailtrap_api');
     expect(effectiveProvider(42)).toBe('mailtrap_api');
+    // the class default of AppConfig: stored by several tenants
+    expect(effectiveProvider('')).toBe('mailtrap_api');
+    expect(effectiveProvider(null)).toBe('mailtrap_api');
     expect(effectiveProvider('netzone_smtp')).toBe('netzone_smtp');
+  });
+});
+
+describe('readers of app-config.emailProvider', () => {
+  // `stored ?? default` keeps a stored '', which no transport knows: those mails were never sent
+  it('never fall back with `??`', () => {
+    const src = join(__dirname, '..');
+    const files = readdirSync(src, { recursive: true, encoding: 'utf8' }).filter((name) => name.endsWith('.ts') && !name.endsWith('.spec.ts'));
+    const offenders = files.filter((name) => /\?\?\s*DEFAULT_EMAIL_PROVIDER|\['emailProvider'\]\s*\?\?/.test(readFileSync(join(src, name), 'utf8')));
+    expect(files.length).toBeGreaterThan(100);
+    expect(offenders).toEqual([]);
+  });
+});
+
+describe('VALID_PROVIDERS', () => {
+  it('is what the settings form of the operator offers', () => {
+    expect([...SETTINGS_EMAIL_PROVIDERS].sort()).toEqual([...VALID_PROVIDERS].sort());
   });
 });
 

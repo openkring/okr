@@ -8,7 +8,7 @@ import { MenuItemModel } from '@okr/shared-models';
 import { debugData, hasRole, withOfflineSnapshot } from '@okr/shared-util-core';
 
 import { MenuService } from '@okr/cms-menu-data-access';
-import { ActiveMenu, canOpenMenu, findActiveMenu, lacksBooks } from '@okr/cms-menu-util';
+import { ActiveMenu, canOpenMenu, findActiveMenu, getIssueUrl, lacksTokenValue } from '@okr/cms-menu-util';
 import { resourceParams } from '@okr/shared-util-angular';
 
 /**
@@ -122,19 +122,22 @@ export class MenuItemsStore {
 
   /**
    * Die aktive Zeile des Hauptmenüs (`main_<tenantId>`) samt den `sub`-Zeilen darüber. Dieselbe
-   * Sichtbarkeit wie beim Rendern (Rolle, `@BOOKS@` ohne Buchhaltung); das Ergebnis hängt an der Url,
+   * Sichtbarkeit wie beim Rendern (Rolle, `@BOOKS@` ohne Buchhaltung, `@ISSUE_URL@` ohne Seite für Fehlermeldungen); das Ergebnis hängt an der Url,
    * nicht an einem Klick, damit auch ein Seitenaufruf oder «Zurück» die richtige Zeile markiert.
    */
   public readonly activeMenu = computed<ActiveMenu | undefined>(() => {
     const items = this.menuItems();
     if (!items) return undefined;
     const user = this.appStore.currentUser();
-    const tokenContext = { version: '', tenantId: this.appStore.tenantId(), booksId: this.selectedBooks.current() };
+    const tokenContext = {
+      version: '', tenantId: this.appStore.tenantId(), booksId: this.selectedBooks.current(),
+      issueUrl: getIssueUrl(this.appStore.appConfig()?.issueUrl),
+    };
     return findActiveMenu({
       rootKey: `main_${this.appStore.tenantId()}`,
       items,
       path: this.currentPath(),
-      canSee: item => hasRole(item.roleNeeded, user) && !lacksBooks(item.url ?? '', tokenContext),
+      canSee: item => hasRole(item.roleNeeded, user) && !lacksTokenValue(item.url ?? '', tokenContext),
       tokenContext,
       lastSelectedKey: this.lastSelectedKey(),
     });

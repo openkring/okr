@@ -24,6 +24,8 @@ const EXPECTED_ROUTES: Record<string, string> = {
   chatMaintenance: '/operator/chat',
   escalations: '/ticket/all',
   features: '/tenant/features',
+  settings: '/tenant/settings',
+  operatorSettings: '/operator/settings',
   workflow: '/workflow/all/workflow-context',
 };
 const EXPECTED_OPERATIONS: Record<string, string> = {
@@ -68,6 +70,8 @@ describe('visibleAocCards', () => {
     expect(ids('ops', ctx('scs'))).not.toContain('emailEvents');
     expect(ids('ops', ctx('scs'))).not.toContain('chatMaintenance');
     expect(ids('access', ctx('scs'))).not.toContain('allocation');
+    expect(ids('config', ctx('scs'))).toEqual(['features', 'settings', 'workflow']);
+    expect(ids('config', ctx('bka'))).toEqual(['features', 'settings', 'operatorSettings', 'workflow']);
     expect(ids('ops', ctx('bka'))).toEqual(['status', 'activity', 'emailEvents', 'chatMaintenance']);
     expect(ids('access', ctx('bka'))).toEqual(['users', 'sessions', 'register', 'privacyAudit', 'privacy', 'iban', 'allocation']);
     expect(ids('data', ctx('scs'))).toEqual(['validate', 'reindex']);
@@ -84,7 +88,7 @@ describe('visibleAocCards', () => {
   it('shows all four areas on kring, like on every catalogue-composed app', () => {
     expect(ids('access', ctx('kring'))).toEqual(['users', 'sessions', 'register', 'privacyAudit', 'privacy', 'iban']);
     expect(ids('ops', ctx('kring'))).toEqual(['status', 'activity', 'escalations']);
-    expect(ids('config', ctx('kring'))).toEqual(['features', 'workflow']);
+    expect(ids('config', ctx('kring'))).toEqual(['features', 'settings', 'workflow']);
     expect(ids('data', ctx('kring'))).toEqual(['validate', 'reindex']);
   });
 

@@ -196,7 +196,8 @@
     "link": "Leer la declaración de privacidad",
     "accept": "Leído y aceptado",
     "accepted": "Has aceptado la declaración de privacidad",
-    "error": "No se pudo guardar la confirmación"
+    "error": "No se pudo guardar la confirmación",
+    "contact": "Contacto para preguntas sobre privacidad:"
   },
   "export": {
     "title": "Descargar mis datos",

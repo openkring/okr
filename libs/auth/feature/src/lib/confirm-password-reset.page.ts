@@ -3,7 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { IonButton, IonCol, IonContent, IonGrid, IonLabel, IonRow, IonText } from '@ionic/angular';
 
 import { Header, ImgDirective } from '@okr/shared-ui';
-import { getImgixUrlWithAutoParams } from '@okr/shared-util-core';
+import { getConfigImageUrl, getImgixUrlWithAutoParams } from '@okr/shared-util-core';
 import { AuthCredentials } from '@okr/shared-models';
 
 import { LoginForm } from '@okr/auth-ui';
@@ -55,7 +55,9 @@ import { AuthStore } from './auth.store';
     <okr-header [i18n]="{ title: store.i18n.pwdconfirm() }" [showCloseButton]="false" />
     <ion-content>
       <div class="login-container">
-        <img class="background-image" [src]="backgroundImageUrl()" [alt]="store.i18n.background_alt()" />
+        @if (backgroundImageUrl(); as imageUrl) {
+          <img class="background-image" [src]="imageUrl" [alt]="store.i18n.background_alt()" />
+        }
         <div class="login-form">
           <img okrImg eager class="logo" [src]="logoUrl()" alt="logo" (click)="store.gotoHome()" />
           <ion-label class="title"><strong>{{ store.i18n.newpwd() }}</strong></ion-label>
@@ -126,7 +128,8 @@ export class ConfirmPasswordResetPage implements OnInit {
 
   // computed
   public logoUrl = computed(() => `${this.store.imgixBaseUrl()}/${getImgixUrlWithAutoParams(this.store.config().logoUrl)}`);
-  public backgroundImageUrl = computed(() => `${this.store.imgixBaseUrl()}/${getImgixUrlWithAutoParams(this.store.config().welcomeBannerUrl)}`);
+  /** '' when the tenant has no image of the sign-in page: none is shown then. */
+  public backgroundImageUrl = computed(() => getConfigImageUrl(this.store.imgixBaseUrl(), this.store.config().welcomeBannerUrl));
 
   // signals
   protected formIsValid = signal(false);

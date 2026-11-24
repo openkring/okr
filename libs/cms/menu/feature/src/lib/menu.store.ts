@@ -15,7 +15,7 @@ import { AlertService, AppNavigationService, dismissOverlay, isInSplitPane, lazy
 import { I18nService } from '@okr/shared-i18n';
 import { ChatStatusService } from '@okr/shared-data-access';
 
-import { expandMenuTokens, getRepoUrl, isMenuNodeVisible, lacksBooks, MENU_I18N_KEYS, MenuTokenContext, resolveMenuLabelKey, resolveMenuUrl } from '@okr/cms-menu-util';
+import { expandMenuTokens, getIssueUrl, getRepoUrl, isMenuNodeVisible, lacksTokenValue, MENU_I18N_KEYS, MenuTokenContext, resolveMenuLabelKey, resolveMenuUrl } from '@okr/cms-menu-util';
 
 import { MenuItemsStore } from './menu-items.store';
 
@@ -94,19 +94,22 @@ export const _MenuStore = signalStore(
     //
     // Filtering happens on the NAME list (see `menuItem` below), so a hidden key never
     // reaches the renderer and cannot produce a «Missing:» placeholder of its own.
-    // A row that opens the default books ('@BOOKS@') is hidden while the app has none. And ANY submenu
+    // A row that opens the default books ('@BOOKS@') or the page for reporting errors ('@ISSUE_URL@') is hidden
+    // while the app has none. And ANY submenu
     // (`sub`) none of whose children would render is hidden too (`isMenuNodeVisible`): the accounting menu of
     // a tenant without books, «Finanzen» of a tenant with neither Spesen nor Kostenrechnung (finance split,
     // 2026-11-10) — an empty accordion is a dead row.
     isVisible: (key: string): boolean => {
       const hiddenKeys = store.featureStore.hiddenMenuKeys();
       const effective = store.featureStore.effective();
-      const booksCtx = { version: '', booksId: store.selectedBooks.current() };
+      const tokenCtx = {
+        version: '', booksId: store.selectedBooks.current(), issueUrl: getIssueUrl(store.appStore.appConfig()?.issueUrl),
+      };
       const all = store.menuItemsStore.menuItems() ?? [];
       const byName = (name: string): MenuItemModel | undefined => all.find(i => i.name === name);
       const rowVisible = (k: string, item: MenuItemModel | undefined): boolean => {
         if (hiddenKeys.has(k)) return false;
-        if (item && lacksBooks(item.url ?? '', booksCtx)) return false;
+        if (item && lacksTokenValue(item.url ?? '', tokenCtx)) return false;
         const owners = blockOwnersOfMenuKey(FEATURE_BLOCKS, k);
         return owners.length === 0 || owners.some(id => effective.has(id));
       };
@@ -426,7 +429,7 @@ export const _MenuStore = signalStore(
 
       /**
        * The token context for a url. A url may carry a dynamic token so the menu document does
-       * not hardcode data that already lives elsewhere — '@REPO_URL@' (app-config) for a
+       * not hardcode data that already lives elsewhere — '@REPO_URL@' / '@ISSUE_URL@' (app-config) for a
        * `browse` item, '@TID@' (the running tenant) for a `navigate` item that points at a
        * per-tenant record, e.g. '/album/@TID@-album/c-album'.
        */
@@ -435,6 +438,7 @@ export const _MenuStore = signalStore(
         return {
           version: store.versionService.getCurrentVersion(),
           repoUrl: getRepoUrl(config.gitOrg, config.gitRepo),
+          issueUrl: getIssueUrl(config.issueUrl),
           tenantId: store.appStore.tenantId(),
           // the selected books (SelectedBooks), else the default books — never the tenant id
           booksId: store.selectedBooks.current(),

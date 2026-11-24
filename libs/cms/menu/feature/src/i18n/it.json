@@ -207,7 +207,7 @@
   "url": {
     "label": "URL",
     "placeholder": "/route/to/page",
-    "helper": "L'URL rimanda alla pagina da visualizzare."
+    "helper": "L'URL rimanda alla pagina da visualizzare. @ISSUE_URL@ sta per la pagina per segnalare errori nelle impostazioni; senza questa pagina la voce non appare."
   },
   "category": {
     "plural": "Categorie"
@@ -397,6 +397,7 @@
     "aoc-access": "Accesso e privacy",
     "aoc-ops": "Esercizio",
     "aoc-config": "Configurazione",
+    "tenant-settings": "Impostazioni",
     "aoc-data": "Qualità dei dati",
     "aoc-menu": "AOC - Centro operativo",
     "aoc-statistics": "Statistiche",

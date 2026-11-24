@@ -67,6 +67,16 @@ export function getImgixUrlWithAutoParams(path: string, imgixParams?: string): s
   return getImgixUrl(path, params);
 }
 
+/**
+ * The full url of an image path stored in `app-config` (or a page), or '' when none is stored: the bare imgix host
+ * answers with a web page, which the browser shows as a broken image.
+ */
+export function getConfigImageUrl(imgixBaseUrl: string, path: string | undefined | null, imgixParams?: string): string {
+  const trimmed = typeof path === 'string' ? path.trim() : '';
+  const url = trimmed === '' ? '' : getImgixUrlWithAutoParams(trimmed, imgixParams);
+  return url === '' ? '' : `${imgixBaseUrl}/${url}`;
+}
+
 export type UrlType = 'https' | 'http' | 'assets' | 'storage' | 'imgix' | 'key';
 
 // imgix: an absolute, external imgix URL

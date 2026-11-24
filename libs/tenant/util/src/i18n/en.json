@@ -493,5 +493,354 @@
     "field_resource_key_data": "Properties",
     "field_resource_key_tags": "Tags",
     "field_resource_key_description": "Description"
+  },
+  "settings": {
+    "confirm": {
+      "widen": "With this change, more people can see this information.",
+      "rebuild": "The address list will be rebuilt afterwards. This can take a few minutes.",
+      "policy": "Everyone who uses this app will afterwards be asked to accept the privacy policy again.",
+      "domain": "The address of the app is used in the links for resetting the password, and passkeys are only valid for this address. After the change, existing passkeys no longer work.",
+      "login": "A wrong path of the sign-in page locks everybody out of the app.",
+      "ask": "Do you want to save?"
+    },
+    "title": "Settings",
+    "missing": "The settings of this app could not be loaded. Try again later or contact the operator.",
+    "public_note": "This information can be read by anyone.",
+    "operator_only": "The operator changes these details.",
+    "empty": "Not set",
+    "edit": "Edit",
+    "yes": "Yes",
+    "no": "No",
+    "color_remove": "Remove colour",
+    "country_search": "Search country (e.g. CH or Switzerland)",
+    "country_empty": "No country found",
+    "page_none": "No page",
+    "group": {
+      "app": "App",
+      "images": "Images",
+      "language": "Language",
+      "start": "Start page",
+      "operator": "Operator",
+      "mail": "Mail",
+      "privacy": "Privacy",
+      "defaults": "Defaults",
+      "platform": "Platform"
+    },
+    "audience": {
+      "title": "Who may see what",
+      "public": "Everyone, even without signing in",
+      "registered": "Everyone who is signed in",
+      "privileged": "People with extended rights",
+      "admin": "Only the administration"
+    },
+    "locale": {
+      "de_ch": "German (Switzerland)",
+      "fr_ch": "French (Switzerland)",
+      "it_ch": "Italian (Switzerland)",
+      "en": "English",
+      "es": "Spanish"
+    },
+    "more": {
+      "title": "More settings",
+      "cookie": {
+        "label": "Cookie notice",
+        "helper": "Whether the notice appears and what it says. You find it under «Access & privacy»."
+      },
+      "task_archive": {
+        "label": "Archive tasks",
+        "helper": "After how many days finished tasks go to the archive. You find it in the menu of the task list under «Settings»."
+      },
+      "file_transfer": {
+        "label": "Limits of file transfers",
+        "helper": "How large files may be and how long they stay available."
+      },
+      "post": {
+        "label": "Defaults for sending by post",
+        "helper": "In the list «All persons» choose the menu entry «Communication», then in the step «Postal mail» choose «Save as default»."
+      },
+      "menu_rows": {
+        "label": "Hidden menu rows",
+        "helper": "Which entries do not appear in the menu. You find them under «Menu rows»."
+      }
+    },
+    "field": {
+      "appName": {
+        "label": "Name of the app",
+        "helper": "Appears in the app and as the sender of e-mails."
+      },
+      "appTitle": {
+        "label": "Title",
+        "helper": "Shown on the sign-in page above the form. Empty: no title is shown."
+      },
+      "appSubtitle": {
+        "label": "Subtitle",
+        "helper": "Shown on the sign-in page below the title. Empty: no subtitle is shown."
+      },
+      "description": {
+        "label": "Description",
+        "helper": "A note about this app. In the app only the administration and the operator see it. Empty: no note."
+      },
+      "brandColor": {
+        "label": "Brand colour",
+        "helper": "Colour of the header and the buttons in e-mails about events and courses. Empty: a neutral blue."
+      },
+      "welcomeBannerUrl": {
+        "label": "Image of the sign-in page",
+        "helper": "Background of the sign-in page and of the pages for resetting the password. JPG or PNG format. Empty: no image."
+      },
+      "notfoundBannerUrl": {
+        "label": "Image of the page «Not found»",
+        "helper": "Shown on the page «Not found». JPG or PNG format. Empty: no image."
+      },
+      "locale": {
+        "label": "Format of date and time",
+        "helper": "Applies wherever a date or a time is picked."
+      },
+      "enabledLanguages": {
+        "label": "Languages",
+        "helper": "These languages can be chosen in the app. At least one must be switched on."
+      },
+      "rootUrl": {
+        "label": "Start page",
+        "helper": "This page opens when the app starts and after signing in. Whoever chose an own start page in the profile gets there. Without a start page, or when its feature is switched off, the welcome page opens."
+      },
+      "opName": {
+        "label": "Name",
+        "helper": "Who is responsible for this app. Shown in the file with the own data. Empty: the detail is missing there."
+      },
+      "opEmail": {
+        "label": "E-mail",
+        "helper": "Contact address in the profile and when downloading the own data. It also applies to privacy if no e-mail is set there. Empty: no address is shown."
+      },
+      "opStreet": {
+        "label": "Street and number",
+        "helper": "Shown in the file that people download with their own data. Empty: the detail is missing there."
+      },
+      "opZipCode": {
+        "label": "Postal code",
+        "helper": "Shown in the file that people download with their own data. Empty: the detail is missing there."
+      },
+      "opCity": {
+        "label": "City",
+        "helper": "Shown in the file that people download with their own data. Empty: the detail is missing there."
+      },
+      "opCountryCode": {
+        "label": "Country",
+        "helper": "Shown in the file that people download with their own data. Empty: the detail is missing there."
+      },
+      "opWebUrl": {
+        "label": "Website",
+        "helper": "Shown in the file that people download with their own data. Empty: the detail is missing there."
+      },
+      "issueUrl": {
+        "label": "Page for reporting errors",
+        "helper": "This page opens through the menu entry for reporting errors. Empty: the entry does not appear."
+      },
+      "mailFrom": {
+        "label": "Sender address",
+        "helper": "When you write an e-mail, the app uses this address as the sender, as the recipient when sending to several people, and names it as the contact at the bottom of the mail. If it does not belong to the mail domain, the app sends the e-mail from app@ and the mail domain, and the address only serves as recipient and contact. Empty: app@ and the domain from which the app sends e-mails."
+      },
+      "dpoName": {
+        "label": "Privacy contact: name",
+        "helper": "Contact person for privacy, shown together with their e-mail. Empty: no name appears."
+      },
+      "dpoEmail": {
+        "label": "Privacy contact: e-mail",
+        "helper": "Appears in the profile with the own data and in the data someone downloads. Gets a message when someone has their own data deleted. Empty: the message goes to the e-mail of the operator."
+      },
+      "privacyPolicyPageKey": {
+        "label": "Page of the privacy policy",
+        "helper": "The cookie notice and the request for confirmation in the profile link to this page. You can choose from the pages that are visible without signing in. No page: the link is missing."
+      },
+      "privacyPolicyVersion": {
+        "label": "Version of the privacy policy",
+        "helper": "For example 2026-07. After a change everyone is asked to confirm again. Empty: no confirmation is required."
+      },
+      "showDateOfBirth": {
+        "label": "Date of birth",
+        "helper": "Who may see this detail. If a person chose a stricter setting for themselves, their choice applies. Without signing in the date is never visible."
+      },
+      "showDateOfDeath": {
+        "label": "Date of death",
+        "helper": "Who may see this detail. Even with a more open choice, at most people with extended rights see this detail."
+      },
+      "showEmail": {
+        "label": "E-mail",
+        "helper": "Who may see this detail. If a person chose a stricter setting for themselves, their choice applies."
+      },
+      "showPhone": {
+        "label": "Phone",
+        "helper": "Who may see this detail. If a person chose a stricter setting for themselves, their choice applies."
+      },
+      "showPostalAddress": {
+        "label": "Postal address",
+        "helper": "Who may see this detail. If a person chose a stricter setting for themselves, their choice applies."
+      },
+      "showIban": {
+        "label": "IBAN",
+        "helper": "Who may see this detail. Even with a more open choice, at most people with extended rights see this detail."
+      },
+      "showTaxId": {
+        "label": "AHV number",
+        "helper": "Who may see this detail. Even with a more open choice, at most people with extended rights see this detail."
+      },
+      "showGender": {
+        "label": "Gender",
+        "helper": "Decides who sees this detail on the page of a person."
+      },
+      "showBexioId": {
+        "label": "Bexio number",
+        "helper": "Decides who sees this detail on the page of a person."
+      },
+      "showTags": {
+        "label": "Tags",
+        "helper": "Decides who sees this detail on the page of a person."
+      },
+      "ownerLocationId": {
+        "label": "Location",
+        "helper": "For this place the departure board in the logbook shows the next connections. Empty: the board shows no connections."
+      },
+      "defaultResourceId": {
+        "label": "Default resource",
+        "helper": "This resource is booked through the reservation form. Empty: the form accepts no reservations."
+      },
+      "avatarUsage": {
+        "label": "Profile picture",
+        "helper": "Applies to new accounts. Existing accounts keep their choice."
+      },
+      "nameDisplay": {
+        "label": "Display of names",
+        "helper": "Applies to new accounts. Existing accounts keep their choice."
+      },
+      "personSortCriteria": {
+        "label": "Sorting of people",
+        "helper": "Applies to new accounts. Existing accounts keep their choice."
+      },
+      "newsDelivery": {
+        "label": "Delivery of news",
+        "helper": "Applies to new accounts. Existing accounts keep their choice."
+      },
+      "invoiceDelivery": {
+        "label": "Delivery of invoices",
+        "helper": "Applies to new accounts. Existing accounts keep their choice."
+      },
+      "appDomain": {
+        "label": "Address of the app",
+        "helper": "Used in the links for resetting the password, and passkeys are only valid for this address. After a change, existing passkeys no longer work. Without an address, the links point to the address of the operator and there are no passkeys."
+      },
+      "emailDomain": {
+        "label": "Mail domain",
+        "helper": "E-mails are sent from this domain. Empty: the address of the app."
+      },
+      "emailProvider": {
+        "label": "Mail service",
+        "helper": "E-mails are sent through this service. Without an entry, mailtrap_api applies. The mail domain must be approved by this service."
+      },
+      "mailtrapPasswordResetTemplate": {
+        "label": "Template for resetting the password",
+        "helper": "Empty: a simple e-mail with the name of the app."
+      },
+      "loginUrl": {
+        "label": "Sign-in page",
+        "helper": "Path of the sign-in page in the app, usually /auth/login. A wrong path prevents signing in."
+      },
+      "passwordResetUrl": {
+        "label": "Page for resetting the password",
+        "helper": "Not used at present: the app always opens its own page."
+      },
+      "logoUrl": {
+        "label": "Logo",
+        "helper": "Path of the logo, also the basis of the app icon. After a change the images have to be generated again. Empty: the sign-in page shows a default icon instead of the logo."
+      },
+      "ownerOrgId": {
+        "label": "Organisation",
+        "helper": "The organisation behind this app, for example as the payee on QR invoices. Empty: on QR invoices, the organisation with the id of the app applies."
+      },
+      "ownerUserId": {
+        "label": "Responsible account",
+        "helper": "The account that is responsible for this app. For information only, it has no effect."
+      },
+      "defaultAccountingTenantId": {
+        "label": "Accounting",
+        "helper": "Must be the id of an existing set of books. It opens from the menu. Empty: the accounting entries are hidden."
+      },
+      "integrations": {
+        "label": "Connected services",
+        "helper": "Services that receive data of this app. Empty: none."
+      },
+      "additionalProcessors": {
+        "label": "Other recipients of data",
+        "helper": "Additional parties that receive data of this app. Empty: none."
+      },
+      "personLookupEnabled": {
+        "label": "Address search",
+        "helper": "When adding a person their address can be looked up in the phone book."
+      },
+      "weatherIntervalHours": {
+        "label": "Weather: interval in hours",
+        "helper": "The number of hours until the weather data is renewed. The shortest interval applies to all apps."
+      },
+      "gitRepo": {
+        "label": "Program code: repository",
+        "helper": "Detail for maintaining the app. Empty: the link to the program code is missing."
+      },
+      "gitOrg": {
+        "label": "Program code: organisation",
+        "helper": "Detail for maintaining the app. Empty: the link to the program code is missing."
+      },
+      "isArchived": {
+        "label": "Archived",
+        "helper": "Only a mark for the operator: the app keeps running and everybody can still sign in."
+      },
+      "showDebugInfo": {
+        "label": "Troubleshooting details",
+        "helper": "Shows additional details that help with troubleshooting."
+      }
+    },
+    "validation": {
+      "email": "This is not a valid e-mail address.",
+      "https": "The address must start with https:// and must not contain spaces.",
+      "appNameChars": "Quotation marks, angle brackets, backslashes and line breaks are not possible.",
+      "brandColor": "This is not a valid colour.",
+      "languagesNone": "Choose at least one language.",
+      "languagesUnknown": "One of the chosen languages does not exist in the app.",
+      "mailFromDomain": "The address must belong to the mail domain or to the address of the app.",
+      "domain": "Write the domain in lower case and without https://, for example app.example.ch.",
+      "path": "This must be a path in the app, for example /auth/login.",
+      "emailProvider": "Choose one of the offered mail services.",
+      "domainTaken": "This address already belongs to another app.",
+      "weatherHours": "Enter a whole number from 1 to 168."
+    },
+    "fallback": "Default",
+    "country_remove": "Remove country",
+    "image_upload": "Upload image",
+    "image_replace": "Upload another image",
+    "image_remove": "Remove image",
+    "image_none": "No image set",
+    "image_uploading": "The image is being uploaded.",
+    "image_type_error": "Choose an image in JPG or PNG format.",
+    "image_failed": "The image could not be uploaded. Please try again.",
+    "mail_domains": "Only an address of the mail domain appears as the sender, any other serves as recipient and contact. Allowed are addresses ending in:",
+    "mail_domains_none": "The operator has to set the domain for e-mails first. Only then can you enter an address here.",
+    "image_too_big": "The image is too large. It must be smaller than 25 MB.",
+    "location_pick": "Choose location",
+    "location_change": "Choose another location",
+    "location_remove": "Remove location",
+    "resource_pick": "Choose resource",
+    "resource_change": "Choose another resource",
+    "resource_remove": "Remove resource",
+    "operator_page": {
+      "title": "Settings of the apps",
+      "refused": "This page is reserved for the operator.",
+      "intro": "You see all settings of the chosen app. Here you can only change «Platform». Everything else is changed by the administration of the app.",
+      "tenant": "App",
+      "choose": "Choose an app.",
+      "none": "No apps were found. The internet connection may be missing. Try again later.",
+      "archived": "archived"
+    },
+    "integration_unknown": "This service is not available for selection. The stored value is kept.",
+    "processors_note": "You cannot change these entries here.",
+    "provider_test": "test service, nothing is delivered",
+    "integrations_note": "Only for the list of data recipients: the switch does not connect or disconnect a service."
   }
 }

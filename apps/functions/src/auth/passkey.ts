@@ -29,8 +29,8 @@ import { checkAppCheckToken, getCallerContext } from '@okr/shared-util-functions
 import { isSyntheticLoginEmail } from '@okr/user-util';
 import { toStoreDateTime } from '../srv/zurich-time';
 
-import { getAppEmailConfig } from './email-templates';
-import { DEFAULT_EMAIL_PROVIDER, isValidProvider, sendEmailViaProvider } from './email-transport';
+import { getAppEmailConfig, getEmailProvider } from './email-templates';
+import { sendEmailViaProvider } from './email-transport';
 import { tenantAppDomain } from './login-id';
 import {
   byCreatedAtDesc, ChallengePurpose, CHALLENGE_TTL_MS, checkLoginTarget, defaultPasskeyLabel, expectedOrigin, verifyOrigins,
@@ -277,12 +277,7 @@ async function notifyPasskeyAdded(uid: string, tenantId: string, label: string):
       logger.info(`${CF_NAME}: users/${uid} has no deliverable address — no passkey notice sent.`);
       return;
     }
-    const configSnap = await db().collection('app-config').doc(tenantId).get();
-    const provider = String(configSnap.data()?.['emailProvider'] ?? DEFAULT_EMAIL_PROVIDER);
-    if (!isValidProvider(provider)) {
-      logger.warn(`${CF_NAME}: tenant ${tenantId} declares an unknown email provider — no passkey notice sent.`);
-      return;
-    }
+    const provider = await getEmailProvider(tenantId);
     const { appName, from } = await getAppEmailConfig(tenantId);
     const { subject, html } = passkeyAddedMail(appName, label, zurichNowForDisplay());
     await sendEmailViaProvider(provider, { from, to: [email], subject, html });

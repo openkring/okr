@@ -196,7 +196,8 @@
     "link": "Lire la déclaration de confidentialité",
     "accept": "Lu et accepté",
     "accepted": "Tu as accepté la déclaration de confidentialité",
-    "error": "La confirmation n'a pas pu être enregistrée"
+    "error": "La confirmation n'a pas pu être enregistrée",
+    "contact": "Contact pour les questions de confidentialité :"
   },
   "export": {
     "title": "Télécharger mes données",

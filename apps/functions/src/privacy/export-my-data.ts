@@ -11,7 +11,7 @@ import { privateBucket } from '../_storage/private-bucket';
 import { AppConfigCollection, UserCollection } from '@okr/shared-models';
 import type { ExportMyDataResponse } from '@okr/shared-models';
 import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functions';
-import { getTodayStr, DateFormat } from '@okr/shared-util-core';
+import { getCountryName, getTodayStr, DateFormat } from '@okr/shared-util-core';
 import { isSyntheticLoginEmail } from '@okr/user-util';
 
 import { gatherSubjectData } from './gather';
@@ -121,21 +121,48 @@ export async function loadFavEmailIfSynthetic(userData: Record<string, unknown> 
   return (snap.data()?.['favEmail'] as string | undefined) || undefined;
 }
 
-/** Plain-text imprint/contact block for `renderReadme`'s "who is responsible" section,
- * built from the tenant's `app-config` operator fields (no dedicated "controller" field
- * exists on `AppConfig`). Falls back to the tenant name if the operator block is empty. */
-function buildController(config: Record<string, unknown> | undefined, tenantName: string): string {
+/** One text (or number) value of the raw `app-config` document on one line; '' for anything else. */
+function configText(config: Record<string, unknown>, field: string): string {
+  const raw = config[field];
+  const value = typeof raw === 'number' ? String(raw) : raw;
+  return typeof value === 'string' ? value.replace(/\s+/g, ' ').trim() : '';
+}
+
+/** A web address as stored, only when it is http(s); '' otherwise. */
+function webUrl(value: string): string {
+  return /^https?:\/\//i.test(value) && URL.canParse(value) ? value : '';
+}
+
+/**
+ * Plain-text imprint/contact block for `renderReadme`'s "who is responsible" section, built from the tenant's
+ * `app-config` operator fields (no dedicated "controller" field exists on `AppConfig`): name, street, zip and city,
+ * country (German name, or the stored value when it is no known code), e-mail, web, data protection contact. Empty
+ * values are left out. Falls back to the tenant name when name, street, city and e-mail are all empty: the other
+ * lines alone do not say who is responsible.
+ */
+export function buildController(config: Record<string, unknown> | undefined, tenantName: string): string {
   if (!config) return tenantName;
-  const cityLine = [String(config['opZipCode'] ?? ''), String(config['opCity'] ?? '')]
-    .filter((p) => p !== '').join(' ');
-  const email = String(config['opEmail'] ?? '');
-  const lines = [
-    String(config['opName'] ?? ''),
-    String(config['opStreet'] ?? ''),
-    cityLine,
+  const text = (field: string): string => configText(config, field);
+  const join = (parts: string[], separator: string): string => parts.filter((p) => p !== '').join(separator);
+
+  const name = text('opName');
+  const street = text('opStreet');
+  const city = join([text('opZipCode'), text('opCity')], ' ');
+  const country = text('opCountryCode');
+  const email = text('opEmail');
+  const web = webUrl(text('opWebUrl'));
+  const contact = join([text('dpoName'), text('dpoEmail')], ', ');
+
+  const isNamed = [name, street, city, email].some((p) => p !== '');
+  return join([
+    isNamed ? name : tenantName,
+    street,
+    city,
+    country !== '' ? getCountryName(country, 'de') || country : '',
     email !== '' ? `E-Mail: ${email}` : '',
-  ].filter((line) => line !== '');
-  return lines.length > 0 ? lines.join('\n') : tenantName;
+    web !== '' ? `Web: ${web}` : '',
+    contact !== '' ? `Datenschutz: ${contact}` : '',
+  ], '\n');
 }
 
 /** Best-effort: the ZIP still ships without an avatar if Storage read fails (e.g. the

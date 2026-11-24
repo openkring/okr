@@ -14,7 +14,8 @@ and the area comes from the route data (`data: { area }`). There is no `/aoc/:ar
 | Konfiguration | `/aoc/config` | `aoc-config` |
 | Datenqualität | `/aoc/data` | `aoc-data` |
 
-The `aoc-menu` submenu holds these four rows, followed by the closing `divider_empty`. Rows outside
+The `aoc-menu` submenu holds these four rows and `tenant-settings` (`/tenant/settings`, spec 1.174), followed by the closing
+`divider_empty`. Rows outside
 the catalogue (`aoc-allocation`, `operator-chat`, `alias-all`, `alias-spaces`, `person-privacy`) stay
 below them. Only the `aoc` block declares `aoc-menu`. The `aoc` block is `core: true`: the hub is
 the only menu path to users, privacy and the feature picker, so no tenant can switch it off.
@@ -52,6 +53,8 @@ writes each run to `activities` (`scope: 'aoc'`), and the card shows the last ru
 | Card | Target | What it does |
 |---|---|---|
 | Features | `/tenant/features` | The feature picker (`@okr/tenant-feature`) |
+| Einstellungen | `/tenant/settings` | The app settings of the tenant (`@okr/tenant-feature`) |
+| Einstellungen der Apps (Betreiber) | `/operator/settings` | The settings of every tenant, operator only (bka) |
 | Workflow-Regeln | `/workflow/all/workflow-context` | Workflow rules (`@okr/system-workflow-feature`) |
 
 ### Datenqualität

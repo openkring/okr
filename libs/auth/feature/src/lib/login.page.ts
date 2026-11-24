@@ -5,7 +5,7 @@ import { IonButton, IonCol, IonContent, IonGrid, IonLabel, IonRow, IonSpinner, V
 import { AuthCredentials } from '@okr/shared-models';
 import { Header, ImgDirective } from '@okr/shared-ui';
 import { navigateByUrl } from '@okr/shared-util-angular';
-import { getImgixUrlWithAutoParams, getSafeReturnUrl } from '@okr/shared-util-core';
+import { getConfigImageUrl, getImgixUrlWithAutoParams, getSafeReturnUrl } from '@okr/shared-util-core';
 
 import { AuthService, PasskeyService } from '@okr/auth-data-access';
 import { LoginForm, PwdResetSent } from '@okr/auth-ui';
@@ -35,6 +35,8 @@ const START_URL = '/';
   styles: `
   .background-image { filter: blur(8px); -webkit-filter: blur(8px); position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.7; z-index: 1;}
   .title { text-align: center; font-size: 2rem; padding: 20px; }
+  .app-title { margin: 0 0 4px; font-size: 1.5rem; font-weight: 600; line-height: 1.25; overflow-wrap: anywhere; }
+  .app-subtitle { margin: 0 0 16px; font-size: 1rem; line-height: 1.4; overflow-wrap: anywhere; }
   .logo { max-width: 150px; text-align: center; display: block; margin-left: auto; margin-right: auto; width: 50%; z-index: 10; padding: 20px; }
   .button-container { margin: 20px; }
   /*
@@ -69,7 +71,9 @@ const START_URL = '/';
     <okr-header [i18n]="{ title: store.i18n.title() }" [showCloseButton]="false" />
     <ion-content>
       <div class="login-container">
-        <img class="background-image" [src]="backgroundImageUrl()" [alt]="store.i18n.background_alt()" />
+        @if (backgroundImageUrl(); as imageUrl) {
+          <img class="background-image" [src]="imageUrl" [alt]="store.i18n.background_alt()" />
+        }
         <div class="login-form">
           <img okrImg eager class="logo" [src]="logoUrl()" alt="logo" (click)="gotoHome()" />
           @if (linkSent()) {
@@ -87,6 +91,12 @@ const START_URL = '/';
               (useOther)="backToForm()"
             />
           } @else {
+            @if (appTitle(); as title) {
+              <h1 class="app-title">{{ title }}</h1>
+            }
+            @if (appSubtitle(); as subtitle) {
+              <p class="app-subtitle">{{ subtitle }}</p>
+            }
             <ion-label class="title"><strong>{{ store.i18n.title() }}</strong></ion-label>
             <okr-login-form context="login"
               [(vm)]="currentCredentials" (validChange)="onValidChange($event)"
@@ -171,7 +181,12 @@ export class LoginPage implements ViewDidEnter, ViewWillLeave {
 
   // computed
   public logoUrl = computed(() => `${this.store.imgixBaseUrl()}/${getImgixUrlWithAutoParams(this.store.config().logoUrl)}`);
-  public backgroundImageUrl = computed(() => `${this.store.imgixBaseUrl()}/${getImgixUrlWithAutoParams(this.store.config().welcomeBannerUrl)}`);
+  /** '' when the tenant has no image of the sign-in page: none is shown then. */
+  public backgroundImageUrl = computed(() => getConfigImageUrl(this.store.imgixBaseUrl(), this.store.config().welcomeBannerUrl));
+
+  /** The tenant's own title and subtitle; '' until app-config has settled, so nothing shows before it is known. */
+  protected readonly appTitle = computed(() => this.configText('appTitle'));
+  protected readonly appSubtitle = computed(() => this.configText('appSubtitle'));
 
   // signals
   protected formIsValid = signal(false);
@@ -277,6 +292,11 @@ export class LoginPage implements ViewDidEnter, ViewWillLeave {
   private retryUrl(returnUrl: string | null): string {
     const loginUrl = this.store.config().loginUrl;
     return returnUrl ? `${loginUrl}?returnUrl=${encodeURIComponent(returnUrl)}` : loginUrl;
+  }
+
+  private configText(field: 'appTitle' | 'appSubtitle'): string {
+    if (!this.store.appStore.isAppConfigSettled()) return '';
+    return String(this.store.config()[field] ?? '').trim();
   }
 
   public async gotoHome(): Promise<void> {

@@ -83,6 +83,8 @@ export const AOC_AREAS: readonly AocCard[] = [
   card('chatMaintenance', 'ops', 'operation', { route: '/operator/chat' }, 'aoc', { tenants: [OPERATOR_TENANT_ID] }),
   card('escalations', 'ops', 'report', { route: '/ticket/all' }, 'business', { tenants: [KRING_TENANT_ID] }),
   card('features', 'config', 'operation', { route: '/tenant/features' }, 'aoc'),
+  card('settings', 'config', 'operation', { route: '/tenant/settings' }, 'aoc'),
+  card('operatorSettings', 'config', 'operation', { route: '/operator/settings' }, 'aoc', { tenants: [OPERATOR_TENANT_ID] }),
   card('workflow', 'config', 'operation', { route: '/workflow/all/workflow-context' }, 'aoc'),
   card('validate', 'data', 'check', { operation: 'validate' }, 'aoc'),
   card('reindex', 'data', 'check', { operation: 'reindex' }, 'aoc'),

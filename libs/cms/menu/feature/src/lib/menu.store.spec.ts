@@ -352,6 +352,27 @@ describe('MenuStore', () => {
     });
   });
 
+  describe('rows with @ISSUE_URL@', () => {
+    const row = { okey: 'report', name: 'report', action: 'browse', url: '@ISSUE_URL@', menuItems: [] } as unknown as MenuItemModel;
+    const root = { okey: 'main_p13', name: 'main_p13', action: 'main', url: '', menuItems: ['report', 'my-custom-link'] } as unknown as MenuItemModel;
+
+    it('are hidden without an issue url and for the class default, shown with one', async () => {
+      store = makeStore(menuServiceMock([row], root));
+      store.setMenuName('main_p13');
+      await TestBed.inject(ApplicationRef).whenStable();
+      expect(store.menu()?.menuItems).toEqual(['my-custom-link']);
+      expect(store.urlTokenContext().issueUrl).toBe('');
+
+      const config = TestBed.inject(AppStore).appConfig as unknown as { set: (c: unknown) => void };
+      config.set({ issueUrl: 'https://github.com///issues/new' });
+      expect(store.menu()?.menuItems).toEqual(['my-custom-link']);
+
+      config.set({ issueUrl: 'https://github.com/openkring/okr/issues/new' });
+      expect(store.menu()?.menuItems).toEqual(['report', 'my-custom-link']);
+      expect(store.urlTokenContext().issueUrl).toBe('https://github.com/openkring/okr/issues/new');
+    });
+  });
+
   describe('fork guard on save', () => {
     // 'aoc-menu' is catalogue-owned AND shared with another tenant → update() would fork it.
     const sharedCatalogueDoc = { okey: 'aoc-menu', name: 'aoc-menu', tenants: [tenantId, 'scs'] };

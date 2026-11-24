@@ -110,3 +110,54 @@ export function shouldJumpToEmergency(
   if (!user?.okey || !previous || previous.uid !== user.okey) return false;
   return previous.activeTripKey === '' && isOnDepartureTrip(user);
 }
+
+/** Opens when the tenant's `rootUrl` cannot. Served by the `cms` block, which is core (always on unless the operator kills it). */
+export const WELCOME_URL = '/public/welcome';
+
+/**
+ * Matches no route, so the `**` route of the app answers: the «page not found» screen, the one route no feature block
+ * gates. Where the feature guard ends when even the block behind `WELCOME_URL` is off.
+ */
+export const UNKNOWN_PAGE_URL = '/notfound';
+
+/** The path of an in-app url, decoded (the router hands out encoded urls), without query, fragment and trailing slash; '' for '/'. */
+function pathOf(url: string | undefined | null): string {
+  const path = (url ?? '').trim().split(/[?#]/)[0].replace(/\/+$/, '');
+  try {
+    return decodeURIComponent(path);
+  } catch {
+    return path;
+  }
+}
+
+function isDecodable(url: string): boolean {
+  try {
+    decodeURIComponent(url);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * The tenant's `rootUrl` as a target a guard can redirect to: `WELCOME_URL` when it is missing, names no page, is no
+ * in-app url, cannot be decoded (the router opens '/' for a url it cannot parse), or is the page being opened right now
+ * (`currentUrl`) or a page above it, which would redirect to itself for ever: a route that redirects to a deeper path
+ * reaches the guard as that path. A guard passes the url through `normalizedRootUrl` first.
+ */
+export function safeRootUrl(rootUrl: string | undefined | null, currentUrl?: string | null): string {
+  const url = (rootUrl ?? '').trim();
+  const path = pathOf(url);
+  if (path === '' || !isDecodable(url) || !/^\/(?![/\\])/.test(url)) return WELCOME_URL;
+  const current = pathOf(currentUrl);
+  return current === path || current.startsWith(`${path}/`) ? WELCOME_URL : url;
+}
+
+/**
+ * Where the feature guard sends a url whose block is off: the tenant's `rootUrl`, the welcome page when that is the url
+ * itself, and from the welcome page always `UNKNOWN_PAGE_URL`. The last rule ends the chain: going back to a `rootUrl`
+ * whose block is off too would be a loop of two.
+ */
+export function featureOffUrl(rootUrl: string | undefined | null, currentUrl: string | undefined | null): string {
+  return pathOf(currentUrl) === WELCOME_URL ? UNKNOWN_PAGE_URL : safeRootUrl(rootUrl, currentUrl);
+}
