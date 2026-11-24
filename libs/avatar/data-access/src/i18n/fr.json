@@ -5,5 +5,10 @@
         "title": "Téléverser l'image de l'avatar"
       }
     }
+  },
+  "choice": {
+    "confirm": "Veux-tu utiliser cette image comme photo de profil ?",
+    "label": "Tes images téléversées",
+    "select": "Utiliser cette image"
   }
 }

@@ -19,7 +19,7 @@ import { PersonService } from '@okr/subject-person-data-access';
 import { PERSON_EDIT_MODAL } from '@okr/subject-person-ui';
 
 import { CalEventEditModal } from '@okr/calendar-calevent-feature';
-import { isCalEvent } from '@okr/calendar-calevent-util';
+import { isCalEvent, newCalEvent } from '@okr/calendar-calevent-util';
 import { browseUrl } from '@okr/subject-address-util';
 import { ActivityService } from '@okr/activity-data-access';
 import { Router } from '@angular/router';
@@ -499,7 +499,7 @@ export const ReservationStore = signalStore(
           component: CalEventEditModal,
           cssClass: 'modal-wide',
           componentProps: {
-                calevent: calevent ?? new CalEventModel(store.tenantId()),
+                calevent: calevent ?? newCalEvent(store.tenantId(), store.appStore.getCategory('calevent_type')),
                 currentUser: store.currentUser(),
                 types: store.appStore.getCategory('calevent_type'),
                 periodicities,

@@ -10,7 +10,7 @@ import { App } from '@capacitor/app';
 import { AUTH, clearStalledRestoreNote, ENV, FIRESTORE, noteStalledExpiredRestore, usesLocalStorageOnlySession, wasStalledSessionDropped } from '@okr/shared-config';
 import { AppConfigService, AppStoreMin, FirestoreService } from '@okr/shared-data-access';
 import { AddressDirectoryCollection, AddressDirectoryModel, AppConfig, getAddressDirectoryKey, AvailableLanguages, CalEventCollection, CalEventModel, CategoryCollection, CategoryItemModel, CategoryListModel, DefaultLanguage, DefaultLanguageCode, GroupCollection, GroupModel, InvitationCollection, InvitationModel, OrgCollection, OrgModel, PersonCollection, PersonModel, PrivacySettings, privacyUsageToAccessor, ResourceCollection, ResourceModel, ResourceModelName, stricterAccessor, TagCollection, TagModel, TaskCollection, TaskModel, UserCollection, UserModel } from '@okr/shared-models';
-import { appLinkOrigins, countableInvitationsOf, die, getSystemQuery, hasRole, isBadgeSourceLoaded, indexBy, openInvitationsOf, pickForTenant, publicAppOrigin, replacePlaceholders, resolveAppOrigin, sortPersons, withOfflineSnapshot } from '@okr/shared-util-core';
+import { appLinkOrigins, countableInvitationsOf, die, getSystemQuery, hasRole, hiddenFieldsOf, isBadgeSourceLoaded, indexBy, openInvitationsOf, pickForTenant, publicAppOrigin, replacePlaceholders, resolveAppOrigin, sortPersons, withOfflineSnapshot } from '@okr/shared-util-core';
 import { AppNavigationService, armStartupStallCheck, HelperVisibility, installScrollDiagnostics, isBrowser, markStartup, probeStoredSession, probeStoredSessionIdb, reportStartupTiming, VersionCheckService, resourceParams } from '@okr/shared-util-angular';
 
 import { authPhase, isDegradedBoot, openBootGate, type BootState } from './boot-readiness.util';
@@ -671,6 +671,11 @@ export const AppStore = signalStore(
         if (!modelType) return '';
         const tagModels = store.allTags().filter((tag: TagModel) => tag.tagModel === modelType);
         return pickForTenant(tagModels, store.tenantId())?.tags ?? '';
+      },
+
+      /** The fields of a model (`person`, `resource.rboat`, …) this tenant has hidden; see `MODEL_FIELDS`. */
+      hiddenFields(modelKey: string): ReadonlySet<string> {
+        return hiddenFieldsOf(modelKey, store.appConfig().modelFields);
       },
 
       getCategory(categoryName?: string): CategoryListModel {

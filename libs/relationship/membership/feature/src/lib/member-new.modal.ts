@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
+import { Component, computed, inject, input, linkedSignal, signal, untracked } from '@angular/core';
 import { IonContent, ModalController } from '@ionic/angular';
 
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
@@ -26,6 +26,7 @@ import { dismissOverlay } from '@okr/shared-util-angular';
     <ion-content class="ion-no-padding">
       @if(formData(); as formData) {
         <okr-member-new-form
+          [hiddenFields]="hiddenFields()"
           [formData]="formData" (formDataChange)="onFormDataChange($event)"
           [currentUser]="currentUser()"
           [genders]="genders()"
@@ -69,12 +70,14 @@ export class MemberNewModal {
   protected selectedMembershipCategory = linkedSignal(() => this.mcat());
 
   // derived
+  /** fields this tenant hides in the person forms */
+  protected readonly hiddenFields = computed(() => this.appStore.hiddenFields('person'));
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
   protected readonly changeConfirmationI18n = computed(() => ({ cancel: this.i18n.cancel(), save: this.i18n.save()} as ChangeConfirmationI18n));
 
   public formData = linkedSignal(() => {
     const org = this.org();
-    return createNewMemberFormModel(org);
+    return createNewMemberFormModel(org, untracked(this.genders));
   });
 
   /******************************* actions *************************************** */
@@ -84,7 +87,7 @@ export class MemberNewModal {
 
   public async cancel(): Promise<void> {
     this.formDirty.set(false);
-    this.formData.set(createNewMemberFormModel(this.org()));  // reset the form
+    this.formData.set(createNewMemberFormModel(this.org(), this.genders()));  // reset the form
   }
 
   protected onFormDataChange(formData: MemberNewFormModel): void {

@@ -1,6 +1,6 @@
 import { DEFAULT_ADDRESS_USAGE, DEFAULT_CITY, DEFAULT_COUNTRY, DEFAULT_DATE, DEFAULT_EMAIL, DEFAULT_GENDER, DEFAULT_ID, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PHONE, DEFAULT_STREETNAME, DEFAULT_STREETNUMBER, DEFAULT_TAGS, DEFAULT_URL, DEFAULT_ZIP, END_FUTURE_DATE_STR } from '@okr/shared-constants';
-import { AddressModel, MembershipModel, OrgModel, PersonModel } from '@okr/shared-models';
-import { addIndexElement, die, getBirthYear, getStoreDateYear, getTodayStr } from '@okr/shared-util-core';
+import { AddressModel, CategoryListModel, MembershipModel, OrgModel, PersonModel } from '@okr/shared-models';
+import { addIndexElement, defaultItemName, die, getBirthYear, getStoreDateYear, getTodayStr } from '@okr/shared-util-core';
 
 import { createFavoriteEmailAddress, createFavoritePhoneAddress, createFavoritePostalAddress, createFavoriteWebAddress } from '@okr/subject-address-util';
 
@@ -9,8 +9,10 @@ import { PersonFormModel } from './person-form.model';
 import { AhvFormat, formatAhv } from '@okr/shared-util-angular';
 
 // new person
-export function createNewPersonFormModel(org?: OrgModel): PersonNewFormModel {
+/** `genders`: the tenant's list; the new person starts with `male` if offered, else the first item. */
+export function createNewPersonFormModel(org?: OrgModel, genders?: CategoryListModel): PersonNewFormModel {
   const model = { ...PERSON_NEW_FORM_SHAPE };
+  model.gender = defaultItemName(genders, model.gender);
   model.orgKey = org?.okey ?? DEFAULT_KEY;
   model.orgName = org?.name ?? DEFAULT_NAME;
   model.membershipCategory = 'active';

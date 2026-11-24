@@ -61,9 +61,19 @@
     "placeholder": "Note"
   },
   "items": {
-      "label": "Elementi",
-      "description": "I singoli elementi di una categoria. Ogni elemento viene visualizzato su una propria riga.",
-      "empty": "In questa categoria non è ancora stato definito alcun elemento."
+    "label": "Elementi",
+    "description": "I singoli elementi di una categoria. Ogni elemento viene visualizzato su una propria riga.",
+    "empty": "In questa categoria non è ancora stato definito alcun elemento.",
+    "missing": "L'app ha bisogno di queste voci e non possono mancare: {name}. Aggiungile di nuovo.",
+    "warning": {
+      "postal": "Senza indirizzo postale, le fatture non possono essere spedite per posta.",
+      "bankaccount": "Senza conto bancario non si possono registrare pagamenti."
+    }
+  },
+  "itemLabel": {
+    "title": "Denominazione di «{name}»",
+    "helper": "Ciò che lasci vuoto riprende la prima denominazione inserita. Senza denominazione viene mostrato il nome.",
+    "error": "La categoria è stata salvata, ma non la denominazione della nuova voce."
   },
 
   "priority": {

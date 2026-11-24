@@ -45,6 +45,9 @@
     },
     {
       "path": "../util-angular/tsconfig.lib.json"
+    },
+    {
+      "path": "../../avatar/util/tsconfig.lib.json"
     }
   ]
 }

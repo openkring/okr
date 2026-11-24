@@ -44,6 +44,7 @@ import { MyNewsletters } from '@okr/relationship-newsletter-feature';
         modelType="person"
         subTitle="{{ loginIdSubtitle() }}"
         [readOnly]="false"
+        [showChoices]="true"
         (imageSelected)="onImageSelected($event)"
       />
       <ion-item lines="none">
@@ -55,6 +56,7 @@ import { MyNewsletters } from '@okr/relationship-newsletter-feature';
             @if(personFormData(); as personFormData) {
               @if(currentUser(); as currentUser) {
                 <okr-profile-data-accordion
+                  [hiddenFields]="hiddenFields()"
                   [formData]="personFormData"
                   (formDataChange)="onPersonChange($event)"
                   [currentUser]="currentUser"
@@ -172,6 +174,8 @@ export class ProfileEditPage {
   // person + vault ssn/dob (spec 1.19 Phase 4) — undefined until both are loaded
   protected currentPerson = computed(() => this.store.personForm());
   protected personKey = computed(() => this.currentUser()?.personKey || '');
+  /** fields this tenant hides in the person forms */
+  protected readonly hiddenFields = computed(() => this.store.appStore.hiddenFields('person'));
   protected genders = computed(() => this.store.appStore.getCategory('gender'));
   protected tenantId = computed(() => this.store.tenantId());
   protected availableLanguages = computed(() =>

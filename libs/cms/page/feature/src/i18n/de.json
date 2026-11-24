@@ -467,5 +467,8 @@
       "step3": "Auf die Website kommen nur Sektionen mit dem Status «Veröffentlicht».",
       "step4": "Tippe auf «Veröffentlichen». Erst dann erscheinen die Änderungen auf der Website. Nach jeder weiteren Änderung veröffentlichst du erneut. Eine frühere Version lässt sich wiederherstellen."
     }
+  },
+  "widget": {
+    "hidden": "ausgeblendet"
   }
 }

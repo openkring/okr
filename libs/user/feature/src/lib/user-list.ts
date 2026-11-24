@@ -183,7 +183,7 @@ export class UserList {
     const selectedMethod = $event.detail.data;
     if (!selectedMethod) return; // dismissed without choosing an item (backdrop/escape) — not an error
     switch(selectedMethod) {
-      case 'add':  await this.store.add(); break;
+      case 'add':  await this.actions.add(); break;
       case 'exportRaw': await this.store.export('raw'); break;
       case 'exportUsers': await this.store.export('users'); break;
       default: error(undefined, `UserList.onPopoverDismiss: unknown method ${selectedMethod}`);

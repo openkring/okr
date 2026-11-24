@@ -4,7 +4,7 @@ import { IonAccordionGroup, IonCol, IonContent, IonGrid, IonRow, ModalController
 
 import { CategoryListModel, ResourceModel, ResourceModelName, RoleName } from '@okr/shared-models';
 import { CategorySelect, ChangeConfirmation, ChangeConfirmationI18n, Header, IconToolbar } from '@okr/shared-ui';
-import { coerceBoolean, getAvatarInfo, hasRole, safeStructuredClone } from '@okr/shared-util-core';
+import { coerceBoolean, getAvatarInfo, getYear, hasRole, resourceFieldKey, safeStructuredClone } from '@okr/shared-util-core';
 import { DEFAULT_RESOURCE_TYPE } from '@okr/shared-constants';
 
 import { CommentsAccordion } from '@okr/comment-feature';
@@ -14,7 +14,7 @@ import { findActiveLockReservations } from '@okr/relationship-reservation-util';
 import { ResourceOwnersAccordion } from '@okr/relationship-ownership-feature';
 
 import { ResourceForm, ResourceLockedBanner } from '@okr/resource-ui';
-import { getCategoryNameForResourceType, getUsageNameForResourceType, isReservable } from '@okr/resource-util';
+import { applyResourceType, getCategoryNameForResourceType, getUsageNameForResourceType, isReservable } from '@okr/resource-util';
 import { dismissOverlay } from '@okr/shared-util-angular';
 import { ResourceStore } from './resource.store';
 
@@ -41,7 +41,7 @@ import { ResourceStore } from './resource.store';
         <ion-grid>
           <ion-row>
             <ion-col size="12" size-md="6">
-              <okr-cat-select [category]="types()!" [selectedItemName]="type()" (selectedItemNameChange)="onFieldChange('type', $event)" [withAll]="false" [readOnly]="isReadOnly()" />
+              <okr-cat-select [category]="types()!" [selectedItemName]="type()" (selectedItemNameChange)="onTypeChange($event)" [withAll]="false" [readOnly]="isReadOnly()" />
             </ion-col>
           </ion-row>
         </ion-grid>
@@ -55,6 +55,7 @@ import { ResourceStore } from './resource.store';
           [subTypes]="subTypes()"
           [usages]="usages()"
           [allTags]="tags()"
+          [hiddenFields]="hiddenFields()"
           [tenantId]="tenantId()"
           [readOnly]="isReadOnly()"
           [showForm]="showForm()"
@@ -108,6 +109,7 @@ export class ResourceEditModal {
   protected subTypes = computed(() => this.getSubtypes());
   protected usages = computed(() => this.getUsages());
   protected tags = computed(() => this.store.getTags(this.type()));
+  protected hiddenFields = computed(() => this.store.appStore.hiddenFields(resourceFieldKey(this.type())));
   protected tenantId = computed(() => this.store.tenantId());
   protected type = linkedSignal(() => this.formData()?.type ?? DEFAULT_RESOURCE_TYPE);
   protected resourceKey = computed(() => this.resource()?.okey ?? '');
@@ -182,6 +184,12 @@ export class ResourceEditModal {
       if (!vm) return vm;
       return { ...vm, [fieldName]: fieldValue };
     });
+  }
+
+  /** A new type brings its own subtype list: a subType left over from the previous type must not stay. */
+  protected onTypeChange(type: string): void {
+    this.formDirty.set(true);
+    this.formData.update((vm: ResourceModel | undefined) => vm && applyResourceType(vm, type, name => this.store.appStore.tryGetCategory(name), getYear()));
   }
 
   protected onFormDataChange(formData: ResourceModel): void {

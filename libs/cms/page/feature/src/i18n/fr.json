@@ -467,5 +467,8 @@
       "step3": "Seules les sections au statut «Publié» vont sur le site web.",
       "step4": "Touche «Publier». Ce n'est qu'alors que les modifications apparaissent sur le site web. Après chaque nouvelle modification, tu publies à nouveau. Une version antérieure peut être restaurée."
     }
+  },
+  "widget": {
+    "hidden": "masqué"
   }
 }

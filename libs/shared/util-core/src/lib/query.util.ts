@@ -134,7 +134,7 @@ export function canWriteTenant(
  *
  * `FirestoreService.forkModel` splits a shared document in two writes: it `set`s the fork with
  * `tenants: [tenantId]`, and it `arrayRemove`s the tenant from the SOURCE so the tenant ends up
- * in exactly one definition. That second half is a NO-OP against a `['system']` source — the
+ * in exactly one definition. That second half is SKIPPED for a `['system']` source — the
  * tenant id was never in that array to remove. The tenant therefore ends up matched by BOTH
  * documents, and every lookup that assumed at most one match (`AppStore.getCategory`'s
  * `.find()`, `getTags`'s `[0]`) starts returning whichever one Firestore listed first: no
@@ -143,7 +143,7 @@ export function canWriteTenant(
  * The fix is a read-side precedence rule rather than a schema field: A DOCUMENT NAMING THIS
  * TENANT BEATS A SHARED ONE. That is the same ladder `indexMenuDocsByName` already applies to
  * menu documents, and it needs no `excludedTenants[]` field, no extra query clause, and no
- * change to `forkModel`.
+ * special case in `forkModel` beyond skipping that detach.
  */
 
 /**

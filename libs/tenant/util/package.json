@@ -10,6 +10,7 @@
     "@angular/router": "*",
     "@okr/shared-models": "*",
     "@okr/shared-constants": "*",
+    "@okr/shared-util-core": "*",
     "@okr/cms-menu-util": "*"
   }
 }

@@ -30,7 +30,7 @@ export type PersonSelectOptions = {
  * Every app binds it once via `provideModelSelector()` from `@okr/shared-feature`.
  */
 export interface ModelSelector {
-  selectPerson(selectedTag?: string): Promise<PersonModel | undefined>;
+  selectPerson(selectedTag?: string, options?: PersonSelectOptions): Promise<PersonModel | undefined>;
   /** Multi-select person picker (checkboxes, select-all, group filter); undefined when cancelled. */
   selectPersons(selectedTag?: string, options?: PersonSelectOptions): Promise<PersonModel[] | undefined>;
   selectPersonAvatar(selectedTag?: string, label?: string, allowCustom?: boolean, membersFirst?: boolean, options?: PersonSelectOptions): Promise<AvatarInfo | undefined>;

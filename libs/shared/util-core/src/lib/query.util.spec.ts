@@ -465,8 +465,8 @@ describe('shared-vs-own resolution', () => {
 
   describe('pickForTenant', () => {
     it('prefers the tenant own fork over the system document', () => {
-      // The case forkModel cannot clean up: arrayRemove('scs') against ['system'] removes
-      // nothing, so both documents match the tenant-scoped query.
+      // The case forkModel cannot clean up: it skips the detach for a ['system'] source,
+      // so both documents match the tenant-scoped query.
       expect(pickForTenant([shared, own], 'scs')).toBe(own);
       expect(pickForTenant([own, shared], 'scs')).toBe(own);
     });

@@ -46,6 +46,7 @@
     "count": "{count} entradas",
     "empty": "Todavía no hay menús — añade el primer menú",
     "noSite": "Todavía no hay sitio web para esta app.",
+    "unavailable": "El sitio web no se puede cargar en este momento. Espera un momento o vuelve a cargar la página.",
     "createSite": "Crear sitio web",
     "addTop": "Añadir",
     "view": {

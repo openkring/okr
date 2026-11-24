@@ -10,7 +10,7 @@ import { AppConfigService } from '@okr/shared-data-access';
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { ListFilter } from '@okr/shared-ui';
+import { ListFilter, Spinner } from '@okr/shared-ui';
 import { AlertService, copyToClipboard } from '@okr/shared-util-angular';
 import { fill } from '@okr/shared-util-core';
 import type { CategoryListModel, FeatureRolloutModel, MenuItemModel } from '@okr/shared-models';
@@ -33,9 +33,10 @@ import { BlockEnableModal, BooksSetupModal, MenuCompareModal, PickerHelpModal } 
 import { buildMenuTree, filterMenuRows, foldMenuRows, foldableMenuRows } from './menu-tree.util';
 import type { MenuTreeRow } from './menu-tree.util';
 import { actionableFieldsOf, patchNoteFor } from './menu-row-actions.util';
+import { CustomizeTab } from './customize-tab';
 
-/** Which of the two `IonSegment` tabs is showing. */
-type PickerSegment = 'blocks' | 'rows';
+/** Which of the three `IonSegment` tabs is showing. */
+type PickerSegment = 'blocks' | 'rows' | 'customize';
 
 /**
  * The admin-facing feature picker — `/tenant/features` — split into two segments: which
@@ -73,7 +74,7 @@ type PickerSegment = 'blocks' | 'rows';
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    SvgIconPipe, ListFilter,
+    SvgIconPipe, ListFilter, Spinner, CustomizeTab,
     IonHeader, IonToolbar, IonButtons, IonMenuButton, IonTitle, IonButton, IonIcon,
     IonContent, IonList, IonItemGroup, IonItemDivider, IonItem, IonLabel, IonNote,
     IonSegment, IonSegmentButton, IonGrid, IonRow, IonCol, IonAccordionGroup, IonAccordion,
@@ -96,6 +97,9 @@ type PickerSegment = 'blocks' | 'rows';
           </ion-segment-button>
           <ion-segment-button value="rows">
             <ion-label>{{ i18n.segment_rows() }}</ion-label>
+          </ion-segment-button>
+          <ion-segment-button value="customize">
+            <ion-label>{{ i18n.segment_customize() }}</ion-label>
           </ion-segment-button>
         </ion-segment>
       </ion-toolbar>
@@ -214,7 +218,7 @@ type PickerSegment = 'blocks' | 'rows';
             }
           }
         </ion-accordion-group>
-      } @else {
+      } @else if (segment() === 'rows') {
         @if (rows().length === 0) {
           <ion-list>
             <ion-item lines="none">
@@ -333,6 +337,12 @@ type PickerSegment = 'blocks' | 'rows';
               </ion-row>
             }
           </ion-grid>
+        }
+      } @else {
+        @defer (on immediate) {
+          <okr-customize-tab (showBlocks)="segment.set('blocks')" />
+        } @placeholder {
+          <okr-spinner />
         }
       }
     </ion-content>

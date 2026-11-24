@@ -61,9 +61,19 @@
     "placeholder": "Notizen"
   },
   "items": {
-      "label": "Elemente",
-      "description": "Die einzelnen Elemente einer Kategorie. Jedes Element wird in einer eigenen Zeile angezeigt.",
-      "empty": "Es sind noch keine Elemente in dieser Kategorie definiert."
+    "label": "Elemente",
+    "description": "Die einzelnen Elemente einer Kategorie. Jedes Element wird in einer eigenen Zeile angezeigt.",
+    "empty": "Es sind noch keine Elemente in dieser Kategorie definiert.",
+    "missing": "Diese Einträge braucht die App und sie dürfen nicht fehlen: {name}. Füge sie wieder hinzu.",
+    "warning": {
+      "postal": "Ohne Postadresse kann die Buchhaltung keine Rechnungen per Post adressieren.",
+      "bankaccount": "Ohne Bankverbindung können keine Zahlungen erfasst werden."
+    }
+  },
+  "itemLabel": {
+    "title": "Bezeichnung für «{name}»",
+    "helper": "Was du leer lässt, übernimmt die erste eingegebene Bezeichnung. Ohne Bezeichnung steht der Name da.",
+    "error": "Die Kategorie wurde gespeichert, die Bezeichnung des neuen Eintrags aber nicht."
   },
 
   "priority": {

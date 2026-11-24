@@ -46,6 +46,7 @@
     "count": "{count} entries",
     "empty": "No menus yet — add the first menu",
     "noSite": "There is no website for this app yet.",
+    "unavailable": "The website cannot be loaded right now. Wait a moment or reload the page.",
     "createSite": "Create website",
     "addTop": "Add",
     "view": {

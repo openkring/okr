@@ -5,5 +5,10 @@
         "title": "Avatar Bild hochladen"
       }
     }
+  },
+  "choice": {
+    "confirm": "Möchtest du dieses Bild als dein Profilbild verwenden?",
+    "label": "Deine hochgeladenen Bilder",
+    "select": "Dieses Bild verwenden"
   }
 }

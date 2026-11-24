@@ -80,6 +80,16 @@ export function buildUserAccountRows(
   return sourcesComplete ? rows : rows.filter(r => r.kind === 'normal');
 }
 
+/** The persons who already have a working account (user and login); «Neuen User hinzufügen» does not offer them. */
+export function personKeysWithAccount(rows: UserAccountRow[]): string[] {
+  return rows.filter(r => r.kind === 'normal').map(r => r.personKey).filter((key): key is string => !!key);
+}
+
+/** The row to open an account for: the person's existing one, else a new one (a person who is no member has none). */
+export function accountRowOfPerson(rows: UserAccountRow[], personKey: string, name: string): UserAccountRow {
+  return rows.find(r => r.personKey === personKey) ?? { kind: 'memberWithoutAccount', personKey, name, roles: [] };
+}
+
 /**
  * The last login as local 'dd.MM.yyyy HH:mm' (e.g. '05.09.2026 14:07'), '' when there is none.
  * Firebase Auth reports `lastSignInTime` as a UTC string ('Sat, 05 Sep 2026 12:07:00 GMT').

@@ -1,10 +1,17 @@
 import type { EventInput } from '@fullcalendar/core';
 
-import { PERSONAL_CALENDAR_KEY, TRIP_CALEVENT_TYPE } from '@okr/shared-constants';
-import { Attendee, AvatarInfo, CalendarModel, CalEventModel, InvitationState } from '@okr/shared-models';
-import { addTime, applyInvitationAnswer, convertDateFormatToString, DateFormat, getAttendee, getEventLocationName, getIsoDateTime, isCaleventAttendanceClosed, isPastDate, isType, toAttendeeState } from '@okr/shared-util-core';
+import { DEFAULT_CALEVENT_TYPE, PERSONAL_CALENDAR_KEY, TRIP_CALEVENT_TYPE } from '@okr/shared-constants';
+import { Attendee, AvatarInfo, CalendarModel, CalEventModel, CategoryListModel, InvitationState } from '@okr/shared-models';
+import { addTime, applyInvitationAnswer, defaultItemName, convertDateFormatToString, DateFormat, getAttendee, getEventLocationName, getIsoDateTime, isCaleventAttendanceClosed, isPastDate, isType, toAttendeeState } from '@okr/shared-util-core';
 
 export { applyInvitationAnswer, toAttendeeState };
+
+/** A new event a user starts: its type is one the tenant offers (`types` = the `calevent_type` list). */
+export function newCalEvent(tenantId: string, types: CategoryListModel | undefined): CalEventModel {
+  const event = new CalEventModel(tenantId);
+  event.type = defaultItemName(types, DEFAULT_CALEVENT_TYPE);
+  return event;
+}
 
 export function isCalEvent(calEvent: unknown, tenantId: string): calEvent is CalEventModel {
   return isType(calEvent, new CalEventModel(tenantId));

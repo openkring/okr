@@ -6,7 +6,7 @@ import { BexioIdMask, ChVatMask } from '@okr/shared-config';
 import { CategoryListModel, OrgModel, RoleName, UserModel } from '@okr/shared-models';
 import { CategorySelect, Chips, DateInput, DateInputI18n, TextareaInput, TextareaInputI18n, TextInput, TextInputI18n , ErrorNote} from '@okr/shared-ui';
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
-import { coerceBoolean, hasRole } from '@okr/shared-util-core';
+import { coerceBoolean, hasRole, isFieldShown, NO_HIDDEN_FIELDS } from '@okr/shared-util-core';
 
 import { OrgI18n, orgValidations } from '@okr/subject-org-util';
 import { ZefixCompanyDetails } from '@okr/subject-org-data-access';
@@ -56,38 +56,47 @@ import { ZefixLookup } from './zefix-lookup';
                 </ion-col>
               }
             </ion-row>
-            <ion-row>
-              <ion-col size="12" size-md="6">
-                <okr-date-input [i18n]="dateOfFoundationI18n()" [storeDate]="dateOfFoundation()" (storeDateChange)="onFieldChange('dateOfFoundation', $event)" [readOnly]="isReadOnly()" />
-                <okr-error-note [errors]="dateOfFoundationErrors()" />
-              </ion-col>
-
-              <ion-col size="12" size-md="6">
-                <okr-date-input [i18n]="dateOfLiquidationI18n()" [storeDate]="dateOfLiquidation()" (storeDateChange)="onFieldChange('dateOfLiquidation', $event)" [readOnly]="isReadOnly()" />
-                <okr-error-note [errors]="dateOfLiquidationErrors()" />
-              </ion-col>
-            </ion-row>
-            <ion-row>
-              <ion-col size="12" size-md="6">
-                <okr-text-input [i18n]="taxIdI18n()" [value]="taxId()" (valueChange)="onFieldChange('taxId', $event)" [mask]="vatMask" [showHelper]=true [maxLength]="shortNameLength" [readOnly]="isReadOnly()" />
-                <okr-error-note [errors]="taxIdErrors()" />
-              </ion-col>
-              @if(hasRole('admin')) { 
-                <ion-col size="12" size-md="6">
-                  <okr-text-input [i18n]="bexioIdI18n()" [value]="bexioId()" (valueChange)="onFieldChange('bexioId', $event)" [maxLength]="bexioIdLength" [mask]="bexioMask" [showHelper]=true [readOnly]="isReadOnly()" />
-                  <okr-error-note [errors]="bexioIdErrors()" />
-                </ion-col>
-              }
-            </ion-row>
+            @if (isShown('dateOfFoundation') || isShown('dateOfLiquidation')) {
+              <ion-row>
+                @if (isShown('dateOfFoundation')) {
+                  <ion-col size="12" size-md="6">
+                    <okr-date-input [i18n]="dateOfFoundationI18n()" [storeDate]="dateOfFoundation()" (storeDateChange)="onFieldChange('dateOfFoundation', $event)" [readOnly]="isReadOnly()" />
+                    <okr-error-note [errors]="dateOfFoundationErrors()" />
+                  </ion-col>
+                }
+                @if (isShown('dateOfLiquidation')) {
+                  <ion-col size="12" size-md="6">
+                    <okr-date-input [i18n]="dateOfLiquidationI18n()" [storeDate]="dateOfLiquidation()" (storeDateChange)="onFieldChange('dateOfLiquidation', $event)" [readOnly]="isReadOnly()" />
+                    <okr-error-note [errors]="dateOfLiquidationErrors()" />
+                  </ion-col>
+                }
+              </ion-row>
+            }
+            @if (isShown('taxId') || (isShown('bexioId') && hasRole('admin'))) {
+              <ion-row>
+                @if (isShown('taxId')) {
+                  <ion-col size="12" size-md="6">
+                    <okr-text-input [i18n]="taxIdI18n()" [value]="taxId()" (valueChange)="onFieldChange('taxId', $event)" [mask]="vatMask" [showHelper]=true [maxLength]="shortNameLength" [readOnly]="isReadOnly()" />
+                    <okr-error-note [errors]="taxIdErrors()" />
+                  </ion-col>
+                }
+                @if (isShown('bexioId') && hasRole('admin')) {
+                  <ion-col size="12" size-md="6">
+                    <okr-text-input [i18n]="bexioIdI18n()" [value]="bexioId()" (valueChange)="onFieldChange('bexioId', $event)" [maxLength]="bexioIdLength" [mask]="bexioMask" [showHelper]=true [readOnly]="isReadOnly()" />
+                    <okr-error-note [errors]="bexioIdErrors()" />
+                  </ion-col>
+                }
+              </ion-row>
+            }
           </ion-grid>
         </ion-card-content>
       </ion-card>
 
-      @if(hasRole('privileged') || hasRole('memberAdmin')) {
+      @if(isShown('tags') && (hasRole('privileged') || hasRole('memberAdmin'))) {
         <okr-chips chipName="tag" [storedChips]="tags()" (storedChipsChange)="onFieldChange('tags', $event)" [allChips]="allTags()" [readOnly]="isReadOnly()" />
       }
 
-      @if(hasRole('admin')) { 
+      @if(isShown('notes') && hasRole('admin')) {
         <okr-textarea-input variant="card" [i18n]="notesI18n()" [maxLength]="descriptionLength" [readOnly]="isReadOnly()" [value]="notes()" (valueChange)="onFieldChange('notes', $event)" [errors]="notesErrors()" />
       }
     </form>
@@ -119,6 +128,7 @@ export class OrgForm {
   public readonly types = input.required<CategoryListModel>();
   public isOrgTypeReadOnly = input(false);
   public isOrgTypeVisible = input(true);
+  public readonly hiddenFields = input<ReadonlySet<string>>(NO_HIDDEN_FIELDS);
   public readOnly = input<boolean>(true);
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
   protected isLegalEntity = computed(() => this.type() === 'legalEntity');
@@ -146,6 +156,11 @@ export class OrgForm {
   protected notesErrors = computed(() => this.validationResult().getErrors('notes'));
   protected taxIdErrors = computed(() => this.validationResult().getErrors('taxId'));
   protected nameErrors = computed(() => this.validationResult().getErrors('name'));
+
+  /** A hidden field with an error stays on screen, so the user can fix what blocks the save. */
+  protected isShown(field: string): boolean {
+    return isFieldShown(field, this.hiddenFields(), this.validationResult().getErrors(field));
+  }
 
   // fields
   protected readonly type = computed(() => this.formData().type ?? 'association');

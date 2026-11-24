@@ -2,13 +2,13 @@ import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController } from '@ionic/angular';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
-import { firstValueFrom, map, of } from 'rxjs';
+import { map, of } from 'rxjs';
 
 import { FirestoreService } from '@okr/shared-data-access';
-import { AppStore, TagEditService } from '@okr/shared-feature';
-import { AvailableLanguages, I18nTenantOverrideCollection, I18nTenantOverrideModel, OkrModel, TagCollection, TagModel } from '@okr/shared-models';
+import { AppStore, TagDocument, TagEditService, TenantLabelService } from '@okr/shared-feature';
+import { AvailableLanguages, OkrModel, TagCollection, TagModel } from '@okr/shared-models';
 import { okrPrompt, confirm } from '@okr/shared-util-angular';
-import { dedupeForTenant, getSystemQuery, isOwnedBy } from '@okr/shared-util-core';
+import { copyStatus, dedupeForTenant, getSystemQuery, isOwnedBy, LIST_COPY_I18N_KEYS, ListCopyStatus, string2stringArray, toI18nRef } from '@okr/shared-util-core';
 import { I18nService } from '@okr/shared-i18n';
 import { AOC_I18N_KEYS, TagStringFormData } from '@okr/aoc-util';
 
@@ -19,19 +19,6 @@ import { AOC_I18N_KEYS, TagStringFormData } from '@okr/aoc-util';
 export interface TagItem extends OkrModel {
   tagModel: string;
   tags: string;
-}
-
-/**
- * Splits a tag string into the (module, key) pair the i18n layer addresses it by:
- * '@tag.ezs' → { module: 'tag', key: 'ezs' }. Legacy raw entries without the '@' prefix
- * (e.g. the icon/task lists) have no translation and yield undefined.
- */
-function toI18nRef(tagStr: string): { module: string; key: string } | undefined {
-  if (!tagStr.startsWith('@')) return undefined;
-  const rest = tagStr.substring(1);
-  const dot = rest.indexOf('.');
-  if (dot <= 0 || dot === rest.length - 1) return undefined;
-  return { module: rest.substring(0, dot), key: rest.substring(dot + 1) };
 }
 
 export type AocTagState = {
@@ -53,9 +40,11 @@ export const AocTagStore = signalStore(
     modalController: inject(ModalController),
     i18nService: inject(I18nService),
     tagEditService: inject(TagEditService),
+    tenantLabelService: inject(TenantLabelService),
   })),
   withProps(store => ({
     i18n: store.i18nService.translateAll(AOC_I18N_KEYS),
+    copyI18n: store.i18nService.translateAll(LIST_COPY_I18N_KEYS),
 
     tagsResource: rxResource({
       params: () => ({
@@ -93,6 +82,17 @@ export const AocTagStore = signalStore(
       return tag.tags.split(',').map(s => s.trim()).filter(Boolean);
     }),
   })),
+  withComputed(store => ({
+    /** how the tenant holds the selected definition; the shared original comes from the undeduplicated allTags() */
+    copyStatus: computed((): ListCopyStatus<TagDocument> | undefined => {
+      const tag = store.selectedTag();
+      if (!tag) return undefined;
+      // a shared definition is shared, even while allTags() still holds a copy that was just given up
+      const others = isOwnedBy(tag, store.appStore.tenantId())
+        ? (store.appStore.allTags() as TagDocument[]).filter(t => t.tagModel === tag.tagModel && t.okey !== tag.okey) : [];
+      return copyStatus([tag as TagDocument, ...others], store.appStore.tenantId(), t => string2stringArray(t.tags ?? ''));
+    }),
+  })),
   withMethods(store => {
     /**
      * Persist an edited tag list — copy-on-write.
@@ -106,34 +106,6 @@ export const AocTagStore = signalStore(
       const key = await store.tagEditService.saveTags(tag as TagItem & TagModel, tags, confirmMessage, errorMessage);
       // a fork lives under a new key: keep it selected
       if (key && key !== tag.okey) patchState(store, { selectedTagKey: key });
-    };
-
-    /** The current tenant's override row for a (module, key) pair, if it has one. */
-    const findOverride = async (module: string, key: string, tenantId: string): Promise<I18nTenantOverrideModel | undefined> => {
-      const rows = await firstValueFrom(store.firestoreService.searchData<I18nTenantOverrideModel>(
-        I18nTenantOverrideCollection,
-        [...getSystemQuery(tenantId), { key: 'module', operator: '==', value: module }, { key: 'key', operator: '==', value: key }],
-        'key', 'asc'
-      ));
-      return rows[0];
-    };
-
-    /** Create or update the tenant's override row from the alert's per-language values. */
-    const saveOverride = async (
-      module: string, key: string, tenantId: string,
-      values: Record<string, string>, existing?: I18nTenantOverrideModel
-    ): Promise<void> => {
-      const labels = Object.fromEntries(AvailableLanguages.map(lang => [lang, (values[lang] ?? '').trim()]));
-      // nothing entered and nothing stored → no row to write
-      if (!existing && Object.values(labels).every(v => !v)) return;
-      const model: I18nTenantOverrideModel = { ...(existing ?? new I18nTenantOverrideModel(tenantId)), module, key, ...labels };
-      if (existing) {
-        await store.firestoreService.updateModel<I18nTenantOverrideModel>(
-          I18nTenantOverrideCollection, model, false, store.i18n.tag_update_conf(), store.i18n.tag_update_error(), store.appStore.currentUser());
-        return;
-      }
-      await store.firestoreService.createModel<I18nTenantOverrideModel>(
-        I18nTenantOverrideCollection, { ...model, okey: '' }, store.i18n.tag_update_conf(), store.i18n.tag_update_error(), store.appStore.currentUser());
     };
 
     return {
@@ -191,6 +163,25 @@ export const AocTagStore = signalStore(
       await saveTags(tag, updated, store.i18n.tag_add_conf(), store.i18n.tag_add_error());
     },
 
+    /** Takes an entry of the shared definition over into the tenant's copy. */
+    async addMissingTag(tag: TagItem, tagStr: string): Promise<void> {
+      const existing = string2stringArray(tag.tags ?? '');
+      if (existing.includes(tagStr)) return;
+      await saveTags(tag, [...existing, tagStr].join(','), store.i18n.tag_add_conf(), store.i18n.tag_add_error());
+    },
+
+    /** Archives the tenant's copy of the selected definition; the shared one takes its place. */
+    async backToShared(): Promise<void> {
+      const tag = store.selectedTag();
+      const status = store.copyStatus();
+      if (!tag || !isOwnedBy(tag, store.appStore.tenantId()) || status?.kind !== 'copy') return;
+      if (!await confirm(store.alertController, store.copyI18n.restore_confirm(), store.i18n.ok(), store.i18n.cancel(), true)) return;
+      const key = await store.firestoreService.deleteModel<TagItem>(TagCollection, { ...tag }, store.copyI18n.restore_conf(), store.copyI18n.restore_error(), store.appStore.currentUser());
+      if (!key) return;
+      if (store.selectedTagKey() === tag.okey) patchState(store, { selectedTagKey: status.shared?.okey });
+      store.appStore.reloadTags();
+    },
+
     async removeTagString(tag: TagItem, tagStr: string): Promise<void> {
       const existing = tag.tags ? tag.tags.split(',').map(s => s.trim()).filter(Boolean) : [];
       const updated = existing.filter(s => s !== tagStr).join(',');
@@ -208,7 +199,7 @@ export const AocTagStore = signalStore(
     async editTagString(tag: TagItem, tagStr: string): Promise<void> {
       const tenantId = store.appStore.env.tenantId;
       const ref = toI18nRef(tagStr);
-      const override = ref ? await findOverride(ref.module, ref.key, tenantId) : undefined;
+      const override = ref ? await store.tenantLabelService.findOverride(ref.module, ref.key, tenantId) : undefined;
 
       // prefill: the tenant's own override wins, otherwise what the static bundle says today
       const tagString = { key: tagStr } as TagStringFormData;
@@ -246,7 +237,7 @@ export const AocTagStore = signalStore(
       // the key may have been renamed — the labels belong to the NEW key
       const newRef = toI18nRef(edited);
       if (!newRef) return;
-      await saveOverride(newRef.module, newRef.key, tenantId, values, override);
+      await store.tenantLabelService.saveOverride(newRef.module, newRef.key, tenantId, values, override, store.i18n.tag_update_conf(), store.i18n.tag_update_error());
     },
     };
   })

@@ -467,5 +467,8 @@
       "step3": "Sul sito web arrivano solo le sezioni con lo stato «Pubblicato».",
       "step4": "Tocca «Pubblica». Solo allora le modifiche appaiono sul sito web. Dopo ogni ulteriore modifica pubblichi di nuovo. Si può ripristinare una versione precedente."
     }
+  },
+  "widget": {
+    "hidden": "nascosto"
   }
 }

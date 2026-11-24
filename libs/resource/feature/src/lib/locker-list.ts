@@ -109,7 +109,7 @@ export class LockerList {
   protected lockersCount = computed(() => this.store.lockersCount());
   protected selectedLockersCount = computed(() => this.filteredLockers().length);
   protected isLoading = computed(() => this.store.isLoading());
-  protected tags = computed(() => this.store.getTags('locker'));
+  protected tags = computed(() => this.store.appStore.hiddenFields('resource.locker').has('tags') ? '' : this.store.getTags('locker'));
   protected types = computed(() => this.store.appStore.getCategory('gender'));
   protected currentUser = computed(() => this.store.appStore.currentUser());
   protected readOnly = computed(() => !hasRole('resourceAdmin', this.currentUser()));

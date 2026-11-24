@@ -7,7 +7,7 @@ import type { FeaturePickerI18n } from '@okr/tenant-util';
 /**
  * The (i) icon in `/tenant/features`'s toolbar, reachable from BOTH segments — the one place
  * that spells out the idea the whole screen exists to express: *the catalogue proposes, the
- * tenant decides*. Six fixed sections, each its own i18n key so Task 12 can translate them
+ * tenant decides*. Seven fixed sections, each its own i18n key so Task 12 can translate them
  * as ordinary prose rather than a bag of fragments:
  *
  *  1. What a Baustein (segment 1) is, versus a Menüzeile (segment 2, this table).
@@ -18,6 +18,7 @@ import type { FeaturePickerI18n } from '@okr/tenant-util';
  *  4. Why there is no Save button: every action writes immediately, after its own confirmation.
  *  5. What «fixiert» means for a field going forward.
  *  6. The promise: nothing is deleted here, and no existing row changes without consent.
+ *  7. The «Anpassen» tab: fields hidden for the whole tenant, nothing deleted.
  *
  * Purely informational — read-only, no writing action lives in this modal. It is not a form, so
  * it carries no `okr-change-confirmation`; the header's own cancel button closes it.
@@ -48,6 +49,9 @@ import type { FeaturePickerI18n } from '@okr/tenant-util';
         </ion-item>
         <ion-item lines="none">
           <ion-label class="ion-text-wrap">{{ i18n().help_promise() }}</ion-label>
+        </ion-item>
+        <ion-item lines="none">
+          <ion-label class="ion-text-wrap">{{ i18n().help_customize() }}</ion-label>
         </ion-item>
       </ion-list>
     </ion-content>

@@ -4,7 +4,7 @@ import { ResourceModel, RoleName } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
 import { error } from '@okr/shared-util-angular';
-import { hasRole, contextMenuId } from '@okr/shared-util-core';
+import { hasRole, contextMenuId, isFieldHiddenForTypes } from '@okr/shared-util-core';
 
 import { Menu, MenuItemsStore } from '@okr/cms-menu-feature';
 
@@ -122,7 +122,8 @@ export class ResourceList {
   protected resourcesCount = computed(() => this.store.resourcesCount());
   protected selectedResourcesCount = computed(() => this.filteredResources().length);
   protected isLoading = computed(() => this.store.isLoading());
-  protected readonly tags = computed(() => this.store.getResourceTags());
+  /** No tag filter when the tenant hides tags for every resource type it offers. */
+  protected readonly tags = computed(() => isFieldHiddenForTypes('tags', this.types().items.map((item) => item.name), this.store.appStore.appConfig()?.modelFields) ? '' : this.store.getResourceTags());
   protected readonly types = computed(() => this.store.appStore.getCategory('resource_type'));
   protected currentUser = computed(() => this.store.appStore.currentUser());
   protected readOnly = computed(() => !hasRole('resourceAdmin', this.currentUser()));

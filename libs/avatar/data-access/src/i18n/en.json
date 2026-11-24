@@ -5,5 +5,10 @@
         "title": "Upload avatar image"
       }
     }
+  },
+  "choice": {
+    "confirm": "Do you want to use this picture as your profile picture?",
+    "label": "Your uploaded pictures",
+    "select": "Use this picture"
   }
 }

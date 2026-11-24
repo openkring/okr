@@ -61,8 +61,8 @@ export class CategoryService {
    *
    * This mirrors `AocTagStore.saveTags`, which has done the same for `tags` since the fork
    * helper existed; categories were the collection still missing it, which is why they could
-   * not move to the sentinel. The `arrayRemove` half is a no-op when the source is a
-   * `'system'` document — nothing to remove — so both documents then match this tenant's
+   * not move to the sentinel. The `arrayRemove` half is skipped when the source is a
+   * `'system'` document — the tenant is not listed there — so both documents then match this tenant's
    * query and `pickForTenant` (own beats shared) is what resolves them on read.
    *
    * @param category the CategoryListModel with the new values. Its key must be valid (in order to find it in the database)
@@ -81,6 +81,16 @@ export class CategoryService {
    */
   public async delete(category: CategoryListModel, currentUser?: UserModel): Promise<void> {
     await this.firestoreService.deleteModel<CategoryListModel>(CategoryCollection, category, this.i18n.delete_conf(), this.i18n.delete_error(), currentUser);
+  }
+
+  /**
+   * Archive the tenant's own copy of a shared list, so that `pickForTenant` finds the shared one again.
+   * @param copy the copy AS STORED (never the edited form data); refused unless the tenant owns it alone
+   * @returns the key of the archived copy, undefined when nothing was archived
+   */
+  public async archiveCopy(copy: CategoryListModel, currentUser?: UserModel, confirmMessage?: string, errorMessage?: string): Promise<string | undefined> {
+    if (!isOwnedBy(copy, this.env.tenantId)) return undefined;
+    return await this.firestoreService.deleteModel<CategoryListModel>(CategoryCollection, { ...copy }, confirmMessage, errorMessage, currentUser);
   }
 
   /*-------------------------- LIST / QUERY / FILTER --------------------------------*/

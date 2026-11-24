@@ -12,6 +12,7 @@ const libraryConfig = defineConfig({
     // @okr/shared-util-core (commit d31e685b). This lib now only holds the Vest validation suite and
     // the i18n key map, so there are no util functions left here to unit-test.
     passWithNoTests: true,
+    setupFiles: ['./test-setup.ts'],
     // only keep project-specific settings here
     coverage: {
       reportsDirectory: '../../../coverage/libs/category/util',

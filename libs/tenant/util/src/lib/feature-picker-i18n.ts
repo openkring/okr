@@ -31,6 +31,8 @@ export const FEATURE_PICKER_I18N_KEYS = {
   segment_blocks: PFX + 'picker.segment_blocks',
   segment_rows: PFX + 'picker.segment_rows',
   segment_rows_placeholder: PFX + 'picker.segment_rows_placeholder',
+  /** The third tab, «Anpassen» — hides optional model fields for the whole tenant. */
+  segment_customize: PFX + 'picker.segment_customize',
   // Per-block actions — one confirmed act each, no global save (spec Task 10).
   enable_button: PFX + 'picker.enable_button',
   disable_button: PFX + 'picker.disable_button',
@@ -201,6 +203,7 @@ export const FEATURE_PICKER_I18N_KEYS = {
   help_pinned: PFX + 'picker.help_pinned',
   /** The promise: this screen deletes nothing and changes no existing row without consent. */
   help_promise: PFX + 'picker.help_promise',
+  help_customize: PFX + 'picker.help_customize',
 
   // The dry run's own sentences. `applyFeatureSelection` builds its plan where no language is
   // active, so it names each sentence (`PlanEntry.consequenceKey`) and the client translates it

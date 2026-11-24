@@ -126,7 +126,7 @@ export class RowingBoatList {
   protected boatsCount = computed(() => this.store.rboatsCount());
   protected selectedBoatsCount = computed(() => this.filteredBoats().length);
   protected isLoading = computed(() => this.store.isLoading());
-  protected tags = computed(() => this.store.getTags('rboat'));
+  protected tags = computed(() => this.store.appStore.hiddenFields('resource.rboat').has('tags') ? '' : this.store.getTags('rboat'));
   protected types = computed(() => this.store.appStore.getCategory('rboat_type'));
   protected currentUser = computed(() => this.store.currentUser());
   protected readOnly = computed(() => !hasRole('resourceAdmin', this.currentUser()));

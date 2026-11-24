@@ -74,6 +74,29 @@ export class AppConfigService {
   }
 
   /**
+   * Patch the hidden model fields only (single-field write, like {@link setHiddenMenuKeys}). The whole
+   * map is written, never a field path, because model keys such as `resource.rboat` contain dots.
+   *
+   * @param tenantId the tenant whose config to patch — the doc id IS the tenantId
+   * @param modelFields the complete next map; build it with `withFieldVisibility`
+   */
+  public async setModelFields(tenantId: string, modelFields: Record<string, Record<string, boolean>>): Promise<string | undefined> {
+    return await this.firestoreService.updateObject<Partial<AppConfig>>(
+      AppConfigCollection, tenantId, { modelFields }, false, this.i18n.update_conf());
+  }
+
+  /**
+   * Patch the hidden dashboard widgets only (single-field write, like {@link setHiddenMenuKeys}).
+   *
+   * @param tenantId the tenant whose config to patch — the doc id IS the tenantId
+   * @param hiddenWidgets the complete next list of widget keys
+   */
+  public async setHiddenWidgets(tenantId: string, hiddenWidgets: string[]): Promise<string | undefined> {
+    return await this.firestoreService.updateObject<Partial<AppConfig>>(
+      AppConfigCollection, tenantId, { hiddenWidgets }, false, this.i18n.update_conf());
+  }
+
+  /**
    * Patch the task settings only (same single-field pattern as {@link setHiddenMenuKeys}).
    * Typed inline with `Pick<AppConfig, …>` rather than `@okr/project-task-util`'s `TaskSettings` — the
    * two are the same shape by construction, but `shared-data-access` must not import a

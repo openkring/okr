@@ -7,7 +7,7 @@ import { selectLanguage } from './i18n.util';
 import { isPageUnloading, reportI18nIssue } from './i18n-sentry';
 
 import { AvailableLanguages, CategoryListModel, DefaultLanguageCode } from '@okr/shared-models';
-import { getItemLabel } from '@okr/shared-util-core';
+import { getItemLabel, toI18nRef } from '@okr/shared-util-core';
 
 /**
  * How often to re-attempt a failed scope load before treating the scope as broken, and how long
@@ -155,6 +155,23 @@ export class I18nService {
     const value = this.translocoService.translate(translationKey, {}, lang);
     // the missing-key handler echoes the key back — an editor wants an empty field instead
     return value === translationKey ? '' : value;
+  }
+
+  /**
+   * Whether the active language has no text for the key. Unlike translating, it reports nothing to
+   * Sentry. False when the scope cannot be loaded: then nothing is known about the key.
+   */
+  public async lacksTranslation(key: string): Promise<boolean> {
+    const ref = toI18nRef(key);
+    if (!ref) return false;
+    const lang = this.translocoService.getActiveLang();
+    const [path, pathKey] = ref.module.includes('/') ? [`${ref.module}/${lang}`, ref.key] : [lang, `${ref.module}.${ref.key}`];
+    try {
+      await firstValueFrom(this.translocoService.load(path));
+    } catch {
+      return false;
+    }
+    return !this.translocoService.getTranslation(path)[pathKey];
   }
 
   /**

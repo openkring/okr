@@ -200,10 +200,10 @@ describe('recipientFields', () => {
     const r = recipientFields({ name1: 'Anna', name2: 'Muster', modelType: 'person' }, { streetName: 'Weg', streetNumber: '3', zipCode: '8000', city: 'Zürich', countryCode: 'CH' }, 'female');
     expect(r).toMatchObject({ firstName: 'Anna', lastName: 'Muster', greeting: 'Liebe Anna', streetName: 'Weg', streetNumber: '3', zipCode: '8000', city: 'Zürich', countryCode: 'CH' });
   });
-  it('greets by gender like the payment confirmation: female → Liebe, otherwise Lieber', () => {
+  it('greets by gender: female → Liebe, male → Lieber, otherwise neutral', () => {
     expect(recipientFields({ name1: 'Peter', name2: 'Muster', modelType: 'person' }, undefined, 'male')['greeting']).toBe('Lieber Peter');
-    expect(recipientFields({ name1: 'Kim', name2: 'Muster', modelType: 'person' }, undefined, 'other')['greeting']).toBe('Lieber Kim');
-    expect(recipientFields({ name1: 'Kim', name2: 'Muster', modelType: 'person' })['greeting']).toBe('Lieber Kim');
+    expect(recipientFields({ name1: 'Kim', name2: 'Muster', modelType: 'person' }, undefined, 'other')['greeting']).toBe('Guten Tag Kim');
+    expect(recipientFields({ name1: 'Kim', name2: 'Muster', modelType: 'person' })['greeting']).toBe('Guten Tag Kim');
   });
   it('a person without first name gets the neutral greeting', () =>
     expect(recipientFields({ name1: '', name2: 'Muster', modelType: 'person' }, undefined, 'female')['greeting']).toBe('Guten Tag'));

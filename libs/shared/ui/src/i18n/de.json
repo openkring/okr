@@ -31,6 +31,18 @@
     "add": "Hinzufügen",
     "price": "Preis"
   },
+  "listCopy": {
+    "shared": "gemeinsame Liste",
+    "own": "eigene Liste",
+    "copy_one": "eigene Liste, 1 weiterer Eintrag in der gemeinsamen",
+    "copy_many": "eigene Liste, {n} weitere Einträge in der gemeinsamen",
+    "add": "Übernehmen",
+    "restore": "Zurück zur gemeinsamen Liste",
+    "restore_confirm": "Du gibst deine eigene Liste auf und siehst wieder die gemeinsame. Einträge, die nur in deiner Liste stehen, kannst du danach nicht mehr auswählen. Was schon gespeichert ist, behält seinen Wert.",
+    "restore_conf": "Du verwendest wieder die gemeinsame Liste.",
+    "restore_error": "Die gemeinsame Liste konnte nicht wiederhergestellt werden.",
+    "restore_none": "Du verwendest bereits die gemeinsame Liste, oder es gibt keine."
+  },
   "color": {
     "select": "Farbwahl",
     "label": "Farbe"

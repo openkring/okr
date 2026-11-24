@@ -4,14 +4,13 @@ import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { ModalController } from '@ionic/angular';
 
+import { AvatarService } from '@okr/avatar-data-access';
 import { FirestoreService } from '@okr/shared-data-access';
 import { I18nService } from '@okr/shared-i18n';
 import { AlertService } from '@okr/shared-util-angular';
 import {
   AddressCollection,
   AddressModel,
-  AvatarCollection,
-  AvatarModel,
   PersonalRelCollection,
   PersonalRelModel,
   Roles,
@@ -77,6 +76,7 @@ function channelHasValue(a: AddressModel, channel: VcardChannelType): boolean {
 @Injectable({ providedIn: 'root' })
 export class VcardExportService {
   private readonly firestoreService = inject(FirestoreService);
+  private readonly avatarService = inject(AvatarService);
   private readonly modalController = inject(ModalController);
   private readonly alertService = inject(AlertService);
   private readonly i18n = inject(I18nService).translateAll(VCARD_I18N_KEYS) as VcardI18n;
@@ -119,9 +119,9 @@ export class VcardExportService {
     // `personal-rels` are not indexed by subject/object key, so — like WorkrelService /
     // PersonalRelService — we read the tenant-scoped list and filter in memory by key.
     const subjectKey = `${kind}.${target.okey}`;
-    const [addresses, avatar, workrels, personalRels] = await Promise.all([
+    const [addresses, avatarPath, workrels, personalRels] = await Promise.all([
       this.firestoreService.getDataOnce<AddressModel>(AddressCollection, [...getSystemQuery(tenantId), { key: 'parentKey', operator: '==', value: subjectKey }], 'none'),
-      firstValueFrom(this.firestoreService.readModel<AvatarModel>(AvatarCollection, subjectKey)),
+      firstValueFrom(this.avatarService.getRelStorageUrl(subjectKey)),
       this.firestoreService.getDataOnce<WorkrelModel>(WorkrelCollection, getSystemQuery(tenantId)),
       kind === 'person'
         ? this.firestoreService.getDataOnce<PersonalRelModel>(PersonalRelCollection, getSystemQuery(tenantId))
@@ -147,7 +147,7 @@ export class VcardExportService {
       // dob presence from the vault channel doc in the same result set — the replicated
       // person.dateOfBirth is being phased out (privacy 1.19 Phase 4)
       birthday: kind === 'person' && (addresses ?? []).some((a) => a.addressChannel === 'dob' && !!a.dob),
-      photo: !!avatar?.storagePath,
+      photo: !!avatarPath,
       workRels: hasWorkRels,
       personalRels: hasPersonalRels,
       orgLinks: false,

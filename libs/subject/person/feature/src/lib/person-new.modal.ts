@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, input, linkedSignal, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, linkedSignal, signal, untracked } from '@angular/core';
 import { IonContent, ModalController } from '@ionic/angular';
 
 import { CategoryListModel, OrgModel } from '@okr/shared-models';
@@ -28,6 +28,7 @@ import { PersonStore } from './person.store';
     <ion-content class="ion-no-padding">
       @if(formData(); as formData) {
         <okr-person-new-form
+          [hiddenFields]="hiddenFields()"
           [i18n]="store.i18n"
           [formData]="formData"
           (formDataChange)="onFormDataChange($event)"
@@ -57,7 +58,7 @@ export class PersonNewModal {
   // signals
   protected formDirty = signal(false);
   protected formValid = signal(false);
-  public formData = linkedSignal(() => createNewPersonFormModel(this.org()));
+  public formData = linkedSignal(() => createNewPersonFormModel(this.org(), untracked(this.genders)));
 
   // derived 
   protected currentUser = computed(() => this.store.currentUser());
@@ -67,6 +68,8 @@ export class PersonNewModal {
   protected membershipEnabled = computed(() => (this.store.membershipCategory()?.items.length ?? 0) > 0);
   protected tags = computed(() => this.store.getTags());
   protected tenantId = computed(() => this.store.tenantId());
+  /** fields this tenant hides in the person forms */
+  protected readonly hiddenFields = computed(() => this.store.appStore.hiddenFields('person'));
   protected genders = computed(() => this.store.appStore.getCategory('gender'));
   protected personLookupEnabled = computed(() => this.store.appStore.appConfig().personLookupEnabled ?? false);
   protected showConfirmation = computed(() => this.formValid() && this.formDirty());
@@ -84,7 +87,7 @@ export class PersonNewModal {
 
   public async cancel(): Promise<void> {
     this.formDirty.set(false);
-    this.formData.set(createNewPersonFormModel(this.org()));  // reset the form
+    this.formData.set(createNewPersonFormModel(this.org(), this.genders()));  // reset the form
   }
 
   protected onFormDataChange(formData: PersonNewFormModel): void {

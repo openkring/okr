@@ -9,16 +9,17 @@ import { confirm, copyToClipboardWithConfirmation, createActionSheetButton, crea
 import { fill, getAge, getCategoryItemNames, getFullName, hasRole, normalizeEmail, OPERATOR_TENANT_ID } from '@okr/shared-util-core';
 
 import { AuthService } from '@okr/auth-data-access';
+import { ModelSelectService } from '@okr/shared-feature';
 import { AddressService } from '@okr/subject-address-data-access';
 import { createFavoriteAddress } from '@okr/subject-address-util';
 import { PersonService } from '@okr/subject-person-data-access';
 import {
-  callableErrorCode, createCustomToken, deleteFirebaseAuthUser, generatePassword, getFirebaseUser, openPersonAccount,
+  callableErrorCode, createCustomToken, deleteFirebaseAuthUser, generatePassword, getFirebaseUser, OpenAccountResponse, openPersonAccount,
   provisionMatrixUser, setLoginId, setPassword, swapLoginEmail, updateFirebaseUser, UserService
 } from '@okr/user-data-access';
 import {
-  AccountCheckFix, accountCheckFindings, actionGroup, actionsForRow, findLoginEmailHolder, isMinorAge, isPlausibleEmail, isSyntheticLoginEmail,
-  isValidLoginId, normalizeLoginIdInput, structureRoles, UserAccountAction, UserAccountRow
+  AccountCheckFix, accountCheckFindings, accountRowOfPerson, actionGroup, actionsForRow, findLoginEmailHolder, isMinorAge, isPlausibleEmail, isSyntheticLoginEmail,
+  isValidLoginId, normalizeLoginIdInput, personKeysWithAccount, structureRoles, UserAccountAction, UserAccountRow
 } from '@okr/user-util';
 
 import { UserStore } from './user.store';
@@ -39,6 +40,7 @@ export class UserAccountActions {
   private readonly personService = inject(PersonService);
   private readonly userService = inject(UserService);
   private readonly addressService = inject(AddressService);
+  private readonly modelSelectService = inject(ModelSelectService);
 
   private readonly i18n = this.store.i18n;
   private readonly appStore = this.store.appStore;
@@ -154,9 +156,23 @@ export class UserAccountActions {
   }
 
   /******************************* account *************************************** */
+  /**
+   * «Neuen User hinzufügen» of the list's context menu: pick a person of this tenant (those with a
+   * working account are left out) and open the account. A user always belongs to a person. Without an
+   * email the check opens, where the email can be added and the account opened. Admin only.
+   */
+  public async add(): Promise<void> {
+    if (!hasRole('admin', this.appStore.currentUser())) return;
+    const rows = this.store.accountRows();
+    const person = await this.modelSelectService.selectPerson(undefined, { excludeKeys: personKeysWithAccount(rows) });
+    if (!person) return;
+    const row = accountRowOfPerson(rows, person.okey, getFullName(person.firstName, person.lastName));
+    if ((await this.openAccount(row)) === 'noEmail') await this.checkAccount(row);
+  }
+
   /** Opens the account through openAccount (syncPersonAccount, spec 1.71 §5.3), the one path that knows the shared-email rule. */
-  private async openAccount(row: UserAccountRow, createdText = this.i18n.account_open_created()): Promise<boolean> {
-    if (!row.personKey) return false;
+  private async openAccount(row: UserAccountRow, createdText = this.i18n.account_open_created()): Promise<OpenAccountResponse['outcome']> {
+    if (!row.personKey) return undefined;
     try {
       const data = await openPersonAccount(row.personKey, this.appStore.tenantId());
       switch (data.outcome) {
@@ -168,11 +184,11 @@ export class UserAccountActions {
         case 'noPerson':           await showToast(this.toastController, this.i18n.account_open_no_person()); break;
       }
       this.store.reload();
-      return data.outcome === 'created' || data.outcome === 'createdWithLoginId';
+      return data.outcome;
     } catch (ex) {
       console.error('UserAccountActions.openAccount', ex);
       error(this.toastController, this.i18n.account_open_error());
-      return false;
+      return undefined;
     }
   }
 
@@ -362,8 +378,9 @@ export class UserAccountActions {
         const email = await this.addEmail(current);
         if (!email) return;
         addedEmail = email;
-      } else if (!(await this.openAccount(current, fix === 'login.add' ? this.i18n.account_check_login_conf() : undefined))) {
-        return;
+      } else {
+        const outcome = await this.openAccount(current, fix === 'login.add' ? this.i18n.account_check_login_conf() : undefined);
+        if (outcome !== 'created' && outcome !== 'createdWithLoginId') return;
       }
       current = await this.reloadedRow(current);
     }

@@ -5,7 +5,7 @@ import { IonAccordion, IonCol, IonGrid, IonItem, IonLabel, IonRow } from "@ionic
 import { ChSsnMask } from "@okr/shared-config";
 import { CategoryListModel, UserModel } from "@okr/shared-models";
 import { CategorySelect, DateInput, DateInputI18n, ErrorNote, TextInput, TextInputI18n } from "@okr/shared-ui";
-import { coerceBoolean } from "@okr/shared-util-core";
+import { coerceBoolean, isFieldShown, NO_HIDDEN_FIELDS } from "@okr/shared-util-core";
 import { DEFAULT_GENDER } from "@okr/shared-constants";
 import { AhvFormat, formatAhv, validateVestTree, vestErrors } from "@okr/shared-util-angular";
 
@@ -14,6 +14,7 @@ import { ProfileI18n } from '@okr/profile-util';
 
 /** The fields this accordion renders as editable — the ones its `valid` output may gate on. */
 const EDITED_FIELDS = ['ssnId'];
+
 
 @Component({
   selector: 'okr-profile-data-accordion',
@@ -44,6 +45,7 @@ const EDITED_FIELDS = ['ssnId'];
               </ion-col>
             </ion-row>
             <ion-row> 
+              @if(isShown('dateOfBirth')) {
               <ion-col size="12" size-md="6">                                                              
                 <okr-date-input
                   [i18n]="dobI18n()"
@@ -53,6 +55,7 @@ const EDITED_FIELDS = ['ssnId'];
                   [readOnly]="true"
                   [allowPartial]="true" />
               </ion-col>
+              }
               <ion-col size="12" size-md="6">
                 <okr-cat-select
                   [category]="genders()!"
@@ -61,6 +64,7 @@ const EDITED_FIELDS = ['ssnId'];
                   [readOnly]="true"
                 />
               </ion-col>
+              @if(isShown('ssnId')) {
               <ion-col size="12" size-md="6">
                 <okr-text-input
                   [i18n]="ssnI18n()"
@@ -74,6 +78,7 @@ const EDITED_FIELDS = ['ssnId'];
                 />
                 <okr-error-note [errors]="ssnIdErrors()" />                                                  
               </ion-col>
+              }
             </ion-row>
           </ion-grid>
         </form>
@@ -93,6 +98,8 @@ export class ProfileDataAccordion {
   public readonly tags = input.required<string>();
   public readonly genders = input.required<CategoryListModel>();
   public readonly readOnly = input<boolean>(true);
+  /** fields the tenant hides; a hidden field with a validation error is still shown */
+  public readonly hiddenFields = input<ReadonlySet<string>>(NO_HIDDEN_FIELDS);
   protected readonly isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
   // signals
@@ -136,6 +143,10 @@ export class ProfileDataAccordion {
 
   // passing constants to template
   protected ssnMask = ChSsnMask;
+
+  protected isShown(field: string): boolean {
+    return isFieldShown(field, this.hiddenFields(), this.validationResult().getErrors(field));
+  }
 
   constructor() {
     effect(() => this.valid.emit(this.editedFieldsValid()));

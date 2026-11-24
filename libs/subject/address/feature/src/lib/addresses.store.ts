@@ -13,7 +13,7 @@ import { STORAGE } from '@okr/shared-config';
 import { AppStore } from '@okr/shared-feature';
 import { AddressCollection, AddressDirectoryCollection, AddressDirectoryModel, AddressModel, AddressModelName, CategoryListModel, DbQuery, DefaultLanguage, DocumentModel, getAddressDirectoryKey, isSensitiveScalarChannel, OrgModel, PersonModel, TaskModel } from '@okr/shared-models';
 import { AlertService, downloadToBrowser, showToast } from '@okr/shared-util-angular';
-import { chipMatches, DateFormat, getAvatarInfoForCurrentUser, getModelAndKey, getSystemQuery, getTodayStr, hasRole, nameMatches, pickCurrentFavoritePostal, residenceStatus, warn } from '@okr/shared-util-core';
+import { chipMatches, DateFormat, defaultItemName, getAvatarInfoForCurrentUser, getModelAndKey, getSystemQuery, getTodayStr, hasRole, nameMatches, pickCurrentFavoritePostal, residenceStatus, warn } from '@okr/shared-util-core';
 import { Languages } from '@okr/shared-categories';
 import { MapViewModal } from '@okr/shared-ui';
 
@@ -26,7 +26,7 @@ import { TaskService } from '@okr/project-task-data-access';
 import { ADDRESSES_I18N_KEYS, browseUrl, canWritePostal, copyAddress, directoryEntryToAddress, getWebUrl, hiddenInAccordion, isAddress, loginEmailDivergence, openExternalUrl, POSTAL_MOVE_ERROR_I18N, PostalMoveMode, postalMoveErrorKind, readsAddressVault, shouldBecomeFavorite, stringifyPostalAddress } from '@okr/subject-address-util';
 
 import { AddressEditModal } from './address-edit.modal';
-import { DEFAULT_MIMETYPES } from '@okr/shared-constants';
+import { DEFAULT_ADDRESS_CHANNEL, DEFAULT_ADDRESS_USAGE, DEFAULT_MIMETYPES } from '@okr/shared-constants';
 import { I18nService } from '@okr/shared-i18n';
 
 export type AddressState = {
@@ -221,8 +221,10 @@ export const AddressStore = signalStore(
         if (readOnly) return;
         const newAddress = new AddressModel(store.tenantId());
         newAddress.parentKey = store.parentKey();
-        newAddress.addressUsage = store.parentKey().startsWith('org') ? 'work' : 'home';
-        await this.edit(newAddress, readOnly, this.getWritableChannels());
+        const channels = this.getWritableChannels();
+        newAddress.addressChannel = defaultItemName(channels, DEFAULT_ADDRESS_CHANNEL);
+        newAddress.addressUsage = defaultItemName(this.getUsages(), store.parentKey().startsWith('org') ? 'work' : DEFAULT_ADDRESS_USAGE);
+        await this.edit(newAddress, readOnly, channels);
       },
 
       /**

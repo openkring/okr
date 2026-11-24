@@ -55,8 +55,8 @@ export class ModelSelectService implements ModelSelector {
     return undefined;
   }
 
-  public async selectPerson(selectedTag = DEFAULT_TAGS): Promise<PersonModel | undefined> {
-    const result = await this.openPersonSelect(selectedTag);
+  public async selectPerson(selectedTag = DEFAULT_TAGS, options: PersonSelectOptions = {}): Promise<PersonModel | undefined> {
+    const result = await this.openPersonSelect(selectedTag, false, false, options);
     if (result?.kind === 'predefined' && isPerson(result.person, this.appStore.env.tenantId)) {
       return result.person;
     }

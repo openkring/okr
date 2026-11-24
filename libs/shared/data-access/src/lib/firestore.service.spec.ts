@@ -4,7 +4,7 @@ import { PLATFORM_ID } from '@angular/core';
 import { concat, defer, firstValueFrom, Observable, of, throwError } from 'rxjs';
 
 import { AUTH, ENV, FIRESTORE } from '@okr/shared-config';
-import { DbQuery } from '@okr/shared-models';
+import { DbQuery, OkrModel } from '@okr/shared-models';
 import { I18nService } from '@okr/shared-i18n';
 import { ToastController } from '@ionic/angular';
 
@@ -39,7 +39,7 @@ vi.mock('firebase/firestore', () => ({
   updateDoc: vi.fn(),
   deleteDoc: vi.fn(),
   writeBatch: vi.fn(),
-  arrayRemove: vi.fn((value: unknown) => ({ arrayRemove: value })),
+  arrayRemove: vi.fn((...values: unknown[]) => ({ arrayRemove: values })),
   // createModel takes this branch whenever the caller named the document id. `transaction.set` is
   // routed to the same setDoc mock the other tests assert on, so the retry/denial cases keep
   // working through the guarded path exactly as they did through the bare setDoc.
@@ -1091,7 +1091,7 @@ describe('FirestoreService.writeChecked', () => {
     await settled();
     expect(result).toMatchObject({ status: 'written', key: 'a1_scs', kind: 'fork' });
     expect(set.mock.calls).toEqual([[{ path: 'sections/a1_scs' }, STORED]]);
-    expect(transactionUpdate.mock.calls).toEqual([[{ path: 'sections/a1' }, { tenants: { arrayRemove: 'scs' } }]]);
+    expect(transactionUpdate.mock.calls).toEqual([[{ path: 'sections/a1' }, { tenants: { arrayRemove: ['scs'] } }]]);
     expect(toast).not.toHaveBeenCalled();
     expect(setDocMock).not.toHaveBeenCalled();
   });
@@ -1305,5 +1305,41 @@ describe('FirestoreService.writeChecked', () => {
       getDocFromServerMock.mockRejectedValue(error('permission-denied'));
       await expect(signedOut.writeChecked<Doc, string>('sections', update, isSame, MESSAGES)).resolves.toMatchObject({ status: 'failed' });
     });
+  });
+});
+
+// A tenant that reads a shared document only through the `system` sentinel is not in its
+// `tenants[]`: the rules refuse the detach write, which would fail the whole batch.
+describe('FirestoreService.forkModel', () => {
+  const writeBatchMock = vi.mocked(writeBatch);
+  let batch: { set: ReturnType<typeof vi.fn>; update: ReturnType<typeof vi.fn>; commit: ReturnType<typeof vi.fn> };
+
+  beforeEach(() => {
+    TestBed.resetTestingModule();
+    vi.clearAllMocks();
+    batch = { set: vi.fn(), update: vi.fn(), commit: vi.fn().mockResolvedValue(undefined) };
+    writeBatchMock.mockReturnValue(batch as never);
+  });
+
+  it('creates only the copy when the tenant reads the source through system', async () => {
+    const key = await makeService().forkModel<OkrModel>('categories', { okey: 'c1', name: 'N', tenants: ['system', 'bka'] } as never, {});
+    expect(batch.set).toHaveBeenCalledTimes(1);
+    expect(batch.set.mock.calls[0][1]).toMatchObject({ tenants: ['scs'] });
+    expect(batch.update).not.toHaveBeenCalled();
+    expect(batch.commit).toHaveBeenCalledTimes(1);
+    expect(key).toHaveLength(20);
+  });
+
+  it.each([[['system', 'scs']], [['scs', 'bka']]])('also detaches the tenant from a source listing it (%j)', async (tenants) => {
+    const key = await makeService().forkModel<OkrModel>('categories', { okey: 'c1', name: 'N', tenants } as never, {});
+    expect(batch.set).toHaveBeenCalledTimes(1);
+    expect(batch.update).toHaveBeenCalledTimes(1);
+    expect(key).toHaveLength(20);
+  });
+
+  it('uses the given newKey as the id of the copy', async () => {
+    const key = await makeService().forkModel<OkrModel>('pages', { okey: 'p1', tenants: ['scs', 'bka'] } as never, {}, undefined, 'p1_scs');
+    expect(key).toBe('p1_scs');
+    expect(docMock).toHaveBeenCalledWith(expect.anything(), 'pages/p1_scs');
   });
 });
