@@ -2,7 +2,15 @@
 // the account and the document store are injected.
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const h = vi.hoisted(() => ({ db: undefined as unknown, logs: [] as unknown[][] }));
+const h = vi.hoisted(() => ({
+  db: undefined as unknown,
+  logs: [] as unknown[][],
+  /** what Firebase Auth has for the caller's uid, and the uids it was asked for */
+  account: {} as { email?: string; emailVerified: boolean },
+  asked: [] as string[],
+  /** what the callable itself sent */
+  wired: [] as { to: string[] }[],
+}));
 
 vi.mock('firebase-functions/v2', async () => {
   const log = (...args: unknown[]): void => { h.logs.push(args); };
@@ -11,6 +19,14 @@ vi.mock('firebase-functions/v2', async () => {
 vi.mock('firebase-admin/firestore', async () => {
   const actual = await vi.importActual<typeof import('firebase-admin/firestore')>('firebase-admin/firestore');
   return { ...actual, getFirestore: () => h.db };
+});
+vi.mock('firebase-admin/auth', async () => {
+  const actual = await vi.importActual<typeof import('firebase-admin/auth')>('firebase-admin/auth');
+  return { ...actual, getAuth: () => ({ getUser: async (uid: string) => { h.asked.push(uid); return h.account; } }) };
+});
+vi.mock('../auth/email-transport', async () => {
+  const actual = await vi.importActual<typeof import('../auth/email-transport')>('../auth/email-transport');
+  return { ...actual, sendEmailViaProvider: async (_provider: string, mail: { to: string[] }) => { h.wired.push(mail); } };
 });
 vi.mock('../_storage/private-bucket', () => ({ privateBucket: () => { throw new Error('the test mail stores nothing'); } }));
 
@@ -27,17 +43,16 @@ const ADDRESS = 'Anna.Muster@mail.example.org';
 let store: Store;
 let sent: { provider: string; mail: EmailOptions }[];
 let documents: string[];
-let accountEmail: string | undefined;
 let sendError: unknown;
 
 const deps = (): TestMailingDeps => ({
   db: h.db as TestMailingDeps['db'],
-  accountEmail: async () => accountEmail,
+  account: async (uid) => { h.asked.push(uid); return h.account; },
   send: async (provider, mail) => { if (sendError) throw sendError; sent.push({ provider, mail }); },
   readDocument: async (path) => { documents.push(path); return { content: Buffer.from('pdf'), contentType: 'application/pdf' }; },
 });
-const run = (data: Record<string, unknown> = {}, uid = 'boss', tokenEmail: unknown = ADDRESS) =>
-  runTestMailing(deps(), { uid, tokenEmail }, { tenantId: T, pageKey: PAGE, subject: 'Herbst', ...data });
+const run = (data: Record<string, unknown> = {}, uid = 'boss', impersonated = false) =>
+  runTestMailing(deps(), { uid, impersonated }, { tenantId: T, pageKey: PAGE, subject: 'Herbst', ...data });
 const mail = (): EmailOptions => sent[0].mail;
 const page = (over: Doc = {}): Doc => ({ tenants: [T], senderUid: 'boss', type: 'mail', createdAt: '2026-11-25T10:00:00.000Z', sections: ['s1'], ...over });
 
@@ -62,7 +77,9 @@ beforeEach(() => {
   h.logs = [];
   sent = [];
   documents = [];
-  accountEmail = undefined;
+  h.account = { email: ADDRESS, emailVerified: true };
+  h.asked = [];
+  h.wired = [];
   sendError = undefined;
   for (const method of ['log', 'info', 'warn', 'error'] as const) vi.spyOn(console, method).mockImplementation((...args) => { h.logs.push(args); });
 });
@@ -84,29 +101,43 @@ describe('the recipient', () => {
     expect(JSON.stringify(mail())).not.toContain('else.ch');
   });
 
-  it('comes from the Auth account when the token has none, never from the users doc', async () => {
-    accountEmail = 'auth@mail.example.org';
-    await run({}, 'boss', null);
+  it('is read from the Auth account every time, never from the users doc', async () => {
+    h.account = { email: 'auth@mail.example.org', emailVerified: true };
+    await run();
+    expect(h.asked).toEqual(['boss']);
     expect(mail().to).toEqual(['auth@mail.example.org']);
-    accountEmail = undefined;
-    await expect(run({}, 'boss', null)).rejects.toMatchObject({ code: 'failed-precondition', message: 'no-address' });
+    h.account = { emailVerified: true };
+    await expect(run()).rejects.toMatchObject({ code: 'failed-precondition', message: 'no-address' });
     expect(sent).toHaveLength(1);
   });
 
   it('must be real: a Benutzername account is refused', async () => {
-    for (const address of ['max_muster@login.club.ch', 'MAX@LOGIN.seeclub.org', '', ' ', 7, null]) {
-      await expect(run({}, 'boss', address), String(address)).rejects.toMatchObject({ code: 'failed-precondition', message: 'no-address' });
+    for (const email of ['max_muster@login.club.ch', 'MAX@LOGIN.seeclub.org', '', ' ']) {
+      h.account = { email, emailVerified: true };
+      await expect(run(), email).rejects.toMatchObject({ code: 'failed-precondition', message: 'no-address' });
     }
-    accountEmail = 'auth@mail.example.org';
-    await expect(run({}, 'boss', 'max_muster@login.club.ch')).rejects.toMatchObject({ message: 'no-address' });
     expect(sent).toHaveLength(0);
   });
 
   it('must be one well-formed address: nothing that a transport reads as two', async () => {
-    for (const address of ['a@x.ch, b@x.ch', 'a@x.ch;b@x.ch', '"A" <a@x.ch>', 'a@x.ch\nBcc: b@x.ch', 'a@x', 'a b@x.ch', 'a@b@x.ch', 'x.ch', `${'a'.repeat(320)}@x.ch`]) {
-      await expect(run({}, 'boss', address), address).rejects.toMatchObject({ message: 'no-address' });
+    for (const email of ['a@x.ch, b@x.ch', 'a@x.ch;b@x.ch', '"A" <a@x.ch>', 'a@x.ch\nBcc: b@x.ch', 'a@x']) {
+      h.account = { email, emailVerified: true };
+      await expect(run(), email).rejects.toMatchObject({ message: 'no-address' });
     }
     expect(sent).toHaveLength(0);
+  });
+
+  it('must be confirmed for a group or newsletter admin, not for an elevated caller', async () => {
+    h.account = { email: ADDRESS, emailVerified: false };
+    await run();
+    store[`mailPages/${PAGE}`] = page({ senderUid: 'ga' });
+    for (const groupKey of ['g1', 'nl']) {
+      await expect(run({ groupKey }, 'ga')).rejects.toMatchObject({ code: 'failed-precondition', message: 'no-address' });
+    }
+    expect(sent).toHaveLength(1);
+    h.account = { email: ADDRESS, emailVerified: true };
+    for (const groupKey of ['g1', 'nl']) await run({ groupKey }, 'ga');
+    expect(sent.slice(1).map((s) => s.mail.to)).toEqual([[ADDRESS], [ADDRESS]]);
   });
 
   it('is in no log, also when the provider fails', async () => {
@@ -129,6 +160,17 @@ describe('who may send', () => {
     await expect(run()).rejects.toMatchObject({ code: 'permission-denied' });
     await expect(run({}, 'nobody')).rejects.toMatchObject({ code: 'permission-denied' });
     expect(sent).toHaveLength(0);
+  });
+
+  it('refuses a session an admin opened for somebody else, after the right and before the address', async () => {
+    await expect(run({}, 'boss', true)).rejects.toMatchObject({ code: 'failed-precondition', message: 'impersonated' });
+    await expect(run({}, 'nobody', true)).rejects.toMatchObject({ code: 'permission-denied' });
+    expect(h.asked).toEqual([]);
+    expect(sent).toHaveLength(0);
+  });
+
+  it('refuses a groupKey that is no document id', async () => {
+    await expect(run({ groupKey: 'a/b' })).rejects.toMatchObject({ code: 'invalid-argument' });
   });
 
   it('a group admin must be admin of the group named', async () => {
@@ -221,6 +263,15 @@ describe('the mail', () => {
     expect(sent).toHaveLength(0);
   });
 
+  it('reads each event once', async () => {
+    const db = fakeDb(store);
+    let reads = 0;
+    h.db = { ...db, collection: (name: string) => db.collection(name), getAll: (...refs: never[]) => { reads += refs.length; return db.getAll(...refs); } };
+    await run({ caleventKeys: ['ours'] });
+    expect(mail().html).toContain('Fondue');
+    expect(reads).toBe(1);
+  });
+
   it('carries a category of its own, that no Versand has', async () => {
     await run();
     expect(mail().category).toBe('test-mailing');
@@ -263,6 +314,34 @@ describe('the attachments', () => {
   });
 });
 
+describe('a provider that does not answer', () => {
+  beforeEach(() => { vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] }); });
+  afterEach(() => { vi.useRealTimers(); });
+
+  it('is given up after 60 seconds', async () => {
+    let called: () => void = () => undefined;
+    const asked = new Promise<void>((resolve) => { called = resolve; });
+    let outcome: unknown;
+    const done = runTestMailing({ ...deps(), send: () => { called(); return new Promise(() => undefined); } }, { uid: 'boss', impersonated: false }, { tenantId: T, pageKey: PAGE })
+      .catch((e: unknown) => { outcome = e; });
+    await asked;
+    await vi.advanceTimersByTimeAsync(59_999);
+    expect(outcome).toBeUndefined();
+    await vi.advanceTimersByTimeAsync(1);
+    await done;
+    expect(outcome).toMatchObject({ code: 'unavailable', message: 'provider' });
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it('leaves no timer behind otherwise', async () => {
+    await run();
+    expect(vi.getTimerCount()).toBe(0);
+    sendError = new Error('down');
+    await expect(run()).rejects.toMatchObject({ message: 'provider' });
+    expect(vi.getTimerCount()).toBe(0);
+  });
+});
+
 describe('what stays', () => {
   it('nothing is written, whether the mail is sent, refused or not taken by the provider', async () => {
     const before = structuredClone(store);
@@ -289,6 +368,21 @@ describe('the callable', () => {
     await expect(callable.run({ data: {}, auth: { uid: 'boss', token: {} } })).rejects.toMatchObject({ code: 'failed-precondition', message: 'App Check verification failed.' });
     await expect(callable.run({ data: {}, app: {} })).rejects.toMatchObject({ code: 'unauthenticated' });
     await expect(callable.run({ data: {}, app: {}, auth: { uid: 'boss', token: {} } })).rejects.toMatchObject({ code: 'invalid-argument' });
+  });
+
+  it('sends to the address of the Auth account, not the older one in the token', async () => {
+    h.account = { email: 'new@mail.example.org', emailVerified: false };
+    const request = { data: { tenantId: T, pageKey: PAGE }, app: {}, auth: { uid: 'boss', token: { email: 'old@mail.example.org' } } };
+    expect(await callable.run(request)).toEqual({ sent: true });
+    expect(h.asked).toEqual(['boss']);
+    expect(h.wired.map((m) => m.to)).toEqual([['new@mail.example.org']]);
+  });
+
+  it('knows an impersonated session by its token', async () => {
+    const request = { data: { tenantId: T, pageKey: PAGE }, app: {}, auth: { uid: 'boss', token: { email: ADDRESS, impersonatedBy: 'admin' } } };
+    await expect(callable.run(request)).rejects.toMatchObject({ code: 'failed-precondition', message: 'impersonated' });
+    expect(h.asked).toEqual([]);
+    expect(h.wired).toEqual([]);
   });
 
   it('runs in europe-west6 with 512 MiB, 120 s and the provider\'s secrets', () => {

@@ -50,7 +50,7 @@ import { htmlToText } from './html-to-text';
 import { MailJobCollection, MailJobDoc } from './mail-job';
 import { lastEventDate } from './mailing-answer.logic';
 import { chunk } from './mailing-recipients';
-import { chunkPersonal, MAX_PERSONAL_RECIPIENTS, parseCaleventKeys, PersonalBlock, personalEntries, refusedEventMessage, sendableEventRefusal } from './personal-mail.logic';
+import { type AnswerEventLine, chunkPersonal, MAX_PERSONAL_RECIPIENTS, parseCaleventKeys, PersonalBlock, personalEntries, refusedEventMessage, sendableEventRefusal } from './personal-mail.logic';
 import { newsletterFunctionUrl, newsletterUnsubscribeUrl } from '../newsletter/newsletter-link';
 import { activeSubscriberKeys } from '../newsletter/subscribers';
 import { asLayoutChoice } from './render-email.logic';
@@ -667,11 +667,15 @@ export function privateRefs(attachments: NoticeAttachment[]): MailJobDoc['attach
   return attachments.map((a) => ({ privatePath: a.storagePath, filename: a.filename, contentType: a.contentType }));
 }
 
-/** The events of a Versand as its mails list them above the answer button. */
-export async function mailAnswerEvents(db: Firestore, caleventKeys: string[]): Promise<{ name: string; when: string }[]> {
+/** Events as a mail lists them above the answer button. */
+export function answerEventLines(events: Pick<AnswerableEvent, 'name' | 'startDate' | 'startTime'>[]): AnswerEventLine[] {
+  return events.map((e) => ({ name: String(e.name ?? ''), when: eventWhen(e.startDate, e.startTime) }));
+}
+
+/** The events of a Versand as its mails list them. */
+async function mailAnswerEvents(db: Firestore, caleventKeys: string[]): Promise<AnswerEventLine[]> {
   const eventSnaps = await db.getAll(...caleventKeys.map((key) => db.collection('calevents').doc(key)));
-  return eventSnaps.map((s2) => s2.data() as { name?: string; startDate?: string; startTime?: string } | undefined)
-    .filter((e) => !!e).map((e) => ({ name: String(e?.name ?? ''), when: eventWhen(e?.startDate, e?.startTime) }));
+  return answerEventLines(eventSnaps.map((s2) => s2.data() as AnswerableEvent | undefined).filter((e): e is AnswerableEvent => !!e));
 }
 
 /** The signed answer link of one recipient of a Versand. */

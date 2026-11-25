@@ -20,7 +20,8 @@ export async function composeSample(
     + (args.answerEvents.length > 0 ? answerBlockHtml(SAMPLE_URL, args.answerEvents) : '')
     + (args.newsletter ? unsubscribeBlockHtml(SAMPLE_URL) : '');
   const rendered = await composeBody(tenantId, { body, layout: args.layout, attachmentName: args.attachmentName }, read);
-  // the text half names a link's address in brackets; a sample has none to show
+  // the text half names a link's address in brackets; a sample has none to show. Found by label and `(#)`, since the text has
+  // no links any more: an author's own link with one of these labels and the address # would lose its brackets too
   const text = [WEB_LINK_LABEL, ANSWER_LINK_LABEL, UNSUBSCRIBE_LINK_LABEL]
     .reduce((out, label) => out.split(`${label} (${SAMPLE_URL})`).join(label), rendered.text);
   return { ...rendered, text };

@@ -20,7 +20,7 @@ export interface VersandSender {
   caller: Record<string, unknown>;
 }
 
-/** Whether `groupKey` names a live newsletter group; one that is archived or another tenant's is refused, never sent the ordinary way. */
+/** The live newsletter group `groupKey` names, if it does; one that is archived or another tenant's is refused, never sent the ordinary way. */
 async function newsletterGroupOf(db: Firestore, tenantId: string, groupKey: unknown): Promise<string | undefined> {
   if (typeof groupKey !== 'string' || !groupKey) return undefined;
   if ((await checkNewsletterGroup(db, tenantId, groupKey)).ok) return groupKey;
@@ -32,16 +32,20 @@ async function newsletterGroupOf(db: Firestore, tenantId: string, groupKey: unkn
 /**
  * What `sendMailing` checks of the caller without looking at recipients. Elevated callers of the tenant may send; any other
  * caller must be an admin of `groupKey` (a group, or a newsletter group) and may attach no tenant document and send no
- * answer links. Answer links never go to a group, except a newsletter. Throws `permission-denied`.
+ * answer links. Answer links never go to a group, except a newsletter. Throws `permission-denied`; `invalid-argument` for a
+ * `groupKey` that is no document id; `failed-precondition` for a newsletter that is archived or another tenant's, and that
+ * only to a member of the tenant: to anybody else every group looks the same.
  */
 export async function assertVersandSender(
   db: Firestore,
   args: { uid: string; tenantId: string; groupKey?: unknown; hasStoragePath?: boolean; hasEvents?: boolean },
 ): Promise<VersandSender> {
   const { uid, tenantId, groupKey } = args;
+  if (typeof groupKey === 'string' && groupKey.includes('/')) throw new HttpsError('invalid-argument', 'groupKey must be a document id.');
   const caller = (await db.collection('users').doc(uid).get()).data() ?? {};
-  const elevated = isElevated(caller['roles']) && ((caller['tenants'] ?? []) as string[]).includes(tenantId);
-  const newsletterGroupKey = await newsletterGroupOf(db, tenantId, groupKey);
+  const member = ((caller['tenants'] ?? []) as string[]).includes(tenantId);
+  const elevated = isElevated(caller['roles']) && member;
+  const newsletterGroupKey = member ? await newsletterGroupOf(db, tenantId, groupKey) : undefined;
   if (newsletterGroupKey) {
     if (!elevated) {
       await assertCallerIsGroupAdmin(db, uid, tenantId, newsletterGroupKey, 'Only an admin of the newsletter may send to its subscribers.');

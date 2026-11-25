@@ -65,4 +65,21 @@ describe('assertVersandSender', () => {
     store['groups/nl'] = { kind: 'newsletter', tenants: ['other'], admins: [{ key: 'pa' }] };
     await expect(check('ga', { groupKey: 'nl' })).rejects.toMatchObject(refusal);
   });
+
+  it('tells a caller of another tenant nothing about a group: the same refusal for every key', async () => {
+    store['users/out'] = { roles: { admin: true }, tenants: ['other'], personKey: 'po' };
+    store['groups/old'] = { kind: 'newsletter', tenants: [T], isArchived: true, admins: [{ key: 'po' }] };
+    store['groups/theirs'] = { kind: 'newsletter', tenants: ['other'], admins: [{ key: 'po' }] };
+    for (const uid of ['out', 'nobody']) {
+      for (const flags of [{}, { hasEvents: true }, { hasStoragePath: true }]) {
+        const refusals = await Promise.all(['old', 'theirs', 'nl', 'g1', 'none'].map((groupKey) => check(uid, { groupKey, ...flags }).catch((e: { code: string; message: string }) => `${e.code} ${e.message}`)));
+        expect(new Set(refusals).size, refusals.join(' | ')).toBe(1);
+        expect(refusals[0]).toMatch(/^permission-denied /);
+      }
+    }
+  });
+
+  it('refuses a groupKey that is no document id', async () => {
+    for (const uid of ['boss', 'ga']) await expect(check(uid, { groupKey: 'a/b' })).rejects.toMatchObject({ code: 'invalid-argument' });
+  });
 });

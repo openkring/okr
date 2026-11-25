@@ -97,7 +97,7 @@ function answerEventsOf(raw: unknown): AnswerEventLine[] {
 /** A page as its E-Mail recipients will see it: what the send adds around the content is shown as inactive samples. */
 async function previewPage(data: RenderPreviewRequest, tenantId: string, pageKey: string, uid: string): Promise<RenderedEmail> {
   const { html: content } = await mailPageContent(tenantId, pageKey, uid);
-  const newsletter = typeof data.groupKey === 'string' && (await checkNewsletterGroup(getFirestore(), tenantId, data.groupKey)).ok;
+  const newsletter = typeof data.groupKey === 'string' && !data.groupKey.includes('/') && (await checkNewsletterGroup(getFirestore(), tenantId, data.groupKey)).ok;
   return composeSample(tenantId, {
     content, layout: asLayoutChoice(data.layout), attachmentName: data.attachmentName,
     answerEvents: answerEventsOf(data.answerEvents),

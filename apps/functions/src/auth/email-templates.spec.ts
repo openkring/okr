@@ -9,7 +9,7 @@ vi.mock('firebase-functions/v2', () => ({ logger: { error: vi.fn(), warn: vi.fn(
 const reported = vi.hoisted(() => [] as Record<string, unknown>[]);
 vi.mock('../srv/sentry', () => ({ reportToSentry: async (e: Record<string, unknown>) => { reported.push(e); } }));
 
-import { bareAddress, effectiveSender, getAppEmailConfig, getEmailProvider } from './email-templates';
+import { bareAddress, effectiveSender, getAppEmailConfig, getEmailProvider, isBareAddress } from './email-templates';
 
 describe('getAppEmailConfig', () => {
   const cfg = (data: Record<string, unknown>) => { read = async () => ({ data: () => data }); reported.length = 0; };
@@ -107,6 +107,22 @@ describe('bareAddress', () => {
   it('strips the display name and passes a bare address through', () => {
     expect(bareAddress('"Seeclub" <app@seeclub.org>')).toBe('app@seeclub.org');
     expect(bareAddress(' app@seeclub.org ')).toBe('app@seeclub.org');
+  });
+});
+
+describe('isBareAddress', () => {
+  it('accepts one plain address', () => {
+    for (const a of ['a@x.ch', 'Anna.Muster+tag@mail.x-y.example.org', "o'neil@x.ch"]) expect(isBareAddress(a), a).toBe(true);
+  });
+
+  it('refuses everything that could be read as a name, a list or a header', () => {
+    for (const a of ['', ' ', 'a', 'a@x', 'x.ch', '@x.ch', 'a@', 'a b@x.ch', 'a@b@x.ch', ' a@x.ch', 'a@x.ch ', 'a@x.ch, b@x.ch', 'a@x.ch;b@x.ch', 'A <a@x.ch>', '<a@x.ch>', '"a"@x.ch',
+      'a@x.ch\nBcc: b@x.ch', 'a@x.ch\r', 'a\u2028@x.ch', '=?utf-8?q?a?=@x.ch', 'a@[1.2.3.4]', 'a@x..ch']) expect(isBareAddress(a), JSON.stringify(a)).toBe(false);
+  });
+
+  it('refuses one that is too long', () => {
+    expect(isBareAddress(`${'a'.repeat(315)}@x.ch`)).toBe(true);
+    expect(isBareAddress(`${'a'.repeat(316)}@x.ch`)).toBe(false);
   });
 });
 

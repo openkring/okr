@@ -92,7 +92,8 @@ describe('renderEmailPreview of a mail page', () => {
   });
 
   it('shows neither for another group, another tenant\'s newsletter or a group that is no key', async () => {
-    for (const groupKey of ['g1', 'foreign', 'none', '', 7]) expect(parts((await preview({ groupKey })).body), String(groupKey)).toEqual([false, false, false]);
+    state.groups['a/b'] = { kind: 'newsletter', tenants: ['scs'] };            // what a path, not a key, would lead to
+    for (const groupKey of ['g1', 'foreign', 'none', '', 'a/b', 7]) expect(parts((await preview({ groupKey })).body), String(groupKey)).toEqual([false, false, false]);
   });
 
   it('shows the web link that was asked for, with a real choice only', async () => {
