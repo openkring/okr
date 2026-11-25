@@ -4,8 +4,8 @@ import { logger } from 'firebase-functions/v2';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { createHmac, createHash } from 'node:crypto';
 
-import { CourseCollection } from '@okr/shared-models';
-import type { BaseType, ConfirmationVariant, DerivedValue, Field } from '@okr/shared-models';
+import { ApplicationCollection, CourseCollection } from '@okr/shared-models';
+import type { AvatarInfo, BaseType, ConfirmationVariant, DerivedValue, Field } from '@okr/shared-models';
 import {
   buildConfirmationMessage,
   computeFormAvailability,
@@ -37,6 +37,7 @@ import {
 import { checkCourseChoice, courseFieldOf, courseNameNote, readAnnouncedCourses, withCourseChoice } from './course-choice';
 import { persistWithSlot, readResponseCount } from './form-stats';
 import { readModelSelectChoices } from './model-select';
+import { buildSubmissionRecord, buildSubmissionTask } from './submission-record';
 import {
   buildFillerMail,
   escapeHtml,
@@ -87,19 +88,9 @@ interface FormMapping {
   propertiesField?: string;
 }
 
-interface AvatarInfoInline {
-  key: string;
-  name1: string;
-  name2: string;
-  modelType: string;
-  type: string;
-  subType: string;
-  label: string;
-}
-
 interface ResponsibilityDoc {
   name: string;
-  responsibleAvatar?: AvatarInfoInline;
+  responsibleAvatar?: AvatarInfo;
 }
 
 interface FormDefinition {
@@ -453,28 +444,26 @@ async function runSideEffects(
       const assignee = resp?.responsibleAvatar;
 
       if (assignee) {
-        await db.collection('tasks').add({
-          name: `${formDef.name} – Formulareinreichung`,
-          tenants: [tenantId],
-          isArchived: false,
-          state: 'open',
-          completionDate: '',
-          dueDate: '',
-          priority: 1,
-          importance: 1,
-          assignee,
-          // without the AHV numbers: they stay in the target record (privacy 1.19)
-          notes: buildSubmissionTaskNotes(formDef.fields, submissionId, formDef.formKey, values),
-          tags: ['form.submission'],
-          index: `c:form a:submission s:${submissionId}`,
+        const taskRef = await db.collection('tasks').add({
+          ...buildSubmissionTask({
+            tenantId,
+            formName: formDef.name ?? '',
+            assignee,
+            // without the AHV numbers: they stay in the target record (privacy 1.19)
+            notes: buildSubmissionTaskNotes(formDef.fields, submissionId, formDef.formKey, values),
+          }),
           createdAt: FieldValue.serverTimestamp(),
         });
         logger.info(`${cfName}: approval task created responsibilityKey=${responsibilityKey}`);
+        // deciding the application closes this task (ApplicationService.closeLinkedTask)
+        if (formDef.target.kind === 'collection' && formDef.target.collectionName === ApplicationCollection) {
+          await db.collection(ApplicationCollection).doc(submissionId).update({ taskKey: taskRef.id });
+        }
       } else {
         logger.warn(`${cfName}: responsibility ${responsibilityKey} has no responsibleAvatar — skipping task`);
       }
     } catch (e) {
-      logger.error(`${cfName}: failed to create approval task`, e);
+      logger.error(`${cfName}: failed to create or link approval task`, e);
     }
   }
 
@@ -846,15 +835,15 @@ export const submitForm = onCall(
           if (isSpam) return crypto.randomUUID();
           return createProspect({ ...shareableValues, ...(mapping.defaults ?? {}) });
         }
-        const record: Record<string, unknown> = {
-          ...cleanValues,
-          ...(mapping.defaults ?? {}),   // defaults always win
-          tenants: [payload.tenantId],
+        const record = buildSubmissionRecord({
+          values: cleanValues,
+          defaults: mapping.defaults,
+          collectionName: target.collectionName,
+          tenantId: payload.tenantId,
           submittedAt: payload.meta.submittedAt,
-          isSpam,
-          spamReasons: spamReasons.length > 0 ? spamReasons : undefined,
           formKey: payload.formKey,
-        };
+          spamReasons,
+        });
         const docRef = await db.collection(target.collectionName).add(record);
         return docRef.id;
       }
