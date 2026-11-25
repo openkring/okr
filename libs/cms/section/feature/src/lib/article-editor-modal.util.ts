@@ -1,10 +1,9 @@
+import type { CanvasChange } from '@okr/cms-article-feature';
 import {
   blocksInOrder, findBlock, isArticleChanged, record, redo, replaceBlock, replacePresent, resizeColumn, setColumnSizes, undo, withUpload, withValidSelection,
   type ArticleEditorState, type ArticlePreviewDevice, type ArticleUpload, type EditorHistory,
 } from '@okr/cms-section-util';
 import { ARTICLE_SECTION_SHAPE, isSameValue, type ArticleBlock, type ArticleSection, type ColumnsBlock } from '@okr/shared-models';
-
-import type { CanvasChange } from './article-canvas.util';
 
 /** The rules of the article editor's modal (spec 1.175 §7), without Angular and Ionic. Nothing is mutated. */
 

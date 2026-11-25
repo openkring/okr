@@ -1,5 +1,5 @@
 import { NgTemplateOutlet } from '@angular/common';
-import { CUSTOM_ELEMENTS_SCHEMA, Component, computed, effect, inject, input, output } from '@angular/core';
+import { CUSTOM_ELEMENTS_SCHEMA, Component, ComponentRef, Type, ViewContainerRef, computed, effect, inject, input, inputBinding, output, outputBinding, signal, untracked, viewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { IonButton, IonCol, IonGrid, IonItem, IonRow } from '@ionic/angular';
 
@@ -7,21 +7,23 @@ import { ArticleSection, ImageConfig, ViewPosition, articleBlocksOf, isFreeArtic
 import { resolveImageStyle } from '@okr/shared-util-core';
 import { ImageLayoutId, articleBackground, articleHeaderPlace, articleImagePosition, drawnBlockImages, resolveImageLayout, resolveSlideshow, validCtas, getSectionIntro } from '@okr/cms-section-util';
 import { badgeFor, DeferError, Img, OptionalCardHeader, Spinner } from '@okr/shared-ui';
+// no @defer here: with this import it would become an import() of the barrel, see its index.ts
+import {
+  ARTICLE_FRAME_STYLES, ArticleCarousel, ArticleFrame, ArticleImages, ArticleSlideshowComponent, loadArticleBlocks, openSectionLink, type ArticleBlocks,
+} from '@okr/cms-article-feature';
 
-// lazy: only ever used inside @defer below. Any other use of it here would make it eager
-import { ArticleBlocks } from './article-blocks';
-import { ArticleCarousel } from './article-carousel';
-import { ARTICLE_FRAME_STYLES, ArticleFrame } from './article-frame';
-import { ArticleImages } from './article-images';
-import { ArticleSlideshowComponent } from './article-slideshow';
 import { ArticleStore } from './article-section.store';
-import { openSectionLink } from './section-link';
+
+/** for all article sections, as in a @defer block: the next one draws its blocks at once, and nothing is tried again after a failure */
+const articleBlocksType = signal<Type<ArticleBlocks> | undefined>(undefined);
+/** offline, stale chunk */
+const articleBlocksFailed = signal(false);
 
 @Component({
   selector: 'okr-article-section',
   standalone: true,
   imports: [
-    Spinner, DeferError, Img, ArticleBlocks, ArticleCarousel, ArticleFrame, ArticleImages, ArticleSlideshowComponent, NgTemplateOutlet, OptionalCardHeader,
+    Spinner, DeferError, Img, ArticleCarousel, ArticleFrame, ArticleImages, ArticleSlideshowComponent, NgTemplateOutlet, OptionalCardHeader,
     IonGrid, IonRow, IonCol, IonItem, IonButton
   ],
   schemas: [
@@ -85,15 +87,15 @@ import { openSectionLink } from './section-link';
         }
       </ng-template>
       <okr-article-frame [section]="section()" [headerPlace]="headerPlace()" [titleOnImages]="titleOnImages()" [headerInColumn]="headerInColumn()">
-        @if (freeBlocks(); as blocks) {
+        @if (freeBlocks()) {
           <!-- a free article (spec 1.173): its blocks carry everything, the button included -->
-          @defer (on immediate) {
-            <okr-article-blocks [blocks]="blocks" [title]="title()" [subTitle]="subTitle()" [intro]="sectionIntro()" [headerPlace]="headerPlace()" [editMode]="editMode()" [imageBadges]="imageBadges()" [emitImageClicks]="emitImageClicks()" (imageSelected)="imageSelected.emit($event)" />
-          } @placeholder {
+          @if (blocksType()) {
+            <ng-container #blocksHost />
+          } @else {
             <ng-container [ngTemplateOutlet]="fallbackTpl" />
-          } @error {
-            <ng-container [ngTemplateOutlet]="fallbackTpl" />
-            <okr-defer-error />
+            @if (blocksFailed()) {
+              <okr-defer-error />
+            }
           }
         } @else if (images().length > 0 || (content() && content()!.length > 7)) {
           @switch(position()) {
@@ -241,6 +243,11 @@ export class ArticleSectionComponent {
   protected section = computed(() => withClassicFields(this.rawSection()));
   /** the blocks of a free article, which the old fields cannot express; undefined = classic, drawn by the template below */
   protected freeBlocks = computed(() => isFreeArticle(this.rawSection()) ? articleBlocksOf(this.rawSection()) : undefined);
+  protected readonly blocksType = articleBlocksType.asReadonly();
+  protected readonly blocksFailed = articleBlocksFailed.asReadonly();
+  /** where the blocks are created; a new one whenever its @if block is entered again */
+  private readonly blocksHost = viewChild('blocksHost', { read: ViewContainerRef });
+
   protected badgeOf(label: string): string | undefined { return badgeFor(this.imageBadges(), label); }
   protected images = computed((): ImageConfig[] => this.store.images());
   // Single image (only when exactly 1 image is configured)
@@ -305,5 +312,42 @@ export class ArticleSectionComponent {
     effect(() => {
       this.store.setConfig(this.section()?.properties);
     });
+    effect(() => {
+      if (this.freeBlocks() && !articleBlocksType() && !articleBlocksFailed()) void this.loadBlocks();
+    });
+    effect((onCleanup) => {
+      const host = this.blocksHost();
+      const type = this.blocksType();
+      if (!host || !type) return;
+      const blocks = untracked(() => this.createBlocks(host, type));
+      onCleanup(() => blocks.destroy());
+    });
+  }
+
+  private async loadBlocks(): Promise<void> {
+    try {
+      articleBlocksType.set(await loadArticleBlocks());
+    } catch (error) {
+      console.warn('ArticleSection: the blocks could not be loaded', error);
+      articleBlocksFailed.set(true);
+    }
+  }
+
+  private createBlocks(host: ViewContainerRef, type: Type<ArticleBlocks>): ComponentRef<ArticleBlocks> {
+    const blocks = host.createComponent(type, {
+      bindings: [
+        inputBinding('blocks', () => this.freeBlocks() ?? []),
+        inputBinding('title', this.title),
+        inputBinding('subTitle', this.subTitle),
+        inputBinding('intro', this.sectionIntro),
+        inputBinding('headerPlace', this.headerPlace),
+        inputBinding('editMode', this.editMode),
+        inputBinding('imageBadges', this.imageBadges),
+        inputBinding('emitImageClicks', this.emitImageClicks),
+        outputBinding<ImageConfig>('imageSelected', (image) => this.imageSelected.emit(image)),
+      ],
+    });
+    blocks.changeDetectorRef.detectChanges();
+    return blocks;
   }
 }

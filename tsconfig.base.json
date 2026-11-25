@@ -55,6 +55,7 @@
       "@okr/chat-feature": ["libs/chat/feature/src/index.ts"],
       "@okr/chat-ui": ["libs/chat/ui/src/index.ts"],
       "@okr/chat-util": ["libs/chat/util/src/index.ts"],
+      "@okr/cms-article-feature": ["libs/cms/article/feature/src/index.ts"],
       "@okr/cms-icon-data-access": ["libs/cms/icon/data-access/src/index.ts"],
       "@okr/cms-icon-feature": ["libs/cms/icon/feature/src/index.ts"],
       "@okr/cms-icon-ui": ["libs/cms/icon/ui/src/index.ts"],

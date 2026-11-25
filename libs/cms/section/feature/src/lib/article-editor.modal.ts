@@ -1,6 +1,7 @@
 import { Component, DestroyRef, ElementRef, ViewContainerRef, computed, effect, inject, input, linkedSignal, signal, untracked, viewChild, type Signal } from '@angular/core';
 import { AlertController, IonButton, IonContent, IonIcon, IonLabel, IonModalToken, IonSegment, IonSegmentButton, IonSpinner, ToastController } from '@ionic/angular';
 
+import { ArticleCanvas, dropChange, type CanvasCaret, type CanvasChange } from '@okr/cms-article-feature';
 import { ArticleBlocksGate, ArticleSaveService, type ArticleSaveResult } from '@okr/cms-section-data-access';
 import { ArticleBlockLibrary, ArticleBlockPanel, ArticlePanel } from '@okr/cms-section-ui';
 import {
@@ -16,8 +17,6 @@ import { SvgIconPipe } from '@okr/shared-pipes';
 import { ChangeConfirmation, Header } from '@okr/shared-ui';
 import { showToast } from '@okr/shared-util-angular';
 
-import { ArticleCanvas, type CanvasCaret, type CanvasChange } from './article-canvas';
-import { dropChange } from './article-canvas.util';
 import {
   changeSection, closeDecision, columnOfBlock, deviceFor, historyKey, isTypedInto, restore, selectIn, stateAfterChange, stepBack, stepForward, withBlocks, withColumnSize,
   withFieldDefaults, withUploadDetails, type EditorState,

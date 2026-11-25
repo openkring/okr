@@ -14,11 +14,11 @@ import { CALEVENT_I18N_KEYS, canAttendCalevent, isCaleventAttendee, mayJoinOpenC
 import { showCalEventInfo } from '@okr/calendar-calevent-ui';
 import { CalendarFeedService } from '@okr/calendar-calevent-data-access';
 import { isAdminMember } from '@okr/subject-group-util';
+import { openMoreLink } from '@okr/cms-article-feature';
 import { getSectionIntro } from '@okr/cms-section-util';
 
 import { CalendarStore } from './calendar-section.store';
 import { reservedListHeight } from './list-reservation';
-import { openMoreLink } from './section-link';
 
 @Component({
   selector: 'okr-events-section',

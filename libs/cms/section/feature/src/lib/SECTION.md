@@ -85,7 +85,7 @@ Spec 1.173, `planning/specs/2026-11-23-article-blocks-design.md`. An article may
 
 - **Old article** (no `blocks`): the text is in `content`, the images in `properties.images`.
 - **Classic article**: `blocks` in a shape the old fields can express (e.g. image above text). It is converted back and drawn by the template of `ArticleSectionComponent`, unchanged.
-- **Free article** (`isFreeArticle`): anything else. It is drawn by `okr-article-blocks` (`ArticleBlocks`), loaded with `@defer`; until then, or when it cannot be loaded, header, text, images and the first button are shown. What cannot be drawn (empty, malformed, unknown type) is left out by `articleBlockViews`.
+- **Free article** (`isFreeArticle`): anything else. It is drawn by `okr-article-blocks` (`ArticleBlocks` of `@okr/cms-article-feature`), created with `loadArticleBlocks()`; until then, or when it cannot be loaded, header, text, images and the first button are shown. What cannot be drawn (empty, malformed, unknown type) is left out by `articleBlockViews`.
 - The header stands above the blocks. Two exceptions, decided by the first block that is drawn (`articleHeaderPlace`): a slideshow carries title and subtitle on its images; with an own `background`, columns of one image and one text carry the header in the text column.
 
 **Reading an article:** with blocks, the old fields are empty or out of date. Every reader of the text or the images goes through `withClassicFields(section)` (the old fields filled from the blocks; the same object for an old article), or `articleCover` for the teaser picture — all in `@okr/shared-models`. `node scripts/check-article-readers.mjs` fails for a file that reads the text without it; its header names what it does not see.
@@ -100,14 +100,14 @@ Spec 1.175, `planning/specs/2026-11-23-article-block-editor-design.md`. `Article
 | --- | --- | --- |
 | `article-editor.loader.ts` | feature | `openArticleEditor()`, the only entry; light, in the chunk of readers |
 | `article-editor.modal.ts`, `article-editor-modal.util.ts` | feature | Window: history, devices, saving, questions; its rules are in the util |
-| `article-canvas.ts`, `article-canvas-block.ts`, `article-canvas.util.ts` | feature | Canvas: selecting, keyboard, dragging, text in place |
-| `article-frame.ts`, `article-block.ts` | feature | Card and header, one block: drawn once, for readers and canvas. Whoever draws the frame adds `ARTICLE_FRAME_STYLES` (and `ARTICLE_COLUMNS_STYLES`) to its own styles |
+| `article-canvas.ts`, `article-canvas-block.ts`, `article-canvas.util.ts` | `cms-article-feature` | Canvas: selecting, keyboard, dragging, text in place |
+| `article-frame.ts`, `article-block.ts` | `cms-article-feature` | Card and header, one block: drawn once, for readers and canvas. Whoever draws the frame adds `ARTICLE_FRAME_STYLES` (and `ARTICLE_COLUMNS_STYLES`) to its own styles |
 | `article-block-panel.ts`, `article-panel.ts`, `article-block-library.ts`, `article-image-pick.modal.ts` | ui | Side panel. They hold no form: the modal runs `articleSectionValidations` once and passes the errors |
 | `article-editor*.util.ts`, `article-panel.util.ts` | util | Pure operations: blocks, history (100 steps, typing run 1 s), opening, comparing, translations, errors |
 | `okr-rich-text-inline` | `shared-ui-editor` | One text edited in place, toolbar outside |
 | `ArticleBlocksGate`, `ArticleSaveService` | data-access | Gate and save, see below |
 
-**Keep readers light.** The editor, ProseMirror and `article-editor-i18n.ts` are in chunks that only the editor loads. Export none of `article-editor.modal`, `article-canvas*` from the feature barrel, and import `article-editor-open.util`, `article-editor-history.util` and the panels only from editor files. What readers' stores need is in `article-editor-entry.util.ts`. Check with a production build (`lazy-loading` skill); the probe of `scripts/bundle-closure.mjs` matches packages and folders, not file names, so look for the files in the source maps.
+**Keep readers light.** The editor, ProseMirror and `article-editor-i18n.ts` are in chunks that only the editor loads. Do not export `article-editor.modal` from the feature barrel, import `ArticleCanvas` and `article-editor-open.util`, `article-editor-history.util` and the panels only from editor files. What readers' stores need is in `article-editor-entry.util.ts`. Check with a production build (`lazy-loading` skill); the probe of `scripts/bundle-closure.mjs` matches packages and folders, not file names, so look for the files in the source maps. The barrel of `@okr/cms-article-feature` exports the canvas beside the parts readers load at once; its `index.ts` says what must never be done with it, ESLint refuses it.
 
 **Gate** (`ArticleBlocksGate`): blocks may be stored only when the global `app-version.minVersion` is at least `ARTICLE_BLOCKS_MIN_VERSION` (`version` skill). Since 7.63.0 it is `7.63.0`; the gate stays closed while `minVersion` is lower. `open` / `load()`: the editor may open. `mayWrite` / `loadMayWrite()`: blocks may be stored; code that creates articles uses only this one, through `articlesToWrite()`.
 
@@ -152,9 +152,9 @@ Notable store actions:
 | `SectionSelectModalComponent` | (modal) | Select an existing section to add to a page |
 | `SectionEditModalComponent` | (modal, full) | Full-screen edit modal for any section type |
 | `ArticleSectionComponent` | `bk-article-section` | Rich-text + images |
-| `ArticleBlocks` | `okr-article-blocks` | The blocks of a free article (lazy, not exported) |
-| `ArticleBlockComponent` | `okr-article-block` | One block, except columns; for readers and canvas (not exported) |
-| `ArticleFrame` | `okr-article-frame` | Card, banner, colour and header of an article (not exported) |
+| `ArticleBlocks` | `okr-article-blocks` | The blocks of a free article (`cms-article-feature`; lazy, `loadArticleBlocks()`) |
+| `ArticleBlockComponent` | `okr-article-block` | One block, except columns; for readers and canvas (`cms-article-feature`, not exported) |
+| `ArticleFrame` | `okr-article-frame` | Card, banner, colour and header of an article (`cms-article-feature`) |
 | `ArticleEditorModal` | `okr-article-editor-modal` | Block editor (lazy, not exported; open it with `openArticleEditor`) |
 | `AlbumSectionComponent` | `bk-album-section` | Photo/video gallery |
 | `CalendarSectionComponent` | `bk-calendar-section` | FullCalendar |

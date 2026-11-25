@@ -5,10 +5,9 @@ import { IonButton, IonChip, IonCol, IonGrid, IonIcon, IonLabel, IonRow } from '
 
 import { HERO_OVERLAY_DEFAULT, HeroSection, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
+import { openSectionLink } from '@okr/cms-article-feature';
 import { getSectionIntro, heroBackgroundStyle, heroHeightCss, heroImgixParams, heroLogoStyle, heroObjectPosition, heroOverlayCss, HeroOverlayText, validCtas } from '@okr/cms-section-util';
 import { Img, Spinner } from '@okr/shared-ui';
-
-import { openSectionLink } from './section-link';
 
 @Component({
   selector: 'okr-hero-section',

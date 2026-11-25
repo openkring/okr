@@ -8,10 +8,10 @@ import { debugMessage, hasRole, shortenText } from '@okr/shared-util-core';
 import { createActionSheetButton, createActionSheetOptions, isBrowser } from '@okr/shared-util-angular';
 import { ArticleSection, IMAGE_STYLE_SHAPE, ImageConfig, NewsConfig, SectionModel, articleCover, withClassicFields } from '@okr/shared-models';
 import { ThumbnailUrlPipe } from '@okr/shared-pipes';
+import { isAppMoreUrl, openMoreLink } from '@okr/cms-article-feature';
 import { getSectionIntro } from '@okr/cms-section-util';
 
 import { NewsStore } from './news-section.store';
-import { isAppMoreUrl, openMoreLink } from './section-link';
 
 @Component({
   selector: 'okr-news-section',

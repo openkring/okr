@@ -6,6 +6,7 @@ import { NgTemplateOutlet } from '@angular/common';
 import { IonIcon } from '@ionic/angular';
 
 import { PageCollection, PageModel, TilesSection } from '@okr/shared-models';
+import { openSectionLink } from '@okr/cms-article-feature';
 import { groupTiles, isSectionCtaUrl, tileColor, tileImageUrl, tilesColumns, validTiles, withTilesDefaults } from '@okr/cms-section-util';
 import { AppStore } from '@okr/shared-feature';
 import { FirestoreService } from '@okr/shared-data-access';
@@ -16,7 +17,6 @@ import { ImgDirective } from '@okr/shared-ui';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { ColorsIonic } from '@okr/shared-categories';
 
-import { openSectionLink } from './section-link';
 
 /**
  * A grid of tiles: stat tiles (big value + caption), cards (icon, title, text, optional link) or image

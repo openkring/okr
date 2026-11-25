@@ -117,6 +117,35 @@ module.exports = [
         'error',
         { paths: [{ name: '@ionic/angular', importNames: ['IonImg'], message: 'Use <img okrImg> (ImgDirective from @okr/shared-ui) instead of the deprecated ion-img.' }] },
       ],
+      // Spec 1.176: readers import the barrel of @okr/cms-article-feature statically, and it also exports the canvas of the
+      // editor. An import() of it makes every export eager (lazy-loading skill). The Angular
+      // compiler writes such an import() itself for a component that a file uses only inside @defer.
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: "ImportExpression[source.value='@okr/cms-article-feature']",
+          message: 'An import() of this barrel makes the article editor eager. Use a loader function of @okr/cms-article-feature (relative import() inside the lib).',
+        },
+        {
+          selector: "Program:has(ImportDeclaration[source.value='@okr/cms-article-feature'][importKind='value']) TemplateElement[value.raw=/@defer\\b/]",
+          message: 'A component of @okr/cms-article-feature that is used only inside @defer becomes an import() of its barrel and makes the article editor eager. Create it with a loader function and createComponent.',
+        },
+      ],
+    },
+  },
+  // The same barrel from the inside: esbuild skips a barrel (sideEffects: false) as long as it only passes on with `export *`.
+  // One `export { x } from` that somebody uses puts the barrel itself into the bundle, and with it every file it names
+  // (measured 2026-11-25: the canvas, 20 KB gzip, on the dashboard).
+  {
+    files: ['libs/cms/article/feature/src/index.ts'],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: "ExportNamedDeclaration[exportKind='value'], ExportAllDeclaration[exported], ImportDeclaration[importKind='value']",
+          message: 'Only `export *` and `export type` here: anything else makes the article editor eager (spec 1.176).',
+        },
+      ],
     },
   },
   // Build/test tooling configs are not library code: every lib's vite.config.ts imports the root
