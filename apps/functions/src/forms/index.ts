@@ -2,7 +2,7 @@ import { onCall, HttpsError, CallableRequest } from 'firebase-functions/v2/https
 import { defineSecret } from 'firebase-functions/params';
 import { logger } from 'firebase-functions/v2';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
-import { createHmac, createHash } from 'node:crypto';
+import { createHash } from 'node:crypto';
 
 import { ApplicationCollection, CourseCollection } from '@okr/shared-models';
 import type { AvatarInfo, BaseType, ConfirmationVariant, DerivedValue, Field } from '@okr/shared-models';
@@ -35,6 +35,7 @@ import {
   type FormSectionProperties,
 } from './form-section-config';
 import { checkCourseChoice, courseFieldOf, courseNameNote, readAnnouncedCourses, withCourseChoice } from './course-choice';
+import { buildToken, verifyToken } from './form-token';
 import { persistWithSlot, readResponseCount } from './form-stats';
 import { readModelSelectChoices } from './model-select';
 import { buildSubmissionRecord, buildSubmissionTask } from './submission-record';
@@ -207,36 +208,6 @@ function getFormMapping(mappingKey: string): FormMapping | undefined {
 }
 
 // ──────────────────────────────────────────
-// Token helpers
-// ──────────────────────────────────────────
-
-const TOKEN_TTL_MS = 30 * 60 * 1000; // 30 minutes
-
-function buildToken(formKey: string, secret: string): string {
-  const timestamp = Date.now().toString();
-  const payload = `${formKey}:${timestamp}`;
-  const sig = createHmac('sha256', secret).update(payload).digest('hex');
-  return Buffer.from(`${payload}:${sig}`).toString('base64url');
-}
-
-function verifyToken(token: string, secret: string): { valid: boolean; reason?: string } {
-  let decoded: string;
-  try {
-    decoded = Buffer.from(token, 'base64url').toString('utf8');
-  } catch {
-    return { valid: false, reason: 'malformed' };
-  }
-  const parts = decoded.split(':');
-  if (parts.length !== 3) return { valid: false, reason: 'malformed' };
-  const [formKey, timestamp, sig] = parts;
-  const age = Date.now() - parseInt(timestamp, 10);
-  if (isNaN(age) || age > TOKEN_TTL_MS) return { valid: false, reason: 'expired' };
-  const expected = createHmac('sha256', secret).update(`${formKey}:${timestamp}`).digest('hex');
-  if (sig !== expected) return { valid: false, reason: 'invalid_sig' };
-  return { valid: true };
-}
-
-// ──────────────────────────────────────────
 // Rate-limit helpers (§10.4)
 // ──────────────────────────────────────────
 
@@ -276,7 +247,7 @@ async function checkRateLimit(
 }
 
 // ──────────────────────────────────────────
-// getFormToken — issues a short-lived HMAC token (§10.3)
+// getFormToken — issues an HMAC token (§10.3, see form-token.ts)
 // ──────────────────────────────────────────
 
 export const getFormToken = onCall(
