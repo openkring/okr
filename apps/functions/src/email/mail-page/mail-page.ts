@@ -62,8 +62,8 @@ export async function renderMailPage(tenantId: string, pageKey: string, uid: str
 export async function runMailPageDraftReap(): Promise<void> {
   const db = getFirestore();
   const nowIso = new Date().toISOString();
-  // single-field range on createdAt, no composite index: a page edited later is older by createdAt, so this is a
-  // superset; the changedAt rule and the mailingKey check stay in isReapableDraft
+  // single-field range on createdAt, no composite index: normally changedAt ≥ createdAt, so a page edited later is
+  // older by createdAt and this is a superset; the changedAt rule and the mailingKey check stay in isReapableDraft
   const cutoffIso = new Date(Date.parse(nowIso) - MAIL_PAGE_DRAFT_DAYS * 86_400_000).toISOString();
   const old = await db.collection(MailPageCollection).where('createdAt', '<', cutoffIso).get();
   let deleted = 0;

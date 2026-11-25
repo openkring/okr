@@ -22,12 +22,15 @@ export const MAIL_PAGE_DRAFT_DAYS = 30;
 
 /**
  * A draft (never sent) is reaped nightly once `days` days passed since its last edit: `changedAt`, else
- * `createdAt` (also when `changedAt` is not a date). A page without a readable date is never reaped.
+ * `createdAt` (also when `changedAt` is not a date or lies more than 24 hours after `nowIso`, so a far-future
+ * value cannot keep a draft alive; a clock slightly ahead still counts). A page without a readable date is never reaped.
  */
 export function isReapableDraft(page: MailPageModel, nowIso: string, days = MAIL_PAGE_DRAFT_DAYS): boolean {
   if (page.mailingKey) return false;
+  const now = Date.parse(nowIso);
   const changed = page.changedAt ? Date.parse(page.changedAt) : Number.NaN;
-  const last = Number.isNaN(changed) ? Date.parse(page.createdAt) : changed;
+  const usable = !Number.isNaN(changed) && changed <= now + 86_400_000;
+  const last = usable ? changed : Date.parse(page.createdAt);
   if (Number.isNaN(last)) return false;
-  return Date.parse(nowIso) - last > days * 86_400_000;
+  return now - last > days * 86_400_000;
 }

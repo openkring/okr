@@ -27,6 +27,14 @@ describe('isReapableDraft', () => {
     expect(isReapableDraft(page({ createdAt: daysAgo(60), changedAt: daysAgo(5) }), now)).toBe(false);
     expect(isReapableDraft(page({ createdAt: daysAgo(60), changedAt: daysAgo(31) }), now)).toBe(true);
   });
+  it('ignores a changedAt far in the future: createdAt counts', () => {
+    expect(isReapableDraft(page({ createdAt: daysAgo(31), changedAt: '2100-01-01T00:00:00.000Z' }), now)).toBe(true);
+    expect(isReapableDraft(page({ createdAt: daysAgo(10), changedAt: '2100-01-01T00:00:00.000Z' }), now)).toBe(false);
+  });
+  it('counts a changedAt from a clock slightly ahead (within 24 hours)', () => {
+    const ahead = new Date(Date.parse(now) + 5 * 60_000).toISOString();
+    expect(isReapableDraft(page({ createdAt: daysAgo(31), changedAt: ahead }), now)).toBe(false);
+  });
   it('falls back to createdAt when changedAt is malformed', () => {
     expect(isReapableDraft(page({ createdAt: daysAgo(31), changedAt: 'nonsense' }), now)).toBe(true);
     expect(isReapableDraft(page({ createdAt: daysAgo(5), changedAt: 'nonsense' }), now)).toBe(false);
