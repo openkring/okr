@@ -57,6 +57,8 @@ export interface QuoteInput {
    * letter then ends with an unsubscribe block, so the pages are counted with it and the draft hash names it.
    */
   newsletterGroupKey?: string;
+  /** the body comes from blocks (spec 1.176 §9.4): its pictures are embedded before the pages are counted. Set by the server only; not hashed */
+  embedImages?: boolean;
 }
 
 /** JSON with sorted object keys, so equal payloads sign equally. */
@@ -111,7 +113,7 @@ export interface QuoteDeps {
   /** ms epoch; the token's `iat` */
   now: number;
   /** Page count of one letter of the draft (letter + PDF attachments, with the QR block when asked). */
-  countLetterPages(args: { tenantId: string; subject: string; body: string; attachments: ResolvedAttachment[]; withQrBlock: boolean; newsletterGroupKey?: string }): Promise<number>;
+  countLetterPages(args: { tenantId: string; subject: string; body: string; attachments: ResolvedAttachment[]; withQrBlock: boolean; newsletterGroupKey?: string; embedImages?: boolean }): Promise<number>;
   /** Per recipient key (same order): the country code of its postal address, or undefined when it has none. */
   readCountryCodes(tenantId: string, keys: string[]): Promise<(string | undefined)[]>;
 }
@@ -166,6 +168,7 @@ export async function computeQuote(deps: Omit<QuoteDeps, 'secret'>, input: Quote
     tenantId: input.tenantId, subject: input.subject, body: input.body, attachments: input.attachments,
     withQrBlock: input.letterQrCodes && input.caleventKeys.length > 0,
     ...(input.newsletterGroupKey ? { newsletterGroupKey: input.newsletterGroupKey } : {}),
+    ...(input.embedImages ? { embedImages: true } : {}),
   });
   const pages = letters * pagesPerLetter;
   const priced = letters === 0 ? { total: 0, perUnit: 0, perPage: 0 } : deps.port.quote(letters, pages);
@@ -265,6 +268,8 @@ export interface PostOrderArgs {
   postKeys: string[];
   /** a newsletter send: as `sendMailing` decided it (never the client) */
   newsletterGroupKey?: string;
+  /** the body comes from blocks: as the quote counted it */
+  embedImages?: boolean;
   mailingKey: string;
   /** whether the mailing doc already exists (a replay of the same quote, or a write that committed) */
   mailingExists(): Promise<boolean>;
@@ -341,6 +346,7 @@ export async function withPostOrder<T>(env: QuoteEnv, args: PostOrderArgs, work:
     tenantId: args.tenantId, subject: args.subject, body: args.body, attachments: args.attachments,
     letterQrCodes: args.letterQrCodes, caleventKeys: args.caleventKeys, postKeys: args.postKeys, options: args.post.options,
     ...(args.newsletterGroupKey ? { newsletterGroupKey: args.newsletterGroupKey } : {}),
+    ...(args.embedImages ? { embedImages: true } : {}),
   };
   const computed = await computeQuote(await quoteDepsOf(env, port, input, args.post.issuedAt), input);
   if (!verifyQuote(args.post.token, computed.payload, env.secret, env.now)) throw new HttpsError('failed-precondition', 'price-changed');

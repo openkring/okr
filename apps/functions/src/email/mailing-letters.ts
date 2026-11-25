@@ -30,6 +30,7 @@ import { getBrowser } from '../pdf/browser-pool';
 import { registerHelpers } from '../pdf/handlebars-helpers';
 import { resolvePayee } from '../pdf/qr-slip';
 import { compileTemplate } from '../pdf/template-cache';
+import { embedLetterImages, LetterPictureError } from './letter-images';
 import type { HouseholdRecipient } from './household-recipient.logic';
 import { isElevated } from './mailing-recipients';
 
@@ -371,7 +372,7 @@ interface LetterRenderContext {
 async function prepareLetterContext(
   db: Firestore,
   tenantId: string,
-  args: { subject: string; body: string; attachments: NoticeAttachment[]; attachmentBytes?: { filename: string; contentType: string; content: Buffer }[] },
+  args: { subject: string; body: string; embedImages?: boolean; attachments: NoticeAttachment[]; attachmentBytes?: { filename: string; contentType: string; content: Buffer }[] },
 ): Promise<LetterRenderContext> {
   const orgSnap = await db.collection('orgs').doc(tenantId).get();
   const senderAddress = await postalOf(db, `org.${tenantId}`, tenantId);
@@ -396,7 +397,9 @@ async function prepareLetterContext(
       appendix.push(await PDFDocument.load(bytes, { ignoreEncryption: true }));
     }
   }
-  return { sender, now, placeAndDate: placeAndDate(sender.zipCity, now), template: compiled, appendix, subject: args.subject, body: args.body };
+  // once for all letters of the Versand: the page with the recipient's address loads nothing for the body
+  const body = args.embedImages ? await embedLetterImages(args.body) : args.body;
+  return { sender, now, placeAndDate: placeAndDate(sender.zipCity, now), template: compiled, appendix, subject: args.subject, body };
 }
 
 /**
@@ -441,6 +444,8 @@ export async function buildMailingLetters(args: {
   personKeys: string[];
   subject: string;
   body: string;
+  /** the body comes from blocks (spec 1.176 §9.4): its pictures are put into the letters; one that cannot be fetched throws */
+  embedImages?: boolean;
   attachments: NoticeAttachment[];
   /**
    * The resolved households (loadHouseholdRecipients) of the `household.<okey>` keys in `personKeys`: the letter
@@ -535,12 +540,15 @@ export const SAMPLE_LETTER_RECIPIENT: LetterRecipient = {
  * Pages of one letter of this draft: one sample letter (see SAMPLE_LETTER_RECIPIENT) rendered through the same
  * path as the real letters, plus the PDF attachment pages. With `unsubscribeUrl` it ends with the newsletter's
  * unsubscribe block. With `withQrBlock` the letter carries the events block
- * with its QR code (answer link of a placeholder length).
+ * with its QR code (answer link of a placeholder length). A picture that cannot be fetched is `unavailable` with
+ * `letter-picture`: for the quote and for the send that counts again.
  */
 export async function countLetterPages(args: {
   tenantId: string;
   subject: string;
   body: string;
+  /** as for `buildMailingLetters` */
+  embedImages?: boolean;
   attachments?: NoticeAttachment[];
   /** PDF attachments as bytes (not stored yet); other types are ignored */
   attachmentBytes?: { filename: string; contentType: string; content: Buffer }[];
@@ -549,7 +557,14 @@ export async function countLetterPages(args: {
   /** a newsletter send: the letter ends with this unsubscribe link and its QR code, as each real letter does */
   unsubscribeUrl?: string;
 }): Promise<number> {
-  const ctx = await prepareLetterContext(getFirestore(), args.tenantId, { ...args, attachments: args.attachments ?? [] });
+  let ctx: LetterRenderContext;
+  try {
+    ctx = await prepareLetterContext(getFirestore(), args.tenantId, { ...args, attachments: args.attachments ?? [] });
+  } catch (error) {
+    if (!(error instanceof LetterPictureError)) throw error;
+    logger.warn(`letter pages not counted (tenant ${args.tenantId}): ${error.message}`);
+    throw new HttpsError('unavailable', 'letter-picture');
+  }
   const answerHtml = args.withQrBlock && args.answerEvents?.length
     ? eventsBlockHtml(args.answerEvents, await qrSvgOf(`https://app.example.org/answer/${'x'.repeat(60)}`))
     : '';

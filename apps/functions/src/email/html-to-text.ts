@@ -16,7 +16,7 @@ function codePointOrEntity(code: number, entity: string): string {
 }
 
 /** Decodes the entities the editor and Handlebars emit. `&amp;` goes last so `&amp;lt;` stays `&lt;`. */
-function decodeEntities(text: string): string {
+export function decodeEntities(text: string): string {
   return text
     .replace(/&#x([0-9a-f]+);/gi, (entity, hex: string) => codePointOrEntity(parseInt(hex, 16), entity))
     .replace(/&#(\d+);/g, (entity, dec: string) => codePointOrEntity(parseInt(dec, 10), entity))

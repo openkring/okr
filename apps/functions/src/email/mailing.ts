@@ -653,7 +653,7 @@ export const sendMailing = onCall(
         // subject and QR flag exactly as the quote saw them (the token hashes the request, not the stored doc)
         // a page send prices the rendered page: the HTML the letters print
         post: postRequest, tenantId, subject: data.subject, body: letterBody, attachments: resolved, letterQrCodes: data.letterQrCodes === true,
-        caleventKeys, postKeys: keysFor(deliveries, DeliveryChannel.Post), ...(newsletterGroupKey ? { newsletterGroupKey } : {}), mailingKey: ref.id, mailingExists: async () => (await ref.get()).exists, lock: postLockOf(db, ref.id, tenantId), actor: uid,
+        caleventKeys, postKeys: keysFor(deliveries, DeliveryChannel.Post), ...(newsletterGroupKey ? { newsletterGroupKey } : {}), ...(sent ? { embedImages: true } : {}), mailingKey: ref.id, mailingExists: async () => (await ref.get()).exists, lock: postLockOf(db, ref.id, tenantId), actor: uid,
         caller: caller as { roles?: unknown; tenants?: string[] }, nowIso: getTodayStr(DateFormat.StoreDateTime),
       }, build);
     } else {
@@ -877,6 +877,7 @@ export const onMailing = onDocumentCreated(
           const built = await buildMailingLetters({
             tenantId, mailingKey: snap.id, personKeys: postKeys, households,
             subject: mailing.subject, body: await sanitizeEmailBody(letterBody), attachments: mailing.attachments,
+            ...(sent ? { embedImages: true } : {}),
             ...(mailing.letterQrCodes && mailing.caleventKeys?.length ? await letterAnswers(db, snap.id, mailing.caleventKeys) : {}),
             ...(unsubscribeUrl ? { unsubscribeUrl } : {}),
             ...(fanOut ? { onLetter: fanOut.onLetter, only: fanOut.only } : {}),

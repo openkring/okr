@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { PDFDocument } from 'pdf-lib';
 
 const state = vi.hoisted(() => ({
@@ -11,13 +11,17 @@ const state = vi.hoisted(() => ({
   htmls: [] as string[],
   /** a marker that, when the rendered html contains it, makes the letter one page longer (a block that overflows) */
   overflowWith: '',
+  /** the tenant's own letter template (its html), when it has one */
+  template: '',
 }));
 
 vi.mock('firebase-admin/firestore', () => ({
   getFirestore: () => ({
     collection: (name: string) => ({
       doc: (id: string) => ({
-        get: async () => ({ exists: true, data: () => (name === 'orgs' ? { name: 'Seeclub' } : { firstName: id, lastName: 'Muster' }) }),
+        get: async () => ({ exists: true, data: () => (name === 'orgs' ? { name: 'Seeclub' }
+          : name === 'templates' && state.template ? { tenants: ['scs'], currentVersion: 1 } : { firstName: id, lastName: 'Muster' }) }),
+        collection: () => ({ doc: () => ({ get: async () => ({ exists: true, data: () => ({ status: 'published', html: state.template, css: '' }) }) }) }),
       }),
       where: (_f: string, _o: string, parentKey: string) => ({
         where: () => ({
@@ -451,5 +455,90 @@ describe('the page count of a newsletter letter (Pingen quote)', () => {
       unsubscribeUrl: () => url, onLetter: async (l) => { got.push(l); },
     });
     expect(got[0].pages).toBe(counted);
+  });
+});
+
+describe('pictures of a letter made of blocks (spec 1.176 §9.4)', () => {
+  const JPEG = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 1, 2, 3]);
+  const DATA = `data:image/jpeg;base64,${JPEG.toString('base64')}`;
+  const BODY = '<p>B</p><img src="https://bkaiser.imgix.net/tenant/scs/geheim.jpg?w=880&amp;fit=max" alt="Boot" />';
+  const EMBEDDED = `<p>B</p><img src="${DATA}" alt="Boot" />`;
+  const fetchMock = vi.fn<typeof fetch>();
+  const build = (over: Partial<Parameters<typeof buildMailingLetters>[0]> = {}) => buildMailingLetters({
+    tenantId: 'scs', mailingKey: 'm1', subject: 'S', body: BODY, attachments: [], personKeys: ['anna', 'beat', 'cara'], embedImages: true, ...over,
+  });
+  const count = (over: Partial<Parameters<typeof countLetterPages>[0]> = {}) =>
+    countLetterPages({ tenantId: 'scs', subject: 'S', body: BODY, withQrBlock: false, embedImages: true, ...over });
+
+  beforeEach(() => {
+    state.letterPages = 1;
+    state.overflowWith = '';
+    state.attachment = undefined;
+    state.saved = [];
+    state.htmls = [];
+    state.template = '';
+    state.addresses = ['anna', 'beat', 'cara'].map((key) => ({
+      parentKey: `person.${key}`, addressChannel: 'postal', tenants: ['scs'], isFavorite: true, streetName: 'Dorfweg', streetNumber: '2', zipCode: '8000', city: 'Zürich', countryCode: '',
+    }));
+    fetchMock.mockReset();
+    fetchMock.mockImplementation(async () => new Response(new Uint8Array(JPEG), { headers: { 'content-type': 'image/jpeg' } }));
+    vi.stubGlobal('fetch', fetchMock);
+  });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    state.template = '';
+  });
+
+  it('prints them inside every letter, fetched once for all recipients', async () => {
+    expect((await build())?.letters).toBe(3);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(state.htmls).toHaveLength(3);
+    for (const html of state.htmls) {
+      expect(html).toContain(`<div class="body">${EMBEDDED}</div>`);
+      expect(html).not.toContain('https://bkaiser.imgix.net');
+    }
+  });
+
+  it('prints them inside a letter of the tenant\'s own template, too', async () => {
+    state.template = '<html><body><h1>{{lastName}}</h1>{{{body}}}</body></html>';
+    await build({ personKeys: ['anna'] });
+    expect(state.htmls[0]).toContain('<h1>Muster</h1>');
+    expect(state.htmls[0]).toContain(EMBEDDED);
+    expect(state.htmls[0]).not.toContain('https://bkaiser.imgix.net');
+  });
+
+  it('counts the pages of the same html as the letters print', async () => {
+    state.overflowWith = DATA;
+    const got: RenderedLetter[] = [];
+    await build({ personKeys: ['anna'], onLetter: async (l) => { got.push(l); } });
+    expect(await count()).toBe(2);
+    expect(got[0].pages).toBe(2);
+    expect(state.htmls[1]).toContain(`<div class="body">${EMBEDDED}</div>`);
+  });
+
+  it('a picture that cannot be fetched fails the quote with a code', async () => {
+    fetchMock.mockImplementation(async () => new Response('', { status: 404 }));
+    await expect(count()).rejects.toMatchObject({ code: 'unavailable', message: 'letter-picture' });
+    await expect(count({ body: '<img src="https://elsewhere.example/a.jpg" />' })).rejects.toMatchObject({ code: 'unavailable', message: 'letter-picture' });
+    expect(state.htmls).toEqual([]);
+  });
+
+  it('a picture that cannot be fetched fails the letters: none is rendered, handed on or stored', async () => {
+    fetchMock.mockImplementation(async () => new Response('', { status: 404 }));
+    const onLetter = vi.fn(async () => undefined);
+    await expect(build({ onLetter })).rejects.toThrow('A picture of the letter could not be loaded: HTTP 404.');
+    expect(onLetter).not.toHaveBeenCalled();
+    expect([...state.htmls, ...state.saved]).toEqual([]);
+  });
+
+  it('without the flag the html is untouched and nothing is fetched', async () => {
+    for (const embedImages of [undefined, false]) {
+      state.htmls = [];
+      await build({ embedImages, personKeys: ['anna'] });
+      await count({ embedImages });
+      expect(state.htmls).toHaveLength(2);
+      for (const html of state.htmls) expect(html).toContain(`<div class="body">${BODY}</div>`);
+    }
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });

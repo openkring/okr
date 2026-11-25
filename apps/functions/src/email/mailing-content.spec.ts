@@ -7,6 +7,9 @@ const h = vi.hoisted(() => ({
   letters: [] as Record<string, unknown>[],
   counted: [] as Record<string, unknown>[],
   deleted: [] as unknown[],
+  /** what building the letters, or counting their pages, throws instead */
+  lettersError: undefined as Error | undefined,
+  countError: undefined as Error | undefined,
   saved: [] as string[],
 }));
 
@@ -45,16 +48,19 @@ vi.mock('./mailing-letters', async () => {
   return {
     ...actual,
     postalOf: async () => ({ countryCode: 'CH' }),
-    countLetterPages: async (args: Record<string, unknown>) => { h.counted.push(args); return 2; },
-    buildMailingLetters: async (args: Record<string, unknown>) => { h.letters.push(args); return { storagePath: 'x.pdf', letters: 1, missing: 0 }; },
+    countLetterPages: async (args: Record<string, unknown>) => { h.counted.push(args); if (h.countError) throw h.countError; return 2; },
+    buildMailingLetters: async (args: Record<string, unknown>) => { h.letters.push(args); if (h.lettersError) throw h.lettersError; return { storagePath: 'x.pdf', letters: 1, missing: 0 }; },
   };
 });
+
+import { HttpsError } from 'firebase-functions/v2/https';
 
 import { fakeDb, type Doc, type Store } from '../credit/testing/credit-fake-db';
 import { sanitizeEmailBody } from '../pdf/sanitize';
 import { bindCreditPort, getCreditPort, type CreditPort } from '../pingen/credit-port';
 import type { MailingPost } from '../pingen/post-order';
 import { draftHashOf, quoteMailingLetters, quoteWithCaller, signQuote, type PostQuote } from '../pingen/quote';
+import { LetterPictureError } from './letter-images';
 import type { MailJobDoc } from './mail-job';
 import { MAX_CONTENT_BYTES, type SentContent } from './mail-page/mail-content';
 import { mailPageContent, type MailingDoc, onMailing, sendMailing } from './mailing';
@@ -75,6 +81,7 @@ const BLOCKS: unknown[] = [
 
 let store: Store;
 let deductions: unknown[];
+let reversals: unknown[][];
 
 function setPage(sections: Record<string, Doc>, over: Doc = {}): void {
   store[`mailPages/${PAGE}`] = { tenants: [T], senderUid: 'admin', type: 'mail', createdAt: '2026-11-25T10:00:00.000Z', sections: Object.keys(sections), ...over };
@@ -114,12 +121,15 @@ beforeEach(() => {
   h.counted = [];
   h.deleted = [];
   h.saved = [];
+  h.lettersError = undefined;
+  h.countError = undefined;
   deductions = [];
+  reversals = [];
   const port: CreditPort = {
     quote: (letters, pages) => ({ total: letters * 120 + pages * 30, perUnit: 120, perPage: 30 }),
     balance: async () => 10_000,
     deduct: async (_t, input) => { deductions.push(input); return { entryId: 'e1', balanceAfter: 0 }; },
-    reverseShare: async () => ({ amount: 0, duplicate: false }),
+    reverseShare: async (...a) => { reversals.push(a); return { amount: 0, duplicate: false }; },
   };
   bindCreditPort(port);
 });
@@ -308,6 +318,31 @@ describe('quote and Pingen send', () => {
     expect(store[`mailings/${mailingKey}`]).toMatchObject({ body: html, post: { via: 'pingen', letters: 1, pages: 2 } });
     expect(h.counted.map((c) => c['body'])).toEqual([await sanitizeEmailBody(letterHtml ?? ''), await sanitizeEmailBody(letterHtml ?? '')]);
     expect(letterHtml).not.toBe(html);
+    // the pictures of blocks are embedded where pages are counted
+    expect(h.counted.map((c) => c['embedImages'])).toEqual([true, true]);
+  });
+
+  it('the token hashes the letter with the addresses of its pictures, not their bytes', async () => {
+    setPage({ s1: blockArticle([text('t', '<p>Text <img src="https://bkaiser.imgix.net/a.jpg" alt="a"></p>')]) });
+    const { letterHtml } = await mailPageContent(T, PAGE, 'admin');
+    expect(letterHtml).toContain('src="https://bkaiser.imgix.net/a.jpg');
+    const q = await quote();
+    expect(q.token).toBe(signQuote({
+      iat: q.issuedAt, tenantId: T, recipients: ['p1'], options: OPTIONS, letters: 1, pages: 2, total: 180,
+      draftHash: draftHashOf({ subject: 'Herbst', body: letterHtml ?? '', attachments: [], letterQrCodes: false, caleventKeys: [] }),
+    }, 'secret'));
+  });
+
+  it('a picture that cannot be fetched refuses the send before any money moves', async () => {
+    setPage({ s1: blockArticle(BLOCKS) });
+    const q = await quote();
+    h.countError = new HttpsError('unavailable', 'letter-picture');
+    await expect(send(q)).rejects.toMatchObject({ code: 'unavailable', message: 'letter-picture' });
+    expect(deductions).toEqual([]);
+    expect([...mailings(), ...docsOf('post-orders')]).toEqual([]);
+    h.countError = undefined;
+    await send(q);
+    expect(deductions).toHaveLength(1);
   });
 
   it('a replay of a sent page is the same Versand, without a second deduction', async () => {
@@ -338,6 +373,7 @@ describe('quote and Pingen send', () => {
     await send(q);
     expect(deductions).toHaveLength(1);
     expect(contents()).toEqual([]);
+    for (const args of h.counted) expect(args).not.toHaveProperty('embedImages');
   });
 });
 
@@ -373,6 +409,21 @@ describe('onMailing', () => {
     expect(jobs()[0].body).toBe('<p>Mail</p>');
     expect(notices()[0]).toMatchObject({ body: '<p style="margin:0 0 16px">Mail</p>', blocks: SENT.noticeBlocks });
     expect(h.letters[0]['body']).toBe('<p style="margin:0 0 16px">Brief</p>');
+    expect(h.letters[0]['embedImages']).toBe(true);
+  });
+
+  it('a picture that cannot be fetched fails the letters and gives the share back; the mails are out', async () => {
+    store['mailings/m1/content/sent'] = SENT as unknown as Doc;
+    h.lettersError = new LetterPictureError('HTTP 404');
+    const post: MailingPost = {
+      via: 'pingen', options: { deliveryProduct: 'cheap', printSpectrum: 'grayscale', printMode: 'simplex' }, recipients: ['p1'],
+      letters: 1, abroad: 0, pages: 2, total: 180, creditEntryId: 'e1', acceptedBy: 'admin', acceptedAt: '20261125100000',
+    };
+    const done = await run(mailing({ post, letters: { state: 'pending' } }));
+    expect(done).toMatchObject({ state: 'sent', letters: { state: 'failed', error: 'A picture of the letter could not be loaded: HTTP 404.' } });
+    expect(jobs()).toHaveLength(1);
+    expect(reversals.map((r) => r.slice(0, 3))).toEqual([[T, 'e1', { units: 1, pages: 2 }]]);
+    expect(docsOf('sendings').map(([, d]) => d['state'])).toEqual(['failed']);
   });
 
   it('a Versand without stored content goes out as before', async () => {
@@ -381,6 +432,7 @@ describe('onMailing', () => {
     expect(notices()[0]).not.toHaveProperty('blocks');
     expect(notices()[0]['body']).toBe('<p style="margin:0 0 16px">Mail</p>');
     expect(h.letters[0]['body']).toBe('<p style="margin:0 0 16px">Mail</p>');
+    expect(h.letters[0]).not.toHaveProperty('embedImages');
   });
 
   it('reads nothing for a Versand without a page', async () => {

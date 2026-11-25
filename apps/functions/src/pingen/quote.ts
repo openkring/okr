@@ -85,7 +85,7 @@ export async function quoteMailingLettersCore(deps: QuoteDeps, input: QuoteInput
 }
 
 /** The request's own fields; the attachments are resolved to bytes afterwards. */
-export function parseInput(raw: unknown): Omit<QuoteInput, 'attachments'> & { pageKey?: string } {
+export function parseInput(raw: unknown): Omit<QuoteInput, 'attachments' | 'embedImages'> & { pageKey?: string } {
   const d = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
   const text = (v: unknown): boolean => v === undefined || typeof v === 'string';
   if (!text(d['storagePath']) || !text(d['filename'])) throw new HttpsError('invalid-argument', 'Invalid attachment.');
@@ -120,9 +120,10 @@ export async function quoteWithCaller(env: QuoteCallableEnv, data: unknown, call
   const groupKey = (data as { groupKey?: unknown }).groupKey;
   const newsletterGroupKey = typeof groupKey === 'string' && groupKey && (await env.isNewsletterGroup?.(parsed.tenantId, groupKey)) ? groupKey : undefined;
   // what the letters print is what `sendMailing` prices too (the same `mailPageContent`), so the token verifies
-  if (pageKey) parsed.body = letterBodyOf(await (env.renderPage ?? mailPageContent)(parsed.tenantId, pageKey, uid));
+  const content = pageKey ? await (env.renderPage ?? mailPageContent)(parsed.tenantId, pageKey, uid) : undefined;
+  if (content) parsed.body = letterBodyOf(content);
   const input: QuoteInput = {
-    ...parsed, ...(newsletterGroupKey ? { newsletterGroupKey } : {}),
+    ...parsed, ...(newsletterGroupKey ? { newsletterGroupKey } : {}), ...(content?.letterHtml !== undefined ? { embedImages: true } : {}),
     attachments: await resolveAttachmentBytes(data as MailingAttachmentFields, parsed.tenantId, env.readDocument),
   };
   return quoteMailingLettersCore(await quoteDepsOf(env, port, input, env.now), input, caller);
