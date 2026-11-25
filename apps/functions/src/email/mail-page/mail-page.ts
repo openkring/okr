@@ -12,7 +12,7 @@ import { DateFormat, getTodayStr, MAX_MAIL_EVENTS, publicAppOrigin, upcomingEven
 import { mailColorOf } from '../../_shared/brand-color';
 import { sanitizeEmailBody } from '../../pdf/sanitize';
 import { mailCalendarKeys, renderMailContent, type MailContent } from './mail-content';
-import { isReapableDraft, mailPageRefusal } from './mail-page.logic';
+import { isReapableDraft, MAIL_PAGE_DRAFT_DAYS, mailPageRefusal } from './mail-page.logic';
 import { MailPageError, orderedMailSections, type MailSection } from './render-mail-page.logic';
 
 const REFUSAL_TEXT = {
@@ -58,12 +58,13 @@ export async function renderMailPage(tenantId: string, pageKey: string, uid: str
   return { ...content, page };
 }
 
-/** Nightly: deletes drafts that were never sent after 7 days — sections first, then the page. */
+/** Nightly: deletes drafts that were never sent and not edited for 30 days (`changedAt`, else `createdAt`) — sections first, then the page. */
 export async function runMailPageDraftReap(): Promise<void> {
   const db = getFirestore();
   const nowIso = new Date().toISOString();
-  // single-field range, no composite index; the 7-day rule and the mailingKey check stay in isReapableDraft
-  const cutoffIso = new Date(Date.parse(nowIso) - 7 * 86_400_000).toISOString();
+  // single-field range on createdAt, no composite index: a page edited later is older by createdAt, so this is a
+  // superset; the changedAt rule and the mailingKey check stay in isReapableDraft
+  const cutoffIso = new Date(Date.parse(nowIso) - MAIL_PAGE_DRAFT_DAYS * 86_400_000).toISOString();
   const old = await db.collection(MailPageCollection).where('createdAt', '<', cutoffIso).get();
   let deleted = 0;
   for (const d of old.docs) {

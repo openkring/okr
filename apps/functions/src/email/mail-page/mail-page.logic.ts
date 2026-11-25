@@ -17,10 +17,17 @@ export function mailPageRefusal(
   return undefined;
 }
 
-/** A draft (never sent) older than `days` days is reaped nightly. */
-export function isReapableDraft(page: MailPageModel, nowIso: string, days = 7): boolean {
+/** Drafts live this many days since their last edit (spec 1.176 §8.5; 7 before). */
+export const MAIL_PAGE_DRAFT_DAYS = 30;
+
+/**
+ * A draft (never sent) is reaped nightly once `days` days passed since its last edit: `changedAt`, else
+ * `createdAt` (also when `changedAt` is not a date). A page without a readable date is never reaped.
+ */
+export function isReapableDraft(page: MailPageModel, nowIso: string, days = MAIL_PAGE_DRAFT_DAYS): boolean {
   if (page.mailingKey) return false;
-  const created = Date.parse(page.createdAt);
-  if (Number.isNaN(created)) return false;
-  return Date.parse(nowIso) - created > days * 86_400_000;
+  const changed = page.changedAt ? Date.parse(page.changedAt) : Number.NaN;
+  const last = Number.isNaN(changed) ? Date.parse(page.createdAt) : changed;
+  if (Number.isNaN(last)) return false;
+  return Date.parse(nowIso) - last > days * 86_400_000;
 }

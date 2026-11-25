@@ -52,7 +52,7 @@ export const NIGHTLY_JOBS: NamedJob[] = [
   { name: 'billScanReap', run: runBillScanReap },
   { name: 'privacyExportReap', run: runPrivacyExportReap },
   { name: 'mailingLettersReap', run: runMailingLettersReap },
-  { name: 'mailPageDraftReap', run: runMailPageDraftReap }, // spec 1.172: unsent Versand page drafts after 7 days
+  { name: 'mailPageDraftReap', run: runMailPageDraftReap }, // spec 1.172: unsent Versand page drafts after 30 days without an edit (spec 1.176)
   { name: 'newsletterSignupReap', run: runNewsletterSignupReap }, // spec 1.169: expired and confirmed sign-up docs
   { name: 'courseEndTasks', run: runCourseEndTasks },
   { name: 'energyFiguresFetch', run: runEnergyFiguresFetch },

@@ -2805,6 +2805,19 @@ seed("mailPages/mpA/sections/s1", {"tenants": ["t1"], "type": "article", "conten
 seed("mailPages/mpSent/sections/s1", {"tenants": ["t1"], "type": "article", "content": {"htmlContent": "s"}})
 seed("mailingWeb/w1", {"tenants": ["t1"], "mailingKey": "m1", "html": "<p>x</p>", "createdAt": "20261122"})
 MP_SEC = {"tenants": ["t1"], "type": "article", "content": {"htmlContent": "b"}}
+# spec 1.176 (§8.5, §12): drafts live 30 days; the block editor adds subject / layout / webVersion / changedAt.
+# A sent page of another sender (privileged) with a section, a draft of the same sender, and two group drafts.
+seed("mailPages/mpSentP", mail_page("uidP", mailingKey="m2", subject="S"))
+seed("mailPages/mpSentP/sections/s1", {"tenants": ["t1"], "type": "article", "content": {"htmlContent": "p"}})
+seed("mailPages/mpDraftP", mail_page("uidP"))
+seed("mailPages/mpDraftP/sections/s1", {"tenants": ["t1"], "type": "article", "content": {"htmlContent": "q"}})
+seed("groups/gMail2", {"tenants": ["t1"], "name": "Versand 2", "admins": [{"key": "pE"}], "adminKeys": ["pE"]})
+seed("groups/gMailX", {"tenants": ["t1"], "name": "Fremd", "admins": [{"key": "pM"}], "adminKeys": ["pM"]})
+seed("mailPages/mpGrpFields", mail_page("uidE", groupKey="gMail"))
+seed("mailPages/mpGrpMove", mail_page("uidE", groupKey="gMail"))
+seed("mailPages/mpGrpForeign", mail_page("uidE", groupKey="gMail"))
+seed("mailings/mq1", {"tenants": ["t1"], "subject": "Q"})
+seed("mailings/mq1/content/sent", {"tenants": ["t1"], "letterBody": {"blocks": []}, "noticeBlocks": []})
 mailpage_cases = [
     # create
     ("mailPages: memberAdmin CREATE own draft -> ALLOW", True,
@@ -2912,6 +2925,70 @@ mailpage_cases = [
     ("mailingWeb: anon CREATE -> DENY", False,
      lambda: req("POST", "mailingWeb?documentId=w3", data=body({"tenants": ["t1"], "html": "x"}))),
     ("mailingWeb: admin DELETE -> DENY", False, lambda: req("DELETE", "mailingWeb/w1", token=D)),
+    # --- spec 1.176: the two queries of §8.5 and who sees which page
+    ("mailPages: own drafts query senderUid==uid, filtered by tenant -> ALLOW", True,
+     lambda: field_query("mailPages", [("senderUid", "EQUAL", "uidM"), ("tenants", "ARRAY_CONTAINS", "t1")], token=M)),
+    ("mailPages: drafts query WITHOUT senderUid (tenant only) -> DENY", False,
+     lambda: field_query("mailPages", [("tenants", "ARRAY_CONTAINS", "t1")], token=M)),
+    ("mailPages: drafts query WITHOUT senderUid, privileged -> DENY", False,
+     lambda: field_query("mailPages", [("tenants", "ARRAY_CONTAINS", "t1")], token=P)),
+    ("mailPages: drafts query for another sender's uid -> DENY", False,
+     lambda: field_query("mailPages", [("senderUid", "EQUAL", "uidM")], token=P)),
+    ("mailPages: group admin LIST own pages (senderUid==uid) -> ALLOW", True,
+     lambda: field_query("mailPages", [("senderUid", "EQUAL", "uidE")], token=E)),
+    ("mailPages: group admin LIST pages of another sender -> DENY", False,
+     lambda: field_query("mailPages", [("senderUid", "EQUAL", "uidM")], token=E)),
+    ("mailPages: group admin LIST by tenant only -> DENY", False,
+     lambda: field_query("mailPages", [("tenants", "ARRAY_CONTAINS", "t1")], token=E)),
+    ("mailPages: group admin GET own group draft -> ALLOW", True, lambda: req("GET", "mailPages/mpGrp", token=E)),
+    ("mailPages: group admin GET another sender's draft -> DENY", False, lambda: req("GET", "mailPages/mpA", token=E)),
+    ("mailPages: group admin GET another sender's sent page -> DENY", False, lambda: req("GET", "mailPages/mpSent", token=E)),
+    ("mailPages: group admin GET section of another sender's sent page -> DENY", False,
+     lambda: req("GET", "mailPages/mpSent/sections/s1", token=E)),
+    ("mailPages: memberAdmin GET sent page of another sender -> ALLOW", True, lambda: req("GET", "mailPages/mpSentP", token=M)),
+    ("mailPages: memberAdmin GET section of a sent page of another sender -> ALLOW", True,
+     lambda: req("GET", "mailPages/mpSentP/sections/s1", token=M)),
+    ("mailPages: memberAdmin GET draft of another sender -> DENY", False, lambda: req("GET", "mailPages/mpDraftP", token=M)),
+    ("mailPages: memberAdmin GET section of another sender's draft -> DENY", False,
+     lambda: req("GET", "mailPages/mpDraftP/sections/s1", token=M)),
+    ("mailPages: memberAdmin LIST drafts of another sender (senderUid==uidP) -> DENY", False,
+     lambda: field_query("mailPages", [("senderUid", "EQUAL", "uidP")], token=M)),
+    ("mailPages: admin t2 GET sent page of t1 -> DENY", False, lambda: req("GET", "mailPages/mpSentP", token=B)),
+    ("mailPages: admin t2 GET draft of t1 -> DENY", False, lambda: req("GET", "mailPages/mpDraftP", token=B)),
+    ("mailPages: admin t2 GET section of a sent t1 page -> DENY", False,
+     lambda: req("GET", "mailPages/mpSentP/sections/s1", token=B)),
+    ("mailPages: admin t2 LIST t1 sender's pages -> DENY", False,
+     lambda: field_query("mailPages", [("senderUid", "EQUAL", "uidM")], token=B)),
+    # sender updates the fields of the block editor
+    ("mailPages: sender UPDATE subject -> ALLOW", True,
+     lambda: req("PATCH", "mailPages/mpA", token=M, data=body({"subject": "Betreff"}), mask=["subject"])),
+    ("mailPages: sender UPDATE layout -> ALLOW", True,
+     lambda: req("PATCH", "mailPages/mpA", token=M, data=body({"layout": "default"}), mask=["layout"])),
+    ("mailPages: sender UPDATE webVersion -> ALLOW", True,
+     lambda: req("PATCH", "mailPages/mpA", token=M, data=body({"webVersion": True}), mask=["webVersion"])),
+    ("mailPages: sender UPDATE changedAt -> ALLOW", True,
+     lambda: req("PATCH", "mailPages/mpA", token=M, data=body({"changedAt": "2026-11-26T09:00:00.000Z"}), mask=["changedAt"])),
+    ("mailPages: group admin UPDATE subject, layout, webVersion, changedAt together -> ALLOW", True,
+     lambda: req("PATCH", "mailPages/mpGrpFields", token=E,
+                 data=body({"subject": "S", "layout": "default", "webVersion": False, "changedAt": "2026-11-26T09:00:00.000Z"}),
+                 mask=["subject", "layout", "webVersion", "changedAt"])),
+    ("mailPages: group admin UPDATE groupKey to another group they administer -> ALLOW", True,
+     lambda: req("PATCH", "mailPages/mpGrpMove", token=E, data=body({"groupKey": "gMail2"}), mask=["groupKey"])),
+    ("mailPages: group admin UPDATE groupKey to a group they do not administer -> DENY", False,
+     lambda: req("PATCH", "mailPages/mpGrpForeign", token=E, data=body({"groupKey": "gMailX"}), mask=["groupKey"])),
+    ("mailPages: group admin UPDATE groupKey to a missing group -> DENY", False,
+     lambda: req("PATCH", "mailPages/mpGrpForeign", token=E, data=body({"groupKey": "gNone"}), mask=["groupKey"])),
+    # mailings/{id}/content/sent: server-only (Admin SDK), no rule, so default deny
+    ("mailings content/sent: privileged GET -> DENY", False, lambda: req("GET", "mailings/mq1/content/sent", token=P)),
+    ("mailings content/sent: memberAdmin GET -> DENY", False, lambda: req("GET", "mailings/mq1/content/sent", token=M)),
+    ("mailings content/sent: admin GET -> DENY", False, lambda: req("GET", "mailings/mq1/content/sent", token=D)),
+    ("mailings content/sent: admin t2 GET -> DENY", False, lambda: req("GET", "mailings/mq1/content/sent", token=B)),
+    ("mailings content/sent: anon GET -> DENY", False, lambda: req("GET", "mailings/mq1/content/sent")),
+    ("mailings content/sent: admin CREATE -> DENY", False,
+     lambda: req("POST", "mailings/mq1/content?documentId=other", token=D, data=body({"tenants": ["t1"], "noticeBlocks": []}))),
+    ("mailings content/sent: admin UPDATE -> DENY", False,
+     lambda: req("PATCH", "mailings/mq1/content/sent", token=D, data=body({"noticeBlocks": []}), mask=["noticeBlocks"])),
+    ("mailings content/sent: memberAdmin DELETE -> DENY", False, lambda: req("DELETE", "mailings/mq1/content/sent", token=M)),
 ]
 for label, expect, run in mailpage_cases:
     code = run()

@@ -2205,9 +2205,15 @@ export async function resolveArrayItemDocs(entry: SubjectDataEntry, ctx: Subject
 //   comments with display names (design §9). Authors only; follows the journals row (plan 6).
 // gap: mailPages — a Versand mail page draft (spec 1.172), with its `sections` subcollection: the mail's
 //   content, which may name people, and `senderUid` (the Auth uid, not the personKey) of the sender. A
-//   draft that never sent is reaped after 7 days by `mailPageDraftReap`; a sent one keeps only the
+//   draft that never sent is reaped by `mailPageDraftReap` 30 days after its last edit (`changedAt`, else
+//   `createdAt`; 7 days before spec 1.176); a sent one keeps only the
 //   `mailingKey` link. The sender link is a uid on a subcollection-owning doc, so a `find` here would be
 //   a guess; follows the mailings content until an erasure row reads by senderUid.
 // gap: mailingWeb — the server-only snapshot of a sent Versand (spec 1.172), keyed by `mailingKey`. Built
 //   without personal values (no name greeting, no answer or unsubscribe links), but it holds the mail's free
-//   text, which may name people. No subject link of its own; follows the mailings content.
+//   text, which may name people. No subject link of its own; follows the mailings content, as does
+//   `mailings/{key}/content/sent` (spec 1.176: `letterBody` and `noticeBlocks`, the block content of a sent
+//   mail, server-only, free text that may name people). `notices.blocks` (the In-App copy) is covered by the
+//   `notices` row: that row finds a notice by `recipients`, exports it as an index line (subject, date) only and
+//   erasure anonymizes `recipients` alone, so the block text is neither exported nor erased — like the mail's
+//   content it is the association's communication, not the subject's record.
