@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { MAIL_SECTION_TYPES, SectionModel } from '@okr/shared-models';
-import { mailPageHasContent, mailPageRefusalKey, mailSectionCategory, newMailPage, sectionSummary } from './mail-page.util';
+import { mailEditorWanted, mailPageHasContent, mailPageRefusalKey, mailSectionCategory, newMailPage, sameMailPageMeta, sectionSummary } from './mail-page.util';
 
 const article = (html: string): SectionModel => ({ type: 'article', content: { htmlContent: html }, properties: {} } as unknown as SectionModel);
 const button = (url: string, label = 'Los'): SectionModel =>
@@ -116,5 +116,36 @@ describe('mailPageRefusalKey', () => {
     expect(mailPageRefusalKey(new Error('no-content'))).toBeUndefined();
     expect(mailPageRefusalKey(undefined)).toBeUndefined();
     expect(mailPageRefusalKey('no-content')).toBeUndefined();
+  });
+});
+
+describe('mailEditorWanted', () => {
+  const versand = { isVersand: true, segment: 'editor', draftLoaded: true, hasLoader: true };
+
+  it('loads the editor for a Versand in its editor segment once the draft exists', () => {
+    expect(mailEditorWanted(versand)).toBe(true);
+  });
+
+  it('never loads it for a composer without Versand recipients', () => {
+    for (const segment of ['editor', 'preview', 'list']) {
+      expect(mailEditorWanted({ isVersand: false, segment, draftLoaded: true, hasLoader: true })).toBe(false);
+      expect(mailEditorWanted({ isVersand: false, segment, draftLoaded: false, hasLoader: false })).toBe(false);
+    }
+  });
+
+  it('waits for the draft, the editor segment and a loader', () => {
+    expect(mailEditorWanted({ ...versand, draftLoaded: false })).toBe(false);
+    expect(mailEditorWanted({ ...versand, segment: 'preview' })).toBe(false);
+    expect(mailEditorWanted({ ...versand, hasLoader: false })).toBe(false);
+  });
+});
+
+describe('sameMailPageMeta', () => {
+  const meta = { subject: 'S', layout: 'standard' as const, webVersion: false };
+  it('compares subject, layout and web version', () => {
+    expect(sameMailPageMeta(meta, { ...meta })).toBe(true);
+    expect(sameMailPageMeta(meta, { ...meta, subject: 'T' })).toBe(false);
+    expect(sameMailPageMeta(meta, { ...meta, layout: 'plain' })).toBe(false);
+    expect(sameMailPageMeta(meta, { ...meta, webVersion: true })).toBe(false);
   });
 });

@@ -253,13 +253,17 @@
       "type_article": "Text",
       "type_button": "Button with link",
       "type_events": "Events of a calendar",
-      "no_content": "Write a text or add a section, then you can send.",
+      "no_content": "Write a text or add a block, then you can send.",
       "draft_error": "The draft could not be created. Close the window and try again.",
       "save_error": "The change could not be saved.",
       "refused_no_content": "The email has no content yet.",
       "refused_sent": "This email has already been sent.",
       "refused_gone": "The draft no longer exists. Close the window and start again.",
-      "refused_section": "The email contains a section that cannot be sent."
+      "refused_section": "The email contains a section that cannot be sent.",
+      "block_errors": "Blocks with errors: {count}. Once they are corrected, you can send.",
+      "blocks_invalid": "The email has too many blocks. Remove some, then you can send.",
+      "editor_error": "The editor could not be loaded. Your draft is kept.",
+      "editor_retry": "Try again"
     },
     "web_version": {
       "label": "Offer a web version",

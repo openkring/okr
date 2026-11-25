@@ -286,6 +286,11 @@ export const EMAIL_COMPOSER_I18N_KEYS = {
   page_refused_sent:  PFX + 'composer.page.refused_sent',
   page_refused_gone:  PFX + 'composer.page.refused_gone',
   page_refused_section: PFX + 'composer.page.refused_section',
+  // the editor of blocks (spec 1.176 §8.1, §13)
+  page_block_errors:  PFX + 'composer.page.block_errors',
+  page_blocks_invalid: PFX + 'composer.page.blocks_invalid',
+  page_editor_error:  PFX + 'composer.page.editor_error',
+  page_editor_retry:  PFX + 'composer.page.editor_retry',
 } satisfies Record<string, string>;
 
 export type EmailComposerI18n = { [K in keyof typeof EMAIL_COMPOSER_I18N_KEYS]: Signal<string> };

@@ -1,182 +1,184 @@
 // libs/content/pdf-template/ui/src/lib/mail-page-draft.ts
 //
-// The draft page of one opened Versand composer (spec 1.172 §7.2), shared by the composer and its
-// `okr-mail-page-editor` (provided on the composer, so both see the same instance).
+// The draft of one opened Versand composer (spec 1.176 §8.1): `mailPages/{key}` with one article whose blocks are the mail, and the
+// undo history of the editor. Provided by the composer.
 //
-// Why a shared object rather than state inside the editor: the editor lives in the composer's «Editor» segment
-// and is destroyed when the sender switches to Vorschau or Zustellung, while the composer still needs the
-// sections (the send bar waits for content) and must wait for the last typed characters to reach Firestore
-// before it asks the server to render, price or send the page — the server reads the page from Firestore.
+// Why here and not in the editor: the editor is created in the composer's «Editor» segment and destroyed when the sender switches to
+// Vorschau or Zustellung. The history must survive that (undo covers everything since opening), the composer needs the blocks (send bar,
+// errors) all the time, and before it asks the server to render, price, test or send the page, the last typed characters must have
+// reached Firestore: the server reads the page from there.
 import { computed, inject, Injectable, signal } from '@angular/core';
-import { toObservable, toSignal } from '@angular/core/rxjs-interop';
-import { catchError, map, of, switchMap } from 'rxjs';
 
-import { SectionModel } from '@okr/shared-models';
+import type { ArticleBlock, MailBlock } from '@okr/shared-models';
 import { MailPageService } from '@okr/content-pdf-template-data-access';
-import { mailPageHasContent } from '@okr/content-pdf-template-util';
+import { sameMailPageMeta, type MailPageMeta } from '@okr/content-pdf-template-util';
+import {
+  checkMailBlocks, createHistory, mailArticle, mailBlocksHaveContent, record,
+  type EditorHistory, type EditorState, type MailEditorDraft,
+} from '@okr/cms-section-util';
 
-/** Typing in an article is written to Firestore after this pause. */
+/** Changes are written to Firestore after this pause (spec 1.176: autosave 600 ms). */
 export const MAIL_PAGE_SAVE_DEBOUNCE_MS = 600;
 
+type History = EditorHistory<EditorState>;
+
+const EMPTY_META: MailPageMeta = { subject: '', layout: 'standard', webVersion: false };
+
+function blocksOf(history: History): MailBlock[] {
+  return history.present.section.properties?.blocks ?? [];
+}
+
 @Injectable()
-export class MailPageDraft {
+export class MailPageDraft implements MailEditorDraft {
   private readonly mailPageService = inject(MailPageService);
 
   /** `mailPages/{pageKey}`; empty until the composer has created the draft. */
   public readonly pageKey = signal('');
-  /** The draft could not be created: the page editor shows why instead of an empty page. */
+  /** The doc id of the one article in `mailPages/{pageKey}/sections`; its pictures are stored under it. */
+  public readonly articleKey = signal('');
+  /** The draft exists and its blocks are known. False before, and from a discard until the next `start`. */
+  public readonly loaded = signal(false);
+  /** The draft could not be created: the editor segment says why instead of showing an empty mail. */
   public readonly createFailed = signal(false);
-  /** The last write of a section failed (shown as a note; the next change tries again). */
+  /** The last write failed (shown as a note; the next change or `flush()` tries again). */
   public readonly saveFailed = signal(false);
 
-  /** The sections as Firestore has them, in page order, tagged with their page (a fresh draft must not show the old one's). */
-  private readonly remote = toSignal(toObservable(this.pageKey).pipe(
-    switchMap((key) => !key ? of(undefined) : this.mailPageService.sections$(key).pipe(
-      map((sections) => ({ key, sections })),
-      catchError((err) => {
-        console.error('MailPageDraft: reading the sections failed', err);
-        return of({ key, sections: [] as SectionModel[] });
-      }),
-    )),
-  ), { initialValue: undefined });
+  private readonly historyState = signal<History>(createHistory({ section: mailArticle('', []), copiedFrom: {} }));
+  /** The editor's history: the mail's article with what is selected; kept here, so that it survives a change of the segment. */
+  public readonly history = this.historyState.asReadonly();
+  public readonly blocks = computed(() => blocksOf(this.history()), { equal: (a, b) => a === b });
+  private readonly metaState = signal<MailPageMeta>(EMPTY_META);
+  /** Subject, layout and web version as the page stores them. */
+  public readonly meta = this.metaState.asReadonly();
 
-  /** Edits typed but not yet written: they win over the stored version, so nothing jumps back while saving. */
-  private readonly pending = signal<Record<string, SectionModel>>({});
+  /** One run of the mail's rules for the editor, the send bar and the hint. */
+  private readonly check = computed(() => checkMailBlocks(this.blocks()));
+  public readonly errors = computed(() => this.check().errors);
+  public readonly valid = computed(() => this.check().valid);
+  /** How many blocks have errors (the hint names it); 0 with an error of the mail as a whole, such as too many blocks. */
+  public readonly errorCount = computed(() => this.check().errorCount);
+  public readonly hasContent = computed(() => mailBlocksHaveContent(this.blocks()));
 
-  /** The sections of the current draft have arrived. */
-  public readonly loaded = computed(() => !!this.pageKey() && this.remote()?.key === this.pageKey());
-  public readonly sections = computed<SectionModel[]>(() => {
-    if (!this.loaded()) return [];
-    const pending = this.pending();
-    return (this.remote()?.sections ?? []).map((s) => pending[s.okey] ?? s);
-  });
-  public readonly hasContent = computed(() => mailPageHasContent(this.sections()));
-
-  private readonly timers = new Map<string, ReturnType<typeof setTimeout>>();
-  private readonly inFlight = new Set<Promise<unknown>>();
-  /** Sections whose last write failed: their edit is still pending and is tried again by `flush()`. */
-  private readonly failedKeys = new Set<string>();
+  private tenantId = '';
+  private timer: ReturnType<typeof setTimeout> | undefined;
+  /** Something changed that is not written yet (also after a failed write, until a write succeeds). */
+  private dirty = false;
+  private readonly inFlight = new Set<Promise<void>>();
+  /** No write and no delete any more: thrown away. */
   private discarded = false;
+  /** The page became a mailing, or the sender kept it: a discard leaves it. */
+  private settled = false;
 
-  /** Works on the draft `pageKey` from now on (a fresh one after the composer's «Zurücksetzen»). */
-  public start(pageKey: string): void {
-    for (const timer of this.timers.values()) clearTimeout(timer);
-    this.timers.clear();
-    this.pending.set({});
-    this.failedKeys.clear();
-    this.saveFailed.set(false);
+  /** Works on a newly created draft from now on (also a fresh one after «Zurücksetzen»). Nothing is written: it was created so. */
+  public start(draft: { pageKey: string; articleKey: string; tenantId: string; blocks: MailBlock[]; meta: MailPageMeta; selectedId?: string }): void {
+    clearTimeout(this.timer);
+    this.timer = undefined;
+    this.dirty = false;
     this.discarded = false;
-    this.pageKey.set(pageKey);
+    this.settled = false;
+    this.tenantId = draft.tenantId;
+    this.historyState.set(createHistory({ section: mailArticle(draft.tenantId, draft.blocks), copiedFrom: {}, ...(draft.selectedId ? { selectedId: draft.selectedId } : {}) }));
+    this.metaState.set(draft.meta);
+    this.saveFailed.set(false);
+    this.createFailed.set(false);
+    this.articleKey.set(draft.articleKey);
+    this.pageKey.set(draft.pageKey);
+    this.loaded.set(true);
   }
 
-  /** Keeps the edit and writes it after a typing pause (only for sections that already exist). */
-  public scheduleSave(section: SectionModel): void {
-    if (!section.okey || this.discarded) return;
-    const key = section.okey;
-    this.pending.update((map) => ({ ...map, [key]: section }));
-    clearTimeout(this.timers.get(key));
-    this.timers.set(key, setTimeout(() => this.writePending(key), MAIL_PAGE_SAVE_DEBOUNCE_MS));
+  /** A change of the editor. A change of the blocks is written after a pause; a selection alone is not. */
+  public setHistory(history: History): void {
+    const before = this.historyState();
+    if (history === before) return;
+    this.historyState.set(history);
+    if (blocksOf(history) !== blocksOf(before)) this.schedule();
   }
 
-  /** Writes a section now (a new one gets its key and is appended to the page). Resolves to its key. */
-  public async save(section: SectionModel): Promise<string | undefined> {
-    if (!this.pageKey() || this.discarded) return undefined;
-    if (section.okey) {
-      clearTimeout(this.timers.get(section.okey));
-      this.timers.delete(section.okey);
-      this.pending.update((map) => ({ ...map, [section.okey]: section }));
-    }
-    return this.track(this.mailPageService.saveSection(this.pageKey(), section).then((key) => {
-      this.dropPending(key, section);
-      this.markWritten(key);
-      return key;
-    }), section.okey || undefined);
+  /** New blocks as one step of the history (e.g. something inserted from outside the editor). */
+  public setBlocks(blocks: MailBlock[]): void {
+    const history = this.historyState();
+    const section = history.present.section;
+    this.setHistory(record(history, { ...history.present, section: { ...section, properties: { ...section.properties, blocks: blocks as ArticleBlock[] } } }));
   }
 
-  public async delete(sectionKey: string): Promise<void> {
-    if (!this.pageKey()) return;
-    clearTimeout(this.timers.get(sectionKey));
-    this.timers.delete(sectionKey);
-    await this.flush();
-    this.dropPending(sectionKey);
-    this.failedKeys.delete(sectionKey);
-    await this.track(this.mailPageService.deleteSection(this.pageKey(), sectionKey));
-  }
-
-  public async move(sectionKey: string, dir: -1 | 1): Promise<void> {
-    if (!this.pageKey()) return;
-    await this.track(this.mailPageService.move(this.pageKey(), sectionKey, dir));
+  /** Subject, layout or web version changed in the composer: written with the blocks. */
+  public setMeta(meta: MailPageMeta): void {
+    if (sameMailPageMeta(meta, this.metaState())) return;
+    this.metaState.set({ ...meta });
+    this.schedule();
   }
 
   /**
-   * Writes every edit still waiting for its typing pause, tries a failed write once more, and waits for all writes
-   * under way. The composer calls this before it asks the server to render, price or send the page, which reads
-   * the page from Firestore. Resolves to false when an edit could not be stored: the server would miss it.
+   * Writes what is still waiting for its pause, waits for every write under way, and tries a failed one once more. The composer calls it
+   * before it asks the server to render, price, test or send the page. False when a change could not be stored: the server would miss it.
    */
   public async flush(): Promise<boolean> {
-    for (const [key, timer] of [...this.timers]) {
-      clearTimeout(timer);
-      this.writePending(key);
+    if (this.timer !== undefined) {
+      clearTimeout(this.timer);
+      this.timer = undefined;
+      this.write();
     }
     await Promise.allSettled([...this.inFlight]);
-    const retry = [...this.failedKeys].filter((key) => key in this.pending() && !this.timers.has(key));
-    if (retry.length > 0) {
-      for (const key of retry) this.writePending(key);
+    if (this.dirty && !this.discarded && this.timer === undefined) {
+      this.write();
       await Promise.allSettled([...this.inFlight]);
     }
-    return this.failedKeys.size === 0;
+    return !this.dirty || this.discarded;
+  }
+
+  /** The page became a mailing: it belongs to it now, a later discard never deletes it. */
+  public markSent(): void {
+    this.settled = true;
+  }
+
+  /** «Entwurf behalten»: written now and never deleted by a discard. False when the last change could not be stored. */
+  public async keep(): Promise<boolean> {
+    this.settled = true;
+    return this.flush();
   }
 
   /**
-   * Throws the draft away (the composer closed without sending). Unwritten edits are dropped, writes under way
-   * are awaited first, so none of them lands after the delete.
+   * Throws the draft away (the composer closed without sending, or «Zurücksetzen»). Changes not yet written are dropped; writes under way
+   * are awaited first, so that none of them lands after the delete. A page that was sent or kept stays.
    */
   public async discard(): Promise<void> {
     const pageKey = this.pageKey();
     if (this.discarded) return;
     this.discarded = true;
-    for (const timer of this.timers.values()) clearTimeout(timer);
-    this.timers.clear();
+    this.loaded.set(false);
+    clearTimeout(this.timer);
+    this.timer = undefined;
     await Promise.allSettled([...this.inFlight]);
-    if (pageKey) await this.mailPageService.discardDraft(pageKey);
+    if (pageKey && !this.settled) await this.mailPageService.discardDraft(pageKey);
   }
 
-  private writePending(key: string): void {
-    this.timers.delete(key);
-    const section = this.pending()[key];
-    if (!section || !this.pageKey()) return;
-    void this.track(this.mailPageService.saveSection(this.pageKey(), section).then(() => {
-      this.dropPending(key, section);
-      this.markWritten(key);
-    }), key).catch(() => undefined);
+  private schedule(): void {
+    if (this.discarded || !this.pageKey()) return;
+    this.dirty = true;
+    clearTimeout(this.timer);
+    this.timer = setTimeout(() => {
+      this.timer = undefined;
+      this.write();
+    }, MAIL_PAGE_SAVE_DEBOUNCE_MS);
   }
 
-  /** Forgets a pending edit once it is stored, unless a newer one arrived meanwhile. */
-  private dropPending(key: string, written?: SectionModel): void {
-    this.pending.update((map) => {
-      if (!(key in map) || (written && map[key] !== written)) return map;
-      const next = { ...map };
-      delete next[key];
-      return next;
-    });
-  }
-
-  private markWritten(key: string): void {
-    this.failedKeys.delete(key);
-    this.saveFailed.set(this.failedKeys.size > 0);
-  }
-
-  /** `sectionKey`: the section a failed write leaves unsaved (a new section or a move/delete has none). */
-  private track<T>(promise: Promise<T>, sectionKey?: string): Promise<T> {
-    const tracked = promise.catch((err) => {
-      console.error('MailPageDraft: writing the page failed', err);
-      if (sectionKey) this.failedKeys.add(sectionKey);
-      this.saveFailed.set(true);
-      throw err;
-    });
-    const settled = tracked.then(() => undefined, () => undefined);
-    this.inFlight.add(settled);
-    void settled.finally(() => this.inFlight.delete(settled));
-    return tracked;
+  /** Writes the blocks and the meta as they are now: always the whole article, built anew, so that no old field is stored beside them. */
+  private write(): void {
+    const pageKey = this.pageKey();
+    if (!this.dirty || this.discarded || !pageKey) return;
+    this.dirty = false;
+    const article = mailArticle(this.tenantId, this.blocks());
+    const written = this.mailPageService.saveDraft(pageKey, this.articleKey(), article, this.meta(), new Date().toISOString()).then(
+      () => { if (!this.dirty) this.saveFailed.set(false); },
+      (err) => {
+        console.error('MailPageDraft: writing the draft failed', err);
+        // a draft of another page (after «Zurücksetzen») is not this one's concern
+        if (this.pageKey() !== pageKey) return;
+        this.dirty = true;
+        this.saveFailed.set(true);
+      },
+    );
+    this.inFlight.add(written);
+    void written.finally(() => this.inFlight.delete(written));
   }
 }

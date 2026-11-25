@@ -5,9 +5,13 @@ import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore } from '@okr/shared-feature';
 import {
   AddressCollection, AddressModel, CalendarCollection, CalendarModel, CalEventCollection, CalEventModel,
-  MembershipCollection, MembershipModel, OrgModel, PersonModel,
+  MembershipCollection, MembershipModel, OrgModel, PersonModel, SectionCollection, SectionModel, WebsiteCollection, WebsiteModel,
 } from '@okr/shared-models';
-import { addDuration, getFullName, getSystemQuery, getTodayStr, hasRole, isActiveMembership, isOrgRecipient, orgRecipientKey } from '@okr/shared-util-core';
+import {
+  addDuration, getFullName, getSystemQuery, getTodayStr, hasRole, isActiveMembership, isOrgRecipient, MAX_MAIL_EVENTS, orgRecipientKey, upcomingEventLines,
+} from '@okr/shared-util-core';
+import { articlesToInsert, type MailEditorContext } from '@okr/cms-section-util';
+import { loadMailEditor } from '@okr/cms-article-feature';
 import { type VersandEvent, VERSAND_EVENT_MONTHS, versandEventsOf } from '@okr/content-pdf-template-util';
 import { type ComposedEmail, EmailComposerModal, type VersandRecipient } from '@okr/content-pdf-template-ui';
 
@@ -89,11 +93,56 @@ export async function openBulkEmailFlow(
       filename: attachment?.filename ?? '',
       sendHandler,
       fromLocked: !!sendHandler || newsletterAdminOnly,
+      // the mail is written in the editor of blocks (spec 1.176 §10): loaded by the composer when it opens its editor
+      mailEditor: loadMailEditor,
+      mailContext: mailEditorContext(ctx),
     },
-    cssClass: 'modal-wide',
+    // a Versand is written full screen (spec 1.176 §8.1); every other use of the composer keeps its window
+    cssClass: 'modal-fullscreen',
   });
   await composer.present();
   await composer.onWillDismiss();
+}
+
+/**
+ * What the editor of a Versand mail reads about the tenant (spec 1.176 §8.1, §8.3), each at most once per opened composer and only when
+ * it is asked for. A read that fails answers empty, as `getDataOnce` does.
+ * - calendars: those of the tenant, as `loadVersandEvents` finds them;
+ * - event lines: the tenant's events from today on, read once, of the calendar, listed as the server lists them when it sends
+ *   (`upcomingEventLines`). Firestore allows one `array-contains` per query and `tenants` takes it, so the calendar is filtered here;
+ * - articles: the tenant's sections as `SectionService.list()` reads them, those the sender may insert (`articlesToInsert`);
+ * - site: `websites/{tenantId}`.
+ */
+export function mailEditorContext(ctx: BulkEmailContext): MailEditorContext {
+  const today = getTodayStr();
+  const upcoming = once(() => {
+    const query = getSystemQuery(ctx.tenantId);
+    query.push({ key: 'startDate', operator: '>=', value: today });
+    return ctx.firestoreService.getDataOnce<CalEventModel>(CalEventCollection, query, 'startDate');
+  });
+  return {
+    calendars: once(async () => (await ctx.firestoreService.getDataOnce<CalendarModel>(CalendarCollection, getSystemQuery(ctx.tenantId)))
+      .map((calendar) => ({ key: calendar.okey, name: calendar.name || calendar.okey }))
+      .sort((a, b) => a.name.localeCompare(b.name))),
+    eventLines: async (calendarKey) =>
+      upcomingEventLines((await upcoming()).filter((event) => (event.calendars ?? []).includes(calendarKey)), today, MAX_MAIL_EVENTS),
+    articles: once(async () => articlesToInsert(
+      await ctx.firestoreService.getDataOnce<SectionModel>(SectionCollection, getSystemQuery(ctx.tenantId), 'none'), ctx.appStore.currentUser(), ctx.tenantId)),
+    site: once(async () => {
+      try {
+        return await ctx.firestoreService.readModelOnce<WebsiteModel>(WebsiteCollection, ctx.tenantId);
+      } catch (err) {
+        console.warn('mailEditorContext: reading the website failed', err);
+        return undefined;
+      }
+    }),
+  };
+}
+
+/** `read` on the first call; every later call gets the same answer. */
+function once<T>(read: () => Promise<T>): () => Promise<T> {
+  let answer: Promise<T> | undefined;
+  return () => answer ??= read();
 }
 
 /**

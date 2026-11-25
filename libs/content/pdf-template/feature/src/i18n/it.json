@@ -253,13 +253,17 @@
       "type_article": "Testo",
       "type_button": "Pulsante con link",
       "type_events": "Eventi di un calendario",
-      "no_content": "Scrivi un testo o aggiungi una sezione, poi potrai inviare.",
+      "no_content": "Scrivi un testo o aggiungi un blocco, poi potrai inviare.",
       "draft_error": "Non è stato possibile creare la bozza. Chiudi la finestra e riprova.",
       "save_error": "Non è stato possibile salvare la modifica.",
       "refused_no_content": "L'e-mail non ha ancora contenuto.",
       "refused_sent": "Questa e-mail è già stata inviata.",
       "refused_gone": "La bozza non esiste più. Chiudi la finestra e ricomincia.",
-      "refused_section": "L'e-mail contiene una sezione che non può essere inviata."
+      "refused_section": "L'e-mail contiene una sezione che non può essere inviata.",
+      "block_errors": "Blocchi con errori: {count}. Quando sono corretti, puoi inviare.",
+      "blocks_invalid": "L’e-mail ha troppi blocchi. Rimuovine alcuni, poi puoi inviare.",
+      "editor_error": "Non è stato possibile caricare l’editor. La tua bozza resta salvata.",
+      "editor_retry": "Riprova"
     },
     "web_version": {
       "label": "Offri una versione web",

@@ -83,3 +83,4 @@ export * from './lib/mail-blocks.util';
 export * from './lib/mail-article.util';
 export * from './lib/editor-profile';
 export * from './lib/mail-panel.util';
+export * from './lib/mail-editor';

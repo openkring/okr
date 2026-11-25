@@ -20,6 +20,8 @@
     "@okr/content-pdf-template-ui": "*",
     "@okr/content-pdf-template-util": "*",
     "@okr/avatar-ui": "*",
-    "@okr/subject-address-util": "*"
+    "@okr/subject-address-util": "*",
+    "@okr/cms-section-util": "*",
+    "@okr/cms-article-feature": "*"
   }
 }

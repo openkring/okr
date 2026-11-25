@@ -5,6 +5,7 @@
 //  - the page is created with exactly one tenant, `senderUid` = the caller, `createdAt`, and no `mailingKey`
 //    at all (the server sets it on send); `groupKey` only when given (the rules check the group admin);
 //  - the first section is created in the same batch as the page (the rules read it with `getAfter`);
+//  - a draft of 1.176 is one article whose blocks are the mail (`mailArticle`), written with the page's subject, layout and web version;
 //  - a section's doc id equals the key in `page.sections`, which is the order the server renders in;
 //  - a discard deletes the sections first, then the page, in one batch.
 // Reads are the sender's own draft only (a document read by key); no query over drafts is made here.
@@ -14,10 +15,9 @@ import { docData, collectionData } from 'rxfire/firestore';
 import { combineLatest, map, Observable } from 'rxjs';
 
 import { FIRESTORE } from '@okr/shared-config';
-import { MailPageCollection, MailPageModel, MailPageSectionCollection, OkrModel, SectionModel } from '@okr/shared-models';
+import { ArticleSection, MailPageCollection, MailPageModel, MailPageSectionCollection, OkrModel, SectionModel } from '@okr/shared-models';
 import { removeKeyFromOkrModel, removeUndefinedFields } from '@okr/shared-util-core';
-import { createSection } from '@okr/cms-section-util';
-import { newMailPage } from '@okr/content-pdf-template-util';
+import { newMailPage, type MailPageMeta } from '@okr/content-pdf-template-util';
 
 @Injectable({ providedIn: 'root' })
 export class MailPageService {
@@ -37,23 +37,33 @@ export class MailPageService {
   }
 
   /**
-   * Creates the draft page and its first article (optionally with `firstHtml`) in one batch.
-   * The page's `sections` lists the article's doc id.
+   * Creates the draft page and its one article in one batch (the rules read the page with `getAfter`). The page's `sections` lists the
+   * article's doc id; `meta` (subject, layout, web version) and `changedAt` are stored with it (spec 1.176 §7).
    */
-  public async createDraft(tenantId: string, uid: string, groupKey?: string, firstHtml?: string): Promise<{ pageKey: string; articleKey: string }> {
+  public async createDraft(
+    tenantId: string, uid: string, groupKey: string | undefined, article: ArticleSection, meta: MailPageMeta,
+  ): Promise<{ pageKey: string; articleKey: string }> {
     const pageRef = doc(collection(this.firestore, MailPageCollection));
     const articleRef = doc(this.sectionsRef(pageRef.id));
-    const page: MailPageModel = newMailPage(tenantId, uid, groupKey);
+    const page: MailPageModel = { ...newMailPage(tenantId, uid, groupKey), ...meta, changedAt: new Date().toISOString() };
     page.sections = [articleRef.id];
-    const article = createSection('article', tenantId);
-    article.okey = articleRef.id;
-    if (firstHtml) article.content = { ...article.content, htmlContent: firstHtml };
 
     const batch = writeBatch(this.firestore);
     batch.set(pageRef, this.stored(page));
-    batch.set(articleRef, this.stored(article));
+    batch.set(articleRef, this.stored({ ...article, okey: articleRef.id }));
     await batch.commit();
     return { pageKey: pageRef.id, articleKey: articleRef.id };
+  }
+
+  /**
+   * Writes the draft's article (overwritten as a whole, so that no old field stays beside its blocks) and the page's subject, layout,
+   * web version and `changedAt`, in one batch.
+   */
+  public async saveDraft(pageKey: string, articleKey: string, article: ArticleSection, meta: MailPageMeta, changedAt: string): Promise<void> {
+    const batch = writeBatch(this.firestore);
+    batch.set(doc(this.sectionsRef(pageKey), articleKey), this.stored({ ...article, okey: articleKey }));
+    batch.update(this.pageRef(pageKey), this.stored({ ...meta, changedAt }));
+    await batch.commit();
   }
 
   /** The page's sections in the order of `page.sections`; keys without a section doc are left out, live. */

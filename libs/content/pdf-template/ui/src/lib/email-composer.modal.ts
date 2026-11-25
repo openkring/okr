@@ -1,5 +1,8 @@
 // libs/content/pdf-template/ui/src/lib/email-composer.modal.ts
-import { ChangeDetectionStrategy, Component, computed, DestroyRef, effect, inject, input, linkedSignal, PLATFORM_ID, signal, untracked } from '@angular/core';
+import {
+  ChangeDetectionStrategy, Component, ComponentRef, computed, DestroyRef, effect, inject, input, linkedSignal, PLATFORM_ID, signal, TemplateRef, Type,
+  untracked, viewChild, ViewContainerRef,
+} from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { form } from '@angular/forms/signals';
@@ -9,7 +12,7 @@ import { filter, firstValueFrom, tap } from 'rxjs';
 import {
   IonButton, IonContent,
   IonCard, IonCardContent, IonGrid, IonRow, IonCol, IonIcon, IonChip, IonLabel, IonNote,
-  IonSegment, IonSegmentButton, IonItem, IonAccordionGroup, IonAccordion,
+  IonSegment, IonSegmentButton, IonItem, IonAccordionGroup, IonAccordion, IonPopover,
   AlertController, ModalController, ToastController,
 } from '@ionic/angular';
 
@@ -28,8 +31,9 @@ import {
   GROUP_ADMIN_MAILING_CHANNELS, groupReachWarnings, hasPostDelivery, isSenderDomainAllowed,
   nonPdfAttachmentNames, parseEmails, sharedEmailCount, untickEmailAddress, withLinksInNewTab, toggleDelivery, versandBcc, versandDeliveries,
   EmailComposerFormModel, emailComposerValidations, VersandDeliveries, VersandEvent, VersandRow,
-  EMAIL_COMPOSER_I18N_KEYS, EMAIL_COMPOSER_MSG_KEYS, EmailComposerI18n, mailPageRefusalKey,
+  EMAIL_COMPOSER_I18N_KEYS, EMAIL_COMPOSER_MSG_KEYS, EmailComposerI18n, mailEditorWanted, MailPageMeta, mailPageRefusalKey,
 } from '@okr/content-pdf-template-util';
+import { firstTextId, mailArticle, mailBlocksFromBody, type MailEditorContext } from '@okr/cms-section-util';
 import { DocEmailService, InlineAttachment, MailingLetters, PostQuote, SendMailingRequest, TemplateService } from '@okr/content-pdf-template-data-access';
 
 import { EmailLayoutPicker } from './email-layout-picker';
@@ -41,7 +45,6 @@ import { VersandInfoModal } from './versand-info.modal';
 import { APP_STORE_MIN } from '@okr/shared-data-access';
 import { MailPageService } from '@okr/content-pdf-template-data-access';
 import { MailPageDraft } from './mail-page-draft';
-import { MailPageEditor } from './mail-page-editor';
 
 /** Debounce of the price request while the sender changes options or the draft. */
 const QUOTE_DEBOUNCE_MS = 400;
@@ -116,10 +119,10 @@ interface AddressField {
     VersandDeliveryTable, VersandEventsSelect, PostversandStep,
     IonContent, IonButton,
     IonCard, IonCardContent, IonGrid, IonRow, IonCol, IonIcon, IonChip, IonLabel, IonNote,
-    IonSegment, IonSegmentButton, IonItem, IonAccordionGroup, IonAccordion,
-    VersandAddressList, EmailLayoutPicker, MailPageEditor,
+    IonSegment, IonSegmentButton, IonItem, IonAccordionGroup, IonAccordion, IonPopover,
+    VersandAddressList, EmailLayoutPicker,
   ],
-  // the Versand's draft page, shared with the page editor (which is destroyed whenever the Editor segment closes)
+  // the Versand's draft: its blocks and the editor's history outlive the editor, which is destroyed whenever the Editor segment closes
   providers: [MailPageDraft],
   styles: [`
     @media (width <= 600px) { ion-card { margin: 5px; } }
@@ -138,6 +141,21 @@ interface AddressField {
     .preview-frame { width: 100%; min-height: 420px; border: 0; background: #ffffff; }
     /* the same height whether the preview is empty, loading or shown: the segment does not jump */
     .preview-card { min-height: 420px; }
+    /* Versand (spec 1.176 §8.1): the editor fills the window below the segments, the canvas and the panel scroll on their own */
+    ion-content.mail-fill::part(scroll) { display: flex; flex-direction: column; }
+    ion-content.mail-fill form { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+    .mail-editor { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+    .mail-editor > okr-spinner { padding: 16px; }
+    .mail-message { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 16px 12px; }
+    .mail-head { display: flex; flex-wrap: wrap; align-items: center; gap: 0 16px; padding: 0 8px 4px; }
+    .mail-subject { flex: 1 1 320px; min-width: 0; }
+    .mail-layout { flex: none; }
+    .mail-layout ion-button { margin: 0; text-transform: none; }
+    .mail-web { flex: 0 1 300px; min-width: 0; }
+    .mail-web .note { padding: 0 0 4px; font-size: 0.8rem; }
+    .mail-layouts { --width: min(640px, 94vw); }
+    .mail-layouts-content { padding: 12px; }
+    .mail-panel { display: flex; flex-direction: column; gap: 12px; padding: 12px; border-top: 1px solid var(--ion-color-light-shade); }
   `],
   template: `
     <okr-header [i18n]="{ title: headerTitle() }" [isModal]="true"
@@ -147,6 +165,14 @@ interface AddressField {
       <okr-change-confirmation [i18n]="changeConfirmationI18n()" (saveClicked)="send()" (cancelClicked)="revert()" />
     }
     @if (showSendHints()) {
+      @if (isVersand() && draft.loaded() && !draft.valid()) {
+        <div class="reach-warnings" role="status">
+          <div class="reach-warning">
+            <ion-icon src="{{ 'warning' | svgIcon }}" />
+            <span>{{ blockErrorsText() }}</span>
+          </div>
+        </div>
+      }
       @if (isVersand() && draft.loaded() && !draft.hasContent()) {
         <div class="reach-warnings" role="status">
           <div class="reach-warning">
@@ -175,7 +201,7 @@ interface AddressField {
       }
     }
 
-    <ion-content class="ion-no-padding">
+    <ion-content class="ion-no-padding" [class.mail-fill]="fillWindow()" [scrollY]="!fillWindow()">
       <!-- After a Versand with Post: the letters are built on the server, then downloaded here (P3). -->
       @if (letters(); as letters) {
         <ion-card>
@@ -216,84 +242,144 @@ interface AddressField {
         <form novalidate (submit)="$event.preventDefault()">
           <!-- Editor: subject, layout, the message body and its attachments — in that order. -->
           @if (activeSegment() === 'editor') {
-            <ion-card>
-              <ion-card-content class="ion-no-padding">
-                <ion-grid>
-                  <ion-row>
-                    <ion-col size="12">
-                      <okr-text-input [i18n]="subjectI18n()" [value]="subject()"
-                        (valueChange)="onFieldChange('subject', $event)"
-                        [autofocus]="!focusPage()" [maxLength]="subjectLength" [readOnly]="false" />
-                      <okr-error-note [errors]="subjectErrors()" />
-                    </ion-col>
-                  </ion-row>
-                  <ion-row>
-                    <ion-col size="12">
+            <!-- Versand (spec 1.176 §8.1): the editor of blocks, loaded by the function the opener hands over; head line and panel are this composer's -->
+            @if (isVersand()) {
+              <div class="mail-editor">
+                @if (mailEditorFailed() || !mailEditor()) {
+                  <div class="mail-message" role="status">
+                    <ion-note color="danger">{{ i18n.page_editor_error() }}</ion-note>
+                    @if (mailEditor()) {
+                      <ion-button fill="outline" size="small" (click)="retryMailEditor()">{{ i18n.page_editor_retry() }}</ion-button>
+                    }
+                  </div>
+                } @else if (draft.createFailed()) {
+                  <ion-note color="danger" class="note">{{ i18n.page_draft_error() }}</ion-note>
+                } @else if (draft.loaded()) {
+                  @if (mailEditorLoading()) { <okr-spinner /> }
+                  <ng-container #mailHost />
+                } @else {
+                  <okr-spinner />
+                }
+                @if (draft.saveFailed()) {
+                  <ion-note color="danger" class="note">{{ i18n.page_save_error() }}</ion-note>
+                }
+              </div>
+              <!-- the head line above the editor: subject, template, web version -->
+              <ng-template #mailHead>
+                <div class="mail-head">
+                  <div class="mail-subject" (keydown)="onSubjectKey($event)">
+                    <okr-text-input [i18n]="subjectI18n()" [value]="subject()"
+                      (valueChange)="onFieldChange('subject', $event)"
+                      [autofocus]="subjectAutofocus() && subject().trim() === ''" [maxLength]="subjectLength" [readOnly]="false" />
+                    <okr-error-note [errors]="subjectErrors()" />
+                  </div>
+                  <div class="mail-layout">
+                    <ion-button fill="outline" size="small" [attr.aria-haspopup]="'dialog'" (click)="openLayouts($event)">
+                      {{ i18n.layout_label() }}: {{ layoutLabel() }}
+                      <ion-icon slot="end" src="{{ 'chevron-down' | svgIcon }}" aria-hidden="true" />
+                    </ion-button>
+                  </div>
+                  <div class="mail-web">
+                    <okr-checkbox [i18n]="webVersionI18n()" [checked]="webVersion()" (checkedChange)="onWebVersionChange($event)"
+                      [toggle]="true" [readOnly]="false" />
+                    <ion-note class="note">{{ i18n.web_version_helper() }}</ion-note>
+                  </div>
+                </div>
+                <ion-popover class="mail-layouts" [isOpen]="layoutsOpen()" [event]="layoutsEvent()" (didDismiss)="layoutsOpen.set(false)">
+                  <ng-template>
+                    <div class="mail-layouts-content">
                       <okr-email-layout-picker [label]="i18n.layout_label()" [choices]="layoutChoices()" [labels]="layoutLabels()"
-                        [thumbnails]="layoutThumbnails()" [selected]="layout()" (selectedChange)="onLayoutChange($event)" />
-                    </ion-col>
-                  </ion-row>
-                  <!-- Versand (spec 1.172 §7.2): the web version switch, then the mail as a page of sections -->
-                  @if (isVersand()) {
-                    <ion-row>
-                      <ion-col size="12">
-                        <okr-checkbox [i18n]="webVersionI18n()" [checked]="webVersion()" (checkedChange)="onWebVersionChange($event)"
-                          [toggle]="true" [readOnly]="false" />
-                        <ion-note class="note">{{ i18n.web_version_helper() }}</ion-note>
-                      </ion-col>
-                    </ion-row>
-                    <ion-row>
-                      <ion-col size="12">
-                        <okr-mail-page-editor [i18n]="i18n" [autofocus]="focusPage()" />
-                      </ion-col>
-                    </ion-row>
-                  }
+                        [thumbnails]="layoutThumbnails()" [selected]="layout()" (selectedChange)="onLayoutChange($event); layoutsOpen.set(false)" />
+                    </div>
+                  </ng-template>
+                </ion-popover>
+              </ng-template>
+              <!-- below the block library while no block is selected: the answer-link events and the attachments -->
+              <ng-template #mailPanel>
+                <div class="mail-panel">
                   @if (showEvents()) {
+                    <okr-versand-events-select [events]="versandEvents()" [label]="i18n.events_label()"
+                      [placeholder]="i18n.events_placeholder()" [removeLabel]="i18n.events_remove()"
+                      [selected]="caleventKeys()" (selectedChange)="onEventsChange($event)" />
+                  }
+                  <div class="attachments">
+                    <ion-label>{{ i18n.attachment_label() }}</ion-label>
+                    @if (filename().length > 0) {
+                      <ion-chip [outline]="true">
+                        <ion-icon src="{{ 'attachment' | svgIcon }}" />
+                        <ion-label>{{ filename() }}</ion-label>
+                      </ion-chip>
+                    }
+                    @for (att of extraAttachments(); track att.filename) {
+                      <ion-chip [outline]="true">
+                        <ion-icon src="{{ 'attachment' | svgIcon }}" />
+                        <ion-label>{{ att.filename }}</ion-label>
+                        <ion-icon src="{{ 'cancel' | svgIcon }}" (click)="removeAttachment(att.filename)" />
+                      </ion-chip>
+                    }
+                    <span class="spacer"></span>
+                    <ion-button fill="outline" size="small" (click)="fileInput.click()">
+                      <ion-icon src="{{ 'add' | svgIcon }}" slot="start" />
+                      {{ i18n.attachment_add() }}
+                    </ion-button>
+                    <input #fileInput type="file" hidden (change)="onFileSelected($event)" />
+                  </div>
+                </div>
+              </ng-template>
+            } @else {
+              <ion-card>
+                <ion-card-content class="ion-no-padding">
+                  <ion-grid>
                     <ion-row>
                       <ion-col size="12">
-                        <okr-versand-events-select [events]="versandEvents()" [label]="i18n.events_label()"
-                          [placeholder]="i18n.events_placeholder()" [removeLabel]="i18n.events_remove()"
-                          [selected]="caleventKeys()" (selectedChange)="onEventsChange($event)" />
+                        <okr-text-input [i18n]="subjectI18n()" [value]="subject()"
+                          (valueChange)="onFieldChange('subject', $event)"
+                          [autofocus]="true" [maxLength]="subjectLength" [readOnly]="false" />
+                        <okr-error-note [errors]="subjectErrors()" />
                       </ion-col>
                     </ion-row>
-                  }
-                  @if (!isVersand()) {
+                    <ion-row>
+                      <ion-col size="12">
+                        <okr-email-layout-picker [label]="i18n.layout_label()" [choices]="layoutChoices()" [labels]="layoutLabels()"
+                          [thumbnails]="layoutThumbnails()" [selected]="layout()" (selectedChange)="onLayoutChange($event)" />
+                      </ion-col>
+                    </ion-row>
                     <ion-row>
                       <ion-col size="12">
                         <okr-rich-text-input [i18n]="bodyI18n" [value]="body()" (valueChange)="onFieldChange('body', $event)"
                           [readOnly]="false" [copyable]="true" [errors]="bodyErrors()" />
                       </ion-col>
                     </ion-row>
-                  }
-                  <ion-row>
-                    <ion-col size="12">
-                      <div class="attachments">
-                        <ion-label>{{ i18n.attachment_label() }}</ion-label>
-                        @if (filename().length > 0) {
-                          <ion-chip [outline]="true">
-                            <ion-icon src="{{ 'attachment' | svgIcon }}" />
-                            <ion-label>{{ filename() }}</ion-label>
-                          </ion-chip>
-                        }
-                        @for (att of extraAttachments(); track att.filename) {
-                          <ion-chip [outline]="true">
-                            <ion-icon src="{{ 'attachment' | svgIcon }}" />
-                            <ion-label>{{ att.filename }}</ion-label>
-                            <ion-icon src="{{ 'cancel' | svgIcon }}" (click)="removeAttachment(att.filename)" />
-                          </ion-chip>
-                        }
-                        <span class="spacer"></span>
-                        <ion-button fill="outline" size="small" (click)="fileInput.click()">
-                          <ion-icon src="{{ 'add' | svgIcon }}" slot="start" />
-                          {{ i18n.attachment_add() }}
-                        </ion-button>
-                        <input #fileInput type="file" hidden (change)="onFileSelected($event)" />
-                      </div>
-                    </ion-col>
-                  </ion-row>
-                </ion-grid>
-              </ion-card-content>
-            </ion-card>
+                    <ion-row>
+                      <ion-col size="12">
+                        <div class="attachments">
+                          <ion-label>{{ i18n.attachment_label() }}</ion-label>
+                          @if (filename().length > 0) {
+                            <ion-chip [outline]="true">
+                              <ion-icon src="{{ 'attachment' | svgIcon }}" />
+                              <ion-label>{{ filename() }}</ion-label>
+                            </ion-chip>
+                          }
+                          @for (att of extraAttachments(); track att.filename) {
+                            <ion-chip [outline]="true">
+                              <ion-icon src="{{ 'attachment' | svgIcon }}" />
+                              <ion-label>{{ att.filename }}</ion-label>
+                              <ion-icon src="{{ 'cancel' | svgIcon }}" (click)="removeAttachment(att.filename)" />
+                            </ion-chip>
+                          }
+                          <span class="spacer"></span>
+                          <ion-button fill="outline" size="small" (click)="fileInput.click()">
+                            <ion-icon src="{{ 'add' | svgIcon }}" slot="start" />
+                            {{ i18n.attachment_add() }}
+                          </ion-button>
+                          <input #fileInput type="file" hidden (change)="onFileSelected($event)" />
+                        </div>
+                      </ion-col>
+                    </ion-row>
+                  </ion-grid>
+                </ion-card-content>
+              </ion-card>
+            }
           }
 
           <!-- Preview: the mail as the server renders it, i.e. exactly what the recipient receives. -->
@@ -478,6 +564,14 @@ export class EmailComposerModal {
   public readonly versandEvents  = input<VersandEvent[]>([]);
   /** groupKey → personKeys of its members, for the «not in the group» note. */
   public readonly membersByGroup = input<Record<string, string[]>>({});
+  /**
+   * A Versand's editor of blocks (spec 1.176 §10): `loadMailEditor` of `@okr/cms-article-feature`, handed over by `openBulkEmailFlow`, so
+   * that this lib does not depend on the editor and no other use of the composer loads it. Required for a Versand: without it the editor
+   * segment says that the editor could not be loaded.
+   */
+  public readonly mailEditor = input<(() => Promise<Type<unknown>>) | undefined>(undefined);
+  /** What the editor reads about the tenant (calendars, events, articles, website), from the same opener. */
+  public readonly mailContext = input<MailEditorContext | undefined>(undefined);
 
   protected readonly activeSegment = signal<ComposerSegment>('editor');
 
@@ -627,7 +721,8 @@ export class EmailComposerModal {
   /** A valid form; a Versand also needs its Zustellung loaded and at least one ticked recipient. */
   protected readonly canSend = computed(() =>
     this.composerForm().valid()
-    && (!this.isVersand() || (this.versandLoaded() && versandDeliveries(this.versandRows(), this.deliveries()).length > 0 && this.draft.hasContent()))
+    && (!this.isVersand() || (this.versandLoaded() && versandDeliveries(this.versandRows(), this.deliveries()).length > 0
+      && this.draft.hasContent() && this.draft.valid()))
     && this.postAllowsSend());
   /** Post by download is free; by Pingen the sender needs a sufficient, accepted price. */
   private readonly postAllowsSend = computed(() => {
@@ -704,11 +799,13 @@ export class EmailComposerModal {
     || (this.isVersand() ? this.draft.hasContent() : emailBodyHasContent(this.formData().body ?? '')));
 
   /**
-   * The page's content as one value: a change of any section changes it, a stored copy of what was typed does not
-   * (the overlay and the stored version compare equal), so the preview and the price are not asked for twice.
+   * What the server renders as one value: the blocks and subject, layout and web version of the page. A change of the selection or a
+   * stored copy of what was typed does not change it, so the preview and the price are not asked for twice.
    */
-  private readonly pageVersion = computed(() => JSON.stringify(this.draft.sections()));
-  /** `pageVersion` when the draft was loaded: a later difference means the sender changed the page. */
+  private readonly pageVersion = computed(() => JSON.stringify([this.draft.blocks(), this.draft.meta()]));
+  /** The blocks alone: a change of them makes the composer dirty (subject, layout and web version do that on their own). */
+  private readonly blocksVersion = computed(() => JSON.stringify(this.draft.blocks()));
+  /** `blocksVersion` when the draft was loaded: a later difference means the sender changed the mail. */
   private pageBaseline: string | undefined;
   /** Resolves once the draft page exists (or failed); a dismiss waits for it before discarding the draft. */
   private draftReady: Promise<void> | undefined;
@@ -720,10 +817,32 @@ export class EmailComposerModal {
   private sendInFlight: Promise<void> | undefined;
 
   /**
-   * Where the cursor starts (spec 1.172 §7.2, R13): a mail needs a subject first, so an empty subject keeps the
-   * focus; with a prefilled subject a Versand starts in the text of its first article.
+   * Where the cursor starts (spec 1.176 §8.1): a mail needs a subject first, so an empty subject takes the focus when the editor
+   * opens the first time; with a subject the draft starts with its first text selected, which the editor opens with the cursor in it.
    */
-  protected readonly focusPage = computed(() => this.isVersand() && this.subjectDefault().trim().length > 0);
+  protected readonly subjectAutofocus = signal(true);
+
+  // the editor of a Versand (spec 1.176 §10), created in the editor segment and destroyed with it
+  private readonly mailHost = viewChild('mailHost', { read: ViewContainerRef });
+  private readonly mailHead = viewChild<TemplateRef<unknown>>('mailHead');
+  private readonly mailPanel = viewChild<TemplateRef<unknown>>('mailPanel');
+  private hostRef: ComponentRef<unknown> | undefined;
+  private hostCreating = false;
+  /** The editor's chunk could not be loaded (offline, a stale release): a message with «Erneut versuchen»; the draft is untouched. */
+  protected readonly mailEditorFailed = signal(false);
+  protected readonly mailEditorLoading = signal(false);
+  /** A Versand's editor segment fills the window; every other view scrolls as before. */
+  protected readonly fillWindow = computed(() => this.isVersand() && this.activeSegment() === 'editor');
+  /** The hint while a block is invalid: how many blocks, or the mail as a whole (too many blocks). */
+  protected readonly blockErrorsText = computed(() => this.draft.errorCount() > 0
+    ? fill(this.i18n.page_block_errors(), { count: this.draft.errorCount() })
+    : this.i18n.page_blocks_invalid());
+  /** The template's name on the button of the head line. */
+  protected readonly layoutLabel = computed(() => this.layoutLabels()[this.layoutChoices().indexOf(this.layout())] ?? '');
+  protected readonly layoutsOpen = signal(false);
+  protected readonly layoutsEvent = signal<Event | undefined>(undefined);
+  /** What the page keeps besides its blocks, as the composer has it now. */
+  private readonly meta = computed<MailPageMeta>(() => ({ subject: this.subject(), layout: this.layout(), webVersion: this.webVersion() }));
 
   /** «Webversion anbieten» (spec 1.172 R4): on for a newsletter, else off, until the sender switches it. */
   private readonly webVersionChoice = signal<boolean | undefined>(undefined);
@@ -821,14 +940,28 @@ export class EmailComposerModal {
           .catch((err) => console.warn('EmailComposerModal: could not discard the draft page', err));
       }
     });
-    // A Versand composes a page (spec 1.172): its draft is created once, with the prefilled body as its first article.
+    // A Versand composes a page (spec 1.172): its draft is created once, with the prefilled body as its first text.
     effect(() => {
       if (!this.isVersand() || this.draftReady) return;
       untracked(() => { this.draftReady = this.createDraft(); });
     });
-    // Any change of the page makes the composer dirty, like a change of the body (the send bar appears).
+    // The page keeps subject, layout and web version (spec 1.176 §8.5): written with the blocks.
     effect(() => {
-      const version = this.pageVersion();
+      const meta = this.meta();
+      if (!this.draft.loaded()) return;
+      untracked(() => this.draft.setMeta(meta));
+    });
+    // The editor of a Versand: created when its segment shows the place for it, with the draft loaded. Never for another use of the composer.
+    effect(() => {
+      const anchor = this.mailHost();
+      const wanted = mailEditorWanted({
+        isVersand: this.isVersand(), segment: this.activeSegment(), draftLoaded: this.draft.loaded(), hasLoader: !!this.mailEditor(),
+      });
+      untracked(() => { if (wanted && anchor && !this.hostRef) void this.createMailEditor(); });
+    });
+    // Any change of the blocks makes the composer dirty, like a change of the body (the send bar appears).
+    effect(() => {
+      const version = this.blocksVersion();
       if (!this.draft.loaded()) return;
       untracked(() => {
         if (this.draftResetting) return;
@@ -1292,22 +1425,94 @@ export class EmailComposerModal {
     this.webVersionChoice.set(on);
   }
 
-  /** Creates the draft page with the prefilled body (if any) as its first article; a failure is shown in the editor. */
+  /**
+   * Creates the draft: one article whose first text holds the prefilled body (if any), with subject, layout and web version. With a subject
+   * the first text starts selected, so the editor opens with the cursor in it (spec 1.176 §8.1). A failure is shown in the editor segment.
+   */
   private async createDraft(): Promise<void> {
     if (!isBrowser(this.platformId) || this.destroyed) return;
     const uid = this.appStore.fbUser()?.uid ?? '';
+    const tenantId = this.appStore.tenantId();
+    const blocks = mailBlocksFromBody(this.bodyDefault(), () => crypto.randomUUID());
+    const meta = this.meta();
     try {
-      const { pageKey } = await this.mailPageService.createDraft(
-        this.appStore.tenantId(), uid, this.groupKey() || undefined, this.bodyDefault() || undefined);
+      const { pageKey, articleKey } = await this.mailPageService.createDraft(
+        tenantId, uid, this.groupKey() || undefined, mailArticle(tenantId, blocks), meta);
       this.pageBaseline = undefined;       // the first version of the new draft is its baseline
-      this.draft.start(pageKey);
-      this.draft.createFailed.set(false);
+      const selectedId = this.subject().trim().length > 0 ? firstTextId(blocks) : undefined;
+      this.draft.start({ pageKey, articleKey, tenantId, blocks, meta, selectedId });
     } catch (err) {
       console.error('EmailComposerModal.createDraft: creating the draft page failed', err);
       this.draft.createFailed.set(true);
     } finally {
       this.draftResetting = false;
     }
+  }
+
+  /**
+   * Loads the editor (once per opened segment; the browser keeps the chunk) and creates it in its place, with its first change detection.
+   * Its inputs are set by name: this lib does not know its class. A failure leaves the draft as it is and offers «Erneut versuchen».
+   */
+  private async createMailEditor(): Promise<void> {
+    const load = this.mailEditor();
+    const context = this.mailContext();
+    if (!load || !context || this.hostCreating) {
+      if (!context) this.mailEditorFailed.set(true);
+      return;
+    }
+    this.hostCreating = true;
+    this.mailEditorLoading.set(true);
+    try {
+      const host = await load();
+      const anchor = this.mailHost();
+      // the segment, the draft or the composer went meanwhile: the effect creates it when its place is there again
+      if (this.destroyed || !anchor || this.hostRef || !this.draft.loaded()) return;
+      const ref = anchor.createComponent(host);
+      this.hostRef = ref;
+      ref.onDestroy(() => { if (this.hostRef === ref) this.hostRef = undefined; });
+      ref.setInput('draft', this.draft);
+      ref.setInput('context', context);
+      ref.setInput('head', this.mailHead());
+      ref.setInput('panel', this.mailPanel());
+      ref.setInput('storagePath', `tenant/${this.appStore.tenantId()}/section/${this.draft.articleKey()}`);
+      ref.setInput('currentUser', this.appStore.currentUser());
+      ref.setInput('active', () => !this.destroyed && !this.isSending());
+      ref.changeDetectorRef.detectChanges();
+      // the subject takes the focus only the first time the editor opens
+      this.subjectAutofocus.set(false);
+    } catch (err) {
+      console.warn('EmailComposerModal: the mail editor could not be loaded', err);
+      this.hostRef?.destroy();
+      if (!this.destroyed) this.mailEditorFailed.set(true);
+    } finally {
+      this.hostCreating = false;
+      this.mailEditorLoading.set(false);
+    }
+  }
+
+  protected retryMailEditor(): void {
+    this.mailEditorFailed.set(false);      // the place of the editor comes back, and with it the effect that creates it
+  }
+
+  /** Enter or Tab (without Shift) in the subject goes to the first text of the mail (spec 1.176 §8.1). */
+  protected onSubjectKey(event: KeyboardEvent): void {
+    if (event.isComposing || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+    if (event.key !== 'Enter' && event.key !== 'Tab') return;
+    const host = this.hostRef?.instance as { focusFirstText?: () => boolean } | undefined;
+    if (host?.focusFirstText?.()) event.preventDefault();
+    else if (event.key === 'Enter') event.preventDefault();
+  }
+
+  /** The template picker with its thumbnails, in a popover at the button. */
+  protected openLayouts(event: Event): void {
+    this.layoutsEvent.set(event);
+    this.layoutsOpen.set(true);
+  }
+
+  /** The page is the mailing's now: neither the composer nor the draft may delete it. */
+  private markSent(): void {
+    this.sent = true;
+    this.draft.markSent();
   }
 
   protected revert(): void {
@@ -1429,14 +1634,14 @@ export class EmailComposerModal {
         const sending = (async (): Promise<string | undefined> =>
           (await this.draft.flush()) ? this.docEmailService.sendMailing(mailing) : undefined)();
         // A close while this runs (onDestroy) waits for it: a sent page stays, an unsent draft is discarded.
-        this.sendInFlight = sending.then((key) => { if (key) this.sent = true; }, () => undefined);
+        this.sendInFlight = sending.then((key) => { if (key) this.markSent(); }, () => undefined);
         const mailingKey = await sending;
         if (!mailingKey) {
           await this.showToast(this.i18n.page_save_error(), 'danger');
           this.isSending.set(false);
           return;
         }
-        this.sent = true;
+        this.markSent();
         await this.showParamToast(EMAIL_COMPOSER_MSG_KEYS.send_mailing, {
           emails: deliveries.filter((d) => d.channels.includes(DeliveryChannel.Email)).length,
           notices: deliveries.filter((d) => d.channels.includes(DeliveryChannel.Chat)).length,

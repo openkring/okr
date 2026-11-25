@@ -253,13 +253,17 @@
       "type_article": "Texto",
       "type_button": "Botón con enlace",
       "type_events": "Eventos de un calendario",
-      "no_content": "Escribe un texto o añade una sección, luego podrás enviar.",
+      "no_content": "Escribe un texto o añade un bloque, luego podrás enviar.",
       "draft_error": "No se pudo crear el borrador. Cierra la ventana e inténtalo de nuevo.",
       "save_error": "No se pudo guardar el cambio.",
       "refused_no_content": "El correo todavía no tiene contenido.",
       "refused_sent": "Este correo ya se ha enviado.",
       "refused_gone": "El borrador ya no existe. Cierra la ventana y empieza de nuevo.",
-      "refused_section": "El correo contiene una sección que no se puede enviar."
+      "refused_section": "El correo contiene una sección que no se puede enviar.",
+      "block_errors": "Bloques con errores: {count}. En cuanto los corrijas, puedes enviar.",
+      "blocks_invalid": "El correo tiene demasiados bloques. Quita algunos y podrás enviar.",
+      "editor_error": "No se pudo cargar el editor. Tu borrador se conserva.",
+      "editor_retry": "Reintentar"
     },
     "web_version": {
       "label": "Ofrecer versión web",

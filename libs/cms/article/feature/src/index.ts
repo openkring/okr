@@ -12,6 +12,9 @@ export * from './lib/section-link';
 // not the component, only its loader; the type is for whoever creates it
 export * from './lib/article-blocks.loader';
 export type { ArticleBlocks } from './lib/article-blocks';
+// the editor of a Versand mail: only its loader, for the composer
+export * from './lib/mail-editor.loader';
+export type { MailEditorHost } from './lib/mail-editor-host';
 
 // editors: only lazily loaded files (the article editor) import these, so that readers load none of it
 export * from './lib/article-canvas';

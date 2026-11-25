@@ -2,9 +2,28 @@
 //
 // Pure helpers for the mail page of a Versand (spec 1.172): the draft page, the "does it show anything" check
 // the composer needs before sending, a one-line summary per section, and the picker of addable section types.
-import { CategoryItemModel, CategoryListModel, MAIL_SECTION_TYPES, MailPageModel, SectionModel } from '@okr/shared-models';
+import { CategoryItemModel, CategoryListModel, EmailLayoutChoice, MAIL_SECTION_TYPES, MailPageModel, SectionModel } from '@okr/shared-models';
 
 const SUMMARY_LENGTH = 60;
+
+/** What the draft page keeps of the composer besides its blocks (spec 1.176 §8.5): written with them, read by «Frühere E-Mail kopieren». */
+export interface MailPageMeta {
+  subject: string;
+  layout: EmailLayoutChoice;
+  webVersion: boolean;
+}
+
+export function sameMailPageMeta(a: MailPageMeta, b: MailPageMeta): boolean {
+  return a.subject === b.subject && a.layout === b.layout && a.webVersion === b.webVersion;
+}
+
+/**
+ * Whether the composer loads the mail editor (spec 1.176 §10): only a Versand, only in its «Editor» segment, and only once its draft
+ * exists. Every other use of the composer keeps the text editor and never asks for the editor's chunk.
+ */
+export function mailEditorWanted(state: { isVersand: boolean; segment: string; draftLoaded: boolean; hasLoader: boolean }): boolean {
+  return state.isVersand && state.segment === 'editor' && state.draftLoaded && state.hasLoader;
+}
 
 /**
  * A draft page for `uid`. `createdAt` is always set: the nightly reap of abandoned drafts queries

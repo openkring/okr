@@ -4,7 +4,7 @@
 // typed into directly (the everyday case: two lines, send); every other section is a card with its summary,
 // up/down/remove and «Bearbeiten». «Abschnitt hinzufügen» offers the mail section types.
 //
-// The sections and their writes live in `MailPageDraft`, provided by the composer: this component is destroyed
+// Unused since 1.176 (removed with its Task 15). The sections and their writes live in `MailPageSectionsDraft`, provided by the composer: this component is destroyed
 // whenever the composer leaves its «Editor» segment, the draft is not.
 import { Component, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { ActionSheetController, IonButton, IonCard, IonIcon, IonItem, IonLabel, IonNote, ModalController } from '@ionic/angular';
@@ -17,7 +17,7 @@ import { APP_STORE_MIN } from '@okr/shared-data-access';
 import { createSection } from '@okr/cms-section-util';
 import { EmailComposerI18n, sectionSummary } from '@okr/content-pdf-template-util';
 
-import { MailPageDraft } from './mail-page-draft';
+import { MailPageSectionsDraft } from './mail-page-sections-draft';
 
 const TYPE_ICONS: Record<string, string> = { article: 'document', button: 'link', events: 'calendar' };
 
@@ -89,7 +89,7 @@ const TYPE_ICONS: Record<string, string> = { article: 'document', button: 'link'
   `,
 })
 export class MailPageEditor {
-  protected readonly draft = inject(MailPageDraft);
+  protected readonly draft = inject(MailPageSectionsDraft);
   private readonly appStore = inject(APP_STORE_MIN);
   private readonly modalController = inject(ModalController);
   private readonly actionSheetController = inject(ActionSheetController);
