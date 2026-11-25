@@ -32,7 +32,7 @@ import { onDocumentCreated } from 'firebase-functions/v2/firestore';
 import { logger } from 'firebase-functions/v2';
 import { getFirestore, type Firestore } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
-import { DeliveryChannel, type EmailLayoutChoice, GroupCollection, MailingWebCollection, MailPageCollection, type MailPageModel, NoticeAttachment, NoticeCollection, type NoticeModel, type PostOptions } from '@okr/shared-models';
+import { DeliveryChannel, type EmailLayoutChoice, MailingWebCollection, MailPageCollection, type MailPageModel, NoticeAttachment, NoticeCollection, type NoticeModel, type PostOptions } from '@okr/shared-models';
 import { DateFormat, getEventLocationName, getTodayStr, isOrgRecipient, recipientParentKey } from '@okr/shared-util-core';
 import { projectID } from 'firebase-functions/params';
 import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functions';
@@ -43,16 +43,14 @@ import type { AnswerableEvent } from '../calendar/invitation';
 import { eventWhen } from '../calendar/mail';
 import { privateBucket } from '../_storage/private-bucket';
 import { effectiveSender, getAppEmailConfig } from '../auth/email-templates';
-import { assertCallerIsGroupAdmin } from '../content/group-content.util';
 import { sanitizeEmailBody } from '../pdf/sanitize';
 import { pushToPersons, selectUserDocs } from '../srv/push';
 import { activeMemberKeys, MembershipDoc, unknownRecipients } from './group-mail';
 import { htmlToText } from './html-to-text';
 import { MailJobCollection, MailJobDoc } from './mail-job';
 import { lastEventDate } from './mailing-answer.logic';
-import { chunk, isElevated } from './mailing-recipients';
+import { chunk } from './mailing-recipients';
 import { chunkPersonal, MAX_PERSONAL_RECIPIENTS, parseCaleventKeys, PersonalBlock, personalEntries, refusedEventMessage, sendableEventRefusal } from './personal-mail.logic';
-import { checkNewsletterGroup } from '../newsletter/signup';
 import { newsletterFunctionUrl, newsletterUnsubscribeUrl } from '../newsletter/newsletter-link';
 import { activeSubscriberKeys } from '../newsletter/subscribers';
 import { asLayoutChoice } from './render-email.logic';
@@ -60,13 +58,14 @@ import { EmailTemplateError, renderEmail } from './render-email';
 import { renderMailPage } from './mail-page/mail-page';
 import { fitsDocuments, letterBodyOf, sentContentOf, type MailContent, type SentContent } from './mail-page/mail-content';
 import { MailPageError } from './mail-page/render-mail-page.logic';
-import { createsWebVersion, mailingWebFunctionUrl, newWebToken, webVersionUrl, withWebLink } from './mail-page/web-version.logic';
+import { createsWebVersion, mailingWebFunctionUrl, newWebToken, WEB_LINK_LABEL, webVersionUrl, withWebLink } from './mail-page/web-version.logic';
 import { checkLetterImages, LetterPictureError } from './letter-images';
 import { buildMailingLetters, countLetterPages, LetterEvent } from './mailing-letters';
 import { addressParentKeyOf, contactKeysFor, dropHouseholdKeys, householdFieldsOf, householdInNewsletter, householdsDroppedForAnswers, householdsDroppedForNewsletter, householdWithAnswers, type HouseholdRecipient, loadHouseholdRecipients, postKeysFor } from './household-recipient.logic';
 import { mailingCategory } from './mailing-deliveries.logic';
 import { noticeSenderOf } from './notice-sender.logic';
 import { lettersResult, makePostFanOut, postFanOutDeps } from './mailing-sendings';
+import { assertVersandSender } from './versand-sender';
 import { getCreditPort } from '../pingen/credit-port';
 import '../pingen/credit-binding'; // binds the port: each function loads only its own modules
 import { answerEventsOf, type MailingPost, type PostLock, type PostOrderDoc, PostOrderCollection, parsePostRequest, postMailingKey, quoteTokenSecret, readCountryCodes, type QuoteEnv, withPostOrder } from '../pingen/post-order';
@@ -90,8 +89,6 @@ export function isTenantDocumentPath(path: string, tenantId: string): boolean {
 }
 /** The channels a Versand sends: E-Mail, In-App, and Post as a letter PDF for the sender (P3). */
 const SENDABLE: string[] = [DeliveryChannel.Email, DeliveryChannel.Chat, DeliveryChannel.Post];
-/** The line above the body of every E-Mail of a Versand with a web version (spec 1.172 §7.5). */
-const WEB_LINK_LABEL = 'Im Browser ansehen';
 
 export interface MailingDelivery {
   /** a bare person okey, `org.<okey>` or `household.<okey>` (resolved by onMailing, spec 1.168) */
@@ -343,34 +340,19 @@ async function removeStoredAttachments(ref: FirebaseFirestore.DocumentReference,
 }
 
 /**
- * The newsletter rules of a Versand (spec 1.169 §5.6). Undefined when `groupKey` names no newsletter group (the
- * ordinary rules apply); a newsletter group that is archived or another tenant's is refused (`failed-precondition`),
- * never sent the ordinary way. Otherwise every subscriber gets their own mail, so a Cc is refused
- * (`invalid-argument`), every recipient must hold an active subscription, also for an elevated caller; any other
- * caller must be an admin of the newsletter group (no memberships: a newsletter has none) and is held to the
- * group-admin limits (no tenant document, no Post, no answer links, To only the subscribers' or the club's
- * addresses). Returns the group key the server stamps on the `mailings` doc.
+ * The recipient rules of a newsletter send (spec 1.169 §5.6); the caller was checked by `assertVersandSender`, which also
+ * decided that this is one. Every subscriber gets their own mail, so a Cc is refused (`invalid-argument`), and every
+ * recipient must hold an active subscription, also for an elevated caller; a newsletter group admin (no memberships: a
+ * newsletter has none) sends no Post, and To only to the subscribers' or the club's addresses.
  */
 export async function newsletterSendCheck(db: Firestore, args: {
-  uid: string; tenantId: string; groupKey: unknown; elevated: boolean; deliveries: MailingDelivery[];
-  to: string[]; cc: string[]; hasStoragePath: boolean; hasEvents: boolean;
-}): Promise<string | undefined> {
-  const { uid, tenantId, groupKey, elevated, deliveries } = args;
-  if (typeof groupKey !== 'string' || !groupKey) return undefined;
-  if (!(await checkNewsletterGroup(db, tenantId, groupKey)).ok) {
-    const group = (await db.collection(GroupCollection).doc(groupKey).get()).data();
-    if (group?.['kind'] === 'newsletter') throw new HttpsError('failed-precondition', 'This newsletter is archived or belongs to another tenant.');
-    return undefined;
-  }
+  tenantId: string; groupKey: string; elevated: boolean; deliveries: MailingDelivery[]; to: string[]; cc: string[];
+}): Promise<void> {
+  const { tenantId, groupKey, elevated, deliveries } = args;
   // one mail per subscriber (with their own unsubscribe link): a Cc would be dropped, so it is refused
   if (args.cc.length > 0) throw new HttpsError('invalid-argument', 'A newsletter send has no Cc: every subscriber gets their own mail.');
-  if (!elevated) {
-    await assertCallerIsGroupAdmin(db, uid, tenantId, groupKey, 'Only an admin of the newsletter may send to its subscribers.');
-    if (args.hasStoragePath) throw new HttpsError('permission-denied', 'A group admin may only attach files from the device.');
-    // the letters carry postal addresses, which the address vault keeps from a group admin
-    if (keysFor(deliveries, DeliveryChannel.Post).length > 0) throw new HttpsError('permission-denied', 'A group admin cannot send by post.');
-    if (args.hasEvents) throw new HttpsError('permission-denied', 'A group admin cannot send answer links.');
-  }
+  // the letters carry postal addresses, which the address vault keeps from a group admin
+  if (!elevated && keysFor(deliveries, DeliveryChannel.Post).length > 0) throw new HttpsError('permission-denied', 'A group admin cannot send by post.');
   // never combined per household (§6.4): every subscriber gets their own mail with their own unsubscribe link
   if (householdInNewsletter(deliveries, groupKey)) {
     logger.warn(`sendMailing: newsletter send addresses a household (tenant ${tenantId}, group ${groupKey}) — refused`);
@@ -389,7 +371,21 @@ export async function newsletterSendCheck(db: Firestore, args: {
       throw new HttpsError('permission-denied', 'To must be an address of the club or of the newsletter.');
     }
   }
-  return groupKey;
+}
+
+/** The events of a Versand with answer links; one that cannot be answered any more refuses the send. */
+export async function assertSendableEvents(db: Firestore, tenantId: string, caleventKeys: string[]): Promise<AnswerableEvent[]> {
+  const today = todayStoreDate();               // Zurich, the same day the answer page judges by
+  const snaps = await db.getAll(...caleventKeys.map((key) => db.collection('calevents').doc(key)));
+  const events = snaps.map((snap) => snap.data() as AnswerableEvent | undefined);
+  for (const event of events) {
+    if (sendableEventRefusal(event, tenantId, today)) {
+      // the name only when the event belongs to this tenant: another tenant's name must not leak
+      const name = event?.tenants?.includes(tenantId) ? event.name : undefined;
+      throw new HttpsError('invalid-argument', refusedEventMessage(name));
+    }
+  }
+  return events as AnswerableEvent[];
 }
 
 /** The pricing environment of a Pingen send: the same functions the quote uses. */
@@ -523,35 +519,25 @@ export const sendMailing = onCall(
 
     const db = getFirestore();
     const uid = request.auth?.uid ?? '';
-    const caller = (await db.collection('users').doc(uid).get()).data() ?? {};
-    const elevated = isElevated(caller['roles']) && ((caller['tenants'] ?? []) as string[]).includes(tenantId);
-    let from = typeof data.from === 'string' ? data.from : '';
+    // the caller, and whether this is a newsletter send, decided here for every caller; whatever the client sent as
+    // `newsletterGroupKey` is never read
+    const { elevated, newsletterGroupKey, caller } = await assertVersandSender(db, {
+      uid, tenantId, groupKey, hasStoragePath: !!data.storagePath, hasEvents: caleventKeys.length > 0,
+    });
+    // a group admin's Versand leaves under the tenant's sender
+    const from = elevated && typeof data.from === 'string' ? data.from : '';
     if (!elevated) {
       // a group admin addresses no household (householdsForCaller gives them none): drop, never send
       deliveries = dropHouseholdKeys(deliveries, `sendMailing, tenant ${tenantId}, group ${String(groupKey ?? '')}`);
       if (deliveries.length === 0) throw new HttpsError('invalid-argument', 'Nobody receives this Versand.');
     }
-    // decided here for every caller; whatever the client sent as `newsletterGroupKey` is never read
-    const newsletterGroupKey = await newsletterSendCheck(db, {
-      uid, tenantId, groupKey, elevated, deliveries, to, cc, hasStoragePath: !!data.storagePath, hasEvents: caleventKeys.length > 0,
-    });
     // a newsletter send splits its personal mails into several jobs, so it has no cap of MAX_PERSONAL_RECIPIENTS
-    if (caleventKeys.length > 0 && !newsletterGroupKey) {
-      if (typeof groupKey === 'string' && groupKey) {
-        throw new HttpsError('permission-denied', 'A group admin cannot send answer links.');
-      }
-      if (keysFor(deliveries, DeliveryChannel.Email).length > MAX_PERSONAL_RECIPIENTS) {
-        throw new HttpsError('invalid-argument', `At most ${MAX_PERSONAL_RECIPIENTS} email recipients with events.`);
-      }
+    if (caleventKeys.length > 0 && !newsletterGroupKey && keysFor(deliveries, DeliveryChannel.Email).length > MAX_PERSONAL_RECIPIENTS) {
+      throw new HttpsError('invalid-argument', `At most ${MAX_PERSONAL_RECIPIENTS} email recipients with events.`);
     }
     if (newsletterGroupKey) {
-      if (!elevated) from = '';                    // a group admin's Versand leaves under the tenant's sender
+      await newsletterSendCheck(db, { tenantId, groupKey: newsletterGroupKey, elevated, deliveries, to, cc });
     } else if (!elevated) {
-      if (typeof groupKey !== 'string' || !groupKey) {
-        throw new HttpsError('permission-denied', 'This operation requires the memberAdmin or privileged role.');
-      }
-      await assertCallerIsGroupAdmin(db, uid, tenantId, groupKey, 'Only an admin of the group may send to its members.');
-      if (data.storagePath) throw new HttpsError('permission-denied', 'A group admin may only attach files from the device.');
       // the letters carry members' postal addresses, which the address vault keeps from a group admin
       if (keysFor(deliveries, DeliveryChannel.Post).length > 0) {
         throw new HttpsError('permission-denied', 'A group admin cannot send by post.');
@@ -568,23 +554,9 @@ export const sendMailing = onCall(
       if (unknownRecipients([...to, ...cc], allowed).length > 0) {
         throw new HttpsError('permission-denied', 'To and Cc must be addresses of the club or of the group.');
       }
-      from = '';                                   // a group admin's Versand leaves under the tenant's sender
     }
 
-    let validUntil: string | undefined;
-    if (caleventKeys.length > 0) {
-      const today = todayStoreDate();               // Zurich, the same day the answer page judges by
-      const snaps = await db.getAll(...caleventKeys.map((key) => db.collection('calevents').doc(key)));
-      const events = snaps.map((snap) => snap.data() as AnswerableEvent | undefined);
-      for (const event of events) {
-        if (sendableEventRefusal(event, tenantId, today)) {
-          // the name only when the event belongs to this tenant: another tenant's name must not leak
-          const name = event?.tenants?.includes(tenantId) ? event.name : undefined;
-          throw new HttpsError('invalid-argument', refusedEventMessage(name));
-        }
-      }
-      validUntil = lastEventDate(events as AnswerableEvent[]);
-    }
+    const validUntil = caleventKeys.length > 0 ? lastEventDate(await assertSendableEvents(db, tenantId, caleventKeys)) : undefined;
 
     // QR codes only where they lead somewhere: letters to print and events to answer
     const letterQrCodes = data.letterQrCodes === true && caleventKeys.length > 0 && keysFor(deliveries, DeliveryChannel.Post).length > 0;
@@ -696,7 +668,7 @@ export function privateRefs(attachments: NoticeAttachment[]): MailJobDoc['attach
 }
 
 /** The events of a Versand as its mails list them above the answer button. */
-async function mailAnswerEvents(db: Firestore, caleventKeys: string[]): Promise<{ name: string; when: string }[]> {
+export async function mailAnswerEvents(db: Firestore, caleventKeys: string[]): Promise<{ name: string; when: string }[]> {
   const eventSnaps = await db.getAll(...caleventKeys.map((key) => db.collection('calevents').doc(key)));
   return eventSnaps.map((s2) => s2.data() as { name?: string; startDate?: string; startTime?: string } | undefined)
     .filter((e) => !!e).map((e) => ({ name: String(e?.name ?? ''), when: eventWhen(e?.startDate, e?.startTime) }));

@@ -90,10 +90,14 @@ export function chunkPersonal<T>(entries: T[], size = MAX_PERSONAL_RECIPIENTS): 
   return out;
 }
 
+/** The links of the two blocks; `composeSample` finds them in the text half by these. */
+export const ANSWER_LINK_LABEL = 'An- oder abmelden';
+export const UNSUBSCRIBE_LINK_LABEL = 'Newsletter abbestellen';
+
 /** The newsletter footer line under the mail body: the person's own link to sign off. */
 export function unsubscribeBlockHtml(url: string): string {
   return `<p style="text-align:center;font-size:12px;color:#6e7781;">`
-    + `<a href="${escapeHtml(url)}" style="color:#6e7781;">Newsletter abbestellen</a></p>`;
+    + `<a href="${escapeHtml(url)}" style="color:#6e7781;">${UNSUBSCRIBE_LINK_LABEL}</a></p>`;
 }
 
 /** The one-click unsubscribe headers (RFC 8058) of a newsletter mail. */
@@ -107,7 +111,7 @@ export function answerBlockHtml(url: string, events: AnswerEventLine[]): string 
   return `<p>Melde dich hier für die Anlässe an oder ab:</p>`
     + `<p>${lines}</p>`
     + `<p><a href="${escapeHtml(url)}" style="display:inline-block;padding:10px 20px;background:#1f6feb;color:#ffffff;`
-    + `text-decoration:none;border-radius:6px;">An- oder abmelden</a></p>`;
+    + `text-decoration:none;border-radius:6px;">${ANSWER_LINK_LABEL}</a></p>`;
 }
 
 /** The job's end state: `failed` only when nothing went out; any failure is named in `error`. */

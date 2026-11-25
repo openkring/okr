@@ -10,6 +10,9 @@ import type { EmailLayoutChoice } from '@okr/shared-models';
 import { checkAppCheckToken, checkAuthentication, checkRoles } from '@okr/shared-util-functions';
 
 import { callerMaySendFor } from '../auth';
+import { checkNewsletterGroup } from '../newsletter/signup';
+import { composeSample } from './compose-sample';
+import { createsWebVersion } from './mail-page/web-version.logic';
 import { mailPageContent, parsePageKey } from './mailing';
 import { composeBody, EmailTemplateError, firestoreTemplateReader, RenderedEmail, renderEmail } from './render-email';
 import { answerBlockHtml, AnswerEventLine } from './personal-mail.logic';
@@ -27,6 +30,10 @@ export interface RenderPreviewRequest {
   /** A mail page of the caller (1.172): the server renders it and previews that; wins over `body`. */
   pageKey?: string;
   attachmentName?: string;
+  /** The group of the Versand: a newsletter group shows its unsubscribe line. Only with `pageKey`. */
+  groupKey?: string;
+  /** «Webversion» as `sendMailing` takes it: shows «Im Browser ansehen» above the content. Only with `pageKey`. */
+  webVersion?: boolean;
   /** The events of a Versand with answer links: the preview shows the answer block under the body. */
   answerEvents?: AnswerEventLine[];
   templateKey?: string;
@@ -81,6 +88,24 @@ async function previewTenant(request: CallableRequest<RenderPreviewRequest>): Pr
   return appId;
 }
 
+/** The event lines of the request as text; anything else is left out. */
+function answerEventsOf(raw: unknown): AnswerEventLine[] {
+  return (Array.isArray(raw) ? raw : []).filter((e) => e && typeof e === 'object')
+    .map((e) => ({ name: String(e.name ?? ''), when: String(e.when ?? '') }));
+}
+
+/** A page as its E-Mail recipients will see it: what the send adds around the content is shown as inactive samples. */
+async function previewPage(data: RenderPreviewRequest, tenantId: string, pageKey: string, uid: string): Promise<RenderedEmail> {
+  const { html: content } = await mailPageContent(tenantId, pageKey, uid);
+  const newsletter = typeof data.groupKey === 'string' && (await checkNewsletterGroup(getFirestore(), tenantId, data.groupKey)).ok;
+  return composeSample(tenantId, {
+    content, layout: asLayoutChoice(data.layout), attachmentName: data.attachmentName,
+    answerEvents: answerEventsOf(data.answerEvents),
+    newsletter,
+    webLink: createsWebVersion(typeof data.webVersion === 'boolean' ? data.webVersion : undefined, newsletter, 1),
+  });
+}
+
 async function previewTemplate(request: CallableRequest<RenderPreviewRequest>, tenantId: string): Promise<RenderedEmail> {
   await checkRoles(request as never, CF_NAME, ['privileged', 'contentAdmin']);
   const { templateKey, version } = request.data;
@@ -113,14 +138,10 @@ export const renderEmailPreview = onCall(
     const data = request.data;
     try {
       const pageKey = parsePageKey(data.pageKey);
-      if (pageKey) {
-        const { html: body } = await mailPageContent(tenantId, pageKey, request.auth?.uid ?? '');
-        return await composeBody(tenantId, { body, layout: asLayoutChoice(data.layout), attachmentName: data.attachmentName });
-      }
+      if (pageKey) return await previewPage(data, tenantId, pageKey, request.auth?.uid ?? '');
       if (data.body !== undefined) {
         if (typeof data.body !== 'string') throw new HttpsError('invalid-argument', 'body must be a string.');
-        const events = (Array.isArray(data.answerEvents) ? data.answerEvents : []).filter((e) => e && typeof e === 'object')
-          .map((e) => ({ name: String(e.name ?? ''), when: String(e.when ?? '') }));
+        const events = answerEventsOf(data.answerEvents);
         const body = events.length > 0 ? data.body + answerBlockHtml('#', events) : data.body;
         return await composeBody(tenantId, { body, layout: asLayoutChoice(data.layout), attachmentName: data.attachmentName });
       }

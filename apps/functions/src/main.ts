@@ -216,6 +216,7 @@ export const sendGroupEmail = Email.sendGroupEmail;
 export const renderEmailPreview = Email.renderEmailPreview;
 export const getMailingRecipients = Email.getMailingRecipients;  // Versand Zustellung table (spec 1.145)
 export const sendMailing = Email.sendMailing;                    // Versand: checks the caller, writes mailings (spec 1.145 P2)
+export const sendTestMailing = Email.sendTestMailing;            // Versand: the caller's draft as one mail to the caller's own account (spec 1.176)
 export const onMailing = Email.onMailing;                        // Versand fan-out: mailJobs, notices, push
 export const mailingAnswer = Email.mailingAnswer;                // Versand: answer page behind the mail's personal link
 export const mailingWeb = Email.mailingWeb;                      // Versand: public web version behind «Im Browser ansehen» (spec 1.172)

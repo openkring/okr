@@ -156,6 +156,11 @@ const BARE_SENDER = new RegExp(`^(${ADDRESS})$`);
 const NAME_CHAR = `[^<>,;:"\\\\@${UNSAFE_CHARS}]`;
 const NAMED_SENDER = new RegExp(`^(?:"(${NAME_CHAR}*)"|(${NAME_CHAR}*))\\s*<(${ADDRESS})>$`);
 
+/** Whether `text` is exactly one plain address: no name, no list, nothing that two transports could read in two ways. */
+export function isBareAddress(text: string): boolean {
+  return text.length <= MAX_SENDER_LENGTH && !text.includes('=?') && BARE_SENDER.test(text);
+}
+
 /**
  * The sender a caller-supplied `from` may become, or the tenant's own sender.
  *

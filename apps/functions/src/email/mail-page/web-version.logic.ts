@@ -90,6 +90,9 @@ function escapeHtml(text: string): string {
   return text.replace(/[&<>"']/g, (c) => ESCAPES[c]);
 }
 
+/** The line above the body of every E-Mail of a Versand with a web version (spec 1.172 §7.5). */
+export const WEB_LINK_LABEL = 'Im Browser ansehen';
+
 /** A small centred line with the link to the web version, above the body. */
 export function withWebLink(body: string, url: string, label: string): string {
   const line = '<p style="text-align:center;font-size:12px;color:#888888;margin:0 0 16px 0;">'
