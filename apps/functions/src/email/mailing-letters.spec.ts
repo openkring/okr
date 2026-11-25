@@ -63,6 +63,8 @@ import {
   buildLetterHtml, buildMailingLetters, countLetterPages, type RenderedLetter, eventsBlockHtml, LETTER_QR_INTRO, LETTER_TEMPLATE_ORIGINS, qrSvgOf, withEventsBlock, escapeHtml, isAllowedLetterRequest, isPdfAttachment, isReapableLetters, isReapableSendingLetter, isUsableLetterTemplate,
   letterDate, letterPayload, letterTemplateKey, lettersPath, mayGetLetters, placeAndDate, LETTER_UNSUBSCRIBE_INTRO, unsubscribeLetterBlockHtml,
 } from './mailing-letters';
+import type { CreditPort } from '../pingen/credit-port';
+import { quoteWithCaller } from '../pingen/quote';
 
 describe('buildLetterHtml', () => {
   const html = buildLetterHtml({
@@ -521,6 +523,21 @@ describe('pictures of a letter made of blocks (spec 1.176 §9.4)', () => {
     await expect(count()).rejects.toMatchObject({ code: 'unavailable', message: 'letter-picture' });
     await expect(count({ body: '<img src="https://elsewhere.example/a.jpg" />' })).rejects.toMatchObject({ code: 'unavailable', message: 'letter-picture' });
     expect(state.htmls).toEqual([]);
+  });
+
+  it('the quote of a page with blocks answers with the code, and fetches nothing for a page without them', async () => {
+    const ask = (content: { html: string; letterHtml?: string }) => quoteWithCaller({
+      getPort: () => ({ quote: () => ({ total: 1, perUnit: 1, perPage: 1 }), balance: async () => 5 }) as unknown as CreditPort,
+      secret: 's', now: 1, hasCreditAccount: async () => true, readCountryCodes: async () => ['CH'], answerEventsOf: async () => [],
+      renderPages: countLetterPages, renderPage: async () => content,
+    }, { tenantId: 'scs', subject: 'S', pageKey: 'pg', postKeys: ['anna'] }, { roles: { privileged: true }, tenants: ['scs'] }, 'u');
+    fetchMock.mockImplementation(async () => { throw new TypeError('fetch failed'); });
+    await expect(ask({ html: '<p>Mail</p>', letterHtml: BODY })).rejects.toMatchObject({ code: 'unavailable', message: 'letter-picture' });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(state.htmls).toEqual([]);
+    fetchMock.mockClear();
+    expect(await ask({ html: BODY })).toMatchObject({ pagesPerLetter: 1 });
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it('a picture that cannot be fetched fails the letters: none is rendered, handed on or stored', async () => {

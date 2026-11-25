@@ -1,6 +1,6 @@
 // One rendering per send (spec 1.176 §9): a Versand from its mail page through quote, sendMailing and onMailing, on an
 // in-memory Firestore.
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const h = vi.hoisted(() => ({
   db: undefined as unknown,
@@ -264,6 +264,39 @@ describe('sendMailing of a page with blocks', () => {
       expect(mailings()).toEqual([]);
       await callSend(send);
       expect(mailings()).toHaveLength(1);
+    });
+  });
+
+  describe('with a picture that no letter can hold', () => {
+    const inline = { filename: 'a.pdf', contentBase64: 'eA==' };
+    const picture = (url: string) => ({ label: '', type: 0, url, actionUrl: '', altText: '', overlay: '' });
+    const foreign = [{ id: 'i', type: 'image', image: picture('https://elsewhere.example/a.jpg') }];
+    const gallery = { id: 'g', type: 'gallery', images: Array.from({ length: 61 }, (_, i) => picture(`tenant/scs/${i}.jpg`)) };
+    const fetchMock = vi.fn<typeof fetch>();
+    const refused = { code: 'failed-precondition', message: 'letter-picture' };
+    beforeEach(() => { fetchMock.mockReset(); vi.stubGlobal('fetch', fetchMock); });
+    afterEach(() => { vi.unstubAllGlobals(); });
+
+    it('refuses letters, download or Pingen, before anything is rendered, stored or charged', async () => {
+      for (const blocks of [foreign, [gallery]]) {
+        for (const post of [undefined, { via: 'pingen', options: {}, token: 'x', issuedAt: Date.now() }]) {
+          setPage({ s1: blockArticle(blocks) });
+          const deliveries = [{ personKey: 'p1', channels: ['email', 'post'] }];
+          await expect(callSend(request({ deliveries, webVersion: true, extraAttachments: [inline], ...(post ? { post } : {}) }))).rejects.toMatchObject(refused);
+          expect([...docsOf('mailings'), ...docsOf('mailingWeb'), ...docsOf('post-orders'), ...h.saved, ...h.counted, ...deductions]).toEqual([]);
+          expect(store[`mailPages/${PAGE}`]).not.toHaveProperty('mailingKey');
+        }
+      }
+      expect(fetchMock).not.toHaveBeenCalled();
+    });
+
+    it('sends it without letters, and a page without blocks also with letters, as before', async () => {
+      setPage({ s1: blockArticle(foreign) });
+      await callSend(request());
+      setPage({ s1: { ...oldArticle, properties: { images: [picture('https://elsewhere.example/a.jpg')] } } });
+      await callSend(request({ deliveries: [{ personKey: 'p1', channels: ['post'] }] }));
+      expect(mailings()).toHaveLength(2);
+      expect(fetchMock).not.toHaveBeenCalled();
     });
   });
 

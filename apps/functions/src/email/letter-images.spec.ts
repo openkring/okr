@@ -2,7 +2,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { sanitizeEmailBody } from '../pdf/sanitize';
-import { embedLetterImages, fetchLetterImage, LetterPictureError, MAX_LETTER_PICTURE_BYTES, MAX_LETTER_PICTURES, printPictureUrl } from './letter-images';
+import { checkLetterImages, embedLetterImages, fetchLetterImage, LetterPictureError, MAX_LETTER_PICTURE_BYTES, MAX_LETTER_PICTURES, printPictureUrl } from './letter-images';
 import { renderMailBlocks } from './mail-page/render-mail-blocks.logic';
 
 const JPEG = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 1, 2, 3]);
@@ -115,6 +115,52 @@ describe('embedLetterImages', () => {
     expect(failing).toHaveBeenCalledTimes(5);
   });
 
+  it('starts the next picture as soon as one is there, not after four others', async () => {
+    const waiting: (() => void)[] = [];
+    let started = 0;
+    const html = Array.from({ length: 12 }, (_, i) => img(`${BASE}/${i}.jpg`)).join('');
+    const done = embedLetterImages(html, (url) => {
+      started++;
+      // the first one is slow
+      return new URL(url).pathname === '/0.jpg' ? new Promise((resolve) => { waiting.push(() => resolve(JPEG)); }) : Promise.resolve(JPEG);
+    });
+    await vi.waitFor(() => expect(started).toBe(12));
+    waiting[0]();
+    expect(await done).toBe(img(DATA).repeat(12));
+  });
+
+  it('stops after a minute, whatever the pictures do, and lets no fetch run on', async () => {
+    vi.useFakeTimers();
+    try {
+      const signals: AbortSignal[] = [];
+      const html = Array.from({ length: 60 }, (_, i) => img(`${BASE}/${i}.jpg`)).join('');
+      let settled: unknown = 'open';
+      void embedLetterImages(html, (_url, signal) => {
+        if (signal) signals.push(signal);
+        return new Promise(() => undefined);
+      }).catch((e: unknown) => { settled = e; });
+      await vi.advanceTimersByTimeAsync(59_999);
+      expect(settled).toBe('open');
+      expect(signals.map((s) => s.aborted)).toEqual([false, false, false, false, false]);
+      await vi.advanceTimersByTimeAsync(1);
+      expect(settled).toBeInstanceOf(LetterPictureError);
+      expect(signals.map((s) => s.aborted)).toEqual([true, true, true, true, true]);
+      expect(vi.getTimerCount()).toBe(0);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('leaves no timer behind when all pictures are there', async () => {
+    vi.useFakeTimers();
+    try {
+      await embedLetterImages(img(`${BASE}/a.jpg`), async () => JPEG);
+      expect(vi.getTimerCount()).toBe(0);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('embeds the pictures of a letter as they come out of the mail sanitizer', async () => {
     const { default: hb } = await import('handlebars');
     const picture = (url: string) => ({ label: '', type: 0, url, actionUrl: '', altText: 'Boot & "See" > Steg', overlay: '' });
@@ -130,6 +176,18 @@ describe('embedLetterImages', () => {
     expect(seen.every((url) => url.startsWith(`${BASE}/`) && new URL(url).searchParams.get('fm') === 'jpg')).toBe(true);
     expect(out).not.toContain('<img src="https');
     expect(out.replace(/ src="[^"]*"/g, '')).toBe(body.replace(/ src="[^"]*"/g, ''));
+  });
+});
+
+describe('checkLetterImages', () => {
+  it('refuses what embedLetterImages refuses without fetching, and accepts the rest', () => {
+    const many = (n: number) => Array.from({ length: n }, (_, i) => img(`${BASE}/${i}.jpg`)).join('');
+    for (const html of [img('https://elsewhere.example/a.jpg'), img(`${BASE}/a.jpg`) + img('/a.jpg'), many(61)]) {
+      expect(() => checkLetterImages(html)).toThrow(LetterPictureError);
+    }
+    for (const html of ['', '<p>x</p>', '<img alt="x" />', img('data:image/png;base64,AA'), many(60) + many(60)]) {
+      expect(() => checkLetterImages(html)).not.toThrow();
+    }
   });
 });
 
@@ -151,6 +209,16 @@ describe('printPictureUrl', () => {
   it('keeps the proportions of a crop', () => {
     expect(params(`${BASE}/a.jpg?w=2560&h=1000&fit=crop`)).toMatchObject({ w: '1280', h: '500', fit: 'crop' });
     expect(params(`${BASE}/a.jpg?w=200&h=100&fit=crop`)).toMatchObject({ w: '200', h: '100', fit: 'crop' });
+    // a height alone crops nothing: the picture as it is, at most that high
+    expect(params(`${BASE}/a.jpg?h=300&fit=crop`)).toMatchObject({ w: '1280', h: '300', fit: 'max' });
+    expect(params(`${BASE}/a.jpg?w=abc&h=300&fit=crop`)).toMatchObject({ w: '1280', h: '300', fit: 'max' });
+    // a height with a ratio is a crop of a known width
+    expect(params(`${BASE}/a.jpg?h=300&ar=3:2&fit=crop`)).toMatchObject({ w: '450', h: '300', fit: 'crop' });
+    expect(params(`${BASE}/a.jpg?h=2000&ar=16:9&fit=crop`)).toMatchObject({ w: '1280', h: '720', fit: 'crop' });
+    expect(params(`${BASE}/a.jpg?h=300&ar=3:0&fit=crop`)).toMatchObject({ h: '300', fit: 'max' });
+    // a relative height cannot be scaled
+    expect(params(`${BASE}/a.jpg?w=2560&h=0.5&fit=crop`)).toEqual({ w: '1280', fit: 'max', fm: 'jpg', q: '60', bg: 'fff' });
+    expect(params(`${BASE}/a.jpg?h=0.5&fit=crop`)).not.toHaveProperty('h');
   });
 });
 
@@ -197,6 +265,17 @@ describe('fetchLetterImage', () => {
       await expect(fetchLetterImage(URL_)).rejects.toBeInstanceOf(LetterPictureError);
       expect(fetchMock).toHaveBeenCalledTimes(1);
     }
+  });
+
+  it('stops at once and does not try again when the whole letter is given up', async () => {
+    const controller = new AbortController();
+    fetchMock.mockImplementation((_url, init) => new Promise((_r, reject) => {
+      init?.signal?.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError')));
+    }));
+    const got = fetchLetterImage(URL_, controller.signal);
+    controller.abort();
+    await expect(got).rejects.toBeInstanceOf(LetterPictureError);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
   it('takes exactly 1.5 MB', async () => {

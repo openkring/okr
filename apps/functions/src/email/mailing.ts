@@ -61,6 +61,7 @@ import { renderMailPage } from './mail-page/mail-page';
 import { fitsDocuments, letterBodyOf, sentContentOf, type MailContent, type SentContent } from './mail-page/mail-content';
 import { MailPageError } from './mail-page/render-mail-page.logic';
 import { createsWebVersion, mailingWebFunctionUrl, newWebToken, webVersionUrl, withWebLink } from './mail-page/web-version.logic';
+import { checkLetterImages, LetterPictureError } from './letter-images';
 import { buildMailingLetters, countLetterPages, LetterEvent } from './mailing-letters';
 import { addressParentKeyOf, contactKeysFor, dropHouseholdKeys, householdFieldsOf, householdInNewsletter, householdsDroppedForAnswers, householdsDroppedForNewsletter, householdWithAnswers, type HouseholdRecipient, loadHouseholdRecipients, postKeysFor } from './household-recipient.logic';
 import { mailingCategory } from './mailing-deliveries.logic';
@@ -430,6 +431,17 @@ async function webSnapshotHtml(tenantId: string, layout: EmailLayoutChoice, body
   }
 }
 
+/** Refuses a letter with a picture that can never be embedded (of another host, or too many). Fetches nothing. */
+function assertLetterPictures(letterHtml: string, tenantId: string): void {
+  try {
+    checkLetterImages(letterHtml);
+  } catch (error) {
+    if (!(error instanceof LetterPictureError)) throw error;
+    logger.warn(`sendMailing: letters refused (tenant ${tenantId}): ${error.message}`);
+    throw new HttpsError('failed-precondition', 'letter-picture');
+  }
+}
+
 function sentContentRef(mailingRef: FirebaseFirestore.DocumentReference): FirebaseFirestore.DocumentReference {
   return mailingRef.collection(MailingContentSubcollection).doc(SENT_CONTENT_KEY);
 }
@@ -602,6 +614,8 @@ export const sendMailing = onCall(
       })) {
         throw new HttpsError('failed-precondition', 'too-large');
       }
+      // a picture no letter can hold: refused here, not after the mails are out
+      if (sent && keysFor(deliveries, DeliveryChannel.Post).length > 0) assertLetterPictures(await sanitizeEmailBody(letterBody), tenantId);
       // newsletter or not is the server's decision above (newsletterGroupKey), never the client's; only the
       // E-Mails carry the link, so a send without any E-Mail delivery stores no web version
       const requested = typeof data.webVersion === 'boolean' ? data.webVersion : undefined;

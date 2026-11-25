@@ -8,13 +8,14 @@
 import { IMGIX_BASE } from '@okr/cms-website-render';
 
 import { decodeEntities } from './html-to-text';
-import { chunk } from './mailing-recipients';
 
 /** The most different pictures of one letter. */
 export const MAX_LETTER_PICTURES = 60;
 export const MAX_LETTER_PICTURE_BYTES = 1_500_000;
 const FETCH_TIMEOUT_MS = 15_000;
 const PARALLEL_FETCHES = 5;
+/** For all pictures of a letter together: quote and send have 120 s, and render a letter after it. */
+const FETCH_BUDGET_MS = 60_000;
 /** Twice the text width of a letter (170 mm = 643 px), about 190 dpi. */
 const MAX_PRINT_WIDTH = 1280;
 const PRINT_QUALITY = '60';
@@ -44,6 +45,17 @@ function srcOf(tag: string): { start: number; end: number; value: string } | und
   return undefined;
 }
 
+function pixels(raw: string | null | undefined): number | undefined {
+  const value = Number(raw);
+  return Number.isInteger(value) && value > 0 ? value : undefined;
+}
+
+/** The width of a crop given by its height and ratio (`ar=3:2`). */
+function widthOfRatio(height: number | undefined, ratio: string | null): number | undefined {
+  const m = /^(\d+(?:\.\d+)?):(\d+(?:\.\d+)?)$/.exec(ratio ?? '');
+  return height && m ? pixels(String(Math.round((height * Number(m[1])) / Number(m[2])))) : undefined;
+}
+
 /** The address a picture is printed from: of our image CDN, as a small opaque JPEG; undefined for any other address. */
 export function printPictureUrl(src: string): string | undefined {
   let url: URL;
@@ -56,11 +68,17 @@ export function printPictureUrl(src: string): string | undefined {
   url.hash = '';
   const params = url.searchParams;
   // the mail appends its own width, so the last one counts
-  const asked = Number(params.getAll('w').pop());
-  const height = Number(params.get('h'));
-  const width = Number.isInteger(asked) && asked > 0 ? Math.min(asked, MAX_PRINT_WIDTH) : MAX_PRINT_WIDTH;
-  // a crop keeps its proportions
-  if (width < asked && Number.isInteger(height) && height > 0) params.set('h', String(Math.max(1, Math.round((height * width) / asked))));
+  const height = pixels(params.get('h'));
+  const asked = pixels(params.getAll('w').pop()) ?? widthOfRatio(height, params.get('ar'));
+  const width = Math.min(asked ?? MAX_PRINT_WIDTH, MAX_PRINT_WIDTH);
+  if (asked !== undefined && width < asked && height) {
+    // a crop keeps its proportions
+    params.set('h', String(Math.max(1, Math.round((height * width) / asked))));
+  } else if (params.has('h') && (asked === undefined || width < asked)) {
+    // without its width a crop has no proportions to keep (imgix crops nothing then), and a relative height cannot be scaled
+    params.set('fit', 'max');
+    if (!height) params.delete('h');
+  }
   params.set('w', String(width));
   if (!params.has('fit')) params.set('fit', 'max');
   // `auto` could choose another format, `dpr` another size
@@ -102,28 +120,33 @@ async function cappedBody(response: Response): Promise<Buffer> {
   return Buffer.concat(parts);
 }
 
-/** One picture of our image CDN; once more after a network error or a 5xx. A redirect is an error: it would lead to another host. */
-export async function fetchLetterImage(url: string): Promise<Buffer> {
+/**
+ * One picture of our image CDN; once more after a network error or a 5xx. A redirect is an error: it would lead to another
+ * host. `signal` gives the picture up.
+ */
+export async function fetchLetterImage(url: string, signal?: AbortSignal): Promise<Buffer> {
   for (let attempt = 1; ; attempt++) {
     const last = attempt === 2;
     try {
-      const response = await fetch(url, { redirect: 'error', credentials: 'omit', signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
+      const response = await fetch(url, { redirect: 'error', credentials: 'omit', signal: AbortSignal.any([AbortSignal.timeout(FETCH_TIMEOUT_MS), ...(signal ? [signal] : [])]) });
       if (response.ok && response.headers.get('content-type')?.trim().toLowerCase().startsWith('image/')) return await cappedBody(response);
       await response.body?.cancel();
       if (response.status < 500 || last) throw new LetterPictureError(response.ok ? 'it is not a picture' : `HTTP ${response.status}`);
     } catch (error) {
       if (error instanceof LetterPictureError) throw error;
-      if ((error as Error)?.name === 'TimeoutError') throw new LetterPictureError('no answer in time');
+      if (signal?.aborted || (error as Error)?.name === 'TimeoutError') throw new LetterPictureError('no answer in time');
       if (last) throw new LetterPictureError('no connection');
     }
   }
 }
 
+export type FetchImage = (url: string, signal?: AbortSignal) => Promise<Buffer>;
+
 /** The bytes of one picture as a `data:` address. Whatever the fetch throws, the error names no address. */
-async function dataUrlOf(url: string, fetchImage: (url: string) => Promise<Buffer>): Promise<string> {
+async function dataUrlOf(url: string, fetchImage: FetchImage, signal: AbortSignal): Promise<string> {
   let bytes: Buffer;
   try {
-    bytes = await fetchImage(url);
+    bytes = await fetchImage(url, signal);
   } catch (error) {
     throw error instanceof LetterPictureError ? error : new LetterPictureError('no connection');
   }
@@ -132,13 +155,33 @@ async function dataUrlOf(url: string, fetchImage: (url: string) => Promise<Buffe
   return `data:${mime};base64,${bytes.toString('base64')}`;
 }
 
-/**
- * The html of a letter with its pictures inside it. Every `<img>` is fetched from our image CDN (each once), an inline picture
- * stays, an `<img>` without an address shows its alt text; any other address, or a picture that cannot be fetched, throws a
- * `LetterPictureError`. `html` comes out of `sanitizeEmailBody`.
- */
-export async function embedLetterImages(html: string, fetchImage: (url: string) => Promise<Buffer> = fetchLetterImage): Promise<string> {
-  // the printed address per address in the html; '' for one that stays
+/** All pictures as `data:`, five at a time and within the budget; after the first failure none is started, and the open ones are given up. */
+async function loadAll(urls: string[], fetchImage: FetchImage): Promise<Map<string, string>> {
+  const data = new Map<string, string>();
+  const waiting = [...urls];
+  const controller = new AbortController();
+  const worker = async (): Promise<void> => {
+    for (let url = waiting.shift(); url !== undefined && !controller.signal.aborted; url = waiting.shift()) {
+      data.set(url, await dataUrlOf(url, fetchImage, controller.signal));
+    }
+  };
+  let timer: NodeJS.Timeout | undefined;
+  const budget = new Promise<never>((_resolve, reject) => {
+    timer = setTimeout(() => reject(new LetterPictureError('no answer in time')), FETCH_BUDGET_MS);
+  });
+  try {
+    await Promise.race([Promise.all(Array.from({ length: PARALLEL_FETCHES }, worker)), budget]);
+    return data;
+  } catch (error) {
+    controller.abort();
+    throw error;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/** The address each picture of the html is printed from, `''` for an inline one that stays. */
+function printedUrls(html: string): Map<string, string> {
   const printed = new Map<string, string>();
   for (const [tag] of html.matchAll(IMG_TAG)) {
     const src = srcOf(tag);
@@ -147,14 +190,31 @@ export async function embedLetterImages(html: string, fetchImage: (url: string) 
     if (url === undefined) throw new LetterPictureError('it is not one of our own pictures');
     printed.set(src.value, url);
   }
-  const urls = [...new Set(printed.values())].filter((url) => url !== '');
-  if (urls.length > MAX_LETTER_PICTURES) throw new LetterPictureError('there are too many pictures');
+  if (urlsOf(printed).length > MAX_LETTER_PICTURES) throw new LetterPictureError('there are too many pictures');
+  return printed;
+}
 
-  const data = new Map<string, string>();
-  for (const part of chunk(urls, PARALLEL_FETCHES)) {
-    const loaded = await Promise.all(part.map((url) => dataUrlOf(url, fetchImage)));
-    part.forEach((url, i) => data.set(url, loaded[i]));
-  }
+function urlsOf(printed: Map<string, string>): string[] {
+  return [...new Set(printed.values())].filter((url) => url !== '');
+}
+
+/** Throws the `LetterPictureError` that `embedLetterImages` would throw whatever the pictures are: of another host, or too many. Fetches nothing. */
+export function checkLetterImages(html: string): void {
+  printedUrls(html);
+}
+
+/**
+ * The html of a letter with its pictures inside it. Every `<img>` is fetched from our image CDN (each once), an inline picture
+ * stays, an `<img>` without an address shows its alt text; any other address, or a picture that cannot be fetched, throws a
+ * `LetterPictureError`. `html` comes out of `sanitizeEmailBody`.
+ *
+ * The quote, the send and the fan-out of one Versand each fetch on their own: the bytes are stored nowhere, and the price is
+ * bound to the addresses. A picture replaced in between under its address may therefore give a letter of another length; the
+ * fan-out does not send a letter that is longer than quoted.
+ */
+export async function embedLetterImages(html: string, fetchImage: FetchImage = fetchLetterImage): Promise<string> {
+  const printed = printedUrls(html);
+  const data = await loadAll(urlsOf(printed), fetchImage);
 
   let embedded = 0;
   return html.replace(IMG_TAG, (tag) => {
