@@ -19,6 +19,7 @@
   "include": ["src/**/*", "**/*.spec.ts", "**/*.test.ts"],
   "exclude": ["dist/**/*"],
   "references": [
+    { "path": "../../section/ui/tsconfig.lib.json" },
     { "path": "../../section/util/tsconfig.lib.json" },
     { "path": "../../../shared/config/tsconfig.lib.json" },
     { "path": "../../../shared/feature/tsconfig.lib.json" },

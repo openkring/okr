@@ -1,35 +1,36 @@
 import { CdkDrag, CdkDragDrop, CdkDropList, type DragRef, type Point } from '@angular/cdk/drag-drop';
 import { CdkScrollable } from '@angular/cdk/scrolling';
+import { NgTemplateOutlet } from '@angular/common';
 import {
   Component, DestroyRef, ElementRef, Injector, ViewContainerRef, afterNextRender, computed, effect, forwardRef, inject, input, linkedSignal, output, signal, untracked,
 } from '@angular/core';
 import { ActionSheetController, IonIcon, IonNote } from '@ionic/angular';
 
 import {
-  ARTICLE_BLOCK_ICONS, ARTICLE_BLOCKS_MAX, type ArticleEditorI18n, type ArticlePreviewDevice, BlockViewCache, type BlockPlace, allowedTypesAt,
-  articleBackground, articleColumnsForm, articleHeaderPlace, blockTypeLabel, canAddBlock, columnsTemplate, createBlock, duplicateBlock, findBlock,
+  ARTICLE_BLOCK_ICONS, ARTICLE_BLOCKS_MAX, ARTICLE_PROFILE, type ArticleEditorI18n, type ArticlePreviewDevice, BlockViewCache, type BlockPlace, type EditorProfile,
+  allowedTypesAt, articleBackground, articleColumnsForm, articleHeaderPlace, blockTypeLabel, canAddBlock, columnsTemplate, createBlock, drawnMailBlock, duplicateBlock, findBlock,
   getSectionIntro, insertBlock, joinWithAbove, moveBlockBy, removeBlock, replaceBlock,
 } from '@okr/cms-section-util';
 import { ENV } from '@okr/shared-config';
 import { AppStore } from '@okr/shared-feature';
-import { ARTICLE_BLOCK_TYPES, type ArticleBlock, type ArticleBlockType, type ArticleSection, isFreeArticle } from '@okr/shared-models';
+import { type ArticleBlock, type ArticleSection, MAIL_BLOCK_TYPES, type MailBlock, type MailBlockType, isFreeArticle } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { OptionalCardHeader } from '@okr/shared-ui';
 import type { RichTextCaret } from '@okr/shared-ui-editor';
 import { createActionSheetButton, createActionSheetOptions } from '@okr/shared-util-angular';
-import { fill } from '@okr/shared-util-core';
+import { fill, type MailEventLine } from '@okr/shared-util-core';
 
-import { ARTICLE_COLUMNS_STYLES, ARTICLE_LIST_PADDING } from './article-block';
+import { ARTICLE_BLOCK_PADDING, ARTICLE_COLUMNS_STYLES, ARTICLE_LIST_PADDING } from './article-block';
 import { ArticleCanvasBlock, ArticleCanvasContext, type CanvasCaret, type CanvasItem, type FrameAction } from './article-canvas-block';
-import { classicButtonId, dragPoint, dropChange, isClassicText, isTextual, kindOf, mayEnterList, neighbourId, parentId, type CanvasChange } from './article-canvas.util';
+import { canvasSize, classicButtonId, dragPoint, dropChange, isClassicText, isTextual, kindOf, mayEnterList, neighbourId, parentId, type CanvasChange } from './article-canvas.util';
 import { ARTICLE_FRAME_STYLES, ArticleFrame } from './article-frame';
 
 export type { CanvasCaret } from './article-canvas-block';
 export type { CanvasChange } from './article-canvas.util';
 
 /** What a dragged block of the canvas carries (`cdkDragData`); an entry of the library carries `NewBlockDrag`. */
-export interface BlockDrag { id: string; type: ArticleBlockType; isColumnsChild: boolean }
-type DragData = Partial<BlockDrag> & { newType?: ArticleBlockType };
+export interface BlockDrag { id: string; type: MailBlockType; isColumnsChild: boolean }
+type DragData = Partial<BlockDrag> & { newType?: MailBlockType };
 /** Where a drop list stands (`cdkDropListData`). */
 type ListPlace = Omit<BlockPlace, 'index'>;
 interface CanvasColumn { index: number; place: ListPlace; items: CanvasItem[] }
@@ -43,7 +44,8 @@ let canvases = 0;
 
 /**
  * The canvas of the article editor (spec 1.175 §7.2, §7.4, §7.5): the article as readers see it, with a frame around every block, texts
- * edited in place, and dragging. It holds no state of the article.
+ * edited in place, and dragging. It holds no state of the article. With the profile of a mail (1.176 §8) the same blocks in the width of a
+ * mail, between the head and the foot of its template, and drawn without what a mail ignores.
  *
  * The contract of the host:
  * - It applies every `change` (blocks and selection) and every `selectBlock` at once, in the handler: the canvas goes on from what it
@@ -58,7 +60,7 @@ let canvases = 0;
 @Component({
   selector: 'okr-article-canvas',
   standalone: true,
-  imports: [ArticleCanvasBlock, ArticleFrame, CdkDrag, CdkDropList, CdkScrollable, IonIcon, IonNote, OptionalCardHeader, SvgIconPipe],
+  imports: [ArticleCanvasBlock, ArticleFrame, CdkDrag, CdkDropList, CdkScrollable, IonIcon, IonNote, NgTemplateOutlet, OptionalCardHeader, SvgIconPipe],
   providers: [{ provide: ArticleCanvasContext, useExisting: forwardRef(() => ArticleCanvas) }],
   host: {
     '(keydown)': 'onKeydown($event)',
@@ -73,11 +75,20 @@ let canvases = 0;
     .scroller.auto .room { padding-inline: 0; }
     /* as wide as the device; a canvas with less room scrolls sideways */
     .page { margin-inline: auto; background: var(--ion-background-color, #fff); color: var(--ion-text-color, #000); }
-    .page.mobile { width: 390px; }
-    .page.tablet { width: 768px; }
-    .page.desktop { max-width: 1100px; }
     /* buttons and frames reach over the edge of the card */
     .page ::ng-deep okr-article-frame > ion-card { overflow: visible; contain: layout style; }
+
+    /* a mail: the card has no padding of its own, so that a block is as wide as in the mail; the look of the card goes on around it */
+    .page.mail { background: var(--ion-card-background, var(--ion-item-background, var(--ion-background-color, #fff))); }
+    .page.mail .inside { padding: 24px calc(var(--mail-padding) - ${ARTICLE_BLOCK_PADDING}); }
+    .page.mail ::ng-deep okr-article-frame > ion-card > ion-card-content { padding: 0; }
+    .page.mail .list { padding: 0; }
+    .page.mail .list ::ng-deep ion-item { --inner-padding-end: 0; }
+    .page.mail .list ::ng-deep .callout .tint { padding: 16px; }
+    .page.mail .columns.wide { column-gap: 6px; }
+    /* a picture that is not as wide as its place stands on the left, as in the mail */
+    .page.mail .list ::ng-deep okr-article-block .image-container { justify-content: flex-start; }
+    .strip { padding: 12px; background: color-mix(in srgb, var(--ion-text-color, #000) 14%, var(--ion-background-color, #fff)); font-size: 0.8rem; text-align: center; }
 
     .list { padding: ${ARTICLE_LIST_PADDING}; }
     .list.classic-text { padding: 0; }
@@ -95,55 +106,67 @@ let canvases = 0;
     @let t = i18n();
     <div class="scroller" cdkScrollable role="region" [class]="device()" [attr.aria-label]="t.article_editor_canvas_label()">
       <div class="room">
-        <div class="page" [class]="device()">
-          <okr-article-frame [section]="section()" [headerPlace]="headerPlace()">
-            <div class="list" cdkDropList [id]="topListId" [class.classic-text]="classicText()" [cdkDropListData]="topPlace" [cdkDropListConnectedTo]="dropLists()"
-              [cdkDropListEnterPredicate]="mayEnter" [cdkDropListDisabled]="!dragEnabled()" [cdkDropListAutoScrollStep]="8" (cdkDropListDropped)="onDrop($event)" (cdkDropListExited)="switching = true" (cdkDropListEntered)="switching = false">
-              @for (item of items(); track item.block.id; let last = $last) {
-                @let first = item.block.id === firstDrawnId();
-                <okr-article-canvas-block cdkDrag [item]="item" [addBelow]="!last" [titled]="first && headerPlace() === 'slideshow'" [classicText]="classicText()" [classicButton]="item.block.id === classicButtonId()"
-                  [cdkDragData]="dragData(item, false)" [cdkDragDisabled]="!mayDrag(item)" [cdkDragConstrainPosition]="dragPoint" (cdkDragStarted)="onDragStart()">
-                  @if (item.kind === 'columns') {
-                    <div class="columns" [class]="columnsForm()" [style.--columns]="item.template">
-                      @for (column of item.columns; track column.index) {
-                        @let withHeader = first && headerPlace() === 'column' && item.headerColumn === column.index;
-                        <div class="column" role="group" [attr.aria-label]="columnLabel(column.index)" [class.empty-column]="column.items.length === 0" [style.--stack-order]="item.stackReverse ? -$index : null"
-                          cdkDropList [id]="listId(item.block.id, column.index)" [cdkDropListData]="column.place" [cdkDropListConnectedTo]="dropLists()"
-                          [cdkDropListEnterPredicate]="mayEnter" [cdkDropListDisabled]="!dragEnabled()" [cdkDropListAutoScrollStep]="8" (cdkDropListDropped)="onDrop($event)" (cdkDropListExited)="switching = true" (cdkDropListEntered)="switching = false">
-                          @if (withHeader) {
-                            <div class="header">
-                              <okr-optional-card-header [intro]="intro().text" [introPosition]="intro().position" [title]="title()" [subTitle]="subTitle()" />
-                            </div>
-                          }
-                          @for (inner of column.items; track inner.block.id; let firstInner = $first) {
-                            <okr-article-canvas-block cdkDrag [class.tools-end]="column.index > 0" [item]="inner" [inColumn]="true" [afterHeader]="withHeader && firstInner"
-                              [cdkDragData]="dragData(inner, true)" [cdkDragDisabled]="!mayDrag(inner)" [cdkDragConstrainPosition]="dragPoint" (cdkDragStarted)="onDragStart()" />
-                          } @empty {
-                            <div class="add">
-                              <button type="button" data-canvas-tool [title]="t.article_editor_add_inColumn()" [attr.aria-label]="t.article_editor_add_inColumn()" (click)="addToColumn(column.place)">
-                                <ion-icon src="{{ 'add' | svgIcon }}" aria-hidden="true" />
-                              </button>
-                            </div>
-                          }
-                        </div>
-                      }
-                    </div>
-                  }
-                </okr-article-canvas-block>
-              } @empty {
-                <div class="empty">{{ t.article_editor_canvas_empty() }}</div>
-              }
-            </div>
-          </okr-article-frame>
+        <div class="page" [class]="device()" [class.mail]="isMail()" [style.width.px]="size().width" [style.max-width.px]="size().maxWidth" [style.--mail-padding]="isMail() ? profile().padding + 'px' : null">
+          @if (isMail()) { <div class="strip">{{ t.article_editor_mail_head() }}</div> }
+          <div class="inside">
+            <okr-article-frame [section]="section()" [headerPlace]="headerPlace()">
+              <div class="list" cdkDropList [id]="topListId" [class.classic-text]="classicText()" [cdkDropListData]="topPlace" [cdkDropListConnectedTo]="dropLists()"
+                [cdkDropListEnterPredicate]="mayEnter" [cdkDropListDisabled]="!dragEnabled()" [cdkDropListAutoScrollStep]="8" (cdkDropListDropped)="onDrop($event)" (cdkDropListExited)="switching = true" (cdkDropListEntered)="switching = false">
+                @for (item of items(); track item.block.id; let last = $last) {
+                  @let first = item.block.id === firstDrawnId();
+                  <okr-article-canvas-block cdkDrag [item]="item" [addBelow]="!last" [titled]="first && headerPlace() === 'slideshow'" [classicText]="classicText()" [classicButton]="item.block.id === classicButtonId()"
+                    [cdkDragData]="dragData(item, false)" [cdkDragDisabled]="!mayDrag(item)" [cdkDragConstrainPosition]="dragPoint" (cdkDragStarted)="onDragStart()">
+                    @if (item.kind === 'columns') {
+                      <div class="columns" [class]="columnsForm()" [style.--columns]="item.template">
+                        @for (column of item.columns; track column.index) {
+                          @let withHeader = first && headerPlace() === 'column' && item.headerColumn === column.index;
+                          <div class="column" role="group" [attr.aria-label]="columnLabel(column.index)" [class.empty-column]="column.items.length === 0" [style.--stack-order]="item.stackReverse ? -$index : null"
+                            cdkDropList [id]="listId(item.block.id, column.index)" [cdkDropListData]="column.place" [cdkDropListConnectedTo]="dropLists()"
+                            [cdkDropListEnterPredicate]="mayEnter" [cdkDropListDisabled]="!dragEnabled()" [cdkDropListAutoScrollStep]="8" (cdkDropListDropped)="onDrop($event)" (cdkDropListExited)="switching = true" (cdkDropListEntered)="switching = false">
+                            @if (withHeader) {
+                              <div class="header">
+                                <okr-optional-card-header [intro]="intro().text" [introPosition]="intro().position" [title]="title()" [subTitle]="subTitle()" />
+                              </div>
+                            }
+                            @for (inner of column.items; track inner.block.id; let firstInner = $first) {
+                              <okr-article-canvas-block cdkDrag [class.tools-end]="column.index > 0" [item]="inner" [inColumn]="true" [afterHeader]="withHeader && firstInner"
+                                [cdkDragData]="dragData(inner, true)" [cdkDragDisabled]="!mayDrag(inner)" [cdkDragConstrainPosition]="dragPoint" (cdkDragStarted)="onDragStart()" />
+                            } @empty {
+                              <div class="add">
+                                <button type="button" data-canvas-tool [title]="t.article_editor_add_inColumn()" [attr.aria-label]="t.article_editor_add_inColumn()" (click)="addToColumn(column.place)">
+                                  <ion-icon src="{{ 'add' | svgIcon }}" aria-hidden="true" />
+                                </button>
+                              </div>
+                            }
+                          </div>
+                        }
+                      </div>
+                    }
+                  </okr-article-canvas-block>
+                } @empty {
+                  <div class="empty">{{ t.article_editor_canvas_empty() }}</div>
+                }
+              </div>
+            </okr-article-frame>
+          </div>
+          @if (isMail()) {
+            <ng-container [ngTemplateOutlet]="addAtEnd" />
+            <div class="strip">{{ t.article_editor_mail_foot() }}</div>
+          }
         </div>
-        <div class="add">
-          <button type="button" data-canvas-tool data-add-end [disabled]="full()" [title]="t.article_editor_add_atEnd()" [attr.aria-label]="t.article_editor_add_atEnd()" (click)="add({ index: blocks().length })">
-            <ion-icon src="{{ 'add' | svgIcon }}" aria-hidden="true" />
-          </button>
-          @if (full()) { <ion-note data-canvas-tool>{{ fullNote() }}</ion-note> }
-        </div>
+        @if (!isMail()) { <ng-container [ngTemplateOutlet]="addAtEnd" /> }
       </div>
     </div>
+
+    <!-- in a mail above the foot of its template -->
+    <ng-template #addAtEnd>
+      <div class="add">
+        <button type="button" data-canvas-tool data-add-end [disabled]="full()" [title]="t.article_editor_add_atEnd()" [attr.aria-label]="t.article_editor_add_atEnd()" (click)="add({ index: blocks().length })">
+          <ion-icon src="{{ 'add' | svgIcon }}" aria-hidden="true" />
+        </button>
+        @if (full()) { <ion-note data-canvas-tool>{{ fullNote() }}</ion-note> }
+      </div>
+    </ng-template>
   `,
 })
 export class ArticleCanvas extends ArticleCanvasContext {
@@ -152,10 +175,14 @@ export class ArticleCanvas extends ArticleCanvasContext {
   private readonly element = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
   private readonly imgixBaseUrl = inject(ENV).services.imgixBaseUrl;
   private readonly injector = inject(Injector);
-  private readonly viewCache = new BlockViewCache((html) => this.appStore.replacePlaceholders(html));
+  private readonly viewCache = new BlockViewCache((html) => this.replace(html));
 
   // inputs
+  public readonly profile = input<EditorProfile>(ARTICLE_PROFILE);
+  /** the article, or the one of a mail (`mailArticle`) */
   public readonly section = input.required<ArticleSection>();
+  /** of a mail: the events as of now, per calendar that a block shows */
+  public readonly eventLines = input<Record<string, MailEventLine[]>>({});
   public readonly selectedId = input<string>();
   /** blocks with a red mark */
   public readonly errorIds = input<string[]>([]);
@@ -171,32 +198,35 @@ export class ArticleCanvas extends ArticleCanvasContext {
   // outputs
   public readonly selectBlock = output<string | undefined>();
   // eslint-disable-next-line @angular-eslint/no-output-native -- no native change event bubbles out of the canvas
-  public readonly change = output<CanvasChange>();
+  public readonly change = output<CanvasChange<MailBlock>>();
 
   // computed
   /** as `openArticle` keeps them: also what readers skip, so that a change does not drop it; the same array when there is nothing to leave out */
-  public readonly blocks = computed((): ArticleBlock[] => {
+  public readonly blocks = computed((): MailBlock[] => {
     const stored: unknown = this.section().properties?.blocks;
     if (!Array.isArray(stored)) return [];
-    return stored.every(isObject) ? stored as unknown as ArticleBlock[] : objects<ArticleBlock>(stored);
+    return stored.every(isObject) ? stored as unknown as MailBlock[] : objects<MailBlock>(stored);
   });
-  public readonly title = computed(() => this.appStore.replacePlaceholders(this.section().title ?? ''));
-  public readonly subTitle = computed(() => this.appStore.replacePlaceholders(this.section().subTitle ?? ''));
+  protected readonly isMail = computed(() => this.profile().kind === 'mail');
+  protected readonly size = computed(() => canvasSize(this.device(), this.profile()));
+  public readonly title = computed(() => this.replace(this.section().title ?? ''));
+  public readonly subTitle = computed(() => this.replace(this.section().subTitle ?? ''));
   public readonly captionFallbacks = computed(() => [this.subTitle(), this.title()]);
   protected readonly intro = computed(() => {
     const intro = getSectionIntro(this.section());
-    return { ...intro, text: this.appStore.replacePlaceholders(intro.text) };
+    return { ...intro, text: this.replace(intro.text) };
   });
   protected readonly items = computed(() => this.blocks().map((block) => this.topItem(block)));
-  protected readonly headerPlace = computed(() => articleHeaderPlace(this.blocks(), !!articleBackground(this.section().properties)));
+  protected readonly headerPlace = computed(() => this.isMail() ? 'card' : articleHeaderPlace(this.blocks() as ArticleBlock[], !!articleBackground(this.section().properties)));
   /** the first block that readers see; it may carry the header */
   protected readonly firstDrawnId = computed(() => this.items().find((item) => item.view)?.block.id);
   protected readonly columnsForm = computed(() => articleColumnsForm(this.device()));
   protected readonly full = computed(() => !canAddBlock(this.blocks()));
   protected readonly fullNote = computed(() => fill(this.i18n().article_editor_library_full(), { max: ARTICLE_BLOCKS_MAX }));
   private readonly free = computed(() => isFreeArticle(this.section()));
-  protected readonly classicText = computed(() => isClassicText(this.blocks(), this.free()));
-  protected readonly classicButtonId = computed(() => classicButtonId(this.blocks(), this.free()));
+  /** a mail is never one of the classic articles */
+  protected readonly classicText = computed(() => !this.isMail() && isClassicText(this.blocks(), this.free()));
+  protected readonly classicButtonId = computed(() => this.isMail() ? undefined : classicButtonId(this.blocks(), this.free()));
   /** the drop lists, the inner ones first: the CDK takes the first one under the pointer. For the library of the host */
   public readonly dropLists = computed(() => [
     ...this.items().flatMap((item) => item.columns.map((column) => this.listId(item.block.id, column.index))), this.topListId,
@@ -214,7 +244,7 @@ export class ArticleCanvas extends ArticleCanvasContext {
     const id = this.selectedId();
     if (id === undefined || this.framed()) return undefined;
     const found = findBlock(this.blocks(), id);
-    return found && kindOf(found.block, found.place.columnsId !== undefined) === 'block' && isTextual(found.block) ? id : undefined;
+    return found && kindOf(found.block, found.place.columnsId !== undefined, this.profile()) === 'block' && isTextual(found.block) ? id : undefined;
   });
 
   protected readonly topListId = `article-canvas-${++canvases}`;
@@ -223,7 +253,7 @@ export class ArticleCanvas extends ArticleCanvasContext {
   protected switching = false;
 
   /** what was emitted since the last rendering: the next action goes on from it */
-  private pending: { blocks: ArticleBlock[]; selectedId?: string } | undefined;
+  private pending: { blocks: MailBlock[]; selectedId?: string } | undefined;
   /** the block whose frame is to be selected next, without editing its text */
   private frameOnly: string | undefined;
   /** the selection as this canvas knows it; another one came from the host */
@@ -277,7 +307,7 @@ export class ArticleCanvas extends ArticleCanvasContext {
     switch (action) {
       case 'up': case 'down': return this.move(id, action === 'up' ? -1 : 1, action);
       case 'duplicate': {
-        const copy = duplicateBlock(blocks, id, newId);
+        const copy = duplicateBlock(blocks, id, newId, this.profile());
         if (!copy) return;
         this.emit({ blocks: copy.blocks, selectedId: copy.id, copies: copy.copies });
         return this.focusFrame(copy.id);
@@ -403,16 +433,16 @@ export class ArticleCanvas extends ArticleCanvasContext {
     this.adding = true;
     const type = await this.askType(place).finally(() => { this.adding = false; });
     if (!type || this.destroyed) return;
-    const change = dropChange(this.blocksNow(), { newType: type }, place, newId);
+    const change = dropChange(this.blocksNow(), { newType: type }, place, newId, this.profile());
     if (!change?.selectedId) return;
     this.emit(change);
     this.focusFrame(change.selectedId);
   }
 
-  private async askType(place: BlockPlace): Promise<ArticleBlockType | undefined> {
+  private async askType(place: BlockPlace): Promise<MailBlockType | undefined> {
     const i18n = this.i18n();
     const options = createActionSheetOptions(i18n.article_editor_add_title());
-    for (const type of allowedTypesAt(place)) {
+    for (const type of allowedTypesAt(place, this.profile())) {
       options.buttons.push(createActionSheetButton(type, blockTypeLabel(i18n, type), this.imgixBaseUrl, ARTICLE_BLOCK_ICONS[type]));
     }
     options.buttons.push(createActionSheetButton('cancel', i18n.cancel(), this.imgixBaseUrl, 'cancel'));
@@ -420,7 +450,7 @@ export class ArticleCanvas extends ArticleCanvasContext {
     await sheet.present();
     // not before: Ionic gives the focus back to the button, and the new text takes it
     const { data } = await sheet.onDidDismiss<{ action?: string }>();
-    return ARTICLE_BLOCK_TYPES.find((known) => known === data?.action);
+    return MAIL_BLOCK_TYPES.find((known) => known === data?.action);
   }
 
   protected addToColumn(place: ListPlace): void { void this.add({ ...place, index: 0 }); }
@@ -455,7 +485,7 @@ export class ArticleCanvas extends ArticleCanvasContext {
   protected readonly mayEnter = (drag: CdkDrag<DragData>, list: CdkDropList<ListPlace>): boolean => {
     const { newType, type, isColumnsChild } = drag.data;
     const dragged = { type: newType ?? type, isNew: newType !== undefined, isColumnsChild };
-    return mayEnterList(dragged, list.data, { full: this.full(), switching: this.switching, isOverOwnColumn: () => this.isOverListOf(drag) });
+    return mayEnterList(dragged, list.data, { full: this.full(), switching: this.switching, isOverOwnColumn: () => this.isOverListOf(drag) }, this.profile());
   };
 
   private isOverListOf(drag: CdkDrag<DragData>): boolean {
@@ -481,7 +511,7 @@ export class ArticleCanvas extends ArticleCanvasContext {
     const { x, y } = event.dropPoint;
     if (x < left || x > right || y < top || y > bottom) return this.focusDragged(event.item.data);
     const editing = this.editingId();
-    const change = dropChange(this.blocksNow(), event.item.data, { ...event.container.data, index: event.currentIndex }, newId);
+    const change = dropChange(this.blocksNow(), event.item.data, { ...event.container.data, index: event.currentIndex }, newId, this.profile());
     if (!change?.selectedId) return this.focusDragged(event.item.data);
     this.emit(change, event.item.data.id !== undefined && editing !== event.item.data.id);
     // in another list the text is drawn, and opened, anew
@@ -498,7 +528,7 @@ export class ArticleCanvas extends ArticleCanvasContext {
 
   protected columnLabel(index: number): string { return fill(this.i18n().article_editor_canvas_column(), { n: index + 1 }); }
 
-  private topItem(block: ArticleBlock): TopItem {
+  private topItem(block: MailBlock): TopItem {
     const item = this.item(block, false);
     const none = { ...item, columns: [], template: '', stackReverse: false };
     if (block.type !== 'columns') return none;
@@ -506,20 +536,27 @@ export class ArticleCanvas extends ArticleCanvasContext {
     const columns = stored.map((column, index) => ({ column, index })).filter(({ column }) => isObject(column));
     return {
       ...item, noColumns: columns.length === 0,
-      columns: columns.map(({ column, index }) => ({ index, place: { columnsId: block.id, column: index }, items: objects<ArticleBlock>(column.blocks).map((inner) => this.item(inner, true)) })),
-      template: columnsTemplate(columns.map(({ column }) => column.size)), stackReverse: block.stackReverse === true,
+      columns: columns.map(({ column, index }) => ({ index, place: { columnsId: block.id, column: index }, items: objects<MailBlock>(column.blocks).map((inner) => this.item(inner, true)) })),
+      template: columnsTemplate(columns.map(({ column }) => column.size)), stackReverse: this.profile().stackReverse && block.stackReverse === true,
       headerColumn: item.view?.type === 'columns' ? item.view.headerColumn : undefined,
     };
   }
 
-  private item(block: ArticleBlock, inColumn: boolean): CanvasItem {
-    return { kind: kindOf(block, inColumn), block, view: this.viewCache.view(block) };
+  private item(block: MailBlock, inColumn: boolean): CanvasItem {
+    // the cache knows no events: they have no view
+    const drawn = (this.isMail() ? drawnMailBlock(block) : block) as ArticleBlock;
+    return { kind: kindOf(block, inColumn, this.profile()), block, view: this.viewCache.view(drawn) };
   }
 
-  private blocksNow(): ArticleBlock[] { return this.pending?.blocks ?? this.blocks(); }
+  /** Placeholders such as @APPNAME@; in a mail what is typed is what arrives. */
+  private replace(html: string): string {
+    return this.profile().placeholders ? this.appStore.replacePlaceholders(html) : html;
+  }
+
+  private blocksNow(): MailBlock[] { return this.pending?.blocks ?? this.blocks(); }
   private selectedNow(): string | undefined { return this.pending ? this.pending.selectedId : this.selectedId(); }
 
-  private withHtml(blocks: ArticleBlock[], id: string, html: string): ArticleBlock[] {
+  private withHtml(blocks: MailBlock[], id: string, html: string): MailBlock[] {
     const block = findBlock(blocks, id)?.block;
     return block && isTextual(block) && block.html !== html ? replaceBlock(blocks, { ...block, html }) : blocks;
   }
@@ -533,14 +570,14 @@ export class ArticleCanvas extends ArticleCanvasContext {
   }
 
   /** `asFrame`: a text is not edited by it. */
-  private emit(change: CanvasChange, asFrame = false): void {
+  private emit(change: CanvasChange<MailBlock>, asFrame = false): void {
     this.remember(change);
     this.frameOnly = asFrame ? change.selectedId : undefined;
     if (change.caret) this.opened.set(undefined);
     this.change.emit(change);
   }
 
-  private remember(pending: { blocks: ArticleBlock[]; selectedId?: string }): void {
+  private remember(pending: { blocks: MailBlock[]; selectedId?: string }): void {
     if (!this.pending) afterNextRender(() => { this.pending = undefined; }, { injector: this.injector });
     this.pending = { blocks: pending.blocks, selectedId: pending.selectedId };
     this.knownSelection = pending.selectedId;

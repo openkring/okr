@@ -8,6 +8,7 @@
   "dependencies": {
     "tslib": "^2.8.1",
     "@angular/cdk": "*",
+    "@okr/cms-section-ui": "*",
     "@okr/cms-section-util": "*",
     "@okr/shared-config": "*",
     "@okr/shared-feature": "*",

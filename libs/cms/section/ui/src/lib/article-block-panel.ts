@@ -5,18 +5,18 @@ import {
 } from '@ionic/angular';
 
 import {
-  ArticleBlock, BlockAlign, CalloutTone, ColumnsBlock, IMAGE_CONFIG_SHAPE, ImageActionType, ImageConfig, ImageStyle, isSameValue,
-  SectionCta, SpaceSize, UserModel
+  BlockAlign, CalloutTone, ColumnsBlock, EVENTS_CONFIG_SHAPE, IMAGE_CONFIG_SHAPE, ImageActionType, ImageConfig, ImageStyle, isSameValue,
+  MailBlock, SectionCta, SpaceSize, UserModel
 } from '@okr/shared-models';
 import { URL_LENGTH } from '@okr/shared-constants';
 import { I18nService } from '@okr/shared-i18n';
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { Checkbox, CheckboxI18n, ErrorNote, TextInput, TextInputI18n } from '@okr/shared-ui';
-import { compactImageStyle, fill, resolveImageStyle } from '@okr/shared-util-core';
+import { Checkbox, CheckboxI18n, ErrorNote, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { compactImageStyle, fill, MAX_MAIL_EVENTS, resolveImageStyle } from '@okr/shared-util-core';
 import {
-  ARTICLE_BLOCK_ICONS, ArticleEditorI18n, ArticleUpload, BLOCK_ALIGNS, blockTypeLabel, CALLOUT_TONES, COLUMN_PRESETS,
-  drawableImages, galleryErrors, getFieldErrors, IMAGE_CAPTION_LENGTH, ImageUploadTarget, isPictureMissing, resizeColumn, restErrors, SectionErrors,
-  setColumnCount, setColumnSizes, shownBlockFields, SPACE_SIZES
+  ARTICLE_BLOCK_ICONS, ARTICLE_PROFILE, ArticleEditorI18n, ArticleUpload, BLOCK_ALIGNS, blockTypeLabel, COLUMN_PRESETS,
+  drawableImages, EditorProfile, galleryErrors, getFieldErrors, IMAGE_CAPTION_LENGTH, ImageUploadTarget, isPictureMissing, MAIL_CAPTION_POSITIONS, MAIL_IMAGE_WIDTHS,
+  mailCaptionPosition, mailImageWidth, mailToneOf, resizeColumn, restErrors, SectionErrors, setColumnCount, setColumnSizes, shownBlockFields, SPACE_SIZES, withMailLinks
 } from '@okr/cms-section-util';
 
 import { pickArticleImage } from './article-image-pick.modal';
@@ -28,14 +28,14 @@ import { ImagesConfiguration } from './images-configuration';
 const filled = (value: unknown): boolean => typeof value === 'string' && value.trim() !== '';
 
 /**
- * The settings of the selected block (spec 1.175 §7.3) and nothing else. Every change emits exactly one new block object; nothing is
- * emitted on init. Uploaded pictures go to `onUpload` instead, because they may arrive when another block is selected.
+ * The settings of the selected block (spec 1.175 §7.3) and nothing else; the profile decides which there are (1.176 §8.2). Every change
+ * emits exactly one new block object; nothing is emitted on init. Uploaded pictures go to `onUpload` instead, because they may arrive when another block is selected.
  */
 @Component({
   selector: 'okr-article-block-panel',
   standalone: true,
   imports: [
-    SvgIconPipe, Checkbox, ErrorNote, TextInput, ImagesConfiguration, ArticleImagesConfiguration, CtaConfiguration,
+    SvgIconPipe, Checkbox, ErrorNote, NumberInput, StringSelect, TextInput, ImagesConfiguration, ArticleImagesConfiguration, CtaConfiguration,
     IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonList, IonNote,
     IonRadio, IonRadioGroup, IonRange, IonRow, IonSegment, IonSegmentButton,
   ],
@@ -104,6 +104,12 @@ const filled = (value: unknown): boolean => typeof value === 'string' && value.t
                       <okr-error-note [errors]="errorsFor('image.overlay')" />
                       @if (captionHidden()) { <ion-note class="note">{{ i18n().article_editor_image_captionHidden() }}</ion-note> }
                     </ion-col>
+                    @if (onlyLinks()) {
+                      <ion-col size="12">
+                        <okr-string-select [i18n]="captionPositionI18n()" [selectedString]="captionPosition()" (selectedStringChange)="setCaptionPosition($event)"
+                          [stringList]="captionPositions" [labels]="captionPositionLabels()" [readOnly]="false" />
+                      </ion-col>
+                    }
                     <ion-col size="12">
                       <okr-text-input [i18n]="altTextI18n()" [value]="image().altText ?? ''" (valueChange)="patchImage({ altText: $event })" [readOnly]="false" />
                       <okr-error-note [errors]="errorsFor('image.altText')" />
@@ -113,6 +119,12 @@ const filled = (value: unknown): boolean => typeof value === 'string' && value.t
                       <okr-error-note [errors]="errorsFor('image.actionUrl')" />
                       @if (linkNote(); as note) { <ion-note class="note">{{ note }}</ion-note> }
                     </ion-col>
+                    @if (onlyLinks()) {
+                      <ion-col size="12">
+                        <okr-string-select [i18n]="widthI18n()" [selectedString]="width()" (selectedStringChange)="setWidth($event)" [stringList]="widths()" [readOnly]="false" />
+                        <okr-error-note [errors]="errorsFor('imageStyle.width')" />
+                      </ion-col>
+                    }
                   </ion-row>
                 </ion-grid>
               </ion-card-content>
@@ -130,7 +142,7 @@ const filled = (value: unknown): boolean => typeof value === 'string' && value.t
               </ion-card-content>
             </ion-card>
           }
-          @if (!pictureMissing()) {
+          @if (!pictureMissing() && !onlyLinks()) {
             <okr-article-images-config mode="appearance" [showPlacement]="false" [title]="i18n().article_editor_panel_look()"
               [images]="images()" [imageStyle]="imageStyle()" (imageStyleChange)="setImageStyle($event)"
               [storagePath]="storagePath()" [currentUser]="currentUser()" [readOnly]="false" [i18n]="i18n()" [errors]="errors()" />
@@ -153,7 +165,7 @@ const filled = (value: unknown): boolean => typeof value === 'string' && value.t
               @if (pictureMissing()) { <ion-note class="note" color="danger">{{ i18n().article_editor_gallery_missing() }}</ion-note> }
             </ion-card-content>
           </ion-card>
-          @if (images().length > 0) {
+          @if (images().length > 0 && !profile().galleryPairs) {
             <okr-article-images-config mode="appearance" [showPlacement]="false" [title]="i18n().article_editor_panel_look()"
               [images]="images()" [imageStyle]="imageStyle()" (imageStyleChange)="setImageStyle($event)"
               [imageLayout]="layout()" (imageLayoutChange)="patch({ layout: $event })"
@@ -200,7 +212,9 @@ const filled = (value: unknown): boolean => typeof value === 'string' && value.t
                 }
               }
               @if (errorsFor('columns').length > 0) { <ion-note color="danger">{{ i18n().article_editor_columns_invalid() }}</ion-note> }
-              <okr-checkbox [i18n]="stackReverseI18n()" [checked]="stackReverse()" (checkedChange)="patch({ stackReverse: $event ? true : undefined })" [showHelper]="true" [readOnly]="false" />
+              @if (profile().stackReverse) {
+                <okr-checkbox [i18n]="stackReverseI18n()" [checked]="stackReverse()" (checkedChange)="patch({ stackReverse: $event ? true : undefined })" [showHelper]="true" [readOnly]="false" />
+              }
             </ion-card-content>
           </ion-card>
         }
@@ -212,7 +226,7 @@ const filled = (value: unknown): boolean => typeof value === 'string' && value.t
               <span class="field-label">{{ i18n().article_editor_tone_label() }}</span>
               <ion-radio-group [value]="tone()" [attr.aria-label]="i18n().article_editor_tone_label()" (ionChange)="setTone($event.detail.value)">
                 <ion-list lines="none" class="ion-no-padding">
-                  @for (t of tones; track t) {
+                  @for (t of profile().tones; track t) {
                     <ion-item class="ion-no-padding">
                       <span slot="start" class="swatch" [class]="t" aria-hidden="true"></span>
                       <ion-radio [value]="t" justify="space-between">{{ toneLabels()[t] }}</ion-radio>
@@ -238,6 +252,36 @@ const filled = (value: unknown): boolean => typeof value === 'string' && value.t
           </ion-card>
         }
 
+        @case ('events') {
+          @if (profile().types.includes('events')) {
+            <ion-note class="note">{{ i18n().article_editor_mail_events_helper() }}</ion-note>
+            <ion-card>
+              <ion-card-content class="ion-no-padding">
+                <ion-grid>
+                  <ion-row>
+                    <ion-col size="12">
+                      <okr-string-select [i18n]="calendarI18n()" [selectedString]="calendarKey()" (selectedStringChange)="patch({ calendarKey: $event })"
+                        [stringList]="calendarKeys()" [labels]="calendarNames()" [readOnly]="false" />
+                      @if (errorsFor('calendarKey').length > 0) { <ion-note class="note" color="danger">{{ i18n().article_editor_mail_events_calendarMissing() }}</ion-note> }
+                    </ion-col>
+                    <ion-col size="12">
+                      <okr-text-input [i18n]="eventsTitleI18n()" [value]="eventsTitle()" (valueChange)="patch({ title: $event === '' ? undefined : $event })" [readOnly]="false" />
+                      <okr-error-note [errors]="errorsFor('title')" />
+                    </ion-col>
+                    <ion-col size="12">
+                      <okr-number-input [i18n]="maxEventsI18n()" [value]="maxEvents()" (valueChange)="patch({ maxEvents: $event })" [integer]="true" [min]="1" [max]="maxEventsMax"
+                        [maxLength]="2" [showHelper]="true" [readOnly]="false" />
+                      <okr-error-note [errors]="errorsFor('maxEvents')" />
+                    </ion-col>
+                  </ion-row>
+                </ion-grid>
+              </ion-card-content>
+            </ion-card>
+          } @else {
+            <ion-note class="note">{{ i18n().article_editor_panel_unknown() }}</ion-note>
+          }
+        }
+
         @case ('divider') { <ion-note class="note">{{ i18n().article_editor_panel_nothing() }}</ion-note> }
         @default { <ion-note class="note">{{ i18n().article_editor_panel_unknown() }}</ion-note> }
       }
@@ -253,13 +297,16 @@ export class ArticleBlockPanel {
   private readonly actionI18n = inject(I18nService).translateAll({ followLink: '@shared/categories.imageAction.followlink.label' });
 
   // inputs
-  public readonly block = input.required<ArticleBlock>();
+  public readonly block = input.required<MailBlock>();
+  public readonly profile = input<EditorProfile>(ARTICLE_PROFILE);
   /** the column the block stands in: its size (of 12) and the number of columns; only used for an image */
   public readonly column = input<{ size: number; count: number } | undefined>();
   /** the errors of this block: `blockErrors(errors, id, blocks)` */
   public readonly errors = input<SectionErrors>({});
   /** the languages whose translation is outdated: `outdatedLanguagesOf(paths, id)` */
   public readonly outdated = input<string[]>([]);
+  /** of a mail: the calendars that an events block can list */
+  public readonly calendars = input<readonly { key: string; name: string }[]>([]);
   /** «Aus diesem Artikel»: `articleImageChoices(section)` */
   public readonly articleImages = input<ImageConfig[]>([]);
   /** false in trial mode: no file is uploaded */
@@ -271,17 +318,18 @@ export class ArticleBlockPanel {
   public readonly i18n = input.required<ArticleEditorI18n>();
 
   // outputs
-  public readonly blockChange = output<ArticleBlock>();
+  public readonly blockChange = output<MailBlock>();
   /** the new size (of 12) of the column the image stands in: apply it with `resizeColumn` and `setColumnSizes` */
   public readonly columnSizeChange = output<number>();
 
   // constants
   protected readonly aligns = BLOCK_ALIGNS;
-  protected readonly tones = CALLOUT_TONES;
   protected readonly spaceSizes = SPACE_SIZES;
   protected readonly counts = [2, 3] as const;
   protected readonly captionLength = IMAGE_CAPTION_LENGTH;
   protected readonly urlLength = URL_LENGTH;
+  protected readonly captionPositions = [...MAIL_CAPTION_POSITIONS] as string[];
+  protected readonly maxEventsMax = MAX_MAIL_EVENTS;
 
   // head
   protected readonly typeLabel = computed(() => blockTypeLabel(this.i18n(), this.block().type));
@@ -321,13 +369,24 @@ export class ArticleBlockPanel {
     const style = block.type === 'image' || block.type === 'gallery' ? block.imageStyle : undefined;
     return resolveImageStyle(style && typeof style === 'object' ? style : undefined);
   });
+  /** a mail: a picture has a link and no other action, and nothing of a look but width and caption */
+  protected readonly onlyLinks = computed(() => this.profile().imageAction === 'link');
   protected readonly captionHidden = computed(() => filled(this.image().overlay) && (this.imageStyle().captionPosition ?? 'none') === 'none');
   protected readonly linkNote = computed(() => {
+    // the link alone decides the action
+    if (this.onlyLinks()) return '';
     const follows = this.imageStyle().action === ImageActionType.FollowLink;
     const link = filled(this.image().actionUrl);
     if (link === follows) return '';
     return link ? fill(this.i18n().article_editor_image_linkInactive(), { action: this.actionI18n.followLink() }) : this.i18n().article_editor_image_linkMissing();
   });
+  protected readonly captionPosition = computed<string>(() => mailCaptionPosition(this.imageStyle()));
+  protected readonly captionPositionLabels = computed(() => [this.i18n().captionPosition_none(), this.i18n().captionPosition_top(), this.i18n().captionPosition_bottom()]);
+  protected readonly captionPositionI18n = computed<StringSelectI18n>(() => ({ name: 'captionPosition', label: this.i18n().captionPosition_label() }));
+  protected readonly width = computed(() => mailImageWidth(this.imageStyle()));
+  /** a width from elsewhere (an article) stays until another one is chosen */
+  protected readonly widths = computed(() => MAIL_IMAGE_WIDTHS.includes(this.width()) ? [...MAIL_IMAGE_WIDTHS] : [...MAIL_IMAGE_WIDTHS, this.width()]);
+  protected readonly widthI18n = computed<StringSelectI18n>(() => ({ name: 'imageWidth', label: this.i18n().article_editor_mail_image_width() }));
   protected readonly layout = computed(() => { const block = this.block(); return block.type === 'gallery' ? block.layout : undefined; });
   protected readonly slideshow = computed(() => { const block = this.block(); return block.type === 'gallery' ? block.slideshow : undefined; });
   /** captured with the id of this block: the pictures belong to it, whatever is selected when they arrive */
@@ -370,7 +429,12 @@ export class ArticleBlockPanel {
   }));
 
   // callout, space
-  protected readonly tone = computed(() => { const block = this.block(); return block.type === 'callout' ? block.tone : undefined; });
+  protected readonly tone = computed(() => {
+    const block = this.block();
+    if (block.type !== 'callout') return undefined;
+    // of a copied article: shown as the tone that the mail has
+    return this.profile().kind === 'mail' ? mailToneOf(block.tone) : block.tone;
+  });
   protected readonly toneLabels = computed<Record<CalloutTone, string>>(() => ({
     primary: this.i18n().article_editor_tone_primary(), secondary: this.i18n().article_editor_tone_secondary(),
     tertiary: this.i18n().article_editor_tone_tertiary(), neutral: this.i18n().article_editor_tone_neutral(),
@@ -378,6 +442,25 @@ export class ArticleBlockPanel {
   protected readonly spaceSize = computed(() => { const block = this.block(); return block.type === 'space' ? block.size : undefined; });
   protected readonly spaceLabels = computed<Record<SpaceSize, string>>(() => ({
     small: this.i18n().article_editor_space_small(), medium: this.i18n().article_editor_space_medium(), large: this.i18n().article_editor_space_large(),
+  }));
+
+  // events
+  protected readonly calendarKey = computed(() => { const block = this.block(); return block.type === 'events' && typeof block.calendarKey === 'string' ? block.calendarKey : ''; });
+  /** one that is no longer offered stays chosen */
+  private readonly offered = computed(() => {
+    const key = this.calendarKey();
+    return key === '' || this.calendars().some((calendar) => calendar.key === key) ? this.calendars() : [...this.calendars(), { key, name: key }];
+  });
+  protected readonly calendarKeys = computed(() => this.offered().map((calendar) => calendar.key));
+  protected readonly calendarNames = computed(() => this.offered().map((calendar) => calendar.name));
+  protected readonly calendarI18n = computed<StringSelectI18n>(() => ({ name: 'calendarKey', label: this.i18n().article_editor_mail_events_calendar() }));
+  protected readonly eventsTitle = computed(() => { const block = this.block(); return block.type === 'events' && typeof block.title === 'string' ? block.title : ''; });
+  protected readonly eventsTitleI18n = computed<TextInputI18n>(() => ({
+    name: 'eventsTitle', label: this.i18n().article_editor_mail_events_title_label(), placeholder: this.i18n().article_editor_mail_events_title_placeholder(), helper: '',
+  }));
+  protected readonly maxEvents = computed(() => { const block = this.block(); return block.type === 'events' ? block.maxEvents : EVENTS_CONFIG_SHAPE.maxEvents; });
+  protected readonly maxEventsI18n = computed<NumberInputI18n>(() => ({
+    name: 'maxEvents', label: this.i18n().article_editor_mail_events_max_label(), placeholder: '', helper: fill(this.i18n().article_editor_mail_events_max_helper(), { max: MAX_MAIL_EVENTS }),
   }));
 
   // errors
@@ -388,18 +471,19 @@ export class ArticleBlockPanel {
   });
   /** the errors of a gallery under the names of its look card */
   protected readonly lookErrors = computed(() => galleryErrors(this.errors(), this.block()));
-  protected readonly rest = computed(() => restErrors(this.lookErrors(), shownBlockFields(this.block())));
+  protected readonly rest = computed(() => restErrors(this.lookErrors(), shownBlockFields(this.block(), this.profile())));
 
   /************************************** changes *********************************************** */
   /** Emits the block with these fields; a field that is undefined is left out. Nothing is emitted if that is no change. */
   protected patch(changes: Record<string, unknown>): void {
     const next: Record<string, unknown> = { ...this.block(), ...changes };
     for (const key of Object.keys(changes)) if (next[key] === undefined) delete next[key];
-    this.emit(next as unknown as ArticleBlock);
+    this.emit(next as unknown as MailBlock);
   }
 
-  private emit(next: ArticleBlock): void {
-    if (!isSameValue(next, this.block())) this.blockChange.emit(next);
+  private emit(next: MailBlock): void {
+    const block = this.onlyLinks() ? withMailLinks(next) : next;
+    if (!isSameValue(block, this.block())) this.blockChange.emit(block);
   }
 
   protected setAlign(value: unknown): void {
@@ -407,7 +491,7 @@ export class ArticleBlockPanel {
   }
 
   protected setTone(value: unknown): void {
-    if (this.tones.includes(value as CalloutTone)) this.patch({ tone: value });
+    if (this.profile().tones.includes(value as CalloutTone)) this.patch({ tone: value });
   }
 
   protected setSpace(value: unknown): void {
@@ -425,6 +509,20 @@ export class ArticleBlockPanel {
 
   protected setImageStyle(style: ImageStyle): void {
     this.patch({ imageStyle: compactImageStyle(style) });
+  }
+
+  protected setCaptionPosition(position: string): void {
+    if (position !== this.captionPosition()) this.patchStyle({ captionPosition: position as ImageStyle['captionPosition'] });
+  }
+
+  protected setWidth(width: string): void {
+    if (width !== this.width()) this.patchStyle({ width });
+  }
+
+  /** of a mail: what is stored beside it stays as it is */
+  private patchStyle(changes: Partial<ImageStyle>): void {
+    const block = this.block();
+    if (block.type === 'image') this.setImageStyle({ ...resolveImageStyle(block.imageStyle), ...changes });
   }
 
   /** «Aus diesem Artikel»: a copy of the picture with all its texts */

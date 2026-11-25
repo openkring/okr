@@ -2,7 +2,7 @@ import { Component, computed, input, output } from '@angular/core';
 import { CdkDrag, CdkDragPlaceholder, CdkDragPreview, CdkDropList } from '@angular/cdk/drag-drop';
 import { IonIcon, IonNote } from '@ionic/angular';
 
-import { ArticleBlockType, ARTICLE_BLOCK_TYPES, MailBlockType } from '@okr/shared-models';
+import { ARTICLE_BLOCK_TYPES, MAIL_BLOCK_TYPES, MailBlockType } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { fill } from '@okr/shared-util-core';
 import { ARTICLE_BLOCK_ICONS, ARTICLE_BLOCKS_MAX, ArticleEditorI18n, blockTypeLabel } from '@okr/cms-section-util';
@@ -13,7 +13,7 @@ import { ARTICLE_PANEL_STYLES } from './article-panel.styles';
 export interface NewBlockDrag { newType: MailBlockType }
 
 /**
- * «Blöcke» (spec 1.175 §7.3): the block types. A click adds one at the end; with a mouse an entry can be dragged into the article.
+ * «Blöcke» (spec 1.175 §7.3): the block types of an article or a mail. A click adds one at the end; with a mouse an entry can be dragged into it.
  * A connected drop list whose entries are copied: sorting is off and nothing can be dropped here.
  */
 @Component({
@@ -54,8 +54,8 @@ export interface NewBlockDrag { newType: MailBlockType }
 })
 export class ArticleBlockLibrary {
   // inputs
-  /** the types that may be added at the end of the article */
-  public readonly allowed = input<readonly ArticleBlockType[]>(ARTICLE_BLOCK_TYPES);
+  /** the types that may be added at the end: `profile.types` */
+  public readonly allowed = input<readonly MailBlockType[]>(ARTICLE_BLOCK_TYPES);
   /** the article is full (`!canAddBlock(blocks)`) */
   public readonly disabled = input(false);
   /** false on a phone: entries are only clicked */
@@ -65,10 +65,10 @@ export class ArticleBlockLibrary {
   public readonly i18n = input.required<ArticleEditorI18n>();
 
   // outputs
-  public readonly add = output<ArticleBlockType>();
+  public readonly add = output<MailBlockType>();
 
   protected readonly icons = ARTICLE_BLOCK_ICONS;
-  protected readonly types = computed(() => ARTICLE_BLOCK_TYPES.filter((type) => this.allowed().includes(type)));
+  protected readonly types = computed(() => MAIL_BLOCK_TYPES.filter((type) => this.allowed().includes(type)));
   protected readonly canDrag = computed(() => this.dragEnabled() && !this.disabled());
   protected readonly hint = computed(() => {
     const i18n = this.i18n();
@@ -77,7 +77,7 @@ export class ArticleBlockLibrary {
   });
   protected readonly nothingEnters = (): boolean => false;
 
-  protected dataOf(type: ArticleBlockType): NewBlockDrag { return { newType: type }; }
-  protected label(type: ArticleBlockType): string { return blockTypeLabel(this.i18n(), type); }
-  protected addLabel(type: ArticleBlockType): string { return fill(this.i18n().article_editor_library_add(), { block: this.label(type) }); }
+  protected dataOf(type: MailBlockType): NewBlockDrag { return { newType: type }; }
+  protected label(type: MailBlockType): string { return blockTypeLabel(this.i18n(), type); }
+  protected addLabel(type: MailBlockType): string { return fill(this.i18n().article_editor_library_add(), { block: this.label(type) }); }
 }

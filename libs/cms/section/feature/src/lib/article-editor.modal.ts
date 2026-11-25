@@ -1,35 +1,28 @@
-import { Component, DestroyRef, ElementRef, ViewContainerRef, computed, effect, inject, input, linkedSignal, signal, untracked, viewChild, type Signal } from '@angular/core';
-import { AlertController, IonButton, IonContent, IonIcon, IonLabel, IonModalToken, IonSegment, IonSegmentButton, IonSpinner, ToastController } from '@ionic/angular';
+import { Component, computed, effect, inject, input, linkedSignal, signal, untracked, viewChild } from '@angular/core';
+import { AlertController, IonButton, IonContent, IonIcon, IonModalToken, IonSpinner, ToastController } from '@ionic/angular';
 
-import { ArticleCanvas, dropChange, type CanvasCaret, type CanvasChange } from '@okr/cms-article-feature';
+import { ArticleEditorSurface, changeSection, restore, topOverlay, uploadInto } from '@okr/cms-article-feature';
 import { ArticleBlocksGate, ArticleSaveService, type ArticleSaveResult } from '@okr/cms-section-data-access';
-import { ArticleBlockLibrary, ArticleBlockPanel, ArticlePanel } from '@okr/cms-section-ui';
+import { ArticlePanel } from '@okr/cms-section-ui';
 import {
-  ARTICLE_EDITOR_I18N_KEYS, SECTION_I18N_KEYS, articleImageChoices, articleOwnErrors, articleSectionValidations, blockErrors, blockIdsWithErrors,
-  blockTypeLabel, blocksInOrder, canAddBlock, createHistory, findBlock, isArticleChanged, newArticleForEditor, openArticle, outdatedLanguagesOf,
-  outdatedPaths, prepareArticleForSave, record, replaceBlock, typingPath, withUpload,
-  type ArticleEditorI18n, type ArticlePreviewDevice, type ArticleUpload, type EditorHistory,
+  ARTICLE_EDITOR_I18N_KEYS, ARTICLE_PROFILE, SECTION_I18N_KEYS, articleImageChoices, articleOwnErrors, articleSectionValidations, blockIdsWithErrors,
+  blockTypeLabel, blocksInOrder, createHistory, findBlock, isArticleChanged, newArticleForEditor, openArticle, outdatedPaths, prepareArticleForSave, typingPath,
+  type ArticleEditorI18n, type ArticleUpload, type EditorHistory, type EditorState,
 } from '@okr/cms-section-util';
 import { I18nService } from '@okr/shared-i18n';
 import { AppStore } from '@okr/shared-feature';
-import type { ArticleBlock, ArticleBlockType, ArticleSection, CategoryListModel, SectionModel, UserModel } from '@okr/shared-models';
+import type { ArticleBlock, ArticleSection, CategoryListModel, SectionModel, UserModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { ChangeConfirmation, Header } from '@okr/shared-ui';
 import { showToast } from '@okr/shared-util-angular';
 
-import {
-  changeSection, closeDecision, columnOfBlock, deviceFor, historyKey, isTypedInto, restore, selectIn, stateAfterChange, stepBack, stepForward, withBlocks, withColumnSize,
-  withFieldDefaults, withUploadDetails, type EditorState,
-} from './article-editor-modal.util';
+import { closeDecision, withFieldDefaults } from './article-editor-modal.util';
 
-const DEVICES = ['mobile', 'tablet', 'desktop'] as const satisfies readonly ArticlePreviewDevice[];
-/** what Ionic counts as an overlay that takes the keys, see its `trapKeyboardFocus` */
-const OVERLAYS = 'ion-alert, ion-action-sheet, ion-loading, ion-modal, ion-popover';
 /** a second press on the close icon waits in Ionic until the question of the first one was answered */
 const CLOSE_AGAIN_MS = 300;
 
 /**
- * The article editor (spec 1.175): toolbar, canvas and panel, and the only place that holds the article being edited, its undo
+ * The article editor (spec 1.175): the window of the editor surface, and the only place that holds the article being edited, its undo
  * history and its saving. It stays open until a save succeeded; `onSaved` tells the key each time, however it is closed then.
  *
  * Open it with `openArticleEditor` only: it is in no chunk that readers load and not exported from the lib.
@@ -38,32 +31,16 @@ const CLOSE_AGAIN_MS = 300;
   selector: 'okr-article-editor-modal',
   standalone: true,
   imports: [
-    ArticleBlockLibrary, ArticleBlockPanel, ArticleCanvas, ArticlePanel, ChangeConfirmation, Header, SvgIconPipe,
-    IonButton, IonContent, IonIcon, IonLabel, IonSegment, IonSegmentButton, IonSpinner,
+    ArticleEditorSurface, ArticlePanel, ChangeConfirmation, Header, SvgIconPipe,
+    IonButton, IonContent, IonIcon, IonSpinner,
   ],
-  host: { '(document:keydown)': 'onKeydown($event)' },
   styles: [`
-    .editor { display: flex; flex-direction: column; height: 100%; }
-    /* one line whatever is selected, so that the article never moves; the text tools scroll sideways when there is no room */
-    .bar { flex: none; display: flex; align-items: center; gap: 8px; height: 48px; padding: 0 8px; border-bottom: 1px solid var(--ion-color-light-shade); }
-    .bar ion-segment { flex: none; width: 300px; min-height: 36px; }
-    .bar ion-segment-button { min-height: 34px; min-width: 0; --padding-start: 4px; --padding-end: 4px; }
-    .bar ion-button { flex: none; margin: 0; }
-    .text-tools { flex: 1; min-width: 0; }
-    .text-tools ::ng-deep .rte-toolbar { border-bottom: 0; }
     .running { flex: none; display: flex; align-items: center; gap: 8px; font-size: 0.85rem; }
     .running ion-spinner { width: 20px; height: 20px; }
-    .notice { flex: none; display: flex; align-items: center; gap: 8px; padding: 4px 4px 4px 16px; font-size: 0.9rem; background: var(--ion-color-warning); color: var(--ion-color-warning-contrast); }
+    .notices { flex: none; }
+    .notice { display: flex; align-items: center; gap: 8px; padding: 4px 4px 4px 16px; font-size: 0.9rem; background: var(--ion-color-warning); color: var(--ion-color-warning-contrast); }
     .notice span { flex: 1; }
     .notice ion-button { flex: none; margin: 0; --color: currentColor; }
-    .work { flex: 1; min-height: 0; display: flex; }
-    .canvas { flex: 1; min-width: 0; min-height: 0; }
-    .panel { flex: none; width: 360px; overflow: auto; overscroll-behavior: contain; padding-bottom: 24px; border-inline-start: 1px solid var(--ion-color-light-shade); background: var(--ion-background-color, #fff); color: var(--ion-text-color, #000); }
-    @media (width < 1024px) {
-      .work { flex-direction: column; }
-      .canvas { flex: 1 1 0; }
-      .panel { flex: 0 1 auto; width: auto; max-height: 42%; border-inline-start: 0; border-top: 1px solid var(--ion-color-light-shade); }
-    }
     @media (width < 768px) {
       .running span { display: none; }
     }
@@ -75,51 +52,27 @@ const CLOSE_AGAIN_MS = 300;
       <okr-change-confirmation [i18n]="{ cancel: t.cancel(), save: t.save() }" (cancelClicked)="reset()" (saveClicked)="save()" />
     }
     <ion-content [scrollY]="false" class="ion-no-padding">
-      <div class="editor">
-        <div class="bar">
-          @if (!phone()) {
-            <ion-segment [value]="chosenDevice()" [attr.aria-label]="t.article_editor_device_label()" (ionChange)="chooseDevice($event.detail.value)">
-              @for (name of devices; track name) {
-                <ion-segment-button [value]="name"><ion-label>{{ deviceLabels()[name] }}</ion-label></ion-segment-button>
-              }
-            </ion-segment>
+      <okr-article-editor-surface [profile]="profile" [(history)]="history" [openedIds]="opened().ids" [errors]="errors()" [outdated]="outdated()" [articleImages]="articleImages()"
+        [uploads]="uploads" [onUpload]="onUpload" [storagePath]="storagePath()" [currentUser]="currentUser()" [active]="mayStep" [i18n]="t">
+        <div barEnd class="running" role="status">
+          @if (saving()) { <ion-spinner name="crescent" aria-hidden="true" /><span>{{ t.article_editor_save_running() }}</span> }
+        </div>
+        <div belowBar class="notices">
+          @for (notice of notices(); track notice) {
+            <div class="notice" role="status">
+              <span>{{ noticeText(notice) }}</span>
+              <ion-button fill="clear" size="small" [title]="t.article_editor_notice_close()" [attr.aria-label]="t.article_editor_notice_close()" (click)="closeNotice(notice)">
+                <ion-icon slot="icon-only" src="{{ 'cancel' | svgIcon }}" aria-hidden="true" />
+              </ion-button>
+            </div>
           }
-          <ion-button fill="clear" size="small" [disabled]="history().past.length === 0" [title]="t.article_editor_undo()" [attr.aria-label]="t.article_editor_undo()" (click)="undo()">
-            <ion-icon slot="icon-only" src="{{ 'undo' | svgIcon }}" aria-hidden="true" />
-          </ion-button>
-          <ion-button fill="clear" size="small" [disabled]="history().future.length === 0" [title]="t.article_editor_redo()" [attr.aria-label]="t.article_editor_redo()" (click)="redo()">
-            <ion-icon slot="icon-only" src="{{ 'redo' | svgIcon }}" aria-hidden="true" />
-          </ion-button>
-          <div class="text-tools" role="group" [attr.aria-label]="t.article_editor_textTools()"><ng-container #textTools /></div>
-          <div class="running" role="status">
-            @if (saving()) { <ion-spinner name="crescent" aria-hidden="true" /><span>{{ t.article_editor_save_running() }}</span> }
-          </div>
         </div>
-        @for (notice of notices(); track notice) {
-          <div class="notice" role="status">
-            <span>{{ noticeText(notice) }}</span>
-            <ion-button fill="clear" size="small" [title]="t.article_editor_notice_close()" [attr.aria-label]="t.article_editor_notice_close()" (click)="closeNotice(notice)">
-              <ion-icon slot="icon-only" src="{{ 'cancel' | svgIcon }}" aria-hidden="true" />
-            </ion-button>
-          </div>
-        }
-        <div class="work">
-          <okr-article-canvas class="canvas" [section]="article()" [selectedId]="selectedId()" [errorIds]="errorIds()" [device]="device()" [dragEnabled]="!phone()"
-            [toolbarHost]="toolbarHost()" [caret]="caret()" [i18n]="t" (selectBlock)="select($event)" (change)="onCanvasChange($event)" />
-          <div class="panel" #panel>
-            @if (selectedBlock(); as block) {
-              <okr-article-block-panel [block]="block" [column]="column()" [errors]="selectedErrors()" [outdated]="selectedOutdated()" [articleImages]="articleImages()"
-                [uploads]="uploads" [onUpload]="onUpload" [storagePath]="storagePath()" [currentUser]="currentUser()" [i18n]="t"
-                (blockChange)="onBlockChange($event)" (columnSizeChange)="onColumnSize(block.id, $event)" />
-            } @else {
-              <okr-article-block-library [disabled]="!canAdd()" [dragEnabled]="!phone()" [dropLists]="canvas().dropLists()" [i18n]="t" (add)="add($event)" />
-              <okr-article-panel [section]="article()" (sectionChange)="onSectionChange($event)" [errors]="ownErrors()" [errorBlocks]="errorBlocks()" [outdated]="outdated()"
-                [articleImages]="articleImages()" [uploads]="uploads" [onUpload]="onUpload" [roles]="roles()" [states]="states()" [allTags]="allTags()"
-                [currentUser]="currentUser()" [storagePath]="storagePath()" [i18n]="t" (selectBlock)="selectFromPanel($event)" />
-            }
-          </div>
-        </div>
-      </div>
+        <ng-template #nothingSelected>
+          <okr-article-panel [section]="article()" (sectionChange)="onSectionChange($event)" [errors]="ownErrors()" [errorBlocks]="errorBlocks()" [outdated]="outdated()"
+            [articleImages]="articleImages()" [uploads]="uploads" [onUpload]="onUpload" [roles]="roles()" [states]="states()" [allTags]="allTags()"
+            [currentUser]="currentUser()" [storagePath]="storagePath()" [i18n]="t" (selectBlock)="surface().open($event)" />
+        </ng-template>
+      </okr-article-editor-surface>
     </ion-content>
   `,
 })
@@ -148,13 +101,12 @@ export class ArticleEditorModal {
   /** a fork is the only save without a message of the section service; it gets the one of an update */
   private readonly saved = this.i18nService.translateAll({ message: '@cms/section/data-access.update.conf' });
 
-  protected readonly canvas = viewChild.required(ArticleCanvas);
-  protected readonly toolbarHost = viewChild('textTools', { read: ViewContainerRef });
-  private readonly panel = viewChild.required<ElementRef<HTMLElement>>('panel');
+  protected readonly surface = viewChild.required(ArticleEditorSurface);
+  protected readonly profile = ARTICLE_PROFILE;
 
   // the article
   /** once: the inputs of the modal do not change */
-  private readonly opened = computed(() => untracked(() => {
+  protected readonly opened = computed(() => untracked(() => {
     const section = withFieldDefaults(this.section(), this.isNew());
     const { section: article, notice } = openArticle(this.isNew() ? newArticleForEditor(section, section.okey, newId) : section, newId);
     const ids = blocksInOrder(article.properties.blocks ?? []).map((block) => block.id);
@@ -165,43 +117,21 @@ export class ArticleEditorModal {
   /** what is stored: as opened, later as saved */
   private readonly baseline = linkedSignal<EditorState>(() => this.opened().state);
   protected readonly article = computed(() => this.history().present.section);
-  protected readonly selectedId = computed(() => this.history().present.selectedId);
   private readonly blocks = computed<ArticleBlock[]>(() => this.article().properties.blocks ?? []);
-  protected readonly selectedBlock = computed(() => {
-    const id = this.selectedId();
-    return id === undefined ? undefined : findBlock(this.blocks(), id)?.block;
-  });
-  protected readonly column = computed(() => {
-    const id = this.selectedId();
-    return id === undefined ? undefined : columnOfBlock(this.blocks(), id);
-  });
-  /** where the cursor goes; not part of the history */
-  protected readonly caret = signal<CanvasCaret | undefined>(undefined);
   protected readonly changed = computed(() => isArticleChanged(this.baseline().section, this.article()));
-  protected readonly canAdd = computed(() => canAddBlock(this.blocks()));
   protected readonly articleImages = computed(() => articleImageChoices(this.article()));
 
-  // errors: one run of the suite for canvas, panels and banner
+  // errors: one run of the suite for surface, panel and banner
   private readonly result = computed(() => articleSectionValidations(this.article()));
-  private readonly errors = computed(() => this.result().getErrors());
+  protected readonly errors = computed(() => this.result().getErrors());
   protected readonly valid = computed(() => this.result().isValid());
-  protected readonly errorIds = computed(() => blockIdsWithErrors(this.errors(), this.blocks()));
+  private readonly errorIds = computed(() => blockIdsWithErrors(this.errors(), this.blocks()));
   protected readonly errorBlocks = computed(() => this.errorIds().map((id) => ({ id, label: blockTypeLabel(this.i18n, findBlock(this.blocks(), id)?.block.type ?? '') })));
   protected readonly ownErrors = computed(() => articleOwnErrors(this.errors(), this.blocks()));
-  protected readonly selectedErrors = computed(() => blockErrors(this.errors(), this.selectedId() ?? '', this.blocks()));
 
   // translations
   protected readonly outdated = signal<Record<string, string[]>>({});
-  protected readonly selectedOutdated = computed(() => outdatedLanguagesOf(this.outdated(), this.selectedId() ?? ''));
 
-  // window
-  protected readonly devices = DEVICES;
-  protected readonly deviceLabels = computed(() => ({
-    mobile: this.i18n.article_editor_device_mobile(), tablet: this.i18n.article_editor_device_tablet(), desktop: this.i18n.article_editor_device_desktop(),
-  }));
-  protected readonly chosenDevice = signal<ArticlePreviewDevice>('desktop');
-  protected readonly phone = mediaSignal('(width < 768px)');
-  protected readonly device = computed(() => deviceFor(this.chosenDevice(), this.phone()));
   protected readonly notices = linkedSignal<EditorNotice[]>(() => {
     const { notice } = this.opened();
     return [...(this.gate.trial ? ['trial' as const] : []), ...(notice ? [notice] : [])];
@@ -228,15 +158,11 @@ export class ArticleEditorModal {
   constructor() {
     this.overlay.canDismiss = () => this.mayClose();
     effect(() => this.markOutdated(this.article()));
-    effect(() => {
-      this.selectedId();
-      this.panel().nativeElement.scrollTop = 0;
-    });
   }
 
   /** Ionic. A new article opens with the cursor in its empty text: not before, nothing takes the focus while the modal is hidden. */
   public ionViewDidEnter(): void {
-    if (this.isNew() && this.history().past.length === 0 && this.selectedId() === undefined) this.select(this.blocks()[0]?.id);
+    if (this.isNew() && this.history().past.length === 0 && this.history().present.selectedId === undefined) this.surface().select(this.blocks()[0]?.id);
   }
 
   /** Ionic: closed by now, only its animation goes on. */
@@ -244,97 +170,27 @@ export class ArticleEditorModal {
 
   // ------------------------------------------------------- changes -------------------------------------------------------
 
-  protected select(id: string | undefined): void {
-    this.history.update((history) => selectIn(history, id));
-    this.caret.set(undefined);
-  }
-
-  /** The canvas goes on from what it emitted: applied at once. */
-  protected onCanvasChange(change: CanvasChange): void {
-    const { ids } = this.opened();
-    this.history.update((history) => record(history, stateAfterChange(history.present, change, ids), { tag: change.tag }));
-    // typing has none: the cursor stays where it is
-    if (change.caret && change.selectedId !== undefined) this.caret.set({ id: change.selectedId, at: change.caret });
-  }
-
-  protected add(newType: ArticleBlockType): void {
-    const change = dropChange(this.blocks(), { newType }, { index: this.blocks().length }, newId);
-    if (!change) return;
-    this.onCanvasChange(change);
-    this.canvas().focusSelected();
-  }
-
-  protected selectFromPanel(id: string): void {
-    this.select(id);
-    this.canvas().focusSelected();
-  }
-
-  protected onBlockChange(block: ArticleBlock): void {
-    const before = findBlock(this.blocks(), block.id)?.block;
-    if (!before) return;
-    const path = typingPath(before, block);
-    this.setBlocks(replaceBlock(this.blocks(), block), path && `panel:${block.id}:${path}`);
-  }
-
-  protected onColumnSize(id: string, size: number): void {
-    this.setBlocks(withColumnSize(this.blocks(), id, size));
-  }
-
   protected onSectionChange(section: ArticleSection): void {
     const path = typingPath(this.article(), section);
-    this.setSection(section, path && `article:${path}`);
-  }
-
-  private setBlocks(blocks: ArticleBlock[], tag?: string): void {
-    if (blocks !== this.blocks()) this.setSection(withBlocks(this.article(), blocks), tag);
-  }
-
-  private setSection(section: ArticleSection, tag?: string): void {
-    this.history.update((history) => changeSection(history, section, tag));
+    this.surface().change((history) => changeSection(history, section, path && `article:${path}`));
   }
 
   /** A stable function: it is called when the panel may show another block, or the editor is closed. */
   protected readonly onUpload = (upload: ArticleUpload): void => {
-    if (!this.uploads) return;
-    if (upload.kind === 'details') this.history.update((history) => withUploadDetails(history, upload));
-    else this.setSection(withUpload(this.article(), upload));
+    if (this.uploads) this.surface().change((history) => uploadInto(history, upload));
   };
 
-  // ----------------------------------------------------- undo and redo ---------------------------------------------------
-
-  protected undo(): void { this.step(stepBack); }
-  protected redo(): void { this.step(stepForward); }
-
-  private step(go: (history: EditorHistory<EditorState>) => EditorHistory<EditorState>): void {
-    const next = go(this.history());
-    if (next === this.history()) return;
-    this.history.set(next);
-    this.caret.set(undefined);
-    this.canvas().focusSelected();
-  }
+  /** undo and redo by key */
+  protected readonly mayStep = (): boolean => !this.leaving && !this.done;
 
   /** «Abbrechen»: the article as it is stored, as a step that can be undone. */
   protected reset(): void {
-    this.step((history) => restore(history, this.baseline()));
-  }
-
-  /** Also an event that the text editor prevented: it switches off its own undo that way. */
-  protected onKeydown(event: KeyboardEvent): void {
-    const key = historyKey(event);
-    if (!key || this.leaving || this.done || !this.isOnTop()) return;
-    const from = event.composedPath()[0];
-    // in a field of the panel the browser's own undo works
-    if (from instanceof Element && isTypedInto(from) && !from.closest('okr-article-canvas')) return;
-    event.preventDefault();
-    if (key === 'undo') this.undo();
-    else this.redo();
+    this.surface().step((history) => restore(history, this.baseline()));
   }
 
   /** Whether no picker, sheet or question is open above this modal. */
   private isOnTop(): boolean {
-    const open = [...document.querySelectorAll<HTMLElement & { overlayIndex?: number }>(OVERLAYS)]
-      .filter((element) => (element.overlayIndex ?? 0) > 0 && !element.classList.contains('overlay-hidden'));
-    return open[open.length - 1] === this.overlay;
+    return topOverlay() === this.overlay;
   }
 
   // ------------------------------------------------------- saving -------------------------------------------------------
@@ -426,12 +282,7 @@ export class ArticleEditorModal {
     }
   }
 
-  // ------------------------------------------------------- window --------------------------------------------------------
-
-  protected chooseDevice(value: unknown): void {
-    const device = DEVICES.find((name) => name === value);
-    if (device) this.chosenDevice.set(device);
-  }
+  // ------------------------------------------------------ notices --------------------------------------------------------
 
   protected noticeText(notice: EditorNotice): string {
     switch (notice) {
@@ -459,13 +310,3 @@ export class ArticleEditorModal {
 type EditorNotice = 'trial' | 'noPicture' | 'look';
 
 function newId(): string { return crypto.randomUUID(); }
-
-/** Whether the window matches `query`; in an injection context. */
-function mediaSignal(query: string): Signal<boolean> {
-  const media = window.matchMedia(query);
-  const matches = signal(media.matches);
-  const onChange = (event: MediaQueryListEvent): void => matches.set(event.matches);
-  media.addEventListener('change', onChange);
-  inject(DestroyRef).onDestroy(() => media.removeEventListener('change', onChange));
-  return matches.asReadonly();
-}

@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import type { ArticleBlock, ArticleBlockType } from '@okr/shared-models';
+import { ARTICLE_PROFILE, MAIL_PROFILE } from '@okr/cms-section-util';
+import type { ArticleBlock, ArticleBlockType, MailBlock } from '@okr/shared-models';
 
-import { canDropAt, classicButtonId, dragPoint, dropChange, isClassicText, isTextual, kindOf, mayEnterList, neighbourId, parentId } from './article-canvas.util';
+import { canDropAt, canvasSize, classicButtonId, dragPoint, dropChange, isClassicText, isTextual, kindOf, mayEnterList, neighbourId, parentId } from './article-canvas.util';
 
 const text = (id: string, html = `<p>${id}</p>`): ArticleBlock => ({ id, type: 'text', html });
 const gallery = (id: string): ArticleBlock => ({ id, type: 'gallery', images: [] });
@@ -228,5 +229,59 @@ describe('kindOf and isTextual', () => {
     expect(isTextual(text('a'))).toBe(true);
     expect(isTextual(ofType('callout'))).toBe(true);
     expect(isTextual(ofType('button'))).toBe(false);
+  });
+});
+
+describe('the canvas of a mail', () => {
+  const events = (id: string): MailBlock => ({ id, type: 'events', calendarKey: '', maxEvents: 5 });
+  const mail = (): MailBlock[] => [text('a'), columns('c', [text('x')], [])];
+
+  it('takes events on the top level, new or moved', () => {
+    const change = dropChange(mail(), { newType: 'events' }, { index: 1 }, counter(), MAIL_PROFILE);
+    expect(change?.blocks.map((b) => b.id)).toEqual(['a', 'new1', 'c']);
+    expect(change?.selectedId).toBe('new1');
+    expect(dropChange([...mail(), events('e')], { id: 'e' }, { index: 0 }, counter(), MAIL_PROFILE)?.blocks.map((b) => b.id)).toEqual(['e', 'a', 'c']);
+  });
+  it('takes none in a column', () => {
+    expect(dropChange(mail(), { newType: 'events' }, { columnsId: 'c', column: 1, index: 0 }, counter(), MAIL_PROFILE)).toBeUndefined();
+    expect(dropChange([...mail(), events('e')], { id: 'e' }, { columnsId: 'c', column: 1, index: 0 }, counter(), MAIL_PROFILE)).toBeUndefined();
+    expect(canDropAt({ type: 'events', isNew: true }, { columnsId: 'c' }, false, MAIL_PROFILE)).toBe(false);
+    expect(canDropAt({ type: 'events' }, { columnsId: 'c' }, false, MAIL_PROFILE)).toBe(false);
+    expect(canDropAt({ type: 'text', isNew: true }, { columnsId: 'c' }, false, MAIL_PROFILE)).toBe(true);
+  });
+  it('new events get into no list of an article', () => {
+    expect(canDropAt({ type: 'events', isNew: true }, {}, false, MAIL_PROFILE)).toBe(true);
+    expect(canDropAt({ type: 'events', isNew: true }, {})).toBe(false);
+    expect(canDropAt({ type: 'events' }, {})).toBe(true);    // one that stands there can be moved
+  });
+  it('asks the lists by its profile', () => {
+    const state = { full: false, switching: false, isOverOwnColumn: () => false };
+    expect(mayEnterList({ type: 'events', isNew: true }, {}, state, MAIL_PROFILE)).toBe(true);
+    expect(mayEnterList({ type: 'events', isNew: true }, { columnsId: 'c' }, { ...state, switching: true }, MAIL_PROFILE)).toBe(false);
+    expect(mayEnterList({ type: 'events', isNew: true }, {}, state)).toBe(false);
+  });
+  it('knows events, on the top level only', () => {
+    expect(kindOf(events('e'), false, MAIL_PROFILE)).toBe('block');
+    expect(kindOf(events('e'), true, MAIL_PROFILE)).toBe('unknown');
+    expect(kindOf(events('e'), false)).toBe('unknown');
+    expect(isTextual(events('e'))).toBe(false);
+  });
+  it('the events next to a removed block get the focus', () => {
+    expect(neighbourId([events('e'), text('a')], 'a')).toBe('e');
+    expect(parentId([events('e'), ...mail()], 'x')).toBe('c');
+  });
+});
+
+describe('canvasSize', () => {
+  it('an article is as wide as the device, on the desktop at most', () => {
+    expect(canvasSize('mobile', ARTICLE_PROFILE)).toEqual({ width: 390 });
+    expect(canvasSize('tablet', ARTICLE_PROFILE)).toEqual({ width: 768 });
+    expect(canvasSize('desktop', ARTICLE_PROFILE)).toEqual({ maxWidth: 1100 });
+    expect(canvasSize('auto', ARTICLE_PROFILE)).toEqual({});
+  });
+  it('a mail is 500 px wide, on the mobile 390; on a phone as wide as that, never wider than its mobile view', () => {
+    expect(canvasSize('desktop', MAIL_PROFILE)).toEqual({ width: 500 });
+    expect(canvasSize('mobile', MAIL_PROFILE)).toEqual({ width: 390 });
+    expect(canvasSize('auto', MAIL_PROFILE)).toEqual({ maxWidth: 390 });
   });
 });

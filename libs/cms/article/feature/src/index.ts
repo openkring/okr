@@ -16,3 +16,5 @@ export type { ArticleBlocks } from './lib/article-blocks';
 // editors: only lazily loaded files (the article editor) import these, so that readers load none of it
 export * from './lib/article-canvas';
 export * from './lib/article-canvas.util';
+export * from './lib/article-editor-surface';
+export * from './lib/article-editor-surface.util';

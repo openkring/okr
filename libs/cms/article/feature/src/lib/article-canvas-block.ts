@@ -4,20 +4,22 @@ import { IonIcon, IonNote } from '@ionic/angular';
 
 import {
   ARTICLE_BLOCK_ICONS, ARTICLE_BLOCKS_MAX, type ArticleBlockView, type ArticleEditorI18n, type ArticlePreviewDevice, blockTypeLabel,
-  canAddBlock, duplicateBlock, moveBlockBy,
+  canAddBlock, duplicateBlock, type EditorProfile, eventsNote, isPictureMissing, mailEventsDrawn, moveBlockBy,
 } from '@okr/cms-section-util';
-import type { ArticleBlock, ArticleBlockType } from '@okr/shared-models';
+import type { MailBlock } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { RichTextInline, type RichTextCaret, type RichTextFeature } from '@okr/shared-ui-editor';
-import { fill } from '@okr/shared-util-core';
+import { fill, type MailEventLine } from '@okr/shared-util-core';
 
 import { ArticleBlockComponent } from './article-block';
 import type { CanvasItemKind } from './article-canvas.util';
+import { MailEvents } from './mail-events';
+import { MailGallery } from './mail-gallery';
 
 /** A block as the canvas shows it. `view`: what readers see of it, undefined when they see nothing. */
 export interface CanvasItem {
   kind: CanvasItemKind;
-  block: ArticleBlock;
+  block: MailBlock;
   view?: ArticleBlockView;
   /** malformed columns: there is nothing to draw a frame around */
   noColumns?: boolean;
@@ -30,6 +32,9 @@ export interface CanvasCaret { id: string; at: RichTextCaret }
 
 /** What a block takes from the canvas around it (`article-canvas.ts`), and what it tells it. */
 export abstract class ArticleCanvasContext {
+  public abstract readonly profile: Signal<EditorProfile>;
+  /** of a mail: the events of its calendars as of now */
+  public abstract readonly eventLines: Signal<Record<string, MailEventLine[]>>;
   public abstract readonly i18n: Signal<ArticleEditorI18n>;
   public abstract readonly device: Signal<ArticlePreviewDevice>;
   public abstract readonly dragEnabled: Signal<boolean>;
@@ -37,7 +42,7 @@ export abstract class ArticleCanvasContext {
   /** where the cursor goes in one text; the end in every other one */
   public abstract readonly textCaret: Signal<CanvasCaret | undefined>;
   public abstract readonly errorIds: Signal<string[]>;
-  public abstract readonly blocks: Signal<ArticleBlock[]>;
+  public abstract readonly blocks: Signal<MailBlock[]>;
   public abstract readonly selectedId: Signal<string | undefined>;
   public abstract readonly editingId: Signal<string | undefined>;
   public abstract readonly title: Signal<string>;
@@ -54,14 +59,14 @@ export abstract class ArticleCanvasContext {
 const HIDDEN_FEATURES: readonly RichTextFeature[] = ['history', 'colors', 'align', 'indent', 'image'];
 
 /**
- * One block in the canvas of the article editor (spec 1.175 §7.4, §7.5): its drawing, the frame and its buttons, and the editor of a text.
+ * One block in the canvas of the article editor (spec 1.175 §7.4, §7.5), or of a mail (1.176 §8.2): its drawing, the frame and its buttons, and the editor of a text.
  * Columns are projected. The frame takes no room: outline, buttons and «+» lie over the drawing, so a block stands where readers see it.
  * The host element is the frame; the canvas puts `cdkDrag` on it.
  */
 @Component({
   selector: 'okr-article-canvas-block',
   standalone: true,
-  imports: [ArticleBlockComponent, CdkDragHandle, CdkDragPlaceholder, CdkDragPreview, IonIcon, IonNote, RichTextInline, SvgIconPipe],
+  imports: [ArticleBlockComponent, CdkDragHandle, CdkDragPlaceholder, CdkDragPreview, IonIcon, IonNote, MailEvents, MailGallery, RichTextInline, SvgIconPipe],
   host: {
     role: 'group',
     tabindex: '0',
@@ -151,7 +156,11 @@ const HIDDEN_FEATURES: readonly RichTextFeature[] = ['history', 'colors', 'align
         <div class="place">{{ label() }}</div>
       }
       @default {
-        @if (drawn(); as view) {
+        @if (mailGallery(); as gallery) {
+          <okr-mail-gallery [block]="gallery" />
+        } @else if (events(); as events) {
+          <okr-mail-events [title]="events.title" [lines]="events.lines" />
+        } @else if (drawn(); as view) {
           <okr-article-block [class.empty-text]="!item().view" [class.after-header]="afterHeader()" [class.classic-button]="classicButton()" [view]="view" [captionFallbacks]="canvas.captionFallbacks()"
             [title]="titled() ? canvas.title() : ''" [subTitle]="titled() ? canvas.subTitle() : ''" [previewDevice]="canvas.device()" [paused]="true" [inert]="true" [classicText]="classicText()" [textEditor]="editing() ? editor : undefined" />
         } @else {
@@ -210,7 +219,7 @@ export class ArticleCanvasBlock {
   protected readonly hasError = computed(() => this.canvas.errorIds().includes(this.item().block.id));
   protected readonly label = computed(() => blockTypeLabel(this.canvas.i18n(), this.item().kind === 'unknown' ? '' : this.item().block.type));
   protected readonly toolsLabel = computed(() => fill(this.canvas.i18n().article_editor_frame_toolbar(), { block: this.label() }));
-  protected readonly icon = computed(() => ARTICLE_BLOCK_ICONS[this.item().block.type as ArticleBlockType] as string | undefined);
+  protected readonly icon = computed(() => ARTICLE_BLOCK_ICONS[this.item().block.type] as string | undefined);
   protected readonly full = computed(() => !this.inColumn() && !canAddBlock(this.canvas.blocks()));
   protected readonly fullNote = computed(() => fill(this.canvas.i18n().article_editor_library_full(), { max: ARTICLE_BLOCKS_MAX }));
   /** only asked for the selected block */
@@ -220,7 +229,7 @@ export class ArticleCanvasBlock {
     return {
       up: moveBlockBy(blocks, id, -1) !== blocks,
       down: moveBlockBy(blocks, id, 1) !== blocks,
-      duplicate: this.item().kind !== 'unknown' && duplicateBlock(blocks, id, () => '') !== undefined,
+      duplicate: this.item().kind !== 'unknown' && duplicateBlock(blocks, id, () => '', this.canvas.profile()) !== undefined,
     };
   });
   /** an empty text shows a placeholder where it will stand */
@@ -231,6 +240,17 @@ export class ArticleCanvasBlock {
     if (block.type === 'text') return { key: block.id, type: 'text', html, align: block.align ?? 'left' };
     if (block.type === 'callout') return { key: block.id, type: 'callout', html, tone: block.tone ?? 'neutral' };
     return undefined;
+  });
+  /** of a mail, with a picture: not the gallery that readers of an article see */
+  protected readonly mailGallery = computed(() => {
+    const { block } = this.item();
+    return this.canvas.profile().galleryPairs && block.type === 'gallery' && !isPictureMissing(block) ? block : undefined;
+  });
+  /** of a mail: the lines there are */
+  protected readonly events = computed(() => {
+    const { block } = this.item();
+    const lines = mailEventsDrawn(block, this.canvas.eventLines());
+    return block.type === 'events' && lines.length > 0 ? { title: typeof block.title === 'string' ? block.title : '', lines } : undefined;
   });
   protected readonly drawnHtml = computed(() => {
     const view = this.drawn();
@@ -243,9 +263,14 @@ export class ArticleCanvasBlock {
   });
   protected readonly placeholder = computed(() => {
     const i18n = this.canvas.i18n();
-    switch (this.item().block.type) {
+    const { block } = this.item();
+    switch (block.type) {
       case 'image': return `${this.label()}: ${i18n.article_editor_canvas_imagePlaceholder()}`;
       case 'gallery': return `${this.label()}: ${i18n.article_editor_canvas_galleryPlaceholder()}`;
+      case 'events': {
+        const texts = { choose: i18n.article_editor_mail_events_choose, later: i18n.article_editor_mail_events_later, none: i18n.article_editor_mail_events_none };
+        return `${this.label()}: ${texts[eventsNote(block, this.canvas.eventLines()) ?? 'later']()}`;
+      }
       // the text names the button itself
       default: return i18n.article_editor_canvas_buttonPlaceholder();
     }

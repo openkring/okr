@@ -16,6 +16,9 @@ import { openSectionLink } from './section-link';
 /** The padding of a list of blocks (the one of the ion-grid of a classic article), for the reader list and the canvas. */
 export const ARTICLE_LIST_PADDING = '5px';
 
+/** The padding of `.block` below, on which the canvas of a mail counts. */
+export const ARTICLE_BLOCK_PADDING = '5px';
+
 /**
  * The grid of the columns and the header in one of them, for whoever draws the columns around `okr-article-block`s: the
  * reader list and the canvas of the editor. The block after the header carries the class `after-header`.
@@ -54,7 +57,7 @@ export const ARTICLE_COLUMNS_STYLES = `
   },
   styles: [`
     :host { display: block; }
-    .block { padding: 5px; }
+    .block { padding: ${ARTICLE_BLOCK_PADDING}; }
     .html { width: 100%; min-width: 0; overflow-wrap: anywhere; }
     .image okr-img { display: block; }
     /* not .button alone: Ionic gives its ion-button that class too */

@@ -99,15 +99,18 @@ Spec 1.175, `planning/specs/2026-11-23-article-block-editor-design.md`. `Article
 | Part | Where | What |
 | --- | --- | --- |
 | `article-editor.loader.ts` | feature | `openArticleEditor()`, the only entry; light, in the chunk of readers |
-| `article-editor.modal.ts`, `article-editor-modal.util.ts` | feature | Window: history, devices, saving, questions; its rules are in the util |
+| `article-editor.modal.ts`, `article-editor-modal.util.ts` | feature | Window of an article: history, saving, questions, notices; its rules are in the util |
+| `article-editor-surface.ts`, `article-editor-surface.util.ts` | `cms-article-feature` | The editor without its window: toolbar row, canvas, panel, undo and redo, selection, caret. For the window of an article and the composer of a mail; its contract is in the class comment |
+| `editor-profile.ts` | util | What differs between the two hosts (`ARTICLE_PROFILE`, `MAIL_PROFILE`): block types, devices, widths, tones, fields of the panel |
 | `article-canvas.ts`, `article-canvas-block.ts`, `article-canvas.util.ts` | `cms-article-feature` | Canvas: selecting, keyboard, dragging, text in place |
-| `article-frame.ts`, `article-block.ts` | `cms-article-feature` | Card and header, one block: drawn once, for readers and canvas. Whoever draws the frame adds `ARTICLE_FRAME_STYLES` (and `ARTICLE_COLUMNS_STYLES`) to its own styles |
+| `article-frame.ts`, `article-block.ts` | `cms-article-feature` | Card and header, one block: drawn once, for readers and canvas. Whoever draws the frame adds `ARTICLE_FRAME_STYLES` to its own styles; `ARTICLE_COLUMNS_STYLES` is for files inside the lib only, it is not exported |
+| `mail-gallery.ts`, `mail-events.ts`, `mail-panel.util.ts` | `cms-article-feature`, util | What only a mail draws (spec 1.176 §8.2); the rules are those of `render-mail-blocks.logic.ts` (functions) |
 | `article-block-panel.ts`, `article-panel.ts`, `article-block-library.ts`, `article-image-pick.modal.ts` | ui | Side panel. They hold no form: the modal runs `articleSectionValidations` once and passes the errors |
 | `article-editor*.util.ts`, `article-panel.util.ts` | util | Pure operations: blocks, history (100 steps, typing run 1 s), opening, comparing, translations, errors |
 | `okr-rich-text-inline` | `shared-ui-editor` | One text edited in place, toolbar outside |
 | `ArticleBlocksGate`, `ArticleSaveService` | data-access | Gate and save, see below |
 
-**Keep readers light.** The editor, ProseMirror and `article-editor-i18n.ts` are in chunks that only the editor loads. Do not export `article-editor.modal` from the feature barrel, import `ArticleCanvas` and `article-editor-open.util`, `article-editor-history.util` and the panels only from editor files. What readers' stores need is in `article-editor-entry.util.ts`. Check with a production build (`lazy-loading` skill); the probe of `scripts/bundle-closure.mjs` matches packages and folders, not file names, so look for the files in the source maps. The barrel of `@okr/cms-article-feature` exports the canvas beside the parts readers load at once; its `index.ts` says what must never be done with it, ESLint refuses it.
+**Keep readers light.** The editor, ProseMirror and `article-editor-i18n.ts` are in chunks that only the editor loads. Do not export `article-editor.modal` from the feature barrel, import `ArticleEditorSurface`, `ArticleCanvas` and `article-editor-open.util`, `article-editor-history.util` and the panels only from editor files. What readers' stores need is in `article-editor-entry.util.ts`. Check with a production build (`lazy-loading` skill); the probe of `scripts/bundle-closure.mjs` matches packages and folders, not file names, so look for the files in the source maps. The barrel of `@okr/cms-article-feature` exports the canvas beside the parts readers load at once; its `index.ts` says what must never be done with it, ESLint refuses it.
 
 **Gate** (`ArticleBlocksGate`): blocks may be stored only when the global `app-version.minVersion` is at least `ARTICLE_BLOCKS_MIN_VERSION` (`version` skill). Since 7.63.0 it is `7.63.0`; the gate stays closed while `minVersion` is lower. `open` / `load()`: the editor may open. `mayWrite` / `loadMayWrite()`: blocks may be stored; code that creates articles uses only this one, through `articlesToWrite()`.
 
