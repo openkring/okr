@@ -117,9 +117,10 @@ module.exports = [
         'error',
         { paths: [{ name: '@ionic/angular', importNames: ['IonImg'], message: 'Use <img okrImg> (ImgDirective from @okr/shared-ui) instead of the deprecated ion-img.' }] },
       ],
-      // Spec 1.176: readers import the barrel of @okr/cms-article-feature statically, and it also exports the canvas of the
-      // editor. An import() of it makes every export eager (lazy-loading skill). The Angular
-      // compiler writes such an import() itself for a component that a file uses only inside @defer.
+      // Spec 1.176: readers import the barrel of @okr/cms-article-feature statically, and it also exports the canvas and the
+      // surface of the editor. An import() of it makes every export eager (lazy-loading skill). The Angular
+      // compiler writes such an import() itself for a component that a file uses only inside @defer. Passed on by another
+      // barrel it would be out of reach of this guard.
       'no-restricted-syntax': [
         'error',
         {
@@ -127,7 +128,15 @@ module.exports = [
           message: 'An import() of this barrel makes the article editor eager. Use a loader function of @okr/cms-article-feature (relative import() inside the lib).',
         },
         {
-          selector: "Program:has(ImportDeclaration[source.value='@okr/cms-article-feature'][importKind='value']) TemplateElement[value.raw=/@defer\\b/]",
+          selector: 'ImportExpression > TemplateLiteral > TemplateElement[value.raw="@okr/cms-article-feature"]',
+          message: 'An import() of this barrel makes the article editor eager. Use a loader function of @okr/cms-article-feature (relative import() inside the lib).',
+        },
+        {
+          selector: "ExportAllDeclaration[source.value='@okr/cms-article-feature'][exportKind='value'], ExportNamedDeclaration[source.value='@okr/cms-article-feature'][exportKind='value']:has(ExportSpecifier[exportKind='value'])",
+          message: 'Do not pass on this barrel: an import() of yours would make the article editor eager. Import from @okr/cms-article-feature where it is used; types may be passed on.',
+        },
+        {
+          selector: "Program:has(ImportDeclaration[source.value='@okr/cms-article-feature'][importKind='value']) TemplateElement[value.raw=/@defer\\s*[({]/]",
           message: 'A component of @okr/cms-article-feature that is used only inside @defer becomes an import() of its barrel and makes the article editor eager. Create it with a loader function and createComponent.',
         },
       ],
@@ -142,7 +151,7 @@ module.exports = [
       'no-restricted-syntax': [
         'error',
         {
-          selector: "ExportNamedDeclaration[exportKind='value'], ExportAllDeclaration[exported], ImportDeclaration[importKind='value']",
+          selector: "ExportNamedDeclaration[exportKind='value'], ExportAllDeclaration[exported], ExportDefaultDeclaration, ImportDeclaration[importKind='value']",
           message: 'Only `export *` and `export type` here: anything else makes the article editor eager (spec 1.176).',
         },
       ],

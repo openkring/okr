@@ -17,7 +17,6 @@ import { ImgDirective } from '@okr/shared-ui';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { ColorsIonic } from '@okr/shared-categories';
 
-
 /**
  * A grid of tiles: stat tiles (big value + caption), cards (icon, title, text, optional link) or image
  * cards (a picture on top, spec 1.165 §10.1).

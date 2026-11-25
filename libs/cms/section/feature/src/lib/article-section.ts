@@ -320,7 +320,9 @@ export class ArticleSectionComponent {
       const type = this.blocksType();
       if (!host || !type) return;
       const blocks = untracked(() => this.createBlocks(host, type));
+      // before its first run: what throws there leaves nothing behind
       onCleanup(() => blocks.destroy());
+      untracked(() => blocks.changeDetectorRef.detectChanges());
     });
   }
 
@@ -328,13 +330,14 @@ export class ArticleSectionComponent {
     try {
       articleBlocksType.set(await loadArticleBlocks());
     } catch (error) {
-      console.warn('ArticleSection: the blocks could not be loaded', error);
+      // every article of the page waits for the same load: one of them tells
+      if (!articleBlocksFailed()) console.warn('ArticleSection: the blocks could not be loaded', error);
       articleBlocksFailed.set(true);
     }
   }
 
   private createBlocks(host: ViewContainerRef, type: Type<ArticleBlocks>): ComponentRef<ArticleBlocks> {
-    const blocks = host.createComponent(type, {
+    return host.createComponent(type, {
       bindings: [
         inputBinding('blocks', () => this.freeBlocks() ?? []),
         inputBinding('title', this.title),
@@ -347,7 +350,5 @@ export class ArticleSectionComponent {
         outputBinding<ImageConfig>('imageSelected', (image) => this.imageSelected.emit(image)),
       ],
     });
-    blocks.changeDetectorRef.detectChanges();
-    return blocks;
   }
 }
