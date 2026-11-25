@@ -4,15 +4,16 @@
 // the blocks of its Mitteilung (§9.3). Pure: the caller loads the event lines and passes Handlebars and the sanitizer.
 // Stored blocks may hold anything. A mail cannot be corrected later, so what cannot be rendered is refused, never left out.
 import {
-  MAIL_BLOCK_TYPES,
-  type ArticleBlock, type BlockAlign, type CalloutTone, type ColumnContentBlock, type ImageConfig, type ImageStyle, type MailBlockType, type SpaceSize,
+  CAPTION_ALIGNS, CAPTION_POSITIONS, CAPTION_STYLES, IMAGE_LAYOUT_IDS, ImageActionType, ImageType, MAIL_BLOCK_TYPES, SLIDESHOW_EFFECTS,
+  type ArticleBlock, type ArticleSlideshow, type BlockAlign, type CalloutTone, type ColumnContentBlock, type ImageConfig, type ImageStyle, type MailBlockType, type SpaceSize,
 } from '@okr/shared-models';
 import { buildImageCaption, isSafeLinkTarget, mailTargetUrl, toPixelNumber, type MailEventLine } from '@okr/shared-util-core';
 
 import { mailColorOf, textColorOn, tintOf } from '../../_shared/brand-color';
 import { MAIL_BLOCK_TEMPLATES } from './mail-block-templates';
+import { pictureUrl, storedPictureUrl } from './mail-picture.logic';
 import { mailTextHtml } from './mail-text.logic';
-import { hasVisibleContent, mailEventLimit, mailImageUrl, MailPageError, P_MARGIN_REPEAT } from './render-mail-page.logic';
+import { hasVisibleContent, mailEventLimit, MailPageError, P_MARGIN_REPEAT } from './render-mail-page.logic';
 
 export type MailTarget = 'mail' | 'print';
 
@@ -41,6 +42,8 @@ const CONTENT_WIDTH = 440;
 const PHONE_WIDTH = 330;
 /** between two columns, or two pictures of a gallery */
 const GUTTER = 16;
+/** left and right of a callout's text */
+const CALLOUT_PADDING = 16;
 const GALLERY_PICTURE_WIDTH = (CONTENT_WIDTH - GUTTER) / 2;
 
 const TEXT_COLOR = '#222222';
@@ -79,21 +82,15 @@ function objectOf(value: unknown): Loose {
   return isObject(value) ? value : {};
 }
 
-/** The address of a stored picture at `width` px; `''` when a mail cannot show it (no path, http, another scheme). */
-function pictureUrl(image: Loose, width: number): string {
-  const path = str(image['url']);
-  if (/^[a-z][a-z\d+.-]*:/i.test(path) && !path.startsWith('https://')) return '';
-  const url = mailImageUrl(path.replace(/ /g, '%20'), width);
-  return url.startsWith('https://bkaiser.imgix.net/') ? `${url}&fit=max` : url;
-}
-
 function altOf(image: Loose): string {
   return str(image['altText']) || str(image['label']);
 }
 
+/** The lines of an events block; a field that is no text is empty. */
 function linesOf(block: Loose, events: Record<string, MailEventLine[]>): MailEventLine[] {
-  const lines: unknown = events[str(block['calendarKey'])];
-  return Array.isArray(lines) ? lines.slice(0, mailEventLimit(block)) as MailEventLine[] : [];
+  const stored: unknown = events[str(block['calendarKey'])];
+  return (Array.isArray(stored) ? stored : []).filter(isObject).slice(0, mailEventLimit(block))
+    .map((line) => ({ date: str(line['date']), time: str(line['time']), title: str(line['title']), place: str(line['place']) }));
 }
 
 /** The stored sizes when they fill the 12 columns, else equal ones, as the readers of an article draw them. */
@@ -112,7 +109,7 @@ function invalid(reason: string, id?: string): MailPageError {
 
 /** A picture must show something: itself, or its alt text. */
 function isDrawable(image: Loose): boolean {
-  return pictureUrl(image, 1) !== '' || altOf(image) !== '';
+  return storedPictureUrl(image['url']) !== '' || altOf(image) !== '';
 }
 
 /** An entry of a gallery in which nothing was entered: no picture is lost when it is left out. */
@@ -183,9 +180,11 @@ function pictureWidth(style: Loose, place: number, stackedPlace: number): { attr
   const width = str(style['width']);
   const percent = /^(\d+(?:\.\d+)?)%$/.exec(width);
   const share = percent ? Number(percent[1]) : 0;
-  if (share > 0 && share < 100) return { attribute: Math.round(place * share / 100), css: `${share}%`, drawn: Math.round(stackedPlace * share / 100) };
+  const attribute = Math.round(place * share / 100);
+  if (attribute >= 1 && share < 100) return { attribute, css: `${share}%`, drawn: Math.round(stackedPlace * share / 100) };
   const px = toPixelNumber(width);
-  if (px === undefined) return { attribute: place, css: '100%', drawn: stackedPlace };
+  // less than half a pixel is no width
+  if (px === undefined || Math.round(px) < 1) return { attribute: place, css: '100%', drawn: stackedPlace };
   const capped = Math.min(Math.round(px), CONTENT_WIDTH);
   return { attribute: Math.min(capped, place), css: `${capped}px`, drawn: Math.min(capped, stackedPlace) };
 }
@@ -220,7 +219,7 @@ class BlockRenderer {
   private readonly compiled = new Map<MailBlockType, (data: unknown) => string>();
   private readonly color: string;
   private readonly print: boolean;
-  /** what every cell sets; on paper nothing has a background */
+  /** what every cell sets; on paper no template sets a background */
   private readonly cell: string;
 
   constructor(private readonly ctx: MailBlockContext) {
@@ -232,7 +231,7 @@ class BlockRenderer {
   /** `place`: the width of the block at 440 px, `stackedPlace`: the widest it is ever drawn in the seeded layouts. */
   public async block(block: CheckedBlock, place = CONTENT_WIDTH, stackedPlace = CONTENT_WIDTH): Promise<Part> {
     switch (block.type) {
-      case 'text': return this.text(block, place);
+      case 'text': return this.text(block, place, stackedPlace);
       case 'callout': return this.callout(block);
       case 'image': return this.draw('image', { ...this.picture(objectOf(block['image']), objectOf(block['imageStyle']), place, stackedPlace) });
       case 'gallery': return this.gallery(block);
@@ -253,20 +252,23 @@ class BlockRenderer {
     return { html: template({ ...data, cell: this.cell, print: this.print }), hasContent };
   }
 
-  private async html(block: Loose, width: number): Promise<string> {
-    const html = mailTextHtml(await this.ctx.sanitize(block['html'] as string), { appOrigin: this.ctx.appOrigin, width, print: this.print });
-    return hasVisibleContent(html) ? html : '';
+  private async html(block: Loose, width: number, widestWidth: number): Promise<Part> {
+    const html = mailTextHtml(await this.ctx.sanitize(block['html'] as string), { appOrigin: this.ctx.appOrigin, width, widestWidth, print: this.print });
+    const hasContent = hasVisibleContent(html);
+    // a line is drawn, but it is no content
+    return hasContent || /<hr\b/.test(html) ? { html, hasContent } : NOTHING;
   }
 
-  private async text(block: Loose, place: number): Promise<Part> {
-    const html = await this.html(block, place);
-    return html ? this.draw('text', { html, align: alignOf(block) }) : NOTHING;
+  private async text(block: Loose, place: number, stackedPlace: number): Promise<Part> {
+    const { html, hasContent } = await this.html(block, place, stackedPlace);
+    return html ? this.draw('text', { html, align: alignOf(block) }, hasContent) : NOTHING;
   }
 
   private async callout(block: Loose): Promise<Part> {
-    const html = await this.html(block, CONTENT_WIDTH - 2 * 16);
+    const width = CONTENT_WIDTH - 2 * CALLOUT_PADDING;
+    const { html, hasContent } = await this.html(block, width, width);
     const neutral = oneOf(block['tone'], TONES, 'neutral') === 'neutral';
-    return html ? this.draw('callout', { html, tint: neutral ? NEUTRAL_TINT : tintOf(this.color, TINT_SHARE) }) : NOTHING;
+    return html ? this.draw('callout', { html, tint: neutral ? NEUTRAL_TINT : tintOf(this.color, TINT_SHARE) }, hasContent) : NOTHING;
   }
 
   private picture(image: Loose, style: Loose, place: number, stackedPlace: number): Loose {
@@ -277,7 +279,7 @@ class BlockRenderer {
     const captionLines = position === 'none' ? [] : [caption.text, caption.source].filter((line) => line !== '');
     const above = position === 'top';
     return {
-      src: pictureUrl(image, width.drawn * 2), alt: altOf(image), href: mailTargetUrl(image['actionUrl'], this.ctx.appOrigin),
+      src: pictureUrl(image['url'], width.drawn * 2), alt: altOf(image), href: mailTargetUrl(image['actionUrl'], this.ctx.appOrigin),
       width: width.attribute, maxWidth: width.css, captionLines,
       captionAbove: above && captionLines.length > 0, captionBelow: !above && captionLines.length > 0,
       cell: this.cell, print: this.print,
@@ -312,18 +314,20 @@ class BlockRenderer {
     const metrics = columnMetrics(columnSizes(stored));
     const columns: Loose[] = [];
     let hasContent = false;
+    let isEmpty = true;
     for (const [i, column] of stored.entries()) {
       const { width, content, gutter, attribute } = metrics[i];
       const parts: Part[] = [];
       // stacked on the phone a picture is as wide as the mail
       for (const inner of column['blocks'] as CheckedBlock[]) parts.push(await this.block(inner, content, Math.max(content, PHONE_WIDTH)));
       hasContent ||= parts.some((part) => part.hasContent);
+      isEmpty &&= parts.every((part) => part.html === '');
       columns.push({
         html: parts.map((part) => part.html).join(''), gutter, width: attribute, cell: this.cell,
         minWidth: percentOf(width, CONTENT_WIDTH), maxWidth: percentOf(PHONE_WIDTH + gutter, PHONE_WIDTH),
       });
     }
-    return hasContent ? this.draw('columns', { columns }) : NOTHING;
+    return isEmpty ? NOTHING : this.draw('columns', { columns }, hasContent);
   }
 
   private events(block: Loose): Part {
@@ -358,44 +362,80 @@ function eventsHtml(title: string, lines: MailEventLine[]): string {
   const heading = title ? `<h2>${escapeHtml(title)}</h2>` : '';
   return heading + lines.map((line) => {
     const when = escapeHtml([line.date, line.time].filter((s) => s).join(' '));
+    const title = line.title ? `<strong>${escapeHtml(line.title)}</strong>` : '';
     const place = line.place ? `<br />${escapeHtml(line.place)}` : '';
-    return `<p>${when} <strong>${escapeHtml(line.title)}</strong>${place}</p>`;
+    return `<p>${[when, title].filter((s) => s).join(' ')}${place}</p>`;
   }).join('');
 }
 
-/** The stored fields of a picture; its link opens without a check in older apps, so only a safe one is kept. */
+const LENGTH = /^(auto|\d{1,5}(\.\d{1,3})?(px|%|vw|vh|rem|em)?)$/;
+const BORDER = /^(\d{1,2}(\.\d)?(px|rem|em)?)?(\s*(none|solid|dashed|dotted|double|groove|ridge|inset|outset))?(\s+(#[0-9a-f]{3,8}|[a-z]{3,20}|rgba?\([\d\s.,%]+\)|var\(--[\w-]+\)))?$/i;
+
+type Check = (value: unknown) => boolean;
+const matches = (pattern: RegExp): Check => (value) => typeof value === 'string' && pattern.test(value);
+const isOneOf = (allowed: readonly unknown[]): Check => (value) => allowed.includes(value);
+const isBoolean: Check = (value) => typeof value === 'boolean';
+const isBetween = (min: number, max: number): Check => (value) => typeof value === 'number' && value >= min && value <= max;
+const isEnum = (values: Record<string, string | number>): Check => (value) => typeof value === 'number' && Object.values(values).includes(value);
+
+/** The style of a picture that a Mitteilung keeps; the app writes some of it into css. */
+const STYLE_CHECKS: Record<keyof ImageStyle, Check> = {
+  imgIxParams: matches(/^[\w.,:&=%~-]*$/), width: matches(LENGTH), height: matches(LENGTH), sizes: matches(/^[\w\s.,%:()-]*$/),
+  border: matches(BORDER), borderRadius: matches(LENGTH), isThumbnail: isBoolean, slot: isOneOf(['start', 'end', 'icon-only', 'none']), fill: isBoolean,
+  hasPriority: isBoolean, action: isEnum(ImageActionType), zoomFactor: isBetween(1, 20), showTitle: isBoolean, showSource: isBoolean,
+  captionPosition: isOneOf(CAPTION_POSITIONS), captionSize: matches(LENGTH), captionStyle: isOneOf(CAPTION_STYLES), captionAlign: isOneOf(CAPTION_ALIGNS),
+};
+/** The ranges of the slideshow are those of the editor (cms-section-util, which functions cannot import). */
+const SLIDESHOW_CHECKS: Record<keyof ArticleSlideshow, Check> = {
+  effect: isOneOf(SLIDESHOW_EFFECTS), autoplay: isBoolean, interval: isBetween(1, 30), duration: isBetween(0.2, 5),
+};
+
+/** The known fields of a stored object that hold a known value. */
+function checkedFields(value: Loose, checks: Record<string, Check>): Loose {
+  return Object.fromEntries(Object.entries(checks).filter(([key, isValid]) => isValid(value[key])).map(([key]) => [key, value[key]]));
+}
+
+function noticeStyle(block: Loose): { imageStyle?: Partial<ImageStyle> } {
+  return isObject(block['imageStyle']) ? { imageStyle: checkedFields(block['imageStyle'], STYLE_CHECKS) } : {};
+}
+
+/** Without a known effect there is no slideshow; the readers have defaults for the rest. */
+function noticeSlideshow(block: Loose): { slideshow?: ArticleSlideshow } {
+  const slideshow = checkedFields(objectOf(block['slideshow']), SLIDESHOW_CHECKS);
+  return 'effect' in slideshow ? { slideshow: slideshow as unknown as ArticleSlideshow } : {};
+}
+
+/** A picture with the address a mail can show, else with its texts only; its link opens unchecked in older apps, so only a safe one is kept. */
 function noticeImage(image: Loose): ImageConfig {
-  const text = (name: string) => (typeof image[name] === 'string' ? image[name] : '');
   return {
-    label: text('label'), type: (typeof image['type'] === 'number' ? image['type'] : 0) as ImageConfig['type'], url: text('url'),
-    actionUrl: isSafeLinkTarget(image['actionUrl']) ? text('actionUrl') : '', altText: text('altText'), overlay: text('overlay'),
-    documentKey: text('documentKey'), credit: text('credit'),
+    label: str(image['label']), type: isEnum(ImageType)(image['type']) ? image['type'] as ImageType : ImageType.Image, url: storedPictureUrl(image['url']),
+    actionUrl: isSafeLinkTarget(image['actionUrl']) ? str(image['actionUrl']) : '', altText: str(image['altText']), overlay: str(image['overlay']),
+    documentKey: str(image['documentKey']), credit: str(image['credit']),
   };
 }
 
-/** A copy of a stored object (a style, a slideshow) as an optional field; no `undefined`, which Firestore refuses. */
-function optionalObject(name: string, value: unknown): Loose {
-  if (!isObject(value)) return {};
-  return { [name]: Object.fromEntries(Object.entries(value).filter(([, v]) => v === null || ['string', 'number', 'boolean'].includes(typeof v))) };
+/** The rules of a text in the mail, but an app path stays a path. */
+async function noticeHtml(html: string, ctx: Pick<MailBlockContext, 'sanitize'>): Promise<string> {
+  const text = mailTextHtml(await ctx.sanitize(html), { appOrigin: '', width: CONTENT_WIDTH, widestWidth: CONTENT_WIDTH, print: false });
+  return (await ctx.sanitize(text)).replace(P_MARGIN_REPEAT, '');
 }
 
 async function noticeBlock(block: CheckedBlock, ctx: Pick<MailBlockContext, 'sanitize' | 'events'>): Promise<ArticleBlock | undefined> {
   const id = block.id;
   const align = block['align'] === undefined ? {} : { align: alignOf(block) };
   switch (block.type) {
-    case 'text': return { id, type: 'text', html: await ctx.sanitize(block['html'] as string), ...align };
-    case 'callout': return { id, type: 'callout', html: await ctx.sanitize(block['html'] as string), tone: oneOf(block['tone'], TONES, 'neutral') };
+    case 'text': return { id, type: 'text', html: await noticeHtml(block['html'] as string, ctx), ...align };
+    case 'callout': return { id, type: 'callout', html: await noticeHtml(block['html'] as string, ctx), tone: oneOf(block['tone'], TONES, 'neutral') };
     case 'image':
-      return { id, type: 'image', image: noticeImage(block['image'] as Loose), ...optionalObject('imageStyle', block['imageStyle']) as { imageStyle?: Partial<ImageStyle> } };
+      return { id, type: 'image', image: noticeImage(block['image'] as Loose), ...noticeStyle(block) };
     case 'gallery':
       return {
-        id, type: 'gallery', images: (block['images'] as Loose[]).map(noticeImage),
-        ...optionalObject('imageStyle', block['imageStyle']), ...optionalObject('slideshow', block['slideshow']),
-        ...(typeof block['layout'] === 'string' ? { layout: block['layout'] } : {}),
+        id, type: 'gallery', images: (block['images'] as Loose[]).filter((image) => !isBlankPicture(image)).map(noticeImage), ...noticeStyle(block), ...noticeSlideshow(block),
+        ...(isOneOf(IMAGE_LAYOUT_IDS)(block['layout']) ? { layout: block['layout'] as string } : {}),
       };
     case 'button': {
       const cta = objectOf(block['cta']);
-      return { id, type: 'button', cta: { label: str(cta['label']), url: str(cta['url']), style: cta['style'] === 'secondary' ? 'secondary' : 'primary' }, ...align };
+      return { id, type: 'button', cta: { label: str(cta['label']), url: mailTargetUrl(cta['url'], ''), style: cta['style'] === 'secondary' ? 'secondary' : 'primary' }, ...align };
     }
     case 'columns': {
       const stored = block['columns'] as Loose[];

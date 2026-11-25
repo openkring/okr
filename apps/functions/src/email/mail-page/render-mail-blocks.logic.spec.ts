@@ -111,7 +111,17 @@ describe('renderMailBlocks: text', () => {
     expect(await full([text('t', '<p>&nbsp;</p><p></p>')])).toEqual({ html: '', hasContent: false });
   });
 
+  it('a text with only a line is drawn, but is no content', async () => {
+    for (const block of [text('t', '<hr>'), callout('k', '<p></p><hr>'), columns('c', [6, 6], [[text('t', '<hr>')], []])]) {
+      const result = await full([block]);
+      expect(result.html).toContain('<hr');
+      expect(result.hasContent).toBe(false);
+    }
+  });
+
   it.each([
+    ['Https://a.ch/X', 'https://a.ch/X'],
+    ['HTTP://a.ch', 'http://a.ch'],
     ['/club', 'https://app.example.ch/club'],
     ['https://a.ch/?x=1&amp;y=2', 'https://a.ch/?x=1&amp;y=2'],
     ['http://a.ch/', 'http://a.ch/'],
@@ -122,7 +132,7 @@ describe('renderMailBlocks: text', () => {
     expect(html).toContain(`<a href="${expected}" target="_blank">hier</a>`);
   });
 
-  it.each(['club.html', '#top', '//evil.org/x', 'javascript:alert(1)', 'data:text/html,x', 'http://a.ch\\@evil.org', 'club'])(
+  it.each(['https://', 'http://', 'http://?x', 'mailto:', 'mailto:?subject=x', 'tel:', 'club.html', '#top', '//evil.org/x', 'javascript:alert(1)', 'data:text/html,x', 'http://a.ch\\@evil.org', 'club'])(
     'a link to %s is unlinked and keeps its text', async (href) => {
       const html = await render([text('t', `<p>vor <a href="${href}"><strong>hier</strong></a> <a href="https://a.ch">da</a> nach</p>`)]);
       expect(html).toContain('vor <strong>hier</strong> <a href="https://a.ch" target="_blank">da</a> nach');
@@ -184,6 +194,54 @@ describe('renderMailBlocks: hostile and pasted texts', () => {
     expect(attrOf(tag, 'style')).toBe('max-width:100%;height:auto');
   });
 
+  it('a stored picture in a text comes from imgix at twice its width', async () => {
+    const tag = async (html: string, block = text('t', html) as unknown) => tagsOf(await render([block]), 'img')[0];
+    expect(attrOf(await tag('<p><img src="tenant/x/a b.jpg" alt="B"></p>'), 'src')).toBe('https://bkaiser.imgix.net/tenant/x/a%20b.jpg?auto=compress,format=jpg&amp;w=880&amp;fit=max');
+    expect(attrOf(await tag('<p><img src="tenant/x/a.jpg" width="100"></p>'), 'src')).toContain('w=200&amp;');
+    expect(attrOf(await tag('', callout('k', '<p><img src="tenant/x/a.jpg"></p>')), 'src')).toContain('w=816&amp;');
+    const inColumn = await tag('', columns('c', [6, 6], [[text('t', '<p><img src="tenant/x/a.jpg" width="900"></p>')], []]));
+    expect(attrOf(inColumn, 'src')).toContain('w=660&amp;');
+    expect(attrOf(inColumn, 'width')).toBe('212');
+  });
+
+  it.each(['/x/a.jpg', '//evil.org/a.jpg', 'data:image/svg+xml,<svg/>', 'data:image/png;base64,x', 'http://a.ch/b.jpg', 'blob:x', 'https://', ''])(
+    'a picture %j in a text is its alt text, or nothing', async (src) => {
+      const html = await render([text('t', `<p>vor<img src="${src.replace(/</g, '&lt;')}" alt="Bild">nach<img src="${src.replace(/</g, '&lt;')}">!</p>`), callout('k', `<p><img src="${src.replace(/</g, '&lt;')}" alt="Dort"></p>`)]);
+      expect(html).toContain('vorBildnach!');
+      expect(html).toContain('>Dort</p>');
+      expect(html).not.toContain('<img');
+    });
+
+  it('table parts outside a table do not leave the cell of the block', async () => {
+    for (const html of ['<td>eins</td>', '<tr><td>eins</td></tr>', '<tbody><tr><td>eins</td></tr></tbody>', '</td></tr></table><p>eins</p>', '<p>a</p><th>eins</th>',
+      '<table><table><tr><td>eins</td></tr></table></table>', '<table><tr><td><tr></tr><table><tr><td>eins</td></tr></table></td></tr></table>',
+      '<table><tr><table><tr><td>eins</td></tr></table></tr></table>', '<table><caption>eins<td>zwei</td></caption></table>', '<table><colgroup><col width="5"></colgroup><tr><td>eins</td></tr></table>',
+      '<table><div><td>eins</td></div></table>', '<table><td><td>eins</td></td></table>']) {
+      const out = await render([text('t', html)]);
+      expect(out).toContain('eins');
+      expect(out).not.toMatch(/<col/);
+      // strictly nested: what a browser parses is what is written
+      const open: string[] = [];
+      for (const [, slash, name] of out.matchAll(/<(\/?)(table|tbody|thead|tfoot|tr|td|th|caption)\b[^>]*>/g)) {
+        if (slash) { expect(open.pop()).toBe(name); continue; }
+        const parent = open.at(-1);
+        if (name === 'td' || name === 'th') expect(parent).toBe('tr');
+        else if (name === 'tr') expect(['table', 'tbody', 'thead', 'tfoot']).toContain(parent);
+        else if (name === 'table') expect([undefined, 'td', 'th', 'caption']).toContain(parent);
+        else expect(parent).toBe('table');
+        open.push(name);
+      }
+      expect(open).toEqual([]);
+      expect(await sanitizeEmailBody(out)).toBe(out.replace(/margin:0 0 16px/g, 'margin:0 0 16px;margin:0 0 16px'));
+    }
+  });
+
+  it('a highlight of the author stays, in mail and on paper', async () => {
+    for (const target of ['mail', 'print'] as const) {
+      expect(await render([text('t', '<p>a <span style="background-color:#ffff00">b</span></p>')], { target })).toContain('<span style="background-color:#ffff00">b</span>');
+    }
+  });
+
   it('a picture whose address the mail policy drops is its alt text', async () => {
     expect(await render([text('t', '<p><img src="http://a.ch/b.jpg" alt="Bild &amp; Ton"></p>')])).toContain('>Bild &amp; Ton</p>');
   });
@@ -210,6 +268,8 @@ describe('renderMailBlocks: picture', () => {
     ['50vw', '440', 'max-width:100%', 'w=880'],
     ['150%', '440', 'max-width:100%', 'w=880'],
     ['0', '440', 'max-width:100%', 'w=880'],
+    ['0.1%', '440', 'max-width:100%', 'w=880'],
+    ['0.4px', '440', 'max-width:100%', 'w=880'],
     ['10px;background:url(x)', '440', 'max-width:100%', 'w=880'],
   ])('width %s', async (width, attr, css, param) => {
     const tag = await imgTag([image('i', 'tenant/x/a.jpg', {}, { width })]);
@@ -223,11 +283,21 @@ describe('renderMailBlocks: picture', () => {
     expect(attrOf(await imgTag([image('i', 'https://bkaiser.imgix.net/tenant/x/a.jpg?sat=-100')]), 'src')).toBe('https://bkaiser.imgix.net/tenant/x/a.jpg?sat=-100&amp;w=880&amp;fit=max');
   });
 
-  it('a blank in the path is encoded', async () => {
-    expect(attrOf(await imgTag([image('i', 'tenant/x/a b.jpg')]), 'src')).toContain('/tenant/x/a%20b.jpg?');
+  it.each([
+    ['tenant/x/a b.jpg', 'tenant/x/a%20b.jpg?auto=compress,format=jpg&w=880&fit=max'],
+    ['tenant/x/a#1.jpg', 'tenant/x/a%231.jpg?auto=compress,format=jpg&w=880&fit=max'],
+    ['tenant/x/a?1.png', 'tenant/x/a%3F1.png?auto=format,compress&w=880&fit=max'],
+    ['tenant/x/ä%20".jpg', 'tenant/x/%C3%A4%2520%22.jpg?auto=compress,format=jpg&w=880&fit=max'],
+  ])('the path %s is encoded', async (path, expected) => {
+    expect(attrOf(await imgTag([image('i', path)]), 'src').replace(/&amp;/g, '&')).toBe(`https://bkaiser.imgix.net/${expected}`);
   });
 
-  it.each(['', 'http://a.ch/b.jpg', 'data:image/png;base64,x', 'javascript:alert(1)'])('%j gives the alt text', async (url) => {
+  it('the scheme may be written in capitals; a fragment is cut off', async () => {
+    expect(attrOf(await imgTag([image('i', 'Https://a.ch/b.jpg#x')]), 'src')).toBe('https://a.ch/b.jpg');
+    expect(attrOf(await imgTag([image('i', 'https://bkaiser.imgix.net/a.jpg#x')]), 'src')).toBe('https://bkaiser.imgix.net/a.jpg?w=880&amp;fit=max');
+  });
+
+  it.each(['', 'http://a.ch/b.jpg', 'data:image/png;base64,x', 'javascript:alert(1)', 'https://', 'https:///a.jpg', '/x/a.jpg', '//evil.org/a.jpg', 'https://a.ch\\@evil.org/a.jpg', 'tenant/x/\ud800.jpg'])('%j gives the alt text', async (url) => {
     const result = await full([image('i', url, { altText: 'Unser Boot' })]);
     expect(result.html).toContain('>Unser Boot</div>');
     expect(result.html).not.toContain('<img');
@@ -339,7 +409,11 @@ describe('renderMailBlocks: button', () => {
     expect(html).not.toContain('text-align');
   });
 
-  it.each(['club.html', '#top', 'javascript:alert(1)', '//evil', 'http://a.ch', '', undefined])('a target %j is refused with the id', async (url) => {
+  it('a scheme in capitals is fine', async () => {
+    expect(await render([button('b', 'Https://a.ch')])).toContain('href="https://a.ch"');
+  });
+
+  it.each(['https://', 'mailto:', 'mailto:?subject=x', 'tel:', 'club.html', '#top', 'javascript:alert(1)', '//evil', 'http://a.ch', '', undefined])('a target %j is refused with the id', async (url) => {
     expect(await refusal([button('b7', url as string)])).toBe('invalid-block b7');
   });
 
@@ -350,8 +424,11 @@ describe('renderMailBlocks: button', () => {
 
   it('mailTargetUrl and the rule of the old sections agree', () => {
     const vectors = ['https://a.ch/x', 'mailto:a@b.ch', 'tel:+41', ' /private/events ', '/', '', '#top', '#', 'club.html', 'club.html#a', 'club', '//evil.org', '/\\evil.org', 'http://a.ch',
-      'javascript:alert(1)', 'data:x', 'https://a.ch/\u0001', 'HTTPS://a.ch', 'https://', undefined, null, 42];
+      'javascript:alert(1)', 'data:x', 'https://a.ch/\u0001', undefined, null, 42];
     for (const v of vectors) expect([v, mailTargetUrl(v, 'https://app.a.ch')]).toEqual([v, mailButtonUrl(v, 'https://app.a.ch')]);
+    // where the new rule differs: capitals are fine, a bare scheme is no target
+    expect([mailTargetUrl('HTTPS://a.ch', ''), mailButtonUrl('HTTPS://a.ch', '')]).toEqual(['https://a.ch', '']);
+    expect([mailTargetUrl('https://', ''), mailButtonUrl('https://', '')]).toEqual(['', 'https://']);
   });
 });
 
@@ -477,6 +554,19 @@ describe('renderMailBlocks: callout, line, space, events', () => {
   it('events without upcoming ones render nothing', async () => {
     expect(await render([events('e', { calendarKey: 'other', title: 'Anlässe' })])).toBe('');
     expect(await render([events('e', { calendarKey: 'constructor' })])).toBe('');
+  });
+
+  it('malformed event lines: no objects are dropped, fields that are no text are empty, in mail, letter and Mitteilung', async () => {
+    const lines = { club: [null, 'x', [], { date: '01.01.2027' }, { date: 7, time: {}, title: 'Titel', place: 5 }] as unknown as MailEventLine[] };
+    for (const target of ['mail', 'print'] as const) {
+      const html = await render([events('e', { maxEvents: 2 })], { events: lines, target });
+      expect(tagsOf(html, 'tr')).toHaveLength(3);
+      expect(html).toContain('01.01.2027');
+      expect(html).toContain('<strong>Titel</strong></td>');
+      expect(html).not.toContain('[object');
+    }
+    const [block] = await noticeBlocks([events('e', { maxEvents: 2 })], { sanitize: sanitizeEmailBody, events: lines }) as { html: string }[];
+    expect(htmlToText(block.html)).toBe('01.01.2027\n\nTitel');
   });
 
   it('events without a calendar are refused', async () => {
@@ -616,7 +706,7 @@ describe('renderMailBlocks: print', () => {
     expect(tagsOf(html, 'td')).toHaveLength(4);
   });
 
-  it('a callout has a thin border, nothing has a background', async () => {
+  it('a callout has a thin border, no template sets a background', async () => {
     const html = await print(EVERY_BLOCK);
     expect(html).not.toContain('background');
     expect(await print([callout('k', '<p>x</p>')])).toContain('border:1px solid #999999');
@@ -656,9 +746,9 @@ describe('noticeBlocks', () => {
       text('t', evil, { htmlI18n: { en: evil }, align: 'center' }), callout('k', evil, 'tertiary'), columns('c', [4, 8], [[text('c1', evil)], []], { stackReverse: true }),
     ]);
     expect(JSON.stringify(blocks)).not.toMatch(/onclick|script|I18n|stackReverse/);
-    expect(blocks[0]).toEqual({ id: 't', type: 'text', html: '<p style="margin:0 0 16px">a</p>', align: 'center' });
+    expect(blocks[0]).toEqual({ id: 't', type: 'text', html: '<p style="margin:0 0 16px;margin-bottom:0;margin-top:0">a</p>', align: 'center' });
     expect(blocks[1]).toMatchObject({ type: 'callout', tone: 'tertiary' });
-    expect(blocks[2]).toEqual({ id: 'c', type: 'columns', columns: [{ size: 4, blocks: [{ id: 'c1', type: 'text', html: '<p style="margin:0 0 16px">a</p>' }] }, { size: 8, blocks: [] }] });
+    expect(blocks[2]).toEqual({ id: 'c', type: 'columns', columns: [{ size: 4, blocks: [{ id: 'c1', type: 'text', html: '<p style="margin:0 0 16px;margin-bottom:0;margin-top:0">a</p>' }] }, { size: 8, blocks: [] }] });
   });
 
   it('a picture keeps its texts and style; an unsafe link is emptied', async () => {
@@ -675,6 +765,52 @@ describe('noticeBlocks', () => {
   it('a gallery keeps its pictures, layout and slideshow', async () => {
     const [g] = await notice([gallery('g', ['tenant/x/1.jpg'], { layout: 'pair' })]);
     expect(g).toMatchObject({ id: 'g', type: 'gallery', layout: 'pair', images: [{ url: 'tenant/x/1.jpg' }] });
+  });
+
+  it('texts follow the rules of the mail, but app paths stay paths', async () => {
+    const html = '<p><a href="/club">a</a> <a href="club.html">b</a> <a href="#top">c</a> <a href="Https://a.ch">d</a><img src="https://t.example/p.gif" width="1" height="1"><img src="data:image/png;base64,x" alt="e"></p><td>f</td>';
+    for (const block of await notice([text('t', html), callout('k', html)]) as { html: string }[]) {
+      expect(block.html).toContain('<a href="/club" target="_blank">a</a> b c <a href="https://a.ch" target="_blank">d</a>e</p>');
+      expect(block.html).not.toMatch(/<img|<td/);
+    }
+  });
+
+  it('a button keeps a path, and has its scheme in small letters', async () => {
+    const blocks = await notice([button('a', '/club'), button('b', 'Https://a.ch')]) as Extract<ArticleBlock, { type: 'button' }>[];
+    expect(blocks.map((b) => b.cta.url)).toEqual(['/club', 'https://a.ch']);
+  });
+
+  it.each(['javascript:alert(1)', 'data:image/png;base64,x', 'http://a.ch/b.jpg', '/x/a.jpg', 'https://'])('a picture %j loses its address and keeps its alt text', async (url) => {
+    const [a, g] = await notice([image('i', url, { altText: 'Alt' }), gallery('g', [url])]) as [Extract<ArticleBlock, { type: 'image' }>, Extract<ArticleBlock, { type: 'gallery' }>];
+    expect(a.image).toMatchObject({ url: '', altText: 'Alt' });
+    expect(g.images[0].url).toBe('');
+  });
+
+  it('a picture keeps only known style keys with known values', async () => {
+    const good = {
+      imgIxParams: 'sat=-100&blur=20', width: '50%', height: '300px', sizes: '(max-width: 1240px) 50vw, 300px', border: '2px solid #ccc', borderRadius: '4px', isThumbnail: false, slot: 'none',
+      fill: true, hasPriority: false, action: 4, zoomFactor: 3, showTitle: false, showSource: true, captionPosition: 'bottom', captionSize: '0.8rem', captionStyle: 'italic', captionAlign: 'center',
+    };
+    const styleOf = async (style: Record<string, unknown>) => (await notice([image('i', 'tenant/x/a.jpg', {}, style)]) as Extract<ArticleBlock, { type: 'image' }>[])[0].imageStyle;
+    expect(await styleOf(good)).toEqual(good);
+    expect(await styleOf({ border: '1px solid', width: 'auto' })).toEqual({ border: '1px solid', width: 'auto' });
+    expect(await styleOf({
+      imgIxParams: 'a=1"><script>', width: '1px;background:url(x)', height: 'expression(1)', sizes: 'url(x);', border: '1px solid red;x', borderRadius: 'url(x)', isThumbnail: 'yes', slot: 'x',
+      fill: 1, hasPriority: null, action: 99, zoomFactor: Infinity, captionPosition: 'x', captionSize: '1px;x', captionStyle: {}, captionAlign: 'x', evil: 'javascript:x', __proto__x: 'y',
+    })).toEqual({});
+    expect(await styleOf({ border: 'url(https://t.example/x)' })).toEqual({});
+  });
+
+  it('a gallery keeps a known layout and slideshow, drops blank entries; an unknown picture type is a picture', async () => {
+    const slideshow = { effect: 'fade', autoplay: true, interval: 3, duration: 1 };
+    const of = async (extra: Record<string, unknown>) => (await notice([gallery('g', ['tenant/x/1.jpg'], extra)]))[0];
+    expect(await of({ layout: 'mosaic', slideshow })).toMatchObject({ layout: 'mosaic', slideshow });
+    const bad = await of({ layout: 'evil', slideshow: { ...slideshow, effect: 'evil' } });
+    expect(bad).not.toHaveProperty('layout');
+    expect(bad).not.toHaveProperty('slideshow');
+    expect(await of({ slideshow: { effect: 'fade', autoplay: 'x', interval: 900, duration: '1', extra: 1 } })).toHaveProperty('slideshow', { effect: 'fade' });
+    const [g] = await notice([{ id: 'g', type: 'gallery', images: [img(''), img('tenant/x/1.jpg', { type: 99 }), img('tenant/x/2.jpg', { type: 1 })] }]) as Extract<ArticleBlock, { type: 'gallery' }>[];
+    expect(g.images.map((i) => [i.url, i.type])).toEqual([['tenant/x/1.jpg', 0], ['tenant/x/2.jpg', 1]]);
   });
 
   it('holds no undefined value and shares no object with the input', async () => {

@@ -5,10 +5,15 @@
 // formed (values in double quotes, `<`, `>`, `&` and `"` in them escaped, no comments), so tags can be read one by one.
 import { mailTargetUrl } from '@okr/shared-util-core';
 
+import { pictureUrl } from './mail-picture.logic';
+
 export interface MailTextOptions {
+  /** makes an app path absolute; `''` keeps the path (Mitteilung) */
   appOrigin: string;
   /** the width of the text in px; a picture in it is not drawn wider (Outlook reads the attribute) */
   width: number;
+  /** the widest the text is ever drawn (a column stacked on the phone); a picture has twice the pixels */
+  widestWidth: number;
   /** on paper a picture is at most 80 mm high */
   print: boolean;
 }
@@ -33,7 +38,7 @@ function attributesOf(raw: string): Record<string, string> {
 function textLinkUrl(href: string, appOrigin: string): string {
   const url = href.trim();
   // eslint-disable-next-line no-control-regex -- rejecting control characters is the point
-  if (url.startsWith('http://') && !/[\\\u0000-\u001f\u007f]/.test(url)) return url;
+  if (/^http:\/\/[^\s/?#]/i.test(url) && !/[\\\u0000-\u001f\u007f]/.test(url)) return `http${url.slice('http'.length)}`;
   return mailTargetUrl(url, appOrigin);
 }
 
@@ -81,10 +86,11 @@ function isTrackingPicture(attributes: Record<string, string>): boolean {
 function pictureTag(attributes: Record<string, string>, options: MailTextOptions): string {
   const alt = attributes['alt'] ?? '';
   if (isTrackingPicture(attributes)) return '';
-  // the sanitizer has dropped an address that is not https
-  if (!attributes['src']) return encode(alt);
   const width = pixels(attributes['width']);
-  return `<img src="${encode(attributes['src'])}" alt="${encode(alt)}"${width ? ` width="${Math.min(Math.round(width), options.width)}"` : ''} style="${options.print ? 'width:auto;max-height:80mm;' : ''}max-width:100%;height:auto" />`;
+  const src = pictureUrl(attributes['src'], 2 * Math.min(Math.round(width ?? options.widestWidth), options.widestWidth));
+  // the sanitizer lets relative and `data:` addresses pass
+  if (!src) return encode(alt);
+  return `<img src="${encode(src)}" alt="${encode(alt)}"${width ? ` width="${Math.min(Math.round(width), options.width)}"` : ''} style="${options.print ? 'width:auto;max-height:80mm;' : ''}max-width:100%;height:auto" />`;
 }
 
 /** An opening tag with what it keeps. Classes and ids go: they could meet rules of the layout. */
@@ -94,7 +100,27 @@ function plainTag(name: string, attributes: Record<string, string>, selfClosing:
   return `<${name}${kept}${style ? ` style="${encode(style)}"` : ''}${selfClosing ? ' />' : '>'}`;
 }
 
-const VOID_TAGS = ['br', 'hr', 'img', 'col'];
+const VOID_TAGS = ['br', 'hr', 'img'];
+const ROW_GROUPS = ['tbody', 'thead', 'tfoot'];
+/** the parts of a table, with the tags they may stand in */
+const TABLE_PARENTS: Record<string, string[]> = {
+  caption: ['table'], tbody: ['table'], thead: ['table'], tfoot: ['table'], tr: ['table', ...ROW_GROUPS], td: ['tr'], th: ['tr'],
+};
+const CELLS = ['td', 'th', 'caption'];
+
+/**
+ * The tag to write instead of `name` inside the open tags, `''` for none. A browser closes the cell of the block when it meets
+ * a table part that is not where it belongs, or a table directly in a table; so such a part becomes a <div>, or goes.
+ */
+function writtenTag(name: string, open: readonly string[]): string {
+  if (name === 'col' || name === 'colgroup') return ''; // widths only
+  if (name === 'table') {
+    const around = [...open].reverse().find((tag) => tag === 'table' || tag in TABLE_PARENTS);
+    return around === undefined || CELLS.includes(around) ? name : '';
+  }
+  if (!Object.keys(TABLE_PARENTS).includes(name) || TABLE_PARENTS[name].includes(open[open.length - 1])) return name;
+  return ROW_GROUPS.includes(name) ? '' : 'div';
+}
 
 /** Adds a declaration to the style of the tag at `position`. */
 function withDeclaration(html: string, position: number, declaration: string): string {
@@ -125,16 +151,25 @@ function withoutOuterMargins(html: string): string {
 
 /** The sanitized html of a text, fit for a mail. */
 export function mailTextHtml(sanitized: string, options: MailTextOptions): string {
-  const links: boolean[] = []; // whether the open <a> was kept
-  const html = sanitized.replace(/<(\/?)([a-z][a-z0-9]*)([^>]*)>/gi, (tag, slash: string, name: string, rest: string) => {
-    if (name === 'a' && slash) return links.pop() ? tag : '';
-    if (slash) return tag;
+  const written: string[] = []; // per open tag what was written for it; '' = nothing
+  const html = sanitized.replace(/<(\/?)([a-z][a-z0-9]*)([^>]*)>/gi, (_tag, slash: string, name: string, rest: string) => {
+    if (slash) {
+      const tag = written.pop();
+      return tag ? `</${tag}>` : '';
+    }
     const attributes = attributesOf(rest);
     if (name === 'img') return pictureTag(attributes, options);
-    if (name !== 'a') return plainTag(name, attributes, rest.trimEnd().endsWith('/'));
-    const url = textLinkUrl(attributes['href'] ?? '', options.appOrigin);
-    links.push(url !== '');
-    return url ? `<a href="${encode(url)}" target="_blank"${keptStyle(attributes['style'] ?? '') ? ` style="${encode(keptStyle(attributes['style']))}"` : ''}>` : '';
+    if (VOID_TAGS.includes(name)) return plainTag(name, attributes, true);
+    if (name === 'a') {
+      const url = textLinkUrl(attributes['href'] ?? '', options.appOrigin);
+      const style = keptStyle(attributes['style'] ?? '');
+      written.push(url ? 'a' : '');
+      return url ? `<a href="${encode(url)}" target="_blank"${style ? ` style="${encode(style)}"` : ''}>` : '';
+    }
+    const tag = writtenTag(name, written.filter((t) => t !== ''));
+    written.push(tag);
+    if (tag === '') return '';
+    return tag === name ? plainTag(name, attributes, false) : `<${tag}>`;
   });
   return withoutOuterMargins(html);
 }

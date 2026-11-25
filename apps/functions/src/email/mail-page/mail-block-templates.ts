@@ -6,7 +6,8 @@
 // What the markup may use is what `sanitizeEmailBody` keeps: no `role`, `bgcolor`, `valign`, no <style>, no comments, so no
 // media query and no Outlook condition. No <p> (the sanitizer prepends a margin to every <p>). Inside a template there is no
 // line break: `htmlToText` (the plain text half) keeps them. Every cell sets its own text and background colour (`cell`), so
-// that a program that inverts colours stays readable; on paper (`print`) nothing has a background.
+// that a program that inverts colours stays readable; on paper (`print`) no template sets a background. A highlight that the
+// author set in a text stays, in the mail and on paper.
 //
 // `{{...}}` escapes; `{{{...}}}` is only used for `html`, which the renderer has sanitized.
 import type { MailBlockType } from '@okr/shared-models';
