@@ -102,7 +102,7 @@ export const ARTICLE_COLUMNS_STYLES = `
       }
       @case ('button') {
         <div class="block button" [style.text-align]="block.align === 'left' ? null : block.align">
-          <ion-button [color]="block.cta.style === 'secondary' ? 'secondary' : 'primary'" [fill]="block.cta.style === 'secondary' ? 'outline' : 'solid'" (click)="open(block.cta.url)">{{ block.cta.label }}</ion-button>
+          <ion-button [color]="block.cta.style === 'secondary' && !brandButtons() ? 'secondary' : 'primary'" [fill]="block.cta.style === 'secondary' ? 'outline' : 'solid'" (click)="open(block.cta.url)">{{ block.cta.label }}</ion-button>
         </div>
       }
       @case ('grid') {
@@ -164,6 +164,8 @@ export class ArticleBlockComponent {
   public paused = input(false);
   /** nothing happens on a click on an image, a button or a link */
   public inert = input(false);
+  /** both button styles in the one colour of the brand (a mail) */
+  public brandButtons = input(false);
   /** a text with the spacing of an article of only a text; not an aligned one, which readers see as a block */
   public classicText = input(false);
   /** the editor of a text or callout, drawn in place of its html (the canvas of the editor) */

@@ -358,6 +358,12 @@
           "captionHidden": "La légende est masquée. Choisis où elle apparaît.",
           "width": "Largeur"
         },
+        "picture": {
+          "title": "Modifier l’image",
+          "url": "Emplacement de l’image",
+          "urlHelper": "L’endroit où l’image est enregistrée. Normalement, tu n’as rien à modifier ici.",
+          "captionHelper": "Le texte de l’image. Tu choisis où il apparaît dans les réglages du bloc."
+        },
         "gallery": {
           "missing": "Ajoute au moins une image. Sans image, tu ne peux pas envoyer l'e-mail."
         },
@@ -2107,7 +2113,8 @@
     "zoomRange": "Saisis un niveau de zoom entre 1 et 19.",
     "layerUnknown": "Choisis l'un des fonds de carte proposés.",
     "trackRequired": "Choisis un parcours.",
-    "imageLink": "Ce lien n’est pas possible. Utilise une adresse avec https://, mailto: ou tel:."
+    "imageLink": "Ce lien n’est pas possible. Utilise une adresse avec https://, mailto: ou tel:.",
+    "mailImageLink": "Ce lien n’est pas possible. Utilise une adresse avec https://, mailto: ou tel:, ou une page de l’application (/…)."
   },
   "advent": {
     "label": "Calendrier de l'Avent",

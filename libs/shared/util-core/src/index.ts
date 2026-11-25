@@ -37,6 +37,7 @@ export * from './lib/location-avatar.util';
 export * from './lib/log.util';
 export * from './lib/mail-events.util';
 export * from './lib/mail-target.util';
+export * from './lib/mail-picture.util';
 export * from './lib/popover.util';
 export * from './lib/membership.util';
 export * from './lib/photo-declaration.util';

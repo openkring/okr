@@ -8,6 +8,7 @@ import {
   ARTICLE_BLOCK_ICONS, articleImageChoices, articleUses, coverErrors, drawableImages, galleryErrors, isPictureMissing, outdatedLanguagesOf, pickErrors, resizeColumn, restErrors, shownArticleFields, shownBlockFields, typingPath, uniqueFileName, withUpload,
 } from './article-panel.util';
 import { MAIL_PROFILE } from './editor-profile';
+import { withMailLinks } from './mail-panel.util';
 import { blockErrors, type SectionErrors } from './section-errors';
 
 const image = (url: string, more: Partial<ImageConfig> = {}): ImageConfig => ({ ...IMAGE_CONFIG_SHAPE, url, ...more });
@@ -358,6 +359,28 @@ describe('what the panel of a mail shows', () => {
     expect(typingPath(before, { ...before, title: 'x' })).toBe('title');
     expect(typingPath(before, { ...before, maxEvents: 6 })).toBe('maxEvents');
     expect(typingPath(before, { ...before, calendarKey: 'o' })).toBeUndefined();
+  });
+
+  it('events in a column, which may not stand there, have no fields', () => {
+    const events: MailBlock = { id: 'b', type: 'events', calendarKey: '', maxEvents: 5 };
+    expect(shownBlockFields(events, MAIL_PROFILE, true)).toEqual([]);
+    expect(shownBlockFields(events, MAIL_PROFILE, false)).toEqual(['calendarKey', 'title', 'maxEvents']);
+  });
+
+  it('a link is typed, also when its action changes with the first character', () => {
+    const before = { id: 'i', type: 'image', image: image('a') };
+    const first = withMailLinks({ ...before, image: { ...before.image, actionUrl: 'h' } } as MailBlock);
+    expect(typingPath(before, first, MAIL_PROFILE)).toBe('image.actionUrl');
+    expect(typingPath(first, { ...first, image: { ...before.image, actionUrl: 'ht' } }, MAIL_PROFILE)).toBe('image.actionUrl');
+    expect(typingPath(first, before, MAIL_PROFILE)).toBe('image.actionUrl');
+    // the action alone is a choice
+    expect(typingPath(before, { ...before, imageStyle: { action: ImageActionType.Zoom } })).toBeUndefined();
+  });
+
+  it('the width of a picture is typed in an article, chosen in a mail', () => {
+    const before = { id: 'i', type: 'image', image: image('a') };
+    expect(typingPath(before, { ...before, imageStyle: { width: '50%' } })).toBe('imageStyle.width');
+    expect(typingPath(before, { ...before, imageStyle: { width: '50%' } }, MAIL_PROFILE)).toBeUndefined();
   });
 
   it('a picture and its upload stand beside events', () => {

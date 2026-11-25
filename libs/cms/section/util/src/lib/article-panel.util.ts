@@ -168,12 +168,14 @@ function leaves(value: unknown, path: string, out: Map<string, unknown>): Map<st
 
 /**
  * The path of the one typed field in which two versions of a block or a section differ, else undefined. A run of typing in one
- * field of the panel is one undo step: use it as the tag of `record`, together with the id of the block.
+ * field of the panel is one undo step: use it as the tag of `record`, together with the id of the block. In a mail the action of a picture
+ * comes with its link (`withMailLinks`), and the width of a picture is chosen.
  */
-export function typingPath(before: unknown, after: unknown): string | undefined {
+export function typingPath(before: unknown, after: unknown, profile: EditorProfile = ARTICLE_PROFILE): string | undefined {
   const [a, b] = [leaves(before, '', new Map()), leaves(after, '', new Map())];
-  const changed = [...new Set([...a.keys(), ...b.keys()])].filter((path) => a.get(path) !== b.get(path));
-  if (changed.length !== 1) return undefined;
+  const all = [...new Set([...a.keys(), ...b.keys()])].filter((path) => a.get(path) !== b.get(path));
+  const changed = all.some((path) => path.endsWith('.actionUrl')) ? all.filter((path) => path !== 'imageStyle.action') : all;
+  if (changed.length !== 1 || (profile.kind === 'mail' && changed[0] === 'imageStyle.width')) return undefined;
   return TYPED_FIELDS.includes(changed[0].split('.').pop() as string) ? changed[0] : undefined;
 }
 
@@ -184,7 +186,7 @@ export function typingPath(before: unknown, after: unknown): string | undefined 
  * factor only for that action and the slot only for a thumbnail, the look card needs a picture, the times of a slideshow need a
  * running one. A picture of a mail has no look card, only its width. Names as `blockErrors` and `galleryErrors` give them.
  */
-export function shownBlockFields(block: MailBlock, profile: EditorProfile = ARTICLE_PROFILE): string[] {
+export function shownBlockFields(block: MailBlock, profile: EditorProfile = ARTICLE_PROFILE, inColumn = false): string[] {
   switch (block.type) {
     case 'text': return ['align', 'html'];
     case 'callout': return ['tone', 'html'];
@@ -203,9 +205,14 @@ export function shownBlockFields(block: MailBlock, profile: EditorProfile = ARTI
       const slideshow = !slider ? [] : isObject(block.slideshow) ? ['slideshow.'] : ['slideshow.effect'];
       return ['images', 'images[', 'imageLayout', ...slideshow, ...shownStyleFields(block.imageStyle)];
     }
-    case 'events': return profile.types.includes('events') ? ['calendarKey', 'title', 'maxEvents'] : [];
+    case 'events': return isEventsShown(profile, inColumn) ? ['calendarKey', 'title', 'maxEvents'] : [];
     default: return [];
   }
+}
+
+/** Events are a block of a mail's top level; anywhere else they are unknown. */
+export function isEventsShown(profile: EditorProfile, inColumn: boolean): boolean {
+  return (inColumn ? profile.columnTypes as readonly string[] : profile.types).includes('events');
 }
 
 function shownStyleFields(stored: unknown): string[] {

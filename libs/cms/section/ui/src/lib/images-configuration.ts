@@ -94,7 +94,7 @@ import { ImageEditModal } from './image-edit.modal';
                       <p>{{ img.altText || img.label }}</p>
                     } @else {
                       <p>{{ img.label || img.url }}</p>
-                      <p class="image-meta">{{ typeName(img.type) }}{{ img.altText ? ' · ' + img.altText : '' }}</p>
+                      <p class="image-meta">{{ showType() ? typeName(img.type) + (img.altText ? ' · ' + img.altText : '') : img.altText }}</p>
                     }
                   </ion-label>
                 </ion-item>
@@ -148,6 +148,8 @@ export class ImagesConfiguration {
    * the stored one, and a published article changes before it is saved.
    */
   public readonly uniqueNames = input(false);
+  /** false: the type of an image is neither shown nor offered (a mail has only pictures) */
+  public readonly showType = input(true);
   /** false: nothing can be uploaded (the trial mode of the article editor); images can still be edited, sorted and removed */
   public readonly uploads = input(true);
   /**
@@ -337,6 +339,7 @@ export class ImagesConfiguration {
       component: ImageEditModal,
       componentProps: {
         image: { ...img },
+        showType: this.showType(),
         readOnly: this.readOnly(),
         i18n: this.i18n(),
       },

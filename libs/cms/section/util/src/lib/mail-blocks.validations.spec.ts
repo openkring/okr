@@ -130,7 +130,7 @@ describe('mailBlocksValidations', () => {
 
   it.each(BAD_TARGETS)('flags a picture with the link %j once, in an image, a gallery and a column', (actionUrl) => {
     const bad = { ...image, actionUrl };
-    const message = ['@cms/section/feature.validation.imageLink'];
+    const message = ['@cms/section/feature.validation.mailImageLink'];
     expect(errors([{ id: 'i', type: 'image', image: bad }])).toEqual({ 'blocks.i.image.actionUrl': message });
     expect(errors([columns({ id: 'i', type: 'image', image: bad })])).toEqual({ 'blocks.i.image.actionUrl': message });
     expect(errors([{ id: 'g', type: 'gallery', images: [image, bad] }])).toEqual({ 'blocks.g.images[1].actionUrl': message });

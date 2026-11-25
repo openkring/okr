@@ -8,7 +8,7 @@ import { ActionSheetController, IonIcon, IonNote } from '@ionic/angular';
 
 import {
   ARTICLE_BLOCK_ICONS, ARTICLE_BLOCKS_MAX, ARTICLE_PROFILE, type ArticleEditorI18n, type ArticlePreviewDevice, BlockViewCache, type BlockPlace, type EditorProfile,
-  allowedTypesAt, articleBackground, articleColumnsForm, articleHeaderPlace, blockTypeLabel, canAddBlock, columnsTemplate, createBlock, drawnMailBlock, duplicateBlock, findBlock,
+  allowedTypesAt, articleBackground, articleColumnsForm, articleHeaderPlace, blockTypeLabel, canAddBlock, columnsTemplate, createBlock, drawnBlock, duplicateBlock, findBlock,
   getSectionIntro, insertBlock, joinWithAbove, moveBlockBy, removeBlock, replaceBlock,
 } from '@okr/cms-section-util';
 import { ENV } from '@okr/shared-config';
@@ -55,7 +55,7 @@ let canvases = 0;
  * - Any other change of the blocks (an upload that ends, undo) must be rendered before the canvas emits again: until the next rendering
  *   the canvas goes on from the blocks it emitted last, so a second emission in the same frame overwrites such a change.
  *
- * Only reachable through the lazily loaded editor: not exported from the lib, never imported by what readers load.
+ * For the editor surface, which only lazily loaded hosts import: in the barrel, but never imported by what readers load.
  */
 @Component({
   selector: 'okr-article-canvas',
@@ -85,6 +85,7 @@ let canvases = 0;
     .page.mail .list { padding: 0; }
     .page.mail .list ::ng-deep ion-item { --inner-padding-end: 0; }
     .page.mail .list ::ng-deep .callout .tint { padding: 16px; }
+    /* with the paddings of two blocks the gutter of 16 px; unequal columns are up to 2 px wider or narrower than in the mail */
     .page.mail .columns.wide { column-gap: 6px; }
     /* a picture that is not as wide as its place stands on the left, as in the mail */
     .page.mail .list ::ng-deep okr-article-block .image-container { justify-content: flex-start; }
@@ -443,7 +444,7 @@ export class ArticleCanvas extends ArticleCanvasContext {
     const i18n = this.i18n();
     const options = createActionSheetOptions(i18n.article_editor_add_title());
     for (const type of allowedTypesAt(place, this.profile())) {
-      options.buttons.push(createActionSheetButton(type, blockTypeLabel(i18n, type), this.imgixBaseUrl, ARTICLE_BLOCK_ICONS[type]));
+      options.buttons.push(createActionSheetButton(type, blockTypeLabel(i18n, type, this.profile()), this.imgixBaseUrl, ARTICLE_BLOCK_ICONS[type]));
     }
     options.buttons.push(createActionSheetButton('cancel', i18n.cancel(), this.imgixBaseUrl, 'cancel'));
     const sheet = await this.actionSheetController.create(options);
@@ -544,7 +545,7 @@ export class ArticleCanvas extends ArticleCanvasContext {
 
   private item(block: MailBlock, inColumn: boolean): CanvasItem {
     // the cache knows no events: they have no view
-    const drawn = (this.isMail() ? drawnMailBlock(block) : block) as ArticleBlock;
+    const drawn = drawnBlock(block, this.profile()) as ArticleBlock;
     return { kind: kindOf(block, inColumn, this.profile()), block, view: this.viewCache.view(drawn) };
   }
 

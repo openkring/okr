@@ -358,6 +358,12 @@
           "captionHidden": "Der Untertitel ist ausgeblendet. Wähle, wo er erscheint.",
           "width": "Breite"
         },
+        "picture": {
+          "title": "Bild bearbeiten",
+          "url": "Ablageort des Bildes",
+          "urlHelper": "Wo das Bild gespeichert ist. Normalerweise musst du hier nichts ändern.",
+          "captionHelper": "Der Text zum Bild. Wo er erscheint, wählst du in den Einstellungen des Blocks."
+        },
         "gallery": {
           "missing": "Füge mindestens ein Bild hinzu. Ohne Bild kannst du die E-Mail nicht senden."
         },
@@ -2107,7 +2113,8 @@
     "zoomRange": "Gib einen Zoom-Faktor zwischen 1 und 19 ein.",
     "layerUnknown": "Wähle eine der angebotenen Kartenebenen.",
     "trackRequired": "Wähle eine Strecke aus.",
-    "imageLink": "Dieser Link ist nicht möglich. Verwende eine Adresse mit https://, mailto: oder tel:."
+    "imageLink": "Dieser Link ist nicht möglich. Verwende eine Adresse mit https://, mailto: oder tel:.",
+    "mailImageLink": "Dieser Link ist nicht möglich. Verwende eine Adresse mit https://, mailto: oder tel:, oder eine Seite der App (/…)."
   },
   "advent": {
     "label": "Adventskalender",

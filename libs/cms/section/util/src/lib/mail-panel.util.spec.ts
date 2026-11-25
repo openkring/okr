@@ -2,13 +2,13 @@ import { describe, expect, it } from 'vitest';
 
 import { IMAGE_STYLE_SHAPE, ImageActionType, type ImageConfig, type ImageStyle, type MailBlock } from '@okr/shared-models';
 
-import { MAIL_CAPTION_POSITIONS, MAIL_IMAGE_WIDTHS, drawnMailBlock, eventsNote, mailCaptionPosition, mailEventsDrawn, mailImageWidth, mailPictureStyle, mailToneOf, withMailLinks } from './mail-panel.util';
+import { ARTICLE_PROFILE, MAIL_PROFILE } from './editor-profile';
+import { MAIL_CAPTION_POSITIONS, MAIL_IMAGE_WIDTHS, drawnBlock, drawnMailBlock, eventsNote, isMailCaptionHidden, mailEventsDrawn, mailImageWidth, mailPictureCells, mailPictureStyle, mailStyleCaptionPosition, mailToneOf, withMailLinks } from './mail-panel.util';
 
 const image = (o: object = {}): ImageConfig => ({ label: '', type: 0, url: 'tenant/t/a.jpg', actionUrl: '', altText: '', overlay: '', ...o }) as ImageConfig;
 const img = (o: object = {}, imageStyle?: object): MailBlock => ({ id: 'i', type: 'image', image: image(o), ...(imageStyle ? { imageStyle } : {}) }) as MailBlock;
 
 describe('mailImageWidth', () => {
-  // the rule of pictureWidth in render-mail-blocks.logic.ts (functions)
   it.each([
     ['50%', '50%'], [' 33.5% ', '33.5%'], ['100%', '100%'], ['120%', '100%'], ['0%', '100%'],
     ['300px', '300px'], ['300', '300px'], ['300.6px', '301px'], ['900px', '440px'], ['0.3px', '100%'],
@@ -25,13 +25,12 @@ describe('mailImageWidth', () => {
   });
 });
 
-describe('mailCaptionPosition', () => {
-  // the rule of picture() in render-mail-blocks.logic.ts (functions)
+describe('mailStyleCaptionPosition', () => {
   it.each([
     ['none', 'none'], [undefined, 'none'], ['', 'none'], ['top', 'top'], ['bottom', 'bottom'],
     ['top-overlay', 'bottom'], ['middle-overlay', 'bottom'], ['bottom-overlay', 'bottom'],
   ])('%j → %s', (captionPosition, expected) => {
-    expect(mailCaptionPosition({ captionPosition } as Partial<ImageStyle>)).toBe(expected);
+    expect(mailStyleCaptionPosition({ captionPosition } as Partial<ImageStyle>)).toBe(expected);
   });
   it('offers the three that a mail has', () => {
     expect(MAIL_CAPTION_POSITIONS).toEqual(['none', 'top', 'bottom']);
@@ -110,5 +109,54 @@ describe('mailEventsDrawn and eventsNote', () => {
     expect(eventsNote(block(), {})).toBe('later');
     expect(eventsNote(block(), { k: [] })).toBe('none');
     expect(eventsNote(block(), { k: [line(1)] })).toBeUndefined();
+  });
+});
+
+describe('isMailCaptionHidden', () => {
+  const gallery = (images: unknown[], imageStyle?: object): MailBlock => ({ id: 'g', type: 'gallery', images, ...(imageStyle ? { imageStyle } : {}) }) as MailBlock;
+
+  it('a caption or a credit of a picture without a position', () => {
+    expect(isMailCaptionHidden(img({ overlay: 'x' }))).toBe(true);
+    expect(isMailCaptionHidden(img({ credit: 'x' }))).toBe(true);
+    expect(isMailCaptionHidden(gallery([image(), image({ credit: 'Foto: M.' })]))).toBe(true);
+    expect(isMailCaptionHidden(gallery([image({ overlay: 'x' })], { captionPosition: 'none' }))).toBe(true);
+  });
+  it('not with a position, not without a text, not for another block', () => {
+    expect(isMailCaptionHidden(img({ overlay: 'x' }, { captionPosition: 'top' }))).toBe(false);
+    expect(isMailCaptionHidden(gallery([image({ overlay: 'x' })], { captionPosition: 'bottom-overlay' }))).toBe(false);
+    expect(isMailCaptionHidden(gallery([image({ overlay: ' ' }), image()]))).toBe(false);
+    expect(isMailCaptionHidden({ id: 't', type: 'text', html: 'x' })).toBe(false);
+  });
+  it('does not throw on malformed blocks', () => {
+    for (const block of [{ id: 'g', type: 'gallery', images: [null, 'x'] }, { id: 'g', type: 'gallery' }, { id: 'i', type: 'image' }]) expect(isMailCaptionHidden(block as unknown as MailBlock)).toBe(false);
+  });
+});
+
+describe('mailPictureCells', () => {
+  const cells = (images: unknown, imageStyle?: object) => mailPictureCells({ id: 'g', type: 'gallery', images, imageStyle } as unknown as Extract<MailBlock, { type: 'gallery' }>);
+
+  it('a picture that the mail can show is drawn', () => {
+    const picture = image({ altText: 'A' });
+    expect(cells([picture])).toEqual([{ image: picture, text: '', above: [], below: [] }]);
+  });
+  it('one with only a text is that text, with its caption', () => {
+    expect(cells([image({ url: '', altText: 'A', overlay: 'U', credit: 'C' })], { captionPosition: 'top' })[0]).toMatchObject({ text: 'A', above: ['U', 'C'], below: [] });
+    expect(cells([image({ url: '', label: 'L', overlay: 'U' })], { captionPosition: 'bottom' })[0]).toMatchObject({ text: 'L', above: [], below: ['U'] });
+    expect(cells([image({ url: 'data:x', altText: 'A' })])[0]).toMatchObject({ text: 'A', above: [], below: [] });
+  });
+  it('an entry in which nothing was entered is left out', () => {
+    expect(cells([image({ url: ' ' }), image({ url: '', overlay: 'U' })])).toEqual([]);
+  });
+  it('does not throw on malformed pictures', () => {
+    expect(cells([null, 3, { url: 4 }, {}])).toEqual([]);
+    expect(cells('x')).toEqual([]);
+  });
+});
+
+describe('drawnBlock', () => {
+  const callout: MailBlock = { id: 'c', type: 'callout', html: '', tone: 'secondary' };
+  it('of a mail without what it ignores, of an article as it is', () => {
+    expect(drawnBlock(callout, MAIL_PROFILE)).toMatchObject({ tone: 'primary' });
+    expect(drawnBlock(callout, ARTICLE_PROFILE)).toBe(callout);
   });
 });

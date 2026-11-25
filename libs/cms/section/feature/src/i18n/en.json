@@ -358,6 +358,12 @@
           "captionHidden": "The caption is hidden. Choose where it appears.",
           "width": "Width"
         },
+        "picture": {
+          "title": "Edit picture",
+          "url": "Storage location of the picture",
+          "urlHelper": "Where the picture is stored. Normally you do not need to change anything here.",
+          "captionHelper": "The text for the picture. You choose where it appears in the settings of the block."
+        },
         "gallery": {
           "missing": "Add at least one picture. Without a picture you cannot send the email."
         },
@@ -2107,7 +2113,8 @@
     "zoomRange": "Enter a zoom level between 1 and 19.",
     "layerUnknown": "Choose one of the offered map layers.",
     "trackRequired": "Choose a track.",
-    "imageLink": "This link is not possible. Use an address with https://, mailto: or tel:."
+    "imageLink": "This link is not possible. Use an address with https://, mailto: or tel:.",
+    "mailImageLink": "This link is not possible. Use an address with https://, mailto: or tel:, or a page of the app (/…)."
   },
   "advent": {
     "label": "Advent calendar",

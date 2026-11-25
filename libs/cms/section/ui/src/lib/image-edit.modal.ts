@@ -26,6 +26,7 @@ import { ImageEditForm } from './image-edit.form';
           (formDataChange)="onFormDataChange($event)"
           [i18n]="i18n()"
           [readOnly]="readOnly()"
+          [showType]="showType()"
           [showForm]="showForm()"
           (dirty)="formDirty.set($event)"
           (valid)="formValid.set($event)"
@@ -40,6 +41,8 @@ export class ImageEditModal {
   // inputs
   public readonly image = input.required<ImageConfig>();
   public readonly readOnly = input<boolean>(true);
+  /** false: the type of the image is not offered */
+  public readonly showType = input(true);
   public readonly i18n = input.required<SectionI18n>();
 
   // state

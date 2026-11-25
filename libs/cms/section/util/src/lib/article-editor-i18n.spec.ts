@@ -18,6 +18,18 @@ describe('blockTypeLabel', () => {
   });
 });
 
+describe('blockTypeLabel of a profile', () => {
+  const i18n = Object.fromEntries(Object.entries(ARTICLE_EDITOR_I18N_KEYS).map(([key, value]) => [key, () => value])) as unknown as ArticleEditorI18n;
+  const unknown = '@cms/section/feature.article.editor.block.unknown';
+
+  it('events are unknown in an article', () => {
+    expect(blockTypeLabel(i18n, 'events', ARTICLE_PROFILE)).toBe(unknown);
+    expect(blockTypeLabel(i18n, 'events', MAIL_PROFILE)).toBe('@cms/section/feature.article.editor.block.events');
+    expect(blockTypeLabel(i18n, 'gallery', ARTICLE_PROFILE)).toBe('@cms/section/feature.article.editor.block.gallery');
+    expect(blockTypeLabel(i18n, '', MAIL_PROFILE)).toBe(unknown);
+  });
+});
+
 describe('editorTexts', () => {
   const i18n = Object.fromEntries(Object.entries({ ...SECTION_I18N_KEYS, ...ARTICLE_EDITOR_I18N_KEYS }).map(([key, value]) => [key, () => value])) as unknown as ArticleEditorI18n;
 
@@ -30,6 +42,11 @@ describe('editorTexts', () => {
     expect(mail.article_editor_canvas_label()).toBe('@cms/section/feature.article.editor.mail.canvasLabel');
     expect(mail.article_editor_library_full()).toBe('@cms/section/feature.article.editor.mail.full');
     expect(mail.cta_url_helper()).toBe('@cms/section/feature.article.editor.mail.target.helper');
+    // the window of one picture
+    expect(mail.image_edit_title()).toBe('@cms/section/feature.article.editor.mail.picture.title');
+    expect(mail.image_edit_action_label()).toBe('@cms/section/feature.article.editor.image.link.label');
+    expect(mail.image_edit_action_helper()).toBe('@cms/section/feature.article.editor.mail.target.helper');
+    expect(mail.image_edit_overlay_helper()).toBe('@cms/section/feature.article.editor.mail.picture.captionHelper');
     expect(mail.article_editor_undo).toBe(i18n.article_editor_undo);
     expect(Object.keys(mail)).toEqual(Object.keys(i18n));
   });

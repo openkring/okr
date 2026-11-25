@@ -175,14 +175,13 @@ export class ArticleEditorSurface {
 
   /** Selects a block, or nothing; a text is edited, with the cursor at its end. */
   public select(id: string | undefined): void {
-    this.history.update((history) => selectIn(history, id));
-    this.caret.set(undefined);
+    if (this.change((history) => selectIn(history, id))) this.caret.set(undefined);
   }
 
   /** Selects a block from outside the canvas: it gets the focus and comes into sight. */
   public open(id: string): void {
     this.select(id);
-    this.canvas().focusSelected();
+    if (!this.destroyed) this.canvas().focusSelected();
   }
 
   /** A change of the host (`changeSection`, `changeBlocks`, `uploadInto`). False when the surface is gone and nothing was changed. */
@@ -220,7 +219,7 @@ export class ArticleEditorSurface {
   protected onBlockChange(block: MailBlock): void {
     const before = findBlock(this.blocks(), block.id)?.block;
     if (!before) return;
-    const path = typingPath(before, block);
+    const path = typingPath(before, block, this.profile());
     this.setBlocks(replaceBlock(this.blocks(), block), path && `panel:${block.id}:${path}`);
   }
 

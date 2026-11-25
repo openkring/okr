@@ -35,10 +35,12 @@ const IMAGE_TYPE_NAMES = Object.keys(ImageType).filter(k => isNaN(Number(k)));
                   <okr-text-input [i18n]="labelI18n()" [value]="label()" (valueChange)="onFieldChange('label', $event)" [autofocus]="true" [readOnly]="isReadOnly()" />
                   <okr-error-note [errors]="labelErrors()" />
                 </ion-col>
-                <ion-col size="12" size-md="6">
-                  <okr-string-select [i18n]="imageTypeI18n()" [selectedString]="typeName()" (selectedStringChange)="onTypeChange($event)" [stringList]="imageTypeNames" [readOnly]="isReadOnly()" />
-                  <okr-error-note [errors]="typeErrors()" />
-                </ion-col>
+                @if (showType()) {
+                  <ion-col size="12" size-md="6">
+                    <okr-string-select [i18n]="imageTypeI18n()" [selectedString]="typeName()" (selectedStringChange)="onTypeChange($event)" [stringList]="imageTypeNames" [readOnly]="isReadOnly()" />
+                    <okr-error-note [errors]="typeErrors()" />
+                  </ion-col>
+                }
                 <ion-col size="12">
                   <okr-text-input [i18n]="overlayI18n()" [value]="overlay()" (valueChange)="onFieldChange('overlay', $event)" [maxLength]="captionLength" [readOnly]="isReadOnly()" />
                   <okr-error-note [errors]="overlayErrors()" />
@@ -82,6 +84,8 @@ export class ImageEditForm {
   public readonly i18n = input.required<SectionI18n>();
   public formData = model.required<ImageConfig>();
   public readonly readOnly = input(true);
+  /** false: the type is not offered (a mail has only pictures) */
+  public readonly showType = input(true);
   public readonly showForm = input(true);   // toggled by the parent to reset Vest state on cancel
 
   // outputs

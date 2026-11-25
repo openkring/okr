@@ -4,7 +4,7 @@ import { IonIcon, IonNote } from '@ionic/angular';
 
 import {
   ARTICLE_BLOCK_ICONS, ARTICLE_BLOCKS_MAX, type ArticleBlockView, type ArticleEditorI18n, type ArticlePreviewDevice, blockTypeLabel,
-  canAddBlock, duplicateBlock, type EditorProfile, eventsNote, isPictureMissing, mailEventsDrawn, moveBlockBy,
+  canAddBlock, drawnBlock, duplicateBlock, type EditorProfile, eventsNote, isPictureMissing, mailEventsDrawn, moveBlockBy,
 } from '@okr/cms-section-util';
 import type { MailBlock } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
@@ -162,7 +162,7 @@ const HIDDEN_FEATURES: readonly RichTextFeature[] = ['history', 'colors', 'align
           <okr-mail-events [title]="events.title" [lines]="events.lines" />
         } @else if (drawn(); as view) {
           <okr-article-block [class.empty-text]="!item().view" [class.after-header]="afterHeader()" [class.classic-button]="classicButton()" [view]="view" [captionFallbacks]="canvas.captionFallbacks()"
-            [title]="titled() ? canvas.title() : ''" [subTitle]="titled() ? canvas.subTitle() : ''" [previewDevice]="canvas.device()" [paused]="true" [inert]="true" [classicText]="classicText()" [textEditor]="editing() ? editor : undefined" />
+            [title]="titled() ? canvas.title() : ''" [subTitle]="titled() ? canvas.subTitle() : ''" [previewDevice]="canvas.device()" [paused]="true" [inert]="true" [brandButtons]="canvas.profile().kind === 'mail'" [classicText]="classicText()" [textEditor]="editing() ? editor : undefined" />
         } @else {
           <div class="place">
             @if (icon(); as name) { <ion-icon src="{{ name | svgIcon }}" aria-hidden="true" /> }
@@ -217,7 +217,7 @@ export class ArticleCanvasBlock {
   /** it could not be loaded: until the next try */
   protected readonly failed = linkedSignal<boolean, boolean>({ source: this.editing, computation: (editing, before) => !editing && (before?.value ?? false) });
   protected readonly hasError = computed(() => this.canvas.errorIds().includes(this.item().block.id));
-  protected readonly label = computed(() => blockTypeLabel(this.canvas.i18n(), this.item().kind === 'unknown' ? '' : this.item().block.type));
+  protected readonly label = computed(() => blockTypeLabel(this.canvas.i18n(), this.item().kind === 'unknown' ? '' : this.item().block.type, this.canvas.profile()));
   protected readonly toolsLabel = computed(() => fill(this.canvas.i18n().article_editor_frame_toolbar(), { block: this.label() }));
   protected readonly icon = computed(() => ARTICLE_BLOCK_ICONS[this.item().block.type] as string | undefined);
   protected readonly full = computed(() => !this.inColumn() && !canAddBlock(this.canvas.blocks()));
@@ -234,7 +234,8 @@ export class ArticleCanvasBlock {
   });
   /** an empty text shows a placeholder where it will stand */
   protected readonly drawn = computed((): ArticleBlockView | undefined => {
-    const { block, view } = this.item();
+    const { view } = this.item();
+    const block = drawnBlock(this.item().block, this.canvas.profile());
     if (view || this.item().kind !== 'block') return view;
     const html = `<p>${this.canvas.i18n().article_editor_canvas_textPlaceholder()}</p>`;
     if (block.type === 'text') return { key: block.id, type: 'text', html, align: block.align ?? 'left' };

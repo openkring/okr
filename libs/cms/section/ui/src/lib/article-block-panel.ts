@@ -15,8 +15,8 @@ import { Checkbox, CheckboxI18n, ErrorNote, NumberInput, NumberInputI18n, String
 import { compactImageStyle, fill, MAX_MAIL_EVENTS, resolveImageStyle } from '@okr/shared-util-core';
 import {
   ARTICLE_BLOCK_ICONS, ARTICLE_PROFILE, ArticleEditorI18n, ArticleUpload, BLOCK_ALIGNS, blockTypeLabel, COLUMN_PRESETS,
-  drawableImages, EditorProfile, galleryErrors, getFieldErrors, IMAGE_CAPTION_LENGTH, ImageUploadTarget, isPictureMissing, MAIL_CAPTION_POSITIONS, MAIL_IMAGE_WIDTHS,
-  mailCaptionPosition, mailImageWidth, mailToneOf, resizeColumn, restErrors, SectionErrors, setColumnCount, setColumnSizes, shownBlockFields, SPACE_SIZES, withMailLinks
+  drawableImages, EditorProfile, galleryErrors, getFieldErrors, IMAGE_CAPTION_LENGTH, ImageUploadTarget, isEventsShown, isMailCaptionHidden, isPictureMissing, MAIL_CAPTION_POSITIONS, MAIL_IMAGE_WIDTHS,
+  mailImageWidth, mailStyleCaptionPosition, mailToneOf, resizeColumn, restErrors, SectionErrors, setColumnCount, setColumnSizes, shownBlockFields, SPACE_SIZES, withMailLinks
 } from '@okr/cms-section-util';
 
 import { pickArticleImage } from './article-image-pick.modal';
@@ -82,7 +82,7 @@ const filled = (value: unknown): boolean => typeof value === 'string' && value.t
         @case ('image') {
           <ion-card>
             <ion-card-content class="ion-no-padding">
-              <okr-images-config [images]="images()" (imagesChange)="setImage($event)" [multiple]="false" [embedded]="true" [uniqueNames]="true"
+              <okr-images-config [images]="images()" (imagesChange)="setImage($event)" [multiple]="false" [embedded]="true" [uniqueNames]="true" [showType]="!onlyLinks()"
                 [uploads]="uploads()" [uploadTarget]="uploadTarget()" [emptyText]="i18n().article_editor_image_empty()"
                 [storagePath]="storagePath()" [currentUser]="currentUser()" [readOnly]="false" [i18n]="i18n()" [errors]="imageListErrors()" />
               <div class="actions">
@@ -153,7 +153,7 @@ const filled = (value: unknown): boolean => typeof value === 'string' && value.t
           <ion-card>
             <ion-card-header><ion-card-title>{{ i18n().article_images_title() }}</ion-card-title></ion-card-header>
             <ion-card-content class="ion-no-padding">
-              <okr-images-config [images]="images()" (imagesChange)="patch({ images: $event })" [embedded]="true" [uniqueNames]="true"
+              <okr-images-config [images]="images()" (imagesChange)="patch({ images: $event })" [embedded]="true" [uniqueNames]="true" [showType]="!onlyLinks()"
                 [uploads]="uploads()" [uploadTarget]="uploadTarget()" [emptyText]="i18n().article_editor_image_empty()"
                 [storagePath]="storagePath()" [currentUser]="currentUser()" [readOnly]="false" [i18n]="i18n()" [errors]="errors()" />
               <div class="actions">
@@ -163,6 +163,11 @@ const filled = (value: unknown): boolean => typeof value === 'string' && value.t
               </div>
               @if (!uploads()) { <ion-note class="note">{{ i18n().article_editor_image_noUpload() }}</ion-note> }
               @if (pictureMissing()) { <ion-note class="note" color="danger">{{ i18n().article_editor_gallery_missing() }}</ion-note> }
+              @if (onlyLinks() && !pictureMissing()) {
+                <okr-string-select [i18n]="captionPositionI18n()" [selectedString]="captionPosition()" (selectedStringChange)="setCaptionPosition($event)"
+                  [stringList]="captionPositions" [labels]="captionPositionLabels()" [readOnly]="false" />
+                @if (captionHidden()) { <ion-note class="note">{{ i18n().article_editor_image_captionHidden() }}</ion-note> }
+              }
             </ion-card-content>
           </ion-card>
           @if (images().length > 0 && !profile().galleryPairs) {
@@ -253,7 +258,7 @@ const filled = (value: unknown): boolean => typeof value === 'string' && value.t
         }
 
         @case ('events') {
-          @if (profile().types.includes('events')) {
+          @if (eventsShown()) {
             <ion-note class="note">{{ i18n().article_editor_mail_events_helper() }}</ion-note>
             <ion-card>
               <ion-card-content class="ion-no-padding">
@@ -332,9 +337,12 @@ export class ArticleBlockPanel {
   protected readonly maxEventsMax = MAX_MAIL_EVENTS;
 
   // head
-  protected readonly typeLabel = computed(() => blockTypeLabel(this.i18n(), this.block().type));
+  protected readonly eventsShown = computed(() => isEventsShown(this.profile(), this.column() !== undefined));
+  /** events where they cannot stand */
+  private readonly isUnknown = computed(() => this.block().type === 'events' && !this.eventsShown());
+  protected readonly typeLabel = computed(() => blockTypeLabel(this.i18n(), this.isUnknown() ? '' : this.block().type, this.profile()));
   protected readonly panelLabel = computed(() => fill(this.i18n().article_editor_panel_label(), { block: this.typeLabel() }));
-  protected readonly icon = computed<string | undefined>(() => ARTICLE_BLOCK_ICONS[this.block().type]);
+  protected readonly icon = computed<string | undefined>(() => this.isUnknown() ? undefined : ARTICLE_BLOCK_ICONS[this.block().type]);
   protected readonly outdatedText = computed(() => this.outdated().length === 0 ? ''
     : fill(this.i18n().article_editor_outdated(), { languages: this.outdated().map((l) => l.toUpperCase()).join(', ') }));
 
@@ -371,7 +379,7 @@ export class ArticleBlockPanel {
   });
   /** a mail: a picture has a link and no other action, and nothing of a look but width and caption */
   protected readonly onlyLinks = computed(() => this.profile().imageAction === 'link');
-  protected readonly captionHidden = computed(() => filled(this.image().overlay) && (this.imageStyle().captionPosition ?? 'none') === 'none');
+  protected readonly captionHidden = computed(() => this.onlyLinks() ? isMailCaptionHidden(this.block()) : filled(this.image().overlay) && (this.imageStyle().captionPosition ?? 'none') === 'none');
   protected readonly linkNote = computed(() => {
     // the link alone decides the action
     if (this.onlyLinks()) return '';
@@ -380,7 +388,7 @@ export class ArticleBlockPanel {
     if (link === follows) return '';
     return link ? fill(this.i18n().article_editor_image_linkInactive(), { action: this.actionI18n.followLink() }) : this.i18n().article_editor_image_linkMissing();
   });
-  protected readonly captionPosition = computed<string>(() => mailCaptionPosition(this.imageStyle()));
+  protected readonly captionPosition = computed<string>(() => mailStyleCaptionPosition(this.imageStyle()));
   protected readonly captionPositionLabels = computed(() => [this.i18n().captionPosition_none(), this.i18n().captionPosition_top(), this.i18n().captionPosition_bottom()]);
   protected readonly captionPositionI18n = computed<StringSelectI18n>(() => ({ name: 'captionPosition', label: this.i18n().captionPosition_label() }));
   protected readonly width = computed(() => mailImageWidth(this.imageStyle()));
@@ -471,7 +479,7 @@ export class ArticleBlockPanel {
   });
   /** the errors of a gallery under the names of its look card */
   protected readonly lookErrors = computed(() => galleryErrors(this.errors(), this.block()));
-  protected readonly rest = computed(() => restErrors(this.lookErrors(), shownBlockFields(this.block(), this.profile())));
+  protected readonly rest = computed(() => restErrors(this.lookErrors(), shownBlockFields(this.block(), this.profile(), this.column() !== undefined)));
 
   /************************************** changes *********************************************** */
   /** Emits the block with these fields; a field that is undefined is left out. Nothing is emitted if that is no change. */
@@ -522,7 +530,7 @@ export class ArticleBlockPanel {
   /** of a mail: what is stored beside it stays as it is */
   private patchStyle(changes: Partial<ImageStyle>): void {
     const block = this.block();
-    if (block.type === 'image') this.setImageStyle({ ...resolveImageStyle(block.imageStyle), ...changes });
+    if (block.type === 'image' || block.type === 'gallery') this.setImageStyle({ ...resolveImageStyle(block.imageStyle), ...changes });
   }
 
   /** «Aus diesem Artikel»: a copy of the picture with all its texts */

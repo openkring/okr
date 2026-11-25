@@ -18,13 +18,16 @@ function checkRequired(field: string, ok: boolean): void {
 const isText = (value: unknown): value is string => typeof value === 'string';
 const isFilled = (value: unknown): boolean => isText(value) && value.trim() !== '';
 
+/** A mail opens pages of the app, too. */
+const LINK_MESSAGE = '@cms/section/feature.validation.mailImageLink';
+
 function checkPicture(field: string, image: unknown): void {
-  checkImage(field, image);
+  checkImage(field, image, LINK_MESSAGE);
   if (!isObject(image)) return;
   if (hasImageUrl(image)) check(`${field}.url`, isMailPictureSource(image['url']));
   // an unsafe link has its error from checkImage; any other that a mail cannot open would be lost silently
   if (isFilled(image['actionUrl']) && isSafeLinkTarget(image['actionUrl'])) {
-    test(`${field}.actionUrl`, '@cms/section/feature.validation.imageLink', () => {
+    test(`${field}.actionUrl`, LINK_MESSAGE, () => {
       enforce(isMailTarget(image['actionUrl'])).isTruthy();
     });
   }

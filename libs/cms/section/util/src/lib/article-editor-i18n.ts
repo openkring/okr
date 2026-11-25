@@ -145,6 +145,10 @@ export const ARTICLE_EDITOR_I18N_KEYS = {
   article_editor_mail_image_pickEmpty:         PFX + 'article.editor.mail.image.pickEmpty',
   article_editor_mail_image_captionHidden:     PFX + 'article.editor.mail.image.captionHidden',
   article_editor_mail_image_width:             PFX + 'article.editor.mail.image.width',
+  article_editor_mail_picture_title:           PFX + 'article.editor.mail.picture.title',
+  article_editor_mail_picture_url:             PFX + 'article.editor.mail.picture.url',
+  article_editor_mail_picture_urlHelper:       PFX + 'article.editor.mail.picture.urlHelper',
+  article_editor_mail_picture_captionHelper:   PFX + 'article.editor.mail.picture.captionHelper',
   article_editor_mail_gallery_missing:         PFX + 'article.editor.mail.gallery.missing',
   article_editor_mail_target_placeholder:      PFX + 'article.editor.mail.target.placeholder',
   article_editor_mail_target_helper:           PFX + 'article.editor.mail.target.helper',
@@ -163,13 +167,14 @@ export const ARTICLE_EDITOR_I18N_KEYS = {
 /** What panel, canvas and modal are given: the texts of the editor and those of the section forms whose parts they reuse. */
 export type ArticleEditorI18n = SectionI18n & { [K in keyof typeof ARTICLE_EDITOR_I18N_KEYS]: Signal<string> };
 
-/** The name of a block type of an article or a mail; «Unbekannter Block» for one this app does not know. */
-export function blockTypeLabel(i18n: ArticleEditorI18n, type: string): string {
+/** The name of a block type; «Unbekannter Block» for one that this app, or the profile, does not know. */
+export function blockTypeLabel(i18n: ArticleEditorI18n, type: string, profile?: EditorProfile): string {
   const key = `article_editor_block_${type}`;
-  return key in ARTICLE_EDITOR_I18N_KEYS ? i18n[key as keyof typeof ARTICLE_EDITOR_I18N_KEYS]() : i18n.article_editor_block_unknown();
+  const isKnown = !profile || (profile.types as readonly string[]).includes(type);
+  return isKnown && key in ARTICLE_EDITOR_I18N_KEYS ? i18n[key as keyof typeof ARTICLE_EDITOR_I18N_KEYS]() : i18n.article_editor_block_unknown();
 }
 
-/** What says «Artikel», or explains something that a mail does not have, and what a mail says instead. */
+/** What says «Artikel», explains something that a mail does not have, or is too technical, and what a mail says instead. */
 const MAIL_TEXTS = {
   article_editor_canvas_label: 'article_editor_mail_canvasLabel',
   article_editor_canvas_empty: 'article_editor_mail_canvasEmpty',
@@ -183,6 +188,14 @@ const MAIL_TEXTS = {
   article_editor_image_link_placeholder: 'article_editor_mail_target_placeholder',
   article_editor_image_link_helper: 'article_editor_mail_target_helper',
   article_editor_gallery_missing: 'article_editor_mail_gallery_missing',
+  image_edit_title: 'article_editor_mail_picture_title',
+  image_edit_url_label: 'article_editor_mail_picture_url',
+  image_edit_url_helper: 'article_editor_mail_picture_urlHelper',
+  image_edit_action_label: 'article_editor_image_link_label',
+  image_edit_action_placeholder: 'article_editor_mail_target_placeholder',
+  image_edit_action_helper: 'article_editor_mail_target_helper',
+  image_edit_overlay_helper: 'article_editor_mail_picture_captionHelper',
+  captionPosition_helper: 'article_editor_mail_picture_captionHelper',
   cta_url_placeholder: 'article_editor_mail_target_placeholder',
   cta_url_helper: 'article_editor_mail_target_helper',
 } as const satisfies Partial<Record<keyof ArticleEditorI18n, keyof typeof ARTICLE_EDITOR_I18N_KEYS>>;

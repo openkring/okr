@@ -126,7 +126,7 @@ export class ArticleEditorModal {
   protected readonly errors = computed(() => this.result().getErrors());
   protected readonly valid = computed(() => this.result().isValid());
   private readonly errorIds = computed(() => blockIdsWithErrors(this.errors(), this.blocks()));
-  protected readonly errorBlocks = computed(() => this.errorIds().map((id) => ({ id, label: blockTypeLabel(this.i18n, findBlock(this.blocks(), id)?.block.type ?? '') })));
+  protected readonly errorBlocks = computed(() => this.errorIds().map((id) => ({ id, label: blockTypeLabel(this.i18n, findBlock(this.blocks(), id)?.block.type ?? '', ARTICLE_PROFILE) })));
   protected readonly ownErrors = computed(() => articleOwnErrors(this.errors(), this.blocks()));
 
   // translations

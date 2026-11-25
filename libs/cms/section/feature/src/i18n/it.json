@@ -358,6 +358,12 @@
           "captionHidden": "La didascalia è nascosta. Scegli dove appare.",
           "width": "Larghezza"
         },
+        "picture": {
+          "title": "Modificare l’immagine",
+          "url": "Posizione dell’immagine",
+          "urlHelper": "Dove è salvata l’immagine. Di solito qui non devi cambiare nulla.",
+          "captionHelper": "Il testo dell’immagine. Nelle impostazioni del blocco scegli dove appare."
+        },
         "gallery": {
           "missing": "Aggiungi almeno un'immagine. Senza immagine non puoi inviare l'e-mail."
         },
@@ -2107,7 +2113,8 @@
     "zoomRange": "Inserisci un livello di zoom tra 1 e 19.",
     "layerUnknown": "Scegli uno dei livelli di mappa proposti.",
     "trackRequired": "Scegli un percorso.",
-    "imageLink": "Questo link non è possibile. Usa un indirizzo con https://, mailto: o tel:."
+    "imageLink": "Questo link non è possibile. Usa un indirizzo con https://, mailto: o tel:.",
+    "mailImageLink": "Questo link non è possibile. Usa un indirizzo con https://, mailto: o tel:, o una pagina dell’app (/…)."
   },
   "advent": {
     "label": "Calendario dell'Avvento",

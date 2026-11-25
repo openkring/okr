@@ -358,6 +358,12 @@
           "captionHidden": "El pie de foto está oculto. Elige dónde aparece.",
           "width": "Anchura"
         },
+        "picture": {
+          "title": "Editar la imagen",
+          "url": "Ubicación de la imagen",
+          "urlHelper": "Dónde está guardada la imagen. Normalmente no tienes que cambiar nada aquí.",
+          "captionHelper": "El texto de la imagen. En los ajustes del bloque eliges dónde aparece."
+        },
         "gallery": {
           "missing": "Añade al menos una imagen. Sin imagen no puedes enviar el correo."
         },
@@ -2107,7 +2113,8 @@
     "zoomRange": "Introduce un nivel de zoom entre 1 y 19.",
     "layerUnknown": "Elige una de las capas de mapa ofrecidas.",
     "trackRequired": "Elige un recorrido.",
-    "imageLink": "Este enlace no es posible. Usa una dirección con https://, mailto: o tel:."
+    "imageLink": "Este enlace no es posible. Usa una dirección con https://, mailto: o tel:.",
+    "mailImageLink": "Este enlace no es posible. Usa una dirección con https://, mailto: o tel:, o una página de la aplicación (/…)."
   },
   "advent": {
     "label": "Calendario de Adviento",

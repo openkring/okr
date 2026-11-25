@@ -7,7 +7,9 @@ import {
   CAPTION_ALIGNS, CAPTION_POSITIONS, CAPTION_STYLES, IMAGE_LAYOUT_IDS, ImageActionType, ImageType, MAIL_BLOCK_TYPES, SLIDESHOW_EFFECTS,
   type ArticleBlock, type ArticleSlideshow, type BlockAlign, type CalloutTone, type ColumnContentBlock, type ImageConfig, type ImageStyle, type MailBlockType, type SpaceSize,
 } from '@okr/shared-models';
-import { buildImageCaption, isSafeLinkTarget, mailEventLimit, mailTargetUrl, toPixelNumber, type MailEventLine } from '@okr/shared-util-core';
+import {
+  MAIL_CONTENT_WIDTH, buildImageCaption, isSafeLinkTarget, mailCaptionPosition, mailEventLimit, mailPictureWidth, mailTargetUrl, type MailEventLine,
+} from '@okr/shared-util-core';
 
 import { mailColorOf, textColorOn, tintOf } from '../../_shared/brand-color';
 import { MAIL_BLOCK_TEMPLATES } from './mail-block-templates';
@@ -38,7 +40,7 @@ type CheckedBlock = Loose & { id: string; type: MailBlockType };
 export const MAX_MAIL_BLOCKS = 50;
 
 /** The width the seeded layouts give the content (500 px with 30 px padding), and what is left of it on a phone. */
-const CONTENT_WIDTH = 440;
+const CONTENT_WIDTH = MAIL_CONTENT_WIDTH;
 const PHONE_WIDTH = 330;
 /** between two columns, or two pictures of a gallery */
 const GUTTER = 16;
@@ -175,18 +177,12 @@ interface Part { html: string; hasContent: boolean }
 
 const NOTHING: Part = { html: '', hasContent: false };
 
-/** The width of a picture as its style has it: `percent` of its place, or px, or (anything else) all of it. */
+/** The width of a picture (`mailPictureWidth`) in its place: for the attribute, the css, and as drawn at most. */
 function pictureWidth(style: Loose, place: number, stackedPlace: number): { attribute: number; css: string; drawn: number } {
-  const width = str(style['width']);
-  const percent = /^(\d+(?:\.\d+)?)%$/.exec(width);
-  const share = percent ? Number(percent[1]) : 0;
-  const attribute = Math.round(place * share / 100);
-  if (attribute >= 1 && share < 100) return { attribute, css: `${share}%`, drawn: Math.round(stackedPlace * share / 100) };
-  const px = toPixelNumber(width);
-  // less than half a pixel is no width
-  if (px === undefined || Math.round(px) < 1) return { attribute: place, css: '100%', drawn: stackedPlace };
-  const capped = Math.min(Math.round(px), CONTENT_WIDTH);
-  return { attribute: Math.min(capped, place), css: `${capped}px`, drawn: Math.min(capped, stackedPlace) };
+  const width = mailPictureWidth(style['width'], place);
+  if ('px' in width) return { attribute: Math.min(width.px, place), css: `${width.px}px`, drawn: Math.min(width.px, stackedPlace) };
+  const part = (whole: number): number => Math.round(whole * width.percent / 100);
+  return { attribute: part(place), css: `${width.percent}%`, drawn: part(stackedPlace) };
 }
 
 /** A mail address or phone number without its scheme, and without a subject. */
@@ -273,8 +269,7 @@ class BlockRenderer {
 
   private picture(image: Loose, style: Loose, place: number, stackedPlace: number): Loose {
     const width = pictureWidth(style, place, stackedPlace);
-    // the reader's rule: no caption without a position; over the picture is below it in a mail
-    const position = str(style['captionPosition']) || 'none';
+    const position = mailCaptionPosition(style['captionPosition']);
     const caption = buildImageCaption({ overlay: str(image['overlay']), credit: str(image['credit']) } as ImageConfig);
     const captionLines = position === 'none' ? [] : [caption.text, caption.source].filter((line) => line !== '');
     const above = position === 'top';

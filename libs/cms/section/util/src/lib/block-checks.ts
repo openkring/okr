@@ -19,14 +19,16 @@ export function checkOneOf(field: string, value: unknown, allowed: readonly stri
   check(field, value === undefined || (typeof value === 'string' && allowed.includes(value)));
 }
 
+const IMAGE_LINK_MESSAGE = '@cms/section/feature.validation.imageLink';
+
 /** Its link opens without a check of its own in older apps, so only safe targets are stored (no `javascript:`). */
-export function checkImage(field: string, image: unknown): void {
+export function checkImage(field: string, image: unknown, linkMessage = IMAGE_LINK_MESSAGE): void {
   if (!isObject(image)) {
     check(`${field}.url`, false);
     return;
   }
   imageConfigValidations(field, image as unknown as ImageConfig);
-  test(`${field}.actionUrl`, '@cms/section/feature.validation.imageLink', () => {
+  test(`${field}.actionUrl`, linkMessage, () => {
     enforce(isSafeLinkTarget(image['actionUrl'])).isTruthy();
   });
 }
