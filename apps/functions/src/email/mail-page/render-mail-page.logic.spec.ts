@@ -4,12 +4,17 @@ import { MAIL_SECTION_TYPES } from '@okr/shared-models';
 import type { MailEventLine } from '@okr/shared-util-core';
 
 import { sanitizeEmailBody } from '../../pdf/sanitize';
+import { renderMailContent } from './mail-content';
 import { MAIL_SECTION_TEMPLATES } from './mail-section-templates';
 import { mailButtonUrl, MailPageError, MailSection, renderMailPageContent } from './render-mail-page.logic';
 
 async function render(order: string[], sections: MailSection[], events: Record<string, MailEventLine[]> = {}): Promise<string> {
   const { default: hb } = await import('handlebars');
-  return renderMailPageContent(order, sections, { hb, sanitize: sanitizeEmailBody, events, appOrigin: 'https://app.example.org' });
+  const ctx = { hb, sanitize: sanitizeEmailBody, events, appOrigin: 'https://app.example.org' };
+  const html = await renderMailPageContent(order, sections, ctx);
+  // what is sent of a page without blocks is this string and nothing else
+  expect(await renderMailContent(order, sections, { ...ctx, color: '#014da2' })).toStrictEqual({ html });
+  return html;
 }
 
 function article(okey: string, htmlContent: string, extra: Partial<MailSection> = {}): MailSection {
@@ -209,5 +214,74 @@ describe('renderMailPageContent with maxEvents', () => {
     expect(html.match(/Termin-0-x/g)?.length).toBe(2);
     expect(html.match(/Termin-2-x/g)?.length).toBe(1);
     expect(html).not.toContain('Termin-3-x');
+  });
+});
+
+describe('the bytes of a page without blocks (recorded before 1.176)', () => {
+  it('an article with everything, an outline button, a button section and events', async () => {
+    const html = await render(['e', 'a', 'b', 'x', 'c'], [
+      article('a', '<h1>Hallo</h1><p onclick="x" style="color:#ff0000">Liebe <a href="/club">Mitglieder</a> &amp; Freunde</p><p>Zwei</p>', {
+        title: 'Titel & <mehr>', subTitle: 'Unter', intro: 'Eins\nZwei', introPosition: 'above',
+        properties: { images: [{ url: 'tenant/scs/img/boot.jpg', altText: 'Boot' }], cta: { label: 'Mehr', url: '/club', style: 'secondary' } },
+      }),
+      button('b', 'https://example.org/x?a=1&b=2', 'Jetzt <anmelden>'),
+      article('x', '<p>archiviert</p>', { isArchived: true }),
+      article('c', '', { intro: 'Nur das', properties: { images: [{ url: '', altText: 'Unser Boot' }], cta: { label: 'Los', url: 'mailto:a@b.ch' } } }),
+      { okey: 'e', type: 'events', name: 'club', title: 'Termine', properties: { maxEvents: 2 } },
+    ], { club: [
+      { date: '04.12.2026', time: '19:00', title: 'Höck & <Fondue>', place: 'Clubhaus' },
+      { date: '12.12.2026', time: '', title: 'Samichlaus', place: '' },
+      { date: '20.12.2026', time: '10:00', title: 'Ausfahrt', place: 'Steg' },
+    ] });
+    expect(html).toMatchInlineSnapshot(`
+      "<table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding:0 0 24px 0;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:1.5;color:#222222">
+      <h2 style="margin:0 0 8px 0;font-family:Arial,Helvetica,sans-serif;font-size:22px;line-height:1.3;color:#222222">Termine</h2>
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr><td width="30%" style="padding:6px 12px 6px 0;border-bottom:1px solid #eeeeee;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:1.5;color:#222222;white-space:nowrap">04.12.2026<br />19:00</td><td style="padding:6px 0;border-bottom:1px solid #eeeeee;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:1.5;color:#222222"><strong>Höck &amp; &lt;Fondue&gt;</strong><br /><span style="color:#555555">Clubhaus</span></td></tr>
+      <tr><td width="30%" style="padding:6px 12px 6px 0;border-bottom:1px solid #eeeeee;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:1.5;color:#222222;white-space:nowrap">12.12.2026</td><td style="padding:6px 0;border-bottom:1px solid #eeeeee;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:1.5;color:#222222"><strong>Samichlaus</strong></td></tr>
+      </table>
+      </td></tr></table>
+      <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding:0 0 24px 0;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:1.5;color:#222222">
+      <img src="https://bkaiser.imgix.net/tenant/scs/img/boot.jpg?auto=compress,format=jpg&amp;w=600" alt="Boot" width="600" style="display:block;width:100%;max-width:100%;height:auto;border:0;margin:0 0 16px 0" />
+      <div style="margin:0 0 4px 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:bold;line-height:1.4;color:#555555">Eins<br />Zwei</div>
+      <h2 style="margin:0 0 8px 0;font-family:Arial,Helvetica,sans-serif;font-size:22px;line-height:1.3;color:#222222">Titel &amp; &lt;mehr&gt;</h2>
+      <h3 style="margin:0 0 12px 0;font-family:Arial,Helvetica,sans-serif;font-size:17px;line-height:1.4;color:#555555;font-weight:normal">Unter</h3>
+
+      <div><h1>Hallo</h1><p style="margin:0 0 16px;color:#ff0000">Liebe <a href="/club">Mitglieder</a> &amp; Freunde</p><p style="margin:0 0 16px">Zwei</p></div>
+      <table cellpadding="0" cellspacing="0" border="0" style="margin:16px 0 0 0"><tr><td align="center" style="border-radius:4px;border:1px solid #222222">
+      <a href="https://app.example.org/club" target="_blank" style="display:inline-block;padding:11px 27px;font-family:Arial,Helvetica,sans-serif;font-size:16px;font-weight:bold;line-height:1.2;color:#222222;text-decoration:none;border-radius:4px">Mehr</a>
+      </td></tr></table>
+      </td></tr></table>
+      <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td align="center" style="padding:8px 0 24px 0">
+      <table cellpadding="0" cellspacing="0" border="0"><tr><td align="center" style="border-radius:4px;background-color:#222222">
+      <a href="https://example.org/x?a=1&amp;b=2" target="_blank" style="display:inline-block;padding:12px 28px;font-family:Arial,Helvetica,sans-serif;font-size:16px;font-weight:bold;line-height:1.2;color:#ffffff;text-decoration:none;border-radius:4px">Jetzt &lt;anmelden&gt;</a>
+      </td></tr></table>
+      </td></tr></table>
+      <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding:0 0 24px 0;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:1.5;color:#222222">
+      <div style="margin:0 0 16px 0;font-style:italic;color:#666666">Unser Boot</div>
+
+
+
+      <div style="margin:0 0 12px 0;color:#555555">Nur das</div>
+
+      <table cellpadding="0" cellspacing="0" border="0" style="margin:16px 0 0 0"><tr><td align="center" style="border-radius:4px;border:1px solid #222222;background-color:#222222">
+      <a href="mailto:a@b.ch" target="_blank" style="display:inline-block;padding:11px 27px;font-family:Arial,Helvetica,sans-serif;font-size:16px;font-weight:bold;line-height:1.2;color:#ffffff;text-decoration:none;border-radius:4px">Los</a>
+      </td></tr></table>
+      </td></tr></table>"
+    `);
+  });
+
+  it('a plain text', async () => {
+    expect(await render(['a'], [article('a', '<p>Hallo</p><p>Bis bald</p>')])).toMatchInlineSnapshot(`
+      "<table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding:0 0 24px 0;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:1.5;color:#222222">
+
+
+
+
+
+      <div><p style="margin:0 0 16px">Hallo</p><p style="margin:0 0 16px">Bis bald</p></div>
+
+      </td></tr></table>"
+    `);
   });
 });

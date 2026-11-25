@@ -10,7 +10,7 @@ import type { EmailLayoutChoice } from '@okr/shared-models';
 import { checkAppCheckToken, checkAuthentication, checkRoles } from '@okr/shared-util-functions';
 
 import { callerMaySendFor } from '../auth';
-import { mailPageBody, parsePageKey } from './mailing';
+import { mailPageContent, parsePageKey } from './mailing';
 import { composeBody, EmailTemplateError, firestoreTemplateReader, RenderedEmail, renderEmail } from './render-email';
 import { answerBlockHtml, AnswerEventLine } from './personal-mail.logic';
 import { asLayoutChoice, StoredTemplate } from './render-email.logic';
@@ -114,7 +114,7 @@ export const renderEmailPreview = onCall(
     try {
       const pageKey = parsePageKey(data.pageKey);
       if (pageKey) {
-        const body = await mailPageBody(tenantId, pageKey, request.auth?.uid ?? '');
+        const { html: body } = await mailPageContent(tenantId, pageKey, request.auth?.uid ?? '');
         return await composeBody(tenantId, { body, layout: asLayoutChoice(data.layout), attachmentName: data.attachmentName });
       }
       if (data.body !== undefined) {

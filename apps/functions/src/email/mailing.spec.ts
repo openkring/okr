@@ -6,7 +6,7 @@ const h = vi.hoisted(() => ({
   letters: [] as Record<string, unknown>[],
   pushes: [] as string[][],
   /** when set, `renderMailPage` (mail-page/mail-page.ts) runs this instead of reading Firestore */
-  renderMailPage: undefined as undefined | (() => Promise<{ html: string }>),
+  renderMailPage: undefined as undefined | (() => Promise<{ html: string; page: MailPageModel }>),
 }));
 
 vi.mock('firebase-functions/v2', () => ({ logger: { info: vi.fn(), error: vi.fn(), warn: vi.fn(), debug: vi.fn() } }));
@@ -55,17 +55,18 @@ vi.mock('./mail-page/mail-page', async () => {
 });
 
 import { HttpsError } from 'firebase-functions/v2/https';
+import { MailPageModel } from '@okr/shared-models';
 import { fakeDb, type Store } from '../credit/testing/credit-fake-db';
 import { MailPageError } from './mail-page/render-mail-page.logic';
 import { verifyNewsletterUnsubscribe } from '../newsletter/newsletter-link';
 import type { MailJobDoc } from './mail-job';
-import { isTenantDocumentPath, keysFor, mailPageBody, type MailingDoc, noticeExcerpt, onMailing, parseDeliveries, privateRefs, safeFilename, sendMailing } from './mailing';
+import { isTenantDocumentPath, keysFor, mailPageContent, type MailingDoc, noticeExcerpt, onMailing, parseDeliveries, privateRefs, safeFilename, sendMailing } from './mailing';
 import { unsubscribeHeaders } from './personal-mail.logic';
 
-describe('mailPageBody', () => {
+describe('mailPageContent', () => {
   async function refusal(): Promise<unknown> {
     try {
-      await mailPageBody('t1', 'pk1', 'uid1');
+      await mailPageContent('t1', 'pk1', 'uid1');
       return undefined;
     } catch (e) {
       return e;
@@ -73,8 +74,9 @@ describe('mailPageBody', () => {
   }
 
   it('returns the rendered page', async () => {
-    h.renderMailPage = async () => ({ html: '<p>Hallo</p>' });
-    expect(await mailPageBody('t1', 'pk1', 'uid1')).toBe('<p>Hallo</p>');
+    const rendered = { html: '<p>Hallo</p>', page: new MailPageModel('t1') };
+    h.renderMailPage = async () => rendered;
+    expect(await mailPageContent('t1', 'pk1', 'uid1')).toBe(rendered);
     h.renderMailPage = undefined;
   });
 
@@ -85,6 +87,14 @@ describe('mailPageBody', () => {
     expect(err).toBeInstanceOf(HttpsError);
     expect((err as HttpsError).code).toBe('failed-precondition');
     expect((err as HttpsError).message).toBe('no-content');
+    expect((err as HttpsError).details).toBeUndefined();
+  });
+
+  it('names the block at fault in the details', async () => {
+    h.renderMailPage = async () => { throw new MailPageError('kaputt', 'invalid-block', 'b1'); };
+    const err = await refusal();
+    h.renderMailPage = undefined;
+    expect(err).toMatchObject({ code: 'failed-precondition', message: 'invalid-block', details: { blockId: 'b1' } });
   });
 
   it('turns any other error into internal, without its message', async () => {

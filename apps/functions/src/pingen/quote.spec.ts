@@ -6,6 +6,7 @@ vi.mock('../calendar/mail', () => ({ eventWhen: vi.fn() }));
 vi.mock('firebase-admin/firestore', () => ({ getFirestore: vi.fn() }));
 
 import { resolveAttachmentBytes } from '../email/mailing';
+import type { MailContent } from '../email/mail-page/mail-content';
 import { makeCreditPort } from './credit-port';
 import { draftHashOf, QUOTE_TTL_MS, quoteMailingLettersCore, quoteWithCaller, type QuoteCallableEnv, signQuote, verifyQuote, type QuoteDeps, type QuoteInput, type QuotePayload } from './quote';
 
@@ -198,7 +199,7 @@ describe('quoteWithCaller', () => {
 
 describe('quoteWithCaller for a mail page (1.172)', () => {
   const page = { tenantId: 'scs', subject: 'S', pageKey: 'pg1', postKeys: ['p0'] };
-  function env(renderPage = vi.fn(async () => '<p>PAGE</p>')) {
+  function env(renderPage = vi.fn(async (): Promise<MailContent> => ({ html: '<p>PAGE</p>' }))) {
     const renderPages = vi.fn(async () => 1);
     const e: QuoteCallableEnv = {
       getPort: () => setup(['CH']).deps.port, secret: 'k', now: 5000, hasCreditAccount: async () => true,
@@ -213,6 +214,13 @@ describe('quoteWithCaller for a mail page (1.172)', () => {
     expect(q.pingenAvailable).toBe(true);
     expect(renderPage).toHaveBeenCalledWith('scs', 'pg1', 'u1');
     expect(renderPages).toHaveBeenCalledWith(expect.objectContaining({ body: expect.stringContaining('PAGE') }));
+  });
+
+  it('prices what the letters print when the page has blocks', async () => {
+    const { e, renderPages } = env(vi.fn(async () => ({ html: '<p>MAIL</p>', letterHtml: '<p>LETTER</p>', notice: [] })));
+    await quoteWithCaller(e, page, ADMIN, 'u1');
+    expect(renderPages).toHaveBeenCalledWith(expect.objectContaining({ body: expect.stringContaining('LETTER') }));
+    expect(renderPages).not.toHaveBeenCalledWith(expect.objectContaining({ body: expect.stringContaining('MAIL') }));
   });
 
   it('the page wins over a body the client also sends', async () => {

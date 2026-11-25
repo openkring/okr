@@ -22,13 +22,17 @@
 // A newsletter send (spec 1.169 §5.6): `groupKey` names a newsletter group. The server decides that, for every
 // caller: it stamps `newsletterGroupKey` and refuses any recipient without an active subscription, so a send to
 // a newsletter can never reach a non-subscriber nor go out without the personal unsubscribe link (§5.4).
+//
+// A page with blocks (spec 1.176 §9): the mail, the letter and the Mitteilung are rendered from one read of the page by
+// `sendMailing`. `body` holds the mail; letter and Mitteilung stand in `mailings/{key}/content/sent`, which is written with
+// the mailing and read by `onMailing`. Server only, and not on the mailing, which the Versand list downloads whole.
 
 import { CallableRequest, HttpsError, onCall } from 'firebase-functions/v2/https';
 import { onDocumentCreated } from 'firebase-functions/v2/firestore';
 import { logger } from 'firebase-functions/v2';
 import { getFirestore, type Firestore } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
-import { DeliveryChannel, type EmailLayoutChoice, GroupCollection, MailingWebCollection, MailPageCollection, NoticeAttachment, NoticeCollection, type NoticeModel, type PostOptions } from '@okr/shared-models';
+import { DeliveryChannel, type EmailLayoutChoice, GroupCollection, MailingWebCollection, MailPageCollection, type MailPageModel, NoticeAttachment, NoticeCollection, type NoticeModel, type PostOptions } from '@okr/shared-models';
 import { DateFormat, getEventLocationName, getTodayStr, isOrgRecipient, recipientParentKey } from '@okr/shared-util-core';
 import { projectID } from 'firebase-functions/params';
 import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functions';
@@ -54,6 +58,7 @@ import { activeSubscriberKeys } from '../newsletter/subscribers';
 import { asLayoutChoice } from './render-email.logic';
 import { EmailTemplateError, renderEmail } from './render-email';
 import { renderMailPage } from './mail-page/mail-page';
+import { letterBodyOf, sentContentOf, type MailContent, type SentContent } from './mail-page/mail-content';
 import { MailPageError } from './mail-page/render-mail-page.logic';
 import { createsWebVersion, mailingWebFunctionUrl, newWebToken, webVersionUrl, withWebLink } from './mail-page/web-version.logic';
 import { buildMailingLetters, countLetterPages, LetterEvent } from './mailing-letters';
@@ -67,6 +72,9 @@ import { answerEventsOf, type MailingPost, type PostLock, type PostOrderDoc, Pos
 
 const REGION = 'europe-west6';
 export const MailingCollection = 'mailings';
+/** `mailings/{key}/content/sent` (SentContent): only of a Versand whose page has blocks. */
+export const MailingContentSubcollection = 'content';
+export const SENT_CONTENT_KEY = 'sent';
 const IN_CHUNK = 30;
 const MAX_RECIPIENTS = 3000;
 /** The callable carries at most ~10 MB; the email provider caps the whole mail lower still. */
@@ -395,12 +403,17 @@ export function parsePageKey(raw: unknown): string | undefined {
   return raw;
 }
 
-/** The content HTML of the caller's unsent mail page; a page that cannot be sent is a clear refusal, never a raw 500. */
-export async function mailPageBody(tenantId: string, pageKey: string, uid: string): Promise<string> {
+/**
+ * The content of the caller's unsent mail page; a page that cannot be sent is a clear refusal, never a raw 500. The refusal
+ * names the block at fault in its details, when there is one.
+ */
+export async function mailPageContent(tenantId: string, pageKey: string, uid: string): Promise<MailContent & { page: MailPageModel }> {
   try {
-    return (await renderMailPage(tenantId, pageKey, uid)).html;
+    return await renderMailPage(tenantId, pageKey, uid);
   } catch (error) {
-    if (error instanceof MailPageError) throw new HttpsError('failed-precondition', error.code);
+    if (error instanceof MailPageError) {
+      throw new HttpsError('failed-precondition', error.code, error.blockId === undefined ? undefined : { blockId: error.blockId });
+    }
     logger.error(`mail page ${pageKey} could not be rendered (tenant ${tenantId})`, { error: String((error as Error)?.message ?? error) });
     throw new HttpsError('internal', 'The mail page could not be rendered.');
   }
@@ -417,13 +430,33 @@ async function webSnapshotHtml(tenantId: string, layout: EmailLayoutChoice, body
   }
 }
 
+function sentContentRef(mailingRef: FirebaseFirestore.DocumentReference): FirebaseFirestore.DocumentReference {
+  return mailingRef.collection(MailingContentSubcollection).doc(SENT_CONTENT_KEY);
+}
+
 /**
- * The writes of a page send, all or nothing: the `mailings` doc, its `mailingWeb` snapshot and the page's
- * `mailingKey` stamp. A page already sent (a second click, a second tab) refuses the whole send, so one page
- * never becomes two Versände, and no snapshot ever points to a mailing that was not stored.
+ * What `sendMailing` stored for a Versand whose page has blocks; undefined for a page without blocks and for a Versand
+ * without a page. It was written in the transaction of the mailing, so a missing document means «none». A read that fails or
+ * a document of another shape throws: printing `body` instead would give letters of another length than the priced ones.
+ */
+async function readSentContent(mailingRef: FirebaseFirestore.DocumentReference, mailing: MailingDoc): Promise<SentContent | undefined> {
+  if (!mailing.pageKey) return undefined;
+  const snap = await sentContentRef(mailingRef).get();
+  if (!snap.exists) return undefined;
+  const sent = snap.data() as Partial<SentContent>;
+  if (typeof sent.letterBody !== 'string' || !Array.isArray(sent.noticeBlocks)) throw new Error('The stored content of the Versand is not readable.');
+  return { letterBody: sent.letterBody, noticeBlocks: sent.noticeBlocks };
+}
+
+/**
+ * The writes of a page send, all or nothing: the `mailings` doc, its `content/sent`, its `mailingWeb` snapshot, and on the
+ * page the `mailingKey` with the subject, layout and web version it was sent with. A page already sent (a second click, a
+ * second tab) refuses the whole send, so one page never becomes two Versände, and no snapshot ever points to a mailing
+ * that was not stored.
  */
 async function createPageMailing(
-  db: Firestore, ref: FirebaseFirestore.DocumentReference, doc: MailingDoc, pageKey: string, web: { token: string; html: string } | undefined,
+  db: Firestore, ref: FirebaseFirestore.DocumentReference, doc: MailingDoc, pageKey: string,
+  sent: SentContent | undefined, web: { token: string; html: string } | undefined,
 ): Promise<void> {
   const pageRef = db.collection(MailPageCollection).doc(pageKey);
   await db.runTransaction(async (tx) => {
@@ -431,10 +464,11 @@ async function createPageMailing(
     if (!page.exists) throw new HttpsError('failed-precondition', 'not-found');
     if (page.get('mailingKey')) throw new HttpsError('failed-precondition', 'sent');
     tx.create(ref, doc);
+    if (sent) tx.create(sentContentRef(ref), sent);
     if (web) {
       tx.create(db.collection(MailingWebCollection).doc(web.token), { tenants: doc.tenants, mailingKey: ref.id, html: web.html, createdAt: doc.createdAt });
     }
-    tx.update(pageRef, { mailingKey: ref.id });
+    tx.update(pageRef, { mailingKey: ref.id, subject: doc.subject, layout: doc.layout, webVersion: doc.webVersion === true });
   });
 }
 
@@ -546,6 +580,8 @@ export const sendMailing = onCall(
     const ref = postRequest ? db.collection(MailingCollection).doc(postMailingKey(tenantId, postRequest.token)) : db.collection(MailingCollection).doc();
     const layout = asLayoutChoice(data.layout);
     let body = typeof data.body === 'string' ? data.body : '';
+    let letterBody = body;
+    let sent: SentContent | undefined;
     let web: { token: string; html: string } | undefined;
     if (pageKey) {
       // a Pingen replay of a page that this very Versand already sent: the duplicate it is, never a refusal
@@ -553,7 +589,10 @@ export const sendMailing = onCall(
         return { mailingKey: ref.id };
       }
       // rendered after every other check and before any money moves or file is stored
-      body = await mailPageBody(tenantId, pageKey, uid);
+      const content = await mailPageContent(tenantId, pageKey, uid);
+      body = content.html;
+      letterBody = letterBodyOf(content);
+      sent = sentContentOf(content);
       // newsletter or not is the server's decision above (newsletterGroupKey), never the client's; only the
       // E-Mails carry the link, so a send without any E-Mail delivery stores no web version
       const requested = typeof data.webVersion === 'boolean' ? data.webVersion : undefined;
@@ -592,7 +631,7 @@ export const sendMailing = onCall(
           ...(pageKey ? { pageKey, webVersion: !!web } : {}),
           ...(web ? { webToken: web.token } : {}),
         };
-        if (pageKey) await createPageMailing(db, ref, doc, pageKey, web);
+        if (pageKey) await createPageMailing(db, ref, doc, pageKey, sent, web);
         else await ref.create(doc);
       } catch (error) {
         await removeStoredAttachments(ref, tenantId);
@@ -604,7 +643,7 @@ export const sendMailing = onCall(
       await withPostOrder(postEnv(), {
         // subject and QR flag exactly as the quote saw them (the token hashes the request, not the stored doc)
         // a page send prices the rendered page: the HTML the letters print
-        post: postRequest, tenantId, subject: data.subject, body, attachments: resolved, letterQrCodes: data.letterQrCodes === true,
+        post: postRequest, tenantId, subject: data.subject, body: letterBody, attachments: resolved, letterQrCodes: data.letterQrCodes === true,
         caleventKeys, postKeys: keysFor(deliveries, DeliveryChannel.Post), ...(newsletterGroupKey ? { newsletterGroupKey } : {}), mailingKey: ref.id, mailingExists: async () => (await ref.get()).exists, lock: postLockOf(db, ref.id, tenantId), actor: uid,
         caller: caller as { roles?: unknown; tenants?: string[] }, nowIso: getTodayStr(DateFormat.StoreDateTime),
       }, build);
@@ -708,6 +747,8 @@ export const onMailing = onDocumentCreated(
         await snap.ref.update(householdFields);
         Object.assign(result, householdFields);
       }
+      // read before anything is sent: a Versand whose content cannot be read fails whole, never half
+      const sent = await readSentContent(snap.ref, mailing);
       // E-Mail and In-App reach a household's contact as a person, each person once
       const emailKeys = contactKeysFor(mailing.deliveries, DeliveryChannel.Email, households);
       if (emailKeys.length > 0) {
@@ -782,6 +823,7 @@ export const onMailing = onDocumentCreated(
           isArchived: false,
           subject: mailing.subject,
           body: await sanitizeEmailBody(mailing.body),
+          ...(sent ? { blocks: sent.noticeBlocks } : {}),
           attachments: mailing.attachments,
           recipients: noticeKeys,
           senderKey: mailing.senderKey,
@@ -813,6 +855,7 @@ export const onMailing = onDocumentCreated(
       // a household keeps its key: one letter named after it, to the contact's address
       const postKeys = postKeysFor(mailing.deliveries, households);
       if (postKeys.length > 0) {
+        const letterBody = sent?.letterBody ?? mailing.body;
         // a Pingen send (spec 1.150): the charged Swiss letters become `sendings` records, the download holds the abroad ones
         const fanOut = mailing.post?.via === 'pingen'
           ? makePostFanOut({ tenantId, mailingKey: snap.id, post: mailing.post, nowIso: new Date().toISOString(), deps: postFanOutDeps() })
@@ -820,7 +863,7 @@ export const onMailing = onDocumentCreated(
         try {
           const built = await buildMailingLetters({
             tenantId, mailingKey: snap.id, personKeys: postKeys, households,
-            subject: mailing.subject, body: await sanitizeEmailBody(mailing.body), attachments: mailing.attachments,
+            subject: mailing.subject, body: await sanitizeEmailBody(letterBody), attachments: mailing.attachments,
             ...(mailing.letterQrCodes && mailing.caleventKeys?.length ? await letterAnswers(db, snap.id, mailing.caleventKeys) : {}),
             ...(unsubscribeUrl ? { unsubscribeUrl } : {}),
             ...(fanOut ? { onLetter: fanOut.onLetter, only: fanOut.only } : {}),

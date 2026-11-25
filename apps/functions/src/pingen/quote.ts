@@ -12,7 +12,8 @@ import { CreditAccountCollection } from '@okr/shared-models';
 import { checkAppCheckToken, checkAuthentication } from '@okr/shared-util-functions';
 
 import { countLetterPages } from '../email/mailing-letters';
-import { mailPageBody, parsePageKey, resolveAttachmentBytes, type MailingAttachmentFields } from '../email/mailing';
+import { letterBodyOf, type MailContent } from '../email/mail-page/mail-content';
+import { mailPageContent, parsePageKey, resolveAttachmentBytes, type MailingAttachmentFields } from '../email/mailing';
 import { parseCaleventKeys } from '../email/personal-mail.logic';
 import { checkNewsletterGroup } from '../newsletter/signup';
 import { getCreditPort } from './credit-port';
@@ -69,8 +70,8 @@ export interface QuoteCallableEnv extends QuoteEnv {
    * unsubscribe block. Absent = no newsletter is recognised; a newsletter send then refuses the quote (price-changed).
    */
   isNewsletterGroup?(tenantId: string, groupKey: string): Promise<boolean>;
-  /** The rendered HTML of the caller's mail page (1.172): what `sendMailing` prices for the same `pageKey`. */
-  renderPage?(tenantId: string, pageKey: string, uid: string): Promise<string>;
+  /** The rendered content of the caller's mail page (1.172): what `sendMailing` prices for the same `pageKey`. */
+  renderPage?(tenantId: string, pageKey: string, uid: string): Promise<MailContent>;
 }
 
 export async function quoteMailingLettersCore(deps: QuoteDeps, input: QuoteInput, caller: QuoteCaller): Promise<PostQuote> {
@@ -118,8 +119,8 @@ export async function quoteWithCaller(env: QuoteCallableEnv, data: unknown, call
   // the server decides that the draft is a newsletter, as `sendMailing` does; a client flag is never read
   const groupKey = (data as { groupKey?: unknown }).groupKey;
   const newsletterGroupKey = typeof groupKey === 'string' && groupKey && (await env.isNewsletterGroup?.(parsed.tenantId, groupKey)) ? groupKey : undefined;
-  // the page's HTML is what `sendMailing` prices too (the same `mailPageBody`), so the token verifies
-  if (pageKey) parsed.body = await (env.renderPage ?? mailPageBody)(parsed.tenantId, pageKey, uid);
+  // what the letters print is what `sendMailing` prices too (the same `mailPageContent`), so the token verifies
+  if (pageKey) parsed.body = letterBodyOf(await (env.renderPage ?? mailPageContent)(parsed.tenantId, pageKey, uid));
   const input: QuoteInput = {
     ...parsed, ...(newsletterGroupKey ? { newsletterGroupKey } : {}),
     attachments: await resolveAttachmentBytes(data as MailingAttachmentFields, parsed.tenantId, env.readDocument),

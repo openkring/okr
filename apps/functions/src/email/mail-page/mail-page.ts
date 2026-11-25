@@ -9,9 +9,11 @@ import { CalEventCollection, MailPageCollection, MailPageSectionCollection } fro
 import type { CalEventModel, MailPageModel } from '@okr/shared-models';
 import { DateFormat, getTodayStr, MAX_MAIL_EVENTS, publicAppOrigin, upcomingEventLines, type MailEventLine } from '@okr/shared-util-core';
 
+import { mailColorOf } from '../../_shared/brand-color';
 import { sanitizeEmailBody } from '../../pdf/sanitize';
+import { mailCalendarKeys, renderMailContent, type MailContent } from './mail-content';
 import { isReapableDraft, mailPageRefusal } from './mail-page.logic';
-import { MailPageError, renderMailPageContent, type MailSection } from './render-mail-page.logic';
+import { MailPageError, type MailSection } from './render-mail-page.logic';
 
 const REFUSAL_TEXT = {
   'not-found': 'Die Mailseite existiert nicht.',
@@ -19,12 +21,8 @@ const REFUSAL_TEXT = {
   sent: 'Die Mailseite wurde schon versendet.',
 } as const;
 
-/** Reads the page, its sections and the event lines, and renders the content HTML of the mail. */
-export async function renderMailPage(
-  tenantId: string,
-  pageKey: string,
-  uid: string,
-): Promise<{ html: string; page: MailPageModel }> {
+/** Reads the page, its sections and the event lines of its sections and blocks, and renders the content of the mail. */
+export async function renderMailPage(tenantId: string, pageKey: string, uid: string): Promise<MailContent & { page: MailPageModel }> {
   const db = getFirestore();
   const pageRef = db.collection(MailPageCollection).doc(pageKey);
   const snap = await pageRef.get();
@@ -39,23 +37,24 @@ export async function renderMailPage(
   const sections = sectionSnap.docs.map((d) => ({ ...d.data(), okey: d.id }) as MailSection);
 
   const today = getTodayStr(DateFormat.StoreDate);
-  const events: Record<string, MailEventLine[]> = {};
-  for (const s of sections) {
-    if (s.type !== 'events' || !s.name || events[s.name]) continue;
-    const evSnap = await db.collection(CalEventCollection).where('calendars', 'array-contains', s.name).get();
+  const events = new Map<string, MailEventLine[]>();
+  for (const calendarKey of mailCalendarKeys(sections)) {
+    const evSnap = await db.collection(CalEventCollection).where('calendars', 'array-contains', calendarKey).get();
     const rows = evSnap.docs
       .map((d) => ({ ...d.data(), okey: d.id }) as CalEventModel)
       .filter((e) => e.tenants?.includes(tenantId));
-    // loaded once per calendar at the cap; each section lists its own maxEvents of them (mailEventLimit)
-    events[s.name] = upcomingEventLines(rows, today, MAX_MAIL_EVENTS);
+    // loaded once per calendar at the cap; each section or block lists its own maxEvents of them (mailEventLimit)
+    events.set(calendarKey, upcomingEventLines(rows, today, MAX_MAIL_EVENTS));
   }
 
   const appConfig = (await db.collection('app-config').doc(tenantId).get()).data();
   const appOrigin = publicAppOrigin(appConfig?.['appDomain'] as string | undefined, tenantId);
 
   const { default: hb } = await import('handlebars');
-  const html = await renderMailPageContent(page.sections ?? [], sections, { hb, sanitize: sanitizeEmailBody, events, appOrigin });
-  return { html, page };
+  const content = await renderMailContent(page.sections ?? [], sections, {
+    hb, sanitize: sanitizeEmailBody, events: Object.fromEntries(events), appOrigin, color: mailColorOf(appConfig?.['brandColor']),
+  });
+  return { ...content, page };
 }
 
 /** Nightly: deletes drafts that were never sent after 7 days — sections first, then the page. */

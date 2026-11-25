@@ -27,7 +27,10 @@ export function fakeDb(store: Store): Firestore {
   const docRef = (path: string): unknown => ({
     path,
     id: path.split('/').pop(),
-    get: async () => ({ id: path.split('/').pop(), exists: store[path] !== undefined, data: () => (store[path] ? { ...store[path] } : undefined) }),
+    get: async () => ({
+      id: path.split('/').pop(), exists: store[path] !== undefined, data: () => (store[path] ? { ...store[path] } : undefined),
+      get: (field: string) => store[path]?.[field],
+    }),
     set: async (d: Doc, opts?: { merge?: boolean }) => { store[path] = opts?.merge ? merged(store[path], d) : d; bump(path); },
     create: async (d: Doc) => {
       if (store[path] !== undefined) throw Object.assign(new Error(`document ${path} already exists`), { code: 6 });

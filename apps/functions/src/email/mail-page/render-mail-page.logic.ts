@@ -1,8 +1,8 @@
 // apps/functions/src/email/mail-page/render-mail-page.logic.ts
 //
-// Renders the sections of a mail page into the content HTML of a Versand mail (spec 1.172 §7.4). Pure:
+// Renders the sections of a mail page without blocks into the content HTML of a Versand mail (spec 1.172 §7.4). Pure:
 // the caller reads the page and its sections, loads the event lines and passes Handlebars and the sanitizer.
-// The result goes into the layout's `{{{content}}}` slot exactly like a typed `body`.
+// The result goes into the layout's `{{{content}}}` slot exactly like a typed `body`. Articles with blocks: mail-content.ts.
 import type { MailSectionType } from '@okr/shared-models';
 import { MAIL_SECTION_TYPES } from '@okr/shared-models';
 import { mailEventLimit, type MailEventLine } from '@okr/shared-util-core';
@@ -12,7 +12,7 @@ import { MAIL_SECTION_TEMPLATES } from './mail-section-templates';
 
 type HandlebarsEnv = typeof import('handlebars');
 
-export type MailPageErrorCode = 'unknown-section-type' | 'no-content' | 'not-found' | 'foreign' | 'sent' | 'unknown-block-type' | 'invalid-block';
+export type MailPageErrorCode = 'unknown-section-type' | 'no-content' | 'not-found' | 'foreign' | 'sent' | 'unknown-block-type' | 'invalid-block' | 'too-large';
 
 /** Why a mail page cannot be rendered or sent. `sendMailing` turns it into a clear refusal; `blockId` names the block at fault, if any. */
 export class MailPageError extends Error {
@@ -77,7 +77,7 @@ export function mailButtonUrl(raw: unknown, appOrigin: string): string {
   return /^(https:\/\/|mailto:|tel:)/.test(url) ? url : '';
 }
 
-interface RenderedPart { html: string; hasContent: boolean }
+export interface RenderedPart { html: string; hasContent: boolean }
 
 /** An article's button; undefined without a label or a target a mail client can open. */
 function articleCta(s: MailSection, appOrigin: string): { label: string; url: string; secondary: boolean } | undefined {
@@ -130,12 +130,10 @@ function renderEvents(s: MailSection, ctx: MailRenderContext, tpl: HandlebarsTem
 type HandlebarsTemplate = (data: unknown) => string;
 
 /**
- * The content HTML of a mail page: its sections in `order` (the page's section keys), each through its email
- * template, joined and sanitized with the mail policy. Keys without a section document and archived sections
- * are left out. Refuses a section type without an email template (`unknown-section-type`, never skipped) and a
- * page that shows nothing (`no-content`).
+ * The sections a mail page shows, in `order` (the page's section keys). Keys without a section document and archived sections
+ * are left out. Refuses a section type without an email template (`unknown-section-type`, never skipped).
  */
-export async function renderMailPageContent(order: string[], sections: MailSection[], ctx: MailRenderContext): Promise<string> {
+export function orderedMailSections(order: string[], sections: MailSection[]): MailSection[] {
   const byKey = new Map(sections.filter(s => s.okey).map(s => [s.okey as string, s]));
   const ordered = order.map(key => byKey.get(key)).filter((s): s is MailSection => !!s && !s.isArchived);
 
@@ -144,7 +142,11 @@ export async function renderMailPageContent(order: string[], sections: MailSecti
       throw new MailPageError(`Section ${s.okey} has type ${String(s.type)}, which has no email template`, 'unknown-section-type');
     }
   }
+  return ordered;
+}
 
+/** Renders sections of `orderedMailSections` through their email templates, each compiled once. */
+export function mailSectionRenderer(ctx: MailRenderContext): (s: MailSection) => Promise<RenderedPart> {
   const compiled = new Map<MailSectionType, HandlebarsTemplate>();
   const templateOf = (type: MailSectionType): HandlebarsTemplate => {
     let tpl = compiled.get(type);
@@ -154,19 +156,31 @@ export async function renderMailPageContent(order: string[], sections: MailSecti
     }
     return tpl;
   };
-
-  const parts: RenderedPart[] = [];
-  for (const s of ordered) {
+  return async (s) => {
     const type = s.type as MailSectionType;
-    if (type === 'article') parts.push(await renderArticle(s, ctx, templateOf(type)));
-    else if (type === 'button') parts.push(renderButton(s, ctx, templateOf(type)));
-    else parts.push(renderEvents(s, ctx, templateOf(type)));
-  }
+    if (type === 'article') return renderArticle(s, ctx, templateOf(type));
+    if (type === 'button') return renderButton(s, ctx, templateOf(type));
+    return renderEvents(s, ctx, templateOf(type));
+  };
+}
 
+/** The parts joined and sanitized with the mail policy; refuses (`no-content`) when none shows anything. */
+export async function joinMailParts(parts: RenderedPart[], ctx: Pick<MailRenderContext, 'sanitize'>): Promise<string> {
   if (!parts.some(p => p.hasContent)) throw new MailPageError('The mail page has no content', 'no-content');
 
   // One more pass over the whole: the output is in the sanitizer's own form, so composeBody's pass changes
   // nothing but the <p> margin, and nothing a template or a value produced can get past the mail policy.
   const html = await ctx.sanitize(parts.map(p => p.html).filter(h => h).join('\n'));
   return html.replace(P_MARGIN_REPEAT, '');
+}
+
+/**
+ * The content HTML of a mail page without blocks: its sections in `order`, each through its email template, joined
+ * and sanitized. Refuses what `orderedMailSections` and `joinMailParts` refuse.
+ */
+export async function renderMailPageContent(order: string[], sections: MailSection[], ctx: MailRenderContext): Promise<string> {
+  const renderSection = mailSectionRenderer(ctx);
+  const parts: RenderedPart[] = [];
+  for (const s of orderedMailSections(order, sections)) parts.push(await renderSection(s));
+  return joinMailParts(parts, ctx);
 }
