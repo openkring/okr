@@ -1,4 +1,4 @@
-import { ImageActionType, SLIDESHOW_EFFECTS, articleBlocksOf, blockImages, type ArticleBlock, type ArticleBlockType, type ArticleColumn, type ArticleSection, type ImageConfig, type SectionModel } from '@okr/shared-models';
+import { ImageActionType, SLIDESHOW_EFFECTS, articleBlocksOf, blockImages, type ArticleBlock, type ArticleColumn, type ArticleSection, type ImageConfig, type MailBlockType, type SectionModel } from '@okr/shared-models';
 import { resolveImageStyle, sanitizeFileName, suffixFileName } from '@okr/shared-util-core';
 
 import { hasImageUrl, isObject, type Loose } from './article-block.util';
@@ -14,9 +14,10 @@ export { BLOCK_ALIGNS, CALLOUT_TONES, SPACE_SIZES } from './article-block.util';
  * stored blocks may be malformed and nothing here throws on them.
  */
 
-/** The icon of each block type, for `svgIcon`. */
-export const ARTICLE_BLOCK_ICONS: Record<ArticleBlockType, string> = {
+/** The icon of each block type of an article or a mail, for `svgIcon`. */
+export const ARTICLE_BLOCK_ICONS: Record<MailBlockType, string> = {
   text: 'text', image: 'image', gallery: 'images', button: 'button', columns: 'grid', callout: 'info-circle', divider: 'remove', space: 'swap-vertical',
+  events: 'calendar',
 };
 
 // ------------------------------------------------------- pictures -------------------------------------------------------

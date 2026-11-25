@@ -1,16 +1,23 @@
 import { staticSuite } from 'vest';
 import { describe, expect, it } from 'vitest';
 
-import { IMAGE_CONFIG_SHAPE, ImageActionType, type ArticleBlock, type ArticleConfig, type ArticleSection, type ImageConfig } from '@okr/shared-models';
+import { IMAGE_CONFIG_SHAPE, ImageActionType, MAIL_BLOCK_TYPES, type ArticleBlock, type ArticleConfig, type ArticleSection, type ImageConfig } from '@okr/shared-models';
 
 import { articleBlocksValidations } from './article-blocks.validations';
 import {
-  articleImageChoices, articleUses, coverErrors, drawableImages, galleryErrors, isPictureMissing, outdatedLanguagesOf, pickErrors, resizeColumn, restErrors, shownArticleFields, shownBlockFields, typingPath, uniqueFileName, withUpload,
+  ARTICLE_BLOCK_ICONS, articleImageChoices, articleUses, coverErrors, drawableImages, galleryErrors, isPictureMissing, outdatedLanguagesOf, pickErrors, resizeColumn, restErrors, shownArticleFields, shownBlockFields, typingPath, uniqueFileName, withUpload,
 } from './article-panel.util';
 import { blockErrors, type SectionErrors } from './section-errors';
 
 const image = (url: string, more: Partial<ImageConfig> = {}): ImageConfig => ({ ...IMAGE_CONFIG_SHAPE, url, ...more });
 const article = (properties: Partial<ArticleConfig>): ArticleSection => ({ okey: 's', type: 'article', title: 'T', properties: { images: [], ...properties } } as unknown as ArticleSection);
+
+describe('ARTICLE_BLOCK_ICONS', () => {
+  it('has an icon for every block type, those of a mail too', () => {
+    expect(Object.keys(ARTICLE_BLOCK_ICONS)).toEqual([...MAIL_BLOCK_TYPES]);
+    expect(ARTICLE_BLOCK_ICONS.events).toBe('calendar');
+  });
+});
 
 describe('uniqueFileName', () => {
   it.each([

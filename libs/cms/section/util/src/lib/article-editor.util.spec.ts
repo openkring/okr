@@ -51,6 +51,8 @@ describe('createBlock', () => {
     expect('align' in button).toBe(false);
     expect(createBlock('divider', n)).toEqual({ id: 'n6', type: 'divider' });
     expect(createBlock('space', n)).toEqual({ id: 'n7', type: 'space', size: 'medium' });
+    // of a mail only; as many events as a section lists by default
+    expect(createBlock('events', n)).toEqual({ id: 'n8', type: 'events', calendarKey: '', maxEvents: 5 });
   });
   it('creates columns: two columns of 6, each with one empty text with its own id', () => {
     const c = createBlock('columns', counter());

@@ -78,3 +78,7 @@ export * from './lib/article-editor-entry.util';
 export * from './lib/article-writer.util';
 export * from './lib/article-panel.util';
 export * from './lib/article-editor-i18n';
+export * from './lib/mail-blocks.validations';
+export * from './lib/mail-blocks.util';
+export * from './lib/mail-article.util';
+export * from './lib/editor-profile';

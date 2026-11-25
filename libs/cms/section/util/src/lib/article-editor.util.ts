@@ -1,5 +1,6 @@
 import {
-  ARTICLE_BLOCK_TYPES, IMAGE_CONFIG_SHAPE, type ArticleBlock, type ArticleBlockType, type ArticleColumn, type ColumnsBlock, type I18nString, type TextBlock,
+  ARTICLE_BLOCK_TYPES, EVENTS_CONFIG_SHAPE, IMAGE_CONFIG_SHAPE, type ArticleBlock, type ArticleBlockType, type ArticleColumn, type ColumnsBlock, type I18nString,
+  type MailBlock, type MailBlockType, type TextBlock,
 } from '@okr/shared-models';
 
 import { COLUMN_BLOCK_TYPES, hasVisibleText, isObject } from './article-block.util';
@@ -60,7 +61,9 @@ export function blocksInOrder(blocks: ArticleBlock[]): ArticleBlock[] {
   return out;
 }
 
-export function createBlock(type: ArticleBlockType, newId: NewId): ArticleBlock {
+export function createBlock(type: ArticleBlockType, newId: NewId): ArticleBlock;
+export function createBlock(type: MailBlockType, newId: NewId): MailBlock;
+export function createBlock(type: MailBlockType, newId: NewId): MailBlock {
   const id = newId();
   switch (type) {
     case 'text': return { id, type, html: '' };
@@ -71,6 +74,7 @@ export function createBlock(type: ArticleBlockType, newId: NewId): ArticleBlock 
     case 'columns': return { id, type, columns: [{ size: 6, blocks: [{ id: newId(), type: 'text', html: '' }] }, { size: 6, blocks: [{ id: newId(), type: 'text', html: '' }] }] };
     case 'divider': return { id, type };
     case 'space': return { id, type, size: 'medium' };
+    case 'events': return { id, type, calendarKey: '', maxEvents: EVENTS_CONFIG_SHAPE.maxEvents };
   }
 }
 

@@ -2,15 +2,15 @@ import { Component, computed, input, output } from '@angular/core';
 import { CdkDrag, CdkDragPlaceholder, CdkDragPreview, CdkDropList } from '@angular/cdk/drag-drop';
 import { IonIcon, IonNote } from '@ionic/angular';
 
-import { ArticleBlockType, ARTICLE_BLOCK_TYPES } from '@okr/shared-models';
+import { ArticleBlockType, ARTICLE_BLOCK_TYPES, MailBlockType } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { fill } from '@okr/shared-util-core';
 import { ARTICLE_BLOCK_ICONS, ARTICLE_BLOCKS_MAX, ArticleEditorI18n, blockTypeLabel } from '@okr/cms-section-util';
 
 import { ARTICLE_PANEL_STYLES } from './article-panel.styles';
 
-/** What a dragged entry of the library carries (`cdkDragData`). */
-export interface NewBlockDrag { newType: ArticleBlockType }
+/** What a dragged entry of the library carries (`cdkDragData`), in an article or a mail. */
+export interface NewBlockDrag { newType: MailBlockType }
 
 /**
  * «Blöcke» (spec 1.175 §7.3): the block types. A click adds one at the end; with a mouse an entry can be dragged into the article.

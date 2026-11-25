@@ -1,10 +1,10 @@
 import { allowedTypesAt, blocksInOrder, createBlock, findBlock, insertBlock, moveBlock, type BlockPlace, type NewId } from '@okr/cms-section-util';
-import { ARTICLE_BLOCK_TYPES, type ArticleBlock, type ArticleBlockType } from '@okr/shared-models';
+import { ARTICLE_BLOCK_TYPES, type ArticleBlock, type ArticleBlockType, type MailBlock } from '@okr/shared-models';
 import type { RichTextCaret } from '@okr/shared-ui-editor';
 
-/** What the author did in the canvas. The host applies every change at once (`article-canvas.ts`). */
-export interface CanvasChange {
-  blocks: ArticleBlock[];
+/** What the author did in the canvas of an article, or of a mail. The host applies every change at once (`article-canvas.ts`). */
+export interface CanvasChange<B extends MailBlock = ArticleBlock> {
+  blocks: B[];
   /** the selected block from now on; undefined = nothing */
   selectedId?: string;
   /** 'text:<id>' while typing in that block; without it the change is a step of its own */

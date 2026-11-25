@@ -64,6 +64,7 @@ describe('dropChange', () => {
   it('is undefined for data it does not know, a block or a place that is gone', () => {
     expect(dropChange(blocks(), {}, { index: 0 }, counter())).toBeUndefined();
     expect(dropChange(blocks(), { newType: 'video' as ArticleBlockType }, { index: 0 }, counter())).toBeUndefined();
+    expect(dropChange(blocks(), { newType: 'events' as ArticleBlockType }, { index: 0 }, counter())).toBeUndefined();   // of a mail only
     expect(dropChange(blocks(), { id: 'gone' }, { index: 0 }, counter())).toBeUndefined();
     expect(dropChange(blocks(), { id: 'a' }, { columnsId: 'gone', column: 0, index: 0 }, counter())).toBeUndefined();
   });

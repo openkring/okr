@@ -1,46 +1,15 @@
 import { enforce, test } from 'vest';
 
-import { ARTICLE_BLOCK_TYPES, ArticleConfig, ImageConfig, SECTION_CTA_STYLES, SLIDESHOW_EFFECTS } from '@okr/shared-models';
-import { isSafeLinkTarget, resolveImageStyle } from '@okr/shared-util-core';
+import { ARTICLE_BLOCK_TYPES, ArticleConfig, SECTION_CTA_STYLES, SLIDESHOW_EFFECTS } from '@okr/shared-models';
 
 import { BLOCK_ALIGNS, CALLOUT_TONES, COLUMN_BLOCK_TYPES, SPACE_SIZES, hasImageUrl, hasVisibleText, isObject } from './article-block.util';
-import { imageConfigValidations, imageStyleValidations } from './image.validations';
+import { areColumns, check, checkImage, checkImageStyle, checkOneOf, columnLists, haveOwnIds } from './block-checks';
 import { isImageLayoutId } from './image-layout.util';
 import { isSectionCtaUrl } from './section-cta.util';
 import { SLIDESHOW_DURATION_MAX, SLIDESHOW_DURATION_MIN, SLIDESHOW_INTERVAL_MAX, SLIDESHOW_INTERVAL_MIN } from './slideshow.util';
 
 /** At most this many top-level blocks per article (spec 1.173 §10). */
 export const ARTICLE_BLOCKS_MAX = 50;
-
-function check(field: string, ok: boolean): void {
-  test(field, 'invalidValue', () => {
-    enforce(ok).isTruthy();
-  });
-}
-
-/** An optional enumerated value: absent is fine, a present one must be known. */
-function checkOneOf(field: string, value: unknown, allowed: readonly string[]): void {
-  check(field, value === undefined || (typeof value === 'string' && allowed.includes(value)));
-}
-
-/** Its link opens without a check of its own in older apps, so only safe targets are stored (no `javascript:`). */
-function checkImage(field: string, image: unknown): void {
-  if (!isObject(image)) {
-    check(`${field}.url`, false);
-    return;
-  }
-  imageConfigValidations(field, image as unknown as ImageConfig);
-  test(`${field}.actionUrl`, '@cms/section/feature.validation.imageLink', () => {
-    enforce(isSafeLinkTarget(image['actionUrl'])).isTruthy();
-  });
-}
-
-/** An optional partial image style: a non-object is an error, an object is checked on top of the defaults. */
-function checkImageStyle(field: string, style: unknown): void {
-  if (style === undefined) return;
-  if (!isObject(style)) check(field, false);
-  else imageStyleValidations(resolveImageStyle(style), `${field}.`);
-}
 
 function checkSlideshow(field: string, slideshow: unknown): void {
   if (slideshow === undefined) return;
@@ -69,19 +38,6 @@ function checkHtml(field: string, block: Record<string, unknown>): void {
   test(field, 'required', () => {
     enforce(!translated || hasVisibleText(block['html'])).isTruthy();
   });
-}
-
-/** The ids of all blocks, the ones inside columns included. */
-function collectIds(blocks: unknown[], ids: unknown[]): void {
-  for (const block of blocks) {
-    if (!isObject(block)) continue;
-    ids.push(block['id']);
-    if (block['type'] === 'columns' && Array.isArray(block['columns'])) {
-      for (const column of block['columns']) {
-        if (isObject(column) && Array.isArray(column['blocks'])) collectIds(column['blocks'], ids);
-      }
-    }
-  }
 }
 
 function checkBlock(block: unknown, index: number, inColumn: boolean): void {
@@ -134,19 +90,9 @@ function checkBlock(block: unknown, index: number, inColumn: boolean): void {
       check(f('size'), typeof block['size'] === 'string' && (SPACE_SIZES as readonly string[]).includes(block['size']));
       break;
     case 'columns': {
-      const columns = block['columns'];
-      const list = Array.isArray(columns) ? columns : [];
-      const sizes = list.map((c) => (isObject(c) ? c['size'] : undefined));
-      check(f('columns'), Array.isArray(columns) && !inColumn && (list.length === 2 || list.length === 3)
-        && list.every((c) => isObject(c) && Array.isArray(c['blocks']))
-        && sizes.every((s) => typeof s === 'number' && Number.isInteger(s) && s >= 1 && s <= 11)
-        && sizes.reduce<number>((sum, s) => sum + (typeof s === 'number' ? s : 0), 0) === 12);
+      check(f('columns'), !inColumn && areColumns(block['columns']));
       // the content is checked with the same rules; a nested `columns` is flagged there
-      for (const column of list) {
-        if (isObject(column) && Array.isArray(column['blocks'])) {
-          column['blocks'].forEach((inner, i) => checkBlock(inner, i, true));
-        }
-      }
+      columnLists(block['columns']).forEach((list) => list.forEach((inner, i) => checkBlock(inner, i, true)));
       break;
     }
   }
@@ -163,9 +109,7 @@ export function articleBlocksValidations(properties: ArticleConfig | undefined):
 
   check('blocks', blocks.length <= ARTICLE_BLOCKS_MAX);
 
-  const ids: unknown[] = [];
-  collectIds(blocks, ids);
-  check('blocks', ids.every((id) => typeof id === 'string' && id !== '') && new Set(ids).size === ids.length);
+  check('blocks', haveOwnIds(blocks));
 
   blocks.forEach((block, index) => checkBlock(block, index, false));
 

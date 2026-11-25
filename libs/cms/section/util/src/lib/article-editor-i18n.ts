@@ -20,6 +20,7 @@ export const ARTICLE_EDITOR_I18N_KEYS = {
   article_editor_block_callout:                 PFX + 'article.editor.block.callout',
   article_editor_block_divider:                 PFX + 'article.editor.block.divider',
   article_editor_block_space:                   PFX + 'article.editor.block.space',
+  article_editor_block_events:                  PFX + 'article.editor.block.events',
   article_editor_block_unknown:                 PFX + 'article.editor.block.unknown',
   // the library of blocks
   article_editor_library_title:                 PFX + 'article.editor.library.title',
@@ -135,7 +136,7 @@ export const ARTICLE_EDITOR_I18N_KEYS = {
 /** What panel, canvas and modal are given: the texts of the editor and those of the section forms whose parts they reuse. */
 export type ArticleEditorI18n = SectionI18n & { [K in keyof typeof ARTICLE_EDITOR_I18N_KEYS]: Signal<string> };
 
-/** The name of a block type; «Unbekannter Block» for one this app does not know. */
+/** The name of a block type of an article or a mail; «Unbekannter Block» for one this app does not know. */
 export function blockTypeLabel(i18n: ArticleEditorI18n, type: string): string {
   const key = `article_editor_block_${type}`;
   return key in ARTICLE_EDITOR_I18N_KEYS ? i18n[key as keyof typeof ARTICLE_EDITOR_I18N_KEYS]() : i18n.article_editor_block_unknown();
