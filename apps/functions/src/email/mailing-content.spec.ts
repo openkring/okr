@@ -7,6 +7,7 @@ const h = vi.hoisted(() => ({
   letters: [] as Record<string, unknown>[],
   counted: [] as Record<string, unknown>[],
   deleted: [] as unknown[],
+  saved: [] as string[],
 }));
 
 vi.mock('firebase-functions/v2', () => ({ logger: { info: vi.fn(), error: vi.fn(), warn: vi.fn(), debug: vi.fn() } }));
@@ -25,7 +26,7 @@ vi.mock('@okr/shared-util-functions', async () => {
   return { ...actual, checkAppCheckToken: () => undefined, checkAuthentication: () => undefined };
 });
 vi.mock('../_storage/private-bucket', () => ({
-  privateBucket: () => ({ file: () => ({ save: async () => undefined }), deleteFiles: async (o: unknown) => { h.deleted.push(o); } }),
+  privateBucket: () => ({ file: (path: string) => ({ save: async () => { h.saved.push(path); } }), deleteFiles: async (o: unknown) => { h.deleted.push(o); } }),
 }));
 vi.mock('../auth/email-templates', async () => {
   const actual = await vi.importActual<typeof import('../auth/email-templates')>('../auth/email-templates');
@@ -52,10 +53,12 @@ vi.mock('./mailing-letters', async () => {
 import { fakeDb, type Doc, type Store } from '../credit/testing/credit-fake-db';
 import { sanitizeEmailBody } from '../pdf/sanitize';
 import { bindCreditPort, getCreditPort, type CreditPort } from '../pingen/credit-port';
-import { draftHashOf, quoteWithCaller, signQuote, type PostQuote } from '../pingen/quote';
+import type { MailingPost } from '../pingen/post-order';
+import { draftHashOf, quoteMailingLetters, quoteWithCaller, signQuote, type PostQuote } from '../pingen/quote';
 import type { MailJobDoc } from './mail-job';
 import { MAX_CONTENT_BYTES, type SentContent } from './mail-page/mail-content';
 import { mailPageContent, type MailingDoc, onMailing, sendMailing } from './mailing';
+import { renderEmailPreview } from './render-email-preview';
 
 const T = 'scs';
 const PAGE = 'pg1';
@@ -110,6 +113,7 @@ beforeEach(() => {
   h.letters = [];
   h.counted = [];
   h.deleted = [];
+  h.saved = [];
   deductions = [];
   const port: CreditPort = {
     quote: (letters, pages) => ({ total: letters * 120 + pages * 30, perUnit: 120, perPage: 30 }),
@@ -142,7 +146,7 @@ describe('mailPageContent', () => {
     }
   });
 
-  it('asks for no calendar without a key, or with a slash in it', async () => {
+  it('asks for the calendars of the page only, each once, also for a key with a slash; for none without a key', async () => {
     const asked: unknown[] = [];
     const db = fakeDb(store) as unknown as { collection(n: string): { where(...a: unknown[]): unknown } };
     h.db = { ...db, collection: (name: string) => {
@@ -150,7 +154,15 @@ describe('mailPageContent', () => {
       return name === 'calevents' ? { ...col, where: (...a: unknown[]) => { asked.push(a[2]); return col.where(...a); } } : col;
     } };
     setPage({ s1: blockArticle([text('t', '<p>x</p>'), { id: 'e', type: 'events', calendarKey: 'a/b', maxEvents: 5 }]) });
-    await mailPageContent(T, PAGE, 'admin');
+    store['calevents/slash'] = { ...store['calevents/ours'], calendars: ['a/b'], name: 'Schräger Anlass' };
+    store[`mailPages/${PAGE}/sections/unlisted`] = { type: 'events', name: 'unlisted' };
+    expect((await mailPageContent(T, PAGE, 'admin')).html).toContain('Schräger Anlass');
+    setPage({ s1: oldArticle, s2: { type: 'events', name: 'archived', isArchived: true }, s3: { type: 'events', name: 'club' }, s4: { type: 'events', name: 'club' } });
+    expect((await mailPageContent(T, PAGE, 'admin')).html).toContain('Fondue');
+    expect(asked).toEqual(['a/b', 'club']);
+    asked.length = 0;
+    setPage({ s1: oldArticle, s2: { type: 'map' } });
+    await expect(mailPageContent(T, PAGE, 'admin')).rejects.toMatchObject({ code: 'failed-precondition', message: 'unknown-section-type' });
     setPage({ s1: blockArticle([text('t', '<p>x</p>'), { id: 'e', type: 'events', calendarKey: ' ', maxEvents: 5 }]) });
     await expect(mailPageContent(T, PAGE, 'admin')).rejects.toMatchObject({ message: 'invalid-block', details: { blockId: 'e' } });
     expect(asked).toEqual([]);
@@ -204,6 +216,55 @@ describe('sendMailing of a page with blocks', () => {
     setPage({ s1: blockArticle([text('t', `<p>${'x'.repeat(MAX_CONTENT_BYTES)}</p>`)]) });
     await expect(callSend(request())).rejects.toMatchObject({ code: 'failed-precondition', message: 'too-large' });
     expect(docsOf('mailings')).toEqual([]);
+  });
+
+  describe('that does not fit into its documents', () => {
+    const longText = [text('t', `<p>${'x'.repeat(400_000)}</p>`)];
+    // any key is accepted of an elevated sender; long ones make the documents long
+    const keys = Array.from({ length: 3000 }, (_, i) => `${'k'.repeat(95)}${i}`);
+    const inline = { filename: 'a.pdf', contentBase64: 'eA==' };
+
+    it('refuses before any file is stored: body and deliveries', async () => {
+      setPage({ s1: blockArticle(longText) });
+      const deliveries = keys.map((personKey) => ({ personKey: personKey.padEnd(200, 'x'), channels: ['chat'] }));
+      await expect(callSend(request({ deliveries, extraAttachments: [inline] }))).rejects.toMatchObject({ code: 'failed-precondition', message: 'too-large' });
+      expect([...docsOf('mailings'), ...h.saved, ...docsOf('mailingWeb')]).toEqual([]);
+      expect(store[`mailPages/${PAGE}`]).not.toHaveProperty('mailingKey');
+      // without the blocks nothing is refused, as before
+      setPage({ s1: { ...oldArticle, content: { htmlContent: longText[0].html } } });
+      await callSend(request({ deliveries }));
+    });
+
+    it('refuses before any money moves: body, deliveries and the post recipients, which only a Pingen send stores twice', async () => {
+      setPage({ s1: blockArticle(longText) });
+      const deliveries = keys.map((personKey) => ({ personKey, channels: ['post'] }));
+      await expect(callSend(request({ deliveries, extraAttachments: [inline], post: { via: 'pingen', options: {}, token: 'x', issuedAt: Date.now() } })))
+        .rejects.toMatchObject({ code: 'failed-precondition', message: 'too-large' });
+      expect([...deductions, ...docsOf('post-orders'), ...docsOf('mailings'), ...h.saved, ...h.counted]).toEqual([]);
+      await callSend(request({ deliveries }));
+    });
+
+    it('refuses a newsletter with events whose mail job would not fit, and sends it without the events', async () => {
+      const subscribers = Array.from({ length: 800 }, (_, i) => `p${i}`);
+      store['groups/nl'] = { kind: 'newsletter', tenants: [T], name: 'News', admins: [] };
+      for (const key of subscribers) store[`newsletterSubscriptions/${key}`] = { tenants: [T], groupKey: 'nl', personKey: key, dateOfExit: '', isArchived: false };
+      setPage({ s1: blockArticle(longText) });
+      const send = request({ groupKey: 'nl', deliveries: subscribers.map((personKey) => ({ personKey, channels: ['email'] })) });
+      await expect(callSend({ ...send, data: { ...send.data, caleventKeys: ['ours'] } })).rejects.toMatchObject({ code: 'failed-precondition', message: 'too-large' });
+      expect(mailings()).toEqual([]);
+      await callSend(send);
+      expect(mailings()).toHaveLength(1);
+    });
+  });
+
+  it('names the block at fault to the quote and the preview, too', async () => {
+    setPage({ s1: blockArticle([text('t', '<p>x</p>'), { id: 'm', type: 'map' }]) });
+    const fault = { code: 'failed-precondition', message: 'unknown-block-type', details: { blockId: 'm' } };
+    store[`credit-accounts/${T}`] = { balance: 1 };
+    const callQuote = quoteMailingLetters as unknown as Run<unknown, unknown>;
+    await expect(callQuote({ auth: { uid: 'admin' }, data: { tenantId: T, subject: 'Herbst', pageKey: PAGE, postKeys: ['p1'] } })).rejects.toMatchObject(fault);
+    const callPreview = renderEmailPreview as unknown as Run<unknown, unknown>;
+    await expect(callPreview({ auth: { uid: 'admin' }, data: { appId: T, pageKey: PAGE } })).rejects.toMatchObject(fault);
   });
 
   it('sends one page once: the second of two sends leaves no content', async () => {
@@ -328,11 +389,37 @@ describe('onMailing', () => {
     expect(reads).toBe(0);
   });
 
+  it('a second run (the trigger is delivered at least once) sends the same content', async () => {
+    store['mailings/m1/content/sent'] = SENT as unknown as Doc;
+    await run(mailing());
+    await run(mailing());
+    expect(notices().map((n) => n['blocks'])).toEqual([SENT.noticeBlocks, SENT.noticeBlocks]);
+    expect(h.letters.map((l) => l['body'])).toEqual([h.letters[0]['body'], h.letters[0]['body']]);
+    expect(store['mailings/m1/content/sent']).toEqual(SENT);
+  });
+
+  it('a charged Pingen send whose content cannot be read sends nothing; its order stays for the reconcile', async () => {
+    const post: MailingPost = {
+      via: 'pingen', options: { deliveryProduct: 'cheap', printSpectrum: 'grayscale', printMode: 'simplex' }, recipients: ['p1'],
+      letters: 1, abroad: 0, pages: 2, total: 180, creditEntryId: 'e1', acceptedBy: 'admin', acceptedAt: '20261125100000',
+    };
+    const done = await run(mailing({ post, letters: { state: 'pending' } }), async () => { throw new Error('unavailable'); });
+    expect(done).toMatchObject({ state: 'failed', post, letters: { state: 'failed', error: 'unavailable' } });
+    expect([...jobs(), ...notices(), ...h.letters, ...docsOf('sendings')]).toEqual([]);
+  });
+
+  it('sets no letters on a failed Versand that has none', async () => {
+    const done = await run(mailing({ deliveries: [{ personKey: 'p1', channels: ['email'] }] }), async () => { throw new Error('unavailable'); });
+    expect(done.state).toBe('failed');
+    expect(done).not.toHaveProperty('letters');
+  });
+
   it('sends nothing at all when the content cannot be read, or is not what sendMailing writes', async () => {
     for (const read of [async () => { throw new Error('unavailable'); }, async () => ({ exists: true, data: () => ({ letterBody: 7 }) })]) {
-      const done = await run(mailing(), read);
+      const done = await run(mailing({ letters: { state: 'pending' } }), read);
       expect(done.state).toBe('failed');
       expect(done.error).toBeTruthy();
+      expect(done.letters).toEqual({ state: 'failed', error: done.error });
       expect([...jobs(), ...notices(), ...h.letters]).toEqual([]);
     }
   });

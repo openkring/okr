@@ -3,7 +3,10 @@ import { describe, expect, it } from 'vitest';
 import type { MailEventLine } from '@okr/shared-util-core';
 
 import { sanitizeEmailBody } from '../../pdf/sanitize';
-import { letterBodyOf, MAX_CONTENT_BYTES, mailCalendarKeys, renderMailContent, sentContentOf, type MailContent } from './mail-content';
+import { mailingAnswerFunctionUrl, mailingAnswerUrl } from '../../calendar/answer-link';
+import { sampleUnsubscribeUrl } from '../../newsletter/newsletter-link';
+import { MAX_PERSONAL_RECIPIENTS, personalEntries } from '../personal-mail.logic';
+import { fitsDocuments, letterBodyOf, MAX_CONTENT_BYTES, MAX_DOCUMENT_BYTES, mailCalendarKeys, personalEntryBytes, renderMailContent, sentContentOf, type MailContent } from './mail-content';
 import { noticeBlocks, renderMailBlocks, type MailBlockContext } from './render-mail-blocks.logic';
 import { MailPageError, renderMailPageContent, type MailRenderContext, type MailSection } from './render-mail-page.logic';
 
@@ -124,6 +127,18 @@ describe('renderMailContent: blocks beside old sections', () => {
     expect(notice?.map((b) => b.id)).toEqual(['t']);
   });
 
+  it('gives every block of the Mitteilung an id of its own', async () => {
+    const columns = (id: string, inner: string[]) => ({ id, type: 'columns', columns: inner.map((i) => ({ size: 6, blocks: [text(i, `<p>${i}</p>`)] })) });
+    const { notice } = await render(['b', 'c', 't'], [
+      blockArticle('b', [text('t', '<p>1</p>'), text('t', '<p>2</p>'), columns('k', ['t', 'u'])]),
+      blockArticle('c', [text('t-2', '<p>3</p>'), text('u', '<p>4</p>')]),
+      oldArticle('t', '<p>5</p>'),
+    ]);
+    expect(notice?.map((b) => b.id)).toEqual(['t', 't-2', 'k', 't-2-2', 'u-2', 't-4']);
+    expect(JSON.stringify(notice?.[2])).toContain('"id":"t-3"');
+    expect(JSON.stringify(notice)).toMatch(/1.*2.*3.*4.*5/);
+  });
+
   it('renders every article with blocks of the page', async () => {
     const { html, notice } = await render(['b', 'c'], [sections[0], blockArticle('c', [text('u', '<p>Charlie</p>')])]);
     expect(at(html, 'Charlie')).toBeGreaterThan(at(html, 'Bravo'));
@@ -147,12 +162,25 @@ describe('renderMailContent: refusals', () => {
     expect(await refusal(['a', 'm'], [blockArticle('a', [text('t', '<p>x</p>')]), { okey: 'm', type: 'map' }])).toBe('unknown-section-type -');
   });
 
-  it('too-large for a mail html over the limit, in bytes, with and without blocks', async () => {
+  it('too-large for a mail html over the limit, in bytes', async () => {
     // two bytes each
     const long = `<p>${'ä'.repeat(MAX_CONTENT_BYTES / 2)}</p>`;
     expect(long.length).toBeLessThan(MAX_CONTENT_BYTES);
     expect(await refusal(['a'], [blockArticle('a', [text('t', long)])])).toBe('too-large -');
-    expect(await refusal(['a'], [oldArticle('a', long)])).toBe('too-large -');
+  });
+
+  it('a page without blocks is rendered whatever its length, as before', async () => {
+    const long = oldArticle('a', `<p>${'x'.repeat(MAX_CONTENT_BYTES + 1)}</p>`);
+    expect(await render(['a'], [long])).toStrictEqual({ html: await renderMailPageContent(['a'], [long], await contextOf()) });
+  });
+
+  it('too-large when the Mitteilung as it is stored (sanitized again, with its recipients) exceeds the document', async () => {
+    // the second pass adds 16 bytes per paragraph: without them, or without the recipients, it would fit
+    const paragraphs = (n: number) => [blockArticle('a', [text('t', '<p>x</p>'.repeat(n))])];
+    const content = await render(['a'], paragraphs(10_000));
+    const bytes = (s: string) => Buffer.byteLength(s, 'utf8');
+    expect(bytes(JSON.stringify(sentContentOf(content)))).toBeLessThan(MAX_CONTENT_BYTES);
+    expect(await refusal(['a'], paragraphs(11_500))).toBe('too-large -');
   });
 
   it('too-large when the stored content exceeds the limit although the mail does not', async () => {
@@ -187,8 +215,12 @@ describe('mailCalendarKeys', () => {
     expect(mailCalendarKeys([oldEvents('e'), blockArticle('a', [events('1', 'club'), events('2', ' jugend '), text('t', '')])])).toEqual(['club', 'jugend']);
   });
 
-  it('takes no empty key and none with a slash from a block', () => {
-    expect(mailCalendarKeys([blockArticle('a', [events('1', ''), events('2', '  '), events('3', 'a/b'), events('4', 7), events('5', null), null, 'x', { type: 'events' }])])).toEqual([]);
+  it('takes a key with a slash from a block as from a section: it is only compared, never a path', () => {
+    expect(mailCalendarKeys([blockArticle('a', [events('1', 'a/b')]), { ...oldEvents('e'), name: 'c/d' }])).toEqual(['a/b', 'c/d']);
+  });
+
+  it('takes no empty key from a block', () => {
+    expect(mailCalendarKeys([blockArticle('a', [events('1', ''), events('2', '  '), events('4', 7), events('5', null), null, 'x', { type: 'events' }])])).toEqual([]);
   });
 
   it('reads no more blocks than a mail may have', () => {
@@ -198,5 +230,41 @@ describe('mailCalendarKeys', () => {
 
   it('leaves out other sections and a section without a name', () => {
     expect(mailCalendarKeys([{ okey: 'x', type: 'events' }, oldArticle('a', ''), { okey: 'b', type: 'button', properties: { blocks: [events('1')] } } as MailSection])).toEqual([]);
+  });
+});
+
+describe('fitsDocuments', () => {
+  const body = 'ä'.repeat(400_000); // 800 000 bytes
+  const deliveries = (bytes: number) => ['x'.repeat(bytes - 4)]; // as JSON
+
+  it('counts the bytes of the body, the deliveries and the post recipients of the mailing', () => {
+    expect(fitsDocuments(body, { deliveries: deliveries(150_000), postKeys: deliveries(50_000) })).toBe(true);
+    expect(fitsDocuments(body, { deliveries: deliveries(150_000), postKeys: deliveries(50_001) })).toBe(false);
+    expect(fitsDocuments(body, { deliveries: deliveries(200_001), postKeys: [] })).toBe(false);
+    expect(MAX_DOCUMENT_BYTES).toBe(1_000_000);
+  });
+
+  it('counts the body and the personal entries of a mail job, at most a full job', () => {
+    const personal = (entries: number) => ({ deliveries: [], postKeys: [], personal: { entries, answer: true, unsubscribe: true } });
+    const perEntry = personalEntryBytes({ answer: true, unsubscribe: true });
+    const fits = Math.floor(200_000 / perEntry);
+    expect(fitsDocuments(body, personal(fits))).toBe(true);
+    expect(fitsDocuments(body, personal(fits + 1))).toBe(false);
+    const rest = 'x'.repeat(MAX_DOCUMENT_BYTES - MAX_PERSONAL_RECIPIENTS * perEntry);
+    expect(fitsDocuments(rest, personal(3000))).toBe(true);
+    expect(fitsDocuments(`${rest}x`, personal(3000))).toBe(false);
+  });
+
+  it('estimates an entry no smaller than a real one', () => {
+    const key = 'x'.repeat(28);
+    const answerUrl = () => mailingAnswerUrl(mailingAnswerFunctionUrl('x'.repeat(30)), 'm'.repeat(20), key, 'secret');
+    const unsubscribeUrl = () => sampleUnsubscribeUrl('g'.repeat(20));
+    const email = new Map([[key, `${'a'.repeat(40)}@example.ch`]]);
+    for (const [answer, unsubscribe] of [[true, false], [false, true], [true, true]]) {
+      const [entry] = personalEntries([key], email, answer ? answerUrl : undefined, unsubscribe ? unsubscribeUrl : undefined);
+      const real = Buffer.byteLength(JSON.stringify(entry), 'utf8');
+      expect(personalEntryBytes({ answer, unsubscribe })).toBeGreaterThanOrEqual(real);
+      expect(personalEntryBytes({ answer, unsubscribe })).toBeLessThan(real * 1.4);
+    }
   });
 });

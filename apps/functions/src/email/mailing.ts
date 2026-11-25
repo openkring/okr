@@ -58,7 +58,7 @@ import { activeSubscriberKeys } from '../newsletter/subscribers';
 import { asLayoutChoice } from './render-email.logic';
 import { EmailTemplateError, renderEmail } from './render-email';
 import { renderMailPage } from './mail-page/mail-page';
-import { letterBodyOf, sentContentOf, type MailContent, type SentContent } from './mail-page/mail-content';
+import { fitsDocuments, letterBodyOf, sentContentOf, type MailContent, type SentContent } from './mail-page/mail-content';
 import { MailPageError } from './mail-page/render-mail-page.logic';
 import { createsWebVersion, mailingWebFunctionUrl, newWebToken, webVersionUrl, withWebLink } from './mail-page/web-version.logic';
 import { buildMailingLetters, countLetterPages, LetterEvent } from './mailing-letters';
@@ -593,10 +593,19 @@ export const sendMailing = onCall(
       body = content.html;
       letterBody = letterBodyOf(content);
       sent = sentContentOf(content);
+      const emails = keysFor(deliveries, DeliveryChannel.Email).length;
+      const answer = caleventKeys.length > 0;
+      // only with blocks: a page without them is sent as before
+      if (sent && !fitsDocuments(body, {
+        deliveries, postKeys: postRequest ? keysFor(deliveries, DeliveryChannel.Post) : [],
+        ...(emails > 0 && (answer || newsletterGroupKey) ? { personal: { entries: emails, answer, unsubscribe: !!newsletterGroupKey } } : {}),
+      })) {
+        throw new HttpsError('failed-precondition', 'too-large');
+      }
       // newsletter or not is the server's decision above (newsletterGroupKey), never the client's; only the
       // E-Mails carry the link, so a send without any E-Mail delivery stores no web version
       const requested = typeof data.webVersion === 'boolean' ? data.webVersion : undefined;
-      if (createsWebVersion(requested, !!newsletterGroupKey, keysFor(deliveries, DeliveryChannel.Email).length)) {
+      if (createsWebVersion(requested, !!newsletterGroupKey, emails)) {
         web = { token: newWebToken(), html: await webSnapshotHtml(tenantId, layout, body) };
       }
     }
@@ -748,7 +757,11 @@ export const onMailing = onDocumentCreated(
         Object.assign(result, householdFields);
       }
       // read before anything is sent: a Versand whose content cannot be read fails whole, never half
-      const sent = await readSentContent(snap.ref, mailing);
+      const sent = await readSentContent(snap.ref, mailing).catch((err: unknown) => {
+        // no letter will be built: the composer must not wait for one
+        if (mailing.letters) result.letters = { state: 'failed', error: err instanceof Error ? err.message : String(err) };
+        throw err;
+      });
       // E-Mail and In-App reach a household's contact as a person, each person once
       const emailKeys = contactKeysFor(mailing.deliveries, DeliveryChannel.Email, households);
       if (emailKeys.length > 0) {

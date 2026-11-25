@@ -13,7 +13,7 @@ import { mailColorOf } from '../../_shared/brand-color';
 import { sanitizeEmailBody } from '../../pdf/sanitize';
 import { mailCalendarKeys, renderMailContent, type MailContent } from './mail-content';
 import { isReapableDraft, mailPageRefusal } from './mail-page.logic';
-import { MailPageError, type MailSection } from './render-mail-page.logic';
+import { MailPageError, orderedMailSections, type MailSection } from './render-mail-page.logic';
 
 const REFUSAL_TEXT = {
   'not-found': 'Die Mailseite existiert nicht.',
@@ -37,15 +37,16 @@ export async function renderMailPage(tenantId: string, pageKey: string, uid: str
   const sections = sectionSnap.docs.map((d) => ({ ...d.data(), okey: d.id }) as MailSection);
 
   const today = getTodayStr(DateFormat.StoreDate);
-  const events = new Map<string, MailEventLine[]>();
-  for (const calendarKey of mailCalendarKeys(sections)) {
+  const loadLines = async (calendarKey: string): Promise<[string, MailEventLine[]]> => {
     const evSnap = await db.collection(CalEventCollection).where('calendars', 'array-contains', calendarKey).get();
     const rows = evSnap.docs
       .map((d) => ({ ...d.data(), okey: d.id }) as CalEventModel)
       .filter((e) => e.tenants?.includes(tenantId));
     // loaded once per calendar at the cap; each section or block lists its own maxEvents of them (mailEventLimit)
-    events.set(calendarKey, upcomingEventLines(rows, today, MAX_MAIL_EVENTS));
-  }
+    return [calendarKey, upcomingEventLines(rows, today, MAX_MAIL_EVENTS)];
+  };
+  // only of what the page shows
+  const events = await Promise.all(mailCalendarKeys(orderedMailSections(page.sections ?? [], sections)).map(loadLines));
 
   const appConfig = (await db.collection('app-config').doc(tenantId).get()).data();
   const appOrigin = publicAppOrigin(appConfig?.['appDomain'] as string | undefined, tenantId);
