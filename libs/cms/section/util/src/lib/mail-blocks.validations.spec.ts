@@ -16,6 +16,17 @@ const text = (id: string, extra: object = {}) => ({ id, type: 'text', html: '<p>
 const button = (url: unknown) => ({ id: 'b', type: 'button', cta: { ...cta, url } });
 const columns = (...inner: unknown[]) => ({ id: 'c', type: 'columns', columns: [{ size: 6, blocks: inner }, { size: 6, blocks: [] }] });
 
+// the vectors of mailTargetUrl (shared-util-core), which the server's renderer uses, too
+const GOOD_TARGETS = [
+  'https://a.ch/x', '  https://a.ch/x?a=1&b=2#c  ', 'mailto:a@b.ch', 'tel:+41 44 000 00 00', '/club', ' /private/events ', '/', 'Https://a.ch/X', 'HTTPS://a.ch', 'MailTo:A@b.ch', 'TEL:+41',
+];
+const BAD_TARGETS: unknown[] = [
+  'https://', 'https:///a', 'https://?x=1', 'https://#a', 'mailto:', 'mailto:?subject=x', 'mailto: ', 'tel:', 'tel:+', 'tel:?x',
+  '#top', '#', 'club.html', 'club.html#a', 'club', 'www.a.ch', '//evil.org', '/\\evil.org', '/a\\b', 'http://a.ch', 'HTTP://a.ch',
+  'javascript:alert(1)', 'JavaScript:alert(1)', 'java\tscript:alert(1)', 'data:text/html,x', 'vbscript:x', 'file:///etc/passwd', 'ftp://a.ch',
+  'https://a.ch/\u0001', 'https://a.ch/a\nb', 'https://a.ch\\@evil.org', '/club\u007f', 42, {}, ['https://a.ch'],
+];
+
 describe('mailBlocksValidations', () => {
   it('accepts a valid mail with all nine types', () => {
     expect(errors([
@@ -96,11 +107,6 @@ describe('mailBlocksValidations', () => {
     expect(fields([{ id: 'g', type: 'gallery', images: [image, { ...image, url: '' }] }])).toEqual([]);
   });
 
-  it('flags a picture link that is not safe', () => {
-    expect(fields([{ id: 'i', type: 'image', image: { ...image, actionUrl: 'javascript:alert(1)' } }])).toEqual(['blocks.i.image.actionUrl']);
-    expect(fields([{ id: 'g', type: 'gallery', images: [{ ...image, actionUrl: 'data:x' }] }])).toEqual(['blocks.g.images[0].actionUrl']);
-  });
-
   it('ignores the settings a mail does not have: layout, slideshow, zoom, action, stack order', () => {
     const style = { action: 99, zoomFactor: 99 };
     expect(fields([
@@ -112,19 +118,22 @@ describe('mailBlocksValidations', () => {
     expect(fields([{ id: 'i', type: 'image', image, imageStyle: { width: 5 } }])).toContain('blocks.i.imageStyle.width');
   });
 
-  // the vectors of mailTargetUrl (shared-util-core), which the server's renderer uses, too
-  it.each([
-    'https://a.ch/x', '  https://a.ch/x?a=1&b=2#c  ', 'mailto:a@b.ch', 'tel:+41 44 000 00 00', '/club', ' /private/events ', '/', 'Https://a.ch/X', 'HTTPS://a.ch', 'MailTo:A@b.ch', 'TEL:+41',
-  ])('accepts a button to %s', (url) => expect(fields([button(url)])).toEqual([]));
+  it.each(GOOD_TARGETS)('accepts a button to %s', (url) => expect(fields([button(url)])).toEqual([]));
 
-  it.each([
-    'https://', 'https:///a', 'https://?x=1', 'https://#a', 'mailto:', 'mailto:?subject=x', 'mailto: ', 'tel:', 'tel:+', 'tel:?x',
-    '', '   ', '#top', '#', 'club.html', 'club.html#a', 'club', 'www.a.ch', '//evil.org', '/\\evil.org', '/a\\b', 'http://a.ch', 'HTTP://a.ch',
-    'javascript:alert(1)', 'JavaScript:alert(1)', 'java\tscript:alert(1)', 'data:text/html,x', 'vbscript:x', 'file:///etc/passwd', 'ftp://a.ch',
-    'https://a.ch/\u0001', 'https://a.ch/a\nb', 'https://a.ch\\@evil.org', '/club\u007f', undefined, null, 42, {}, ['https://a.ch'],
-  ])('flags a button to %j, also in a column', (url) => {
+  it.each([...BAD_TARGETS, '', '   ', undefined, null])('flags a button to %j, also in a column', (url) => {
     expect(fields([button(url)])).toEqual(['blocks.b.cta.url']);
     expect(fields([columns(button(url))])).toEqual(['blocks.b.cta.url']);
+  });
+
+  it.each([...GOOD_TARGETS, '', '   ', undefined, null])('accepts a picture with the link %j', (actionUrl) =>
+    expect(fields([{ id: 'i', type: 'image', image: { ...image, actionUrl } }, { id: 'g', type: 'gallery', images: [{ ...image, actionUrl }] }])).toEqual([]));
+
+  it.each(BAD_TARGETS)('flags a picture with the link %j once, in an image, a gallery and a column', (actionUrl) => {
+    const bad = { ...image, actionUrl };
+    const message = ['@cms/section/feature.validation.imageLink'];
+    expect(errors([{ id: 'i', type: 'image', image: bad }])).toEqual({ 'blocks.i.image.actionUrl': message });
+    expect(errors([columns({ id: 'i', type: 'image', image: bad })])).toEqual({ 'blocks.i.image.actionUrl': message });
+    expect(errors([{ id: 'g', type: 'gallery', images: [image, bad] }])).toEqual({ 'blocks.g.images[1].actionUrl': message });
   });
 
   it('flags a button without label, without cta, and of an unknown style', () => {

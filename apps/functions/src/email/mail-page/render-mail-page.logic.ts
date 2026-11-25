@@ -4,8 +4,8 @@
 // the caller reads the page and its sections, loads the event lines and passes Handlebars and the sanitizer.
 // The result goes into the layout's `{{{content}}}` slot exactly like a typed `body`.
 import type { MailSectionType } from '@okr/shared-models';
-import type { MailEventLine } from '@okr/shared-util-core';
-import { EVENTS_CONFIG_SHAPE, MAIL_SECTION_TYPES } from '@okr/shared-models';
+import { MAIL_SECTION_TYPES } from '@okr/shared-models';
+import { mailEventLimit, type MailEventLine } from '@okr/shared-util-core';
 import { IMGIX_BASE, safeSiteUrl, toImgixUrl, type SectionDoc } from '@okr/cms-website-render';
 
 import { MAIL_SECTION_TEMPLATES } from './mail-section-templates';
@@ -33,20 +33,6 @@ export interface MailRenderContext {
   events: Record<string, MailEventLine[]>;
   /** the tenant app's public origin (`publicAppOrigin`), without a trailing slash: it makes an app path in a button absolute */
   appOrigin: string;
-}
-
-/** The most events one events section lists in a mail, whatever its `maxEvents` says. */
-export const MAX_MAIL_EVENTS = 10;
-
-/**
- * How many events an events section lists in a mail: its `properties.maxEvents` when that is a number of 1 or
- * more (rounded down), else the model default (`EVENTS_CONFIG_SHAPE.maxEvents`); never more than MAX_MAIL_EVENTS.
- * On the website an unset or 0 `maxEvents` means «all»; a mail has no «all», so it falls back to the default.
- */
-export function mailEventLimit(properties: unknown): number {
-  const raw = rec(properties)['maxEvents'];
-  const wanted = typeof raw === 'number' && Number.isFinite(raw) && raw >= 1 ? Math.floor(raw) : EVENTS_CONFIG_SHAPE.maxEvents;
-  return Math.min(wanted, MAX_MAIL_EVENTS);
 }
 
 /** The width the layout gives the content; article images are fetched at this width. */

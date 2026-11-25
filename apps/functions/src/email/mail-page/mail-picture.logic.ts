@@ -3,28 +3,23 @@
 // The one rule for the address of a picture in a Versand mail (spec 1.176 §9.1): a picture block, a gallery, a picture inside
 // a text, and the Mitteilung.
 import { IMGIX_BASE } from '@okr/cms-website-render';
+import { isMailPictureSource } from '@okr/shared-util-core';
 
 import { mailImageUrl } from './render-mail-page.logic';
 
 /**
- * A stored picture address that can be shown: a storage path, or an https address (scheme in small letters, no fragment).
- * `''` for everything else: no path, http, `data:` and other schemes, a path from the root, control characters, backslashes.
+ * A stored picture address that can be shown (`isMailPictureSource`): a storage path, or an https address (scheme in small letters,
+ * no fragment). `''` for everything else.
  */
 export function storedPictureUrl(raw: unknown): string {
-  const url = typeof raw === 'string' ? raw.trim() : '';
-  // eslint-disable-next-line no-control-regex -- rejecting control characters is the point
-  if (url === '' || url.startsWith('/') || /[\\\u0000-\u001f\u007f]/.test(url) || encodedPath(url) === '') return '';
-  if (!/^[a-z][a-z\d+.-]*:/i.test(url)) return url;
-  return /^https:\/\/[^\s/?#]/i.test(url) ? `https${url.slice('https'.length)}`.replace(/#.*$/, '') : '';
+  if (!isMailPictureSource(raw)) return '';
+  const url = (raw as string).trim();
+  return /^https:/i.test(url) ? `https${url.slice('https'.length)}`.replace(/#.*$/, '') : url;
 }
 
-/** A storage path is literal: every `%`, `#` or `?` in it belongs to a name. `''` for a text that is no valid unicode. */
+/** A storage path is literal: every `%`, `#` or `?` in it belongs to a name. */
 function encodedPath(path: string): string {
-  try {
-    return path.split('/').map(encodeURIComponent).join('/');
-  } catch {
-    return '';
-  }
+  return path.split('/').map(encodeURIComponent).join('/');
 }
 
 /** The address of a stored picture at `width` px; `''` when a mail cannot show it. */

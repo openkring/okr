@@ -1,10 +1,9 @@
 import { articleBlocksOf, withClassicFields, type MailBlock, type SectionModel } from '@okr/shared-models';
+import { mailEventLimit } from '@okr/shared-util-core';
 
 import { isObject, type Loose } from './article-block.util';
 import { blocksInOrder, type NewId } from './article-editor.util';
-import { copiedBlock, headerHtml, isPicture, mailCta, mailEventNumber, mailImage, mailImageStyle, objectOf, showsSomething, str, textBlock } from './mail-block-parts';
-
-export { MAIL_EVENTS_MAX } from './mail-block-parts';
+import { copiedBlock, headerHtml, isMailTarget, isPicture, mailCta, mailImage, mailImageStyle, objectOf, showsSomething, str, textBlock } from './mail-block-parts';
 
 /**
  * The blocks of a Versand mail (spec 1.176): whether they say anything, and making them from a stored mail page. All functions are
@@ -69,7 +68,9 @@ function fromOldArticle(section: Loose, newId: NewId): MailBlock[] {
   if (images.length > 1) blocks.push({ id: newId(), type: 'gallery', images, ...mailImageStyle(style) });
   if (header) blocks.push(textBlock(newId(), header));
   if (showsSomething(html)) blocks.push(textBlock(newId(), html as string));
-  if (hasCta(properties['cta'])) blocks.push({ id: newId(), type: 'button', cta: mailCta(properties['cta']) });
+  const cta = mailCta(properties['cta']);
+  // the old mail drew it only with a label and a target that it could open
+  if (cta.label !== '' && isMailTarget(cta.url)) blocks.push({ id: newId(), type: 'button', cta });
   return blocks;
 }
 
@@ -82,5 +83,5 @@ function fromOldButton(section: Loose, newId: NewId): MailBlock[] {
 
 function fromOldEvents(section: Loose, newId: NewId): MailBlock {
   const title = str(section['title']);
-  return { id: newId(), type: 'events', calendarKey: str(section['name']), ...(title ? { title } : {}), maxEvents: mailEventNumber(objectOf(section['properties'])['maxEvents']) };
+  return { id: newId(), type: 'events', calendarKey: str(section['name']), ...(title ? { title } : {}), maxEvents: mailEventLimit(section['properties']) };
 }

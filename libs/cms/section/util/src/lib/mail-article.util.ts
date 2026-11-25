@@ -100,12 +100,17 @@ function isPublicRole(roleNeeded: unknown): boolean {
   return roleNeeded === 'none' || roleNeeded === 'public';
 }
 
-/** The page where everybody can read the article without login; undefined when there is none. */
+/**
+ * The page where everybody can read the article without login; undefined when there is none. The news API serves the published, public
+ * articles of the site's tenant only: the article's `tenants` must contain the site's key, which is the tenant's.
+ */
 export function newsArticleUrl(site: Pick<WebsiteModel, 'okey' | 'domain'> | undefined, section: ArticleSection): string | undefined {
   const origin = str(objectOf(site)['domain']).replace(/\/+$/, '');
-  if (!isObject(section) || !NEWS_ARTICLE_SITES.includes(str(objectOf(site)['okey'])) || !/^https:\/\/[^\s/?#]+$/.test(origin)) return undefined;
+  const siteKey = str(objectOf(site)['okey']);
+  if (!isObject(section) || !NEWS_ARTICLE_SITES.includes(siteKey) || !/^https:\/\/[^\s/?#]+$/.test(origin)) return undefined;
   const article: Loose = section;
   if (article['type'] !== 'article' || article['isArchived'] || article['state'] !== 'published' || !isPublicRole(article['roleNeeded'])) return undefined;
+  if (!Array.isArray(article['tenants']) || !article['tenants'].includes(siteKey)) return undefined;
   const slug = articleSlug(section);
   try {
     return slug ? `${origin}/news-artikel?slug=${encodeURIComponent(slug)}` : undefined;

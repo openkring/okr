@@ -5,7 +5,7 @@ import type { MailEventLine } from '@okr/shared-util-core';
 
 import { sanitizeEmailBody } from '../../pdf/sanitize';
 import { MAIL_SECTION_TEMPLATES } from './mail-section-templates';
-import { MAX_MAIL_EVENTS, mailButtonUrl, mailEventLimit, MailPageError, MailSection, renderMailPageContent } from './render-mail-page.logic';
+import { mailButtonUrl, MailPageError, MailSection, renderMailPageContent } from './render-mail-page.logic';
 
 async function render(order: string[], sections: MailSection[], events: Record<string, MailEventLine[]> = {}): Promise<string> {
   const { default: hb } = await import('handlebars');
@@ -188,20 +188,6 @@ describe('renderMailPageContent: intro and button of an article', () => {
   it('survives a second sanitize pass', async () => {
     const html = await render(['a'], [article('a', '', { intro: 'Vorab', introPosition: 'above', properties: { images: [], cta: { label: 'Mehr', url: '/club', style: 'secondary' } } })]);
     expect(await sanitizeEmailBody(html)).toBe(html);
-  });
-});
-
-describe('mailEventLimit', () => {
-  it('takes the section\'s maxEvents', () => expect(mailEventLimit({ maxEvents: 3 })).toBe(3));
-  it('rounds a fraction down', () => expect(mailEventLimit({ maxEvents: 3.7 })).toBe(3));
-  it('caps at MAX_MAIL_EVENTS', () => expect(mailEventLimit({ maxEvents: 50 })).toBe(MAX_MAIL_EVENTS));
-  it('falls back to the model default (5) without a usable value', () => {
-    expect(mailEventLimit(undefined)).toBe(5);
-    expect(mailEventLimit({})).toBe(5);
-    expect(mailEventLimit({ maxEvents: 0 })).toBe(5);
-    expect(mailEventLimit({ maxEvents: -2 })).toBe(5);
-    expect(mailEventLimit({ maxEvents: '7' })).toBe(5);
-    expect(mailEventLimit({ maxEvents: Number.NaN })).toBe(5);
   });
 });
 

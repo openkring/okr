@@ -14,3 +14,20 @@ export function mailTargetUrl(raw: unknown, appOrigin: string): string {
   if (!/^(https:\/\/[^\s/?#]|mailto:[^\s?]|tel:[^?]*\d)/i.test(url)) return '';
   return url.replace(/^[a-z]+/i, (scheme) => scheme.toLowerCase());
 }
+
+/**
+ * Whether a stored picture address can be shown in a Versand mail (spec 1.176): a storage path, or an https address. Not: no path, a
+ * path from the root, http, `data:` and other schemes, control characters, backslashes, text that is no valid unicode.
+ * One rule for the app's validation and the server's renderer.
+ */
+export function isMailPictureSource(raw: unknown): boolean {
+  const url = typeof raw === 'string' ? raw.trim() : '';
+  // eslint-disable-next-line no-control-regex -- rejecting control characters is the point
+  if (url === '' || url.startsWith('/') || /[\\\u0000-\u001f\u007f]/.test(url)) return false;
+  try {
+    encodeURIComponent(url);
+  } catch {
+    return false; // no valid unicode
+  }
+  return !/^[a-z][a-z\d+.-]*:/i.test(url) || /^https:\/\/[^\s/?#]/i.test(url);
+}

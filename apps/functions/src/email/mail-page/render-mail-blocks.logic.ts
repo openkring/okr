@@ -7,13 +7,13 @@ import {
   CAPTION_ALIGNS, CAPTION_POSITIONS, CAPTION_STYLES, IMAGE_LAYOUT_IDS, ImageActionType, ImageType, MAIL_BLOCK_TYPES, SLIDESHOW_EFFECTS,
   type ArticleBlock, type ArticleSlideshow, type BlockAlign, type CalloutTone, type ColumnContentBlock, type ImageConfig, type ImageStyle, type MailBlockType, type SpaceSize,
 } from '@okr/shared-models';
-import { buildImageCaption, isSafeLinkTarget, mailTargetUrl, toPixelNumber, type MailEventLine } from '@okr/shared-util-core';
+import { buildImageCaption, isSafeLinkTarget, mailEventLimit, mailTargetUrl, toPixelNumber, type MailEventLine } from '@okr/shared-util-core';
 
 import { mailColorOf, textColorOn, tintOf } from '../../_shared/brand-color';
 import { MAIL_BLOCK_TEMPLATES } from './mail-block-templates';
 import { pictureUrl, storedPictureUrl } from './mail-picture.logic';
 import { mailTextHtml } from './mail-text.logic';
-import { hasVisibleContent, mailEventLimit, MailPageError, P_MARGIN_REPEAT } from './render-mail-page.logic';
+import { hasVisibleContent, MailPageError, P_MARGIN_REPEAT } from './render-mail-page.logic';
 
 export type MailTarget = 'mail' | 'print';
 

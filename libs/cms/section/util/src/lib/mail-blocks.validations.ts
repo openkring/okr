@@ -1,12 +1,12 @@
 import { enforce, test } from 'vest';
 
 import { MAIL_BLOCK_TYPES, SECTION_CTA_STYLES, type MailBlock, type MailBlockType } from '@okr/shared-models';
-import { mailTargetUrl } from '@okr/shared-util-core';
+import { MAX_MAIL_EVENTS, isMailPictureSource, isSafeLinkTarget } from '@okr/shared-util-core';
 
 import { BLOCK_ALIGNS, CALLOUT_TONES, COLUMN_BLOCK_TYPES, SPACE_SIZES, hasImageUrl, isObject, type Loose } from './article-block.util';
 import { ARTICLE_BLOCKS_MAX } from './article-blocks.validations';
 import { areColumns, check, checkImage, checkImageStyle, checkOneOf, columnLists, haveOwnIds } from './block-checks';
-import { MAIL_EVENTS_MAX } from './mail-block-parts';
+import { isMailTarget } from './mail-block-parts';
 
 /** Without a value the block is incomplete. */
 function checkRequired(field: string, ok: boolean): void {
@@ -18,25 +18,16 @@ function checkRequired(field: string, ok: boolean): void {
 const isText = (value: unknown): value is string => typeof value === 'string';
 const isFilled = (value: unknown): boolean => isText(value) && value.trim() !== '';
 
-/**
- * A picture address that the mail can show: the rule of the server's `storedPictureUrl` (functions, mail-picture.logic.ts,
- * which an app cannot import).
- */
-function isMailPictureUrl(raw: unknown): boolean {
-  const url = isText(raw) ? raw.trim() : '';
-  // eslint-disable-next-line no-control-regex -- rejecting control characters is the point
-  if (url === '' || url.startsWith('/') || /[\\\u0000-\u001f\u007f]/.test(url)) return false;
-  try {
-    encodeURIComponent(url);
-  } catch {
-    return false;    // no valid unicode
-  }
-  return !/^[a-z][a-z\d+.-]*:/i.test(url) || /^https:\/\/[^\s/?#]/i.test(url);
-}
-
 function checkPicture(field: string, image: unknown): void {
   checkImage(field, image);
-  if (hasImageUrl(image)) check(`${field}.url`, isMailPictureUrl((image as Loose)['url']));
+  if (!isObject(image)) return;
+  if (hasImageUrl(image)) check(`${field}.url`, isMailPictureSource(image['url']));
+  // an unsafe link has its error from checkImage; any other that a mail cannot open would be lost silently
+  if (isFilled(image['actionUrl']) && isSafeLinkTarget(image['actionUrl'])) {
+    test(`${field}.actionUrl`, '@cms/section/feature.validation.imageLink', () => {
+      enforce(isMailTarget(image['actionUrl'])).isTruthy();
+    });
+  }
 }
 
 /** What a click does and how far it zooms are no settings of a mail: stored ones are ignored, so they are no error either. */
@@ -69,8 +60,7 @@ function checkContent(type: MailBlockType, block: Loose, f: (name: string) => st
     case 'button': {
       const cta = isObject(block['cta']) ? block['cta'] : {};
       check(f('cta.label'), isFilled(cta['label']));
-      // a website page or an anchor means nothing in a mail; any origin will do, only the form counts
-      check(f('cta.url'), mailTargetUrl(cta['url'], 'https://app') !== '');
+      check(f('cta.url'), isMailTarget(cta['url']));
       checkOneOf(f('cta.style'), cta['style'], SECTION_CTA_STYLES);
       checkOneOf(f('align'), block['align'], BLOCK_ALIGNS);
       break;
@@ -82,7 +72,7 @@ function checkContent(type: MailBlockType, block: Loose, f: (name: string) => st
       const max = block['maxEvents'];
       checkRequired(f('calendarKey'), isFilled(block['calendarKey']));
       check(f('title'), block['title'] === undefined || isText(block['title']));
-      check(f('maxEvents'), Number.isInteger(max) && (max as number) >= 1 && (max as number) <= MAIL_EVENTS_MAX);
+      check(f('maxEvents'), Number.isInteger(max) && (max as number) >= 1 && (max as number) <= MAX_MAIL_EVENTS);
       break;
     }
     case 'columns':

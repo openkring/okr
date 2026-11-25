@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { mailTargetUrl } from './mail-target.util';
+import { isMailPictureSource, mailTargetUrl } from './mail-target.util';
 
 const ORIGIN = 'https://app.example.ch';
 
@@ -38,4 +38,17 @@ describe('mailTargetUrl', () => {
   ])('refuses %j', (url) => expect(mailTargetUrl(url, ORIGIN)).toBe(''));
 
   it.each([undefined, null, 42, {}, ['https://a.ch']])('refuses %j, which is no text', (url) => expect(mailTargetUrl(url, ORIGIN)).toBe(''));
+});
+
+describe('isMailPictureSource', () => {
+  it.each([
+    'tenant/scs/a.jpg', ' tenant/a.jpg ', 'tenant/scs/ä b?#%.jpg', 'assets/a.jpg', 'a', 'https://a.ch/a.jpg', 'HTTPS://a.ch/a.jpg', 'https://a.ch/a b.jpg', 'https://a.ch/a.jpg?w=1#x', '1a:b',
+  ])('accepts %j', (url) => expect(isMailPictureSource(url)).toBe(true));
+
+  it.each([
+    '', '   ', '/a.jpg', '//a.ch/a.jpg', 'http://a.ch/a.jpg', 'HTTP://a.ch/a.jpg', 'data:image/png;base64,x', 'javascript:alert(1)', 'blob:x', 'tenant:a', 'https:', 'https://', 'https:///a.jpg',
+    'https://?x', 'https://#a', 'https:// a.jpg', 'https:a.ch', 'https://a.ch/\\a.jpg', 'tenant\\a.jpg', 'tenant/a\u0001.jpg', 'tenant/a\n.jpg', 'tenant/\u007f.jpg', 'tenant/\ud800.jpg', 'https://a.ch/\udc00',
+  ])('refuses %j', (url) => expect(isMailPictureSource(url)).toBe(false));
+
+  it.each([undefined, null, 42, {}, ['tenant/a.jpg']])('refuses %j, which is no text', (url) => expect(isMailPictureSource(url)).toBe(false));
 });

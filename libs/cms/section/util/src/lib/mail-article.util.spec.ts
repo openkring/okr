@@ -99,6 +99,18 @@ describe('mailBlocksFromArticle', () => {
       .toEqual([{ id: 'n1', type: 'image', image: image('a.jpg', { actionUrl: '/club' }), imageStyle }]);
   });
 
+  it.each(['https://a.ch/x', ' /club ', 'mailto:a@b.ch', 'tel:+41'])('keeps the link %s of a picture', (actionUrl) => {
+    const imageStyle = { action: ImageActionType.FollowLink };
+    const [made] = blocksOf(article({ blocks: [{ id: 'a', type: 'gallery', images: [image('a.jpg', { actionUrl })], imageStyle }] })) as { images: { actionUrl: string }[] }[];
+    expect(made.images[0].actionUrl).toBe(actionUrl.trim());
+  });
+
+  it.each(['club.html', '#top', '#', 'www.a.ch', '//evil.org', 'http://a.ch', 'javascript:alert(1)', 'data:x', 'mailto:', 'tel:', '/a\\b', 'https://', '/club\u007f', 5, undefined])('drops the link %j of a picture, which a mail cannot open', (actionUrl) => {
+    const imageStyle = { action: ImageActionType.FollowLink };
+    const section = article({ blocks: [{ id: 'a', type: 'image', image: image('a.jpg', { actionUrl }), imageStyle }, { id: 'b', type: 'gallery', images: [image('b.jpg', { actionUrl })], imageStyle }] });
+    expect(blocksOf(section)).toMatchObject([{ image: image('a.jpg') }, { images: [image('b.jpg')] }]);
+  });
+
   it('keeps an unknown block, also in a column: it is an error to fix', () => {
     const section = article({ blocks: [{ id: 'v', type: 'video', src: { a: [1] } }, { id: 'c', type: 'columns', columns: [{ size: 6, blocks: [{ id: 'w', type: 'video' }] }, { size: 6, blocks: [] }] }] });
     const result = blocksOf(section);
@@ -235,12 +247,13 @@ describe('newsArticleUrl', () => {
     expect(url({ roleNeeded: 'none' })).toBe('https://seeclub.org/news-artikel?slug=news1');
     expect(url({ name: 'ä b&c?' })).toBe('https://seeclub.org/news-artikel?slug=%C3%A4%20b%26c%3F');
     expect(url({ name: '' })).toBe('https://seeclub.org/news-artikel?slug=a1');
-    expect(url({}, { okey: 'la21staefa', domain: ' https://la21staefa.ch// ' })).toBe('https://la21staefa.ch/news-artikel?slug=news1');
+    expect(url({ tenants: ['p13', 'scs'] })).toBe('https://seeclub.org/news-artikel?slug=news1');
+    expect(url({ tenants: ['la21staefa'] }, { okey: 'la21staefa', domain: ' https://la21staefa.ch// ' })).toBe('https://la21staefa.ch/news-artikel?slug=news1');
   });
 
   it.each([
     { state: 'draft' }, { state: undefined }, { isArchived: true }, { roleNeeded: 'registered' }, { roleNeeded: '' }, { roleNeeded: undefined }, { roleNeeded: 'anonymous' },
-    { type: 'hero' }, { name: '', okey: '' }, { name: '\ud800' },
+    { type: 'hero' }, { name: '', okey: '' }, { name: '\ud800' }, { tenants: ['p13'] }, { tenants: ['system'] }, { tenants: [] }, { tenants: undefined }, { tenants: 'scs' },
   ])('there is none for %j', (rest) => expect(url(rest)).toBeUndefined());
 
   it.each([undefined, null, {}, { okey: 'p13', domain: 'https://p13.ch' }, { okey: 'scs' }, { okey: 'scs', domain: '' }, { okey: 'scs', domain: 'http://seeclub.org' }, { okey: 'scs', domain: 'seeclub.org' }, { okey: 'scs', domain: 5 }, { okey: 'scs', domain: 'https://' }])(

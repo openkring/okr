@@ -1,7 +1,8 @@
 import {
-  ARTICLE_BLOCK_TYPES, CAPTION_POSITIONS, EVENTS_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, ImageActionType, ImageType,
+  ARTICLE_BLOCK_TYPES, CAPTION_POSITIONS, IMAGE_STYLE_SHAPE, ImageActionType, ImageType,
   type ArticleBlockType, type BlockAlign, type CalloutTone, type ColumnContentBlock, type ImageConfig, type ImageStyle, type MailBlock, type SectionCta, type TextBlock,
 } from '@okr/shared-models';
+import { mailTargetUrl } from '@okr/shared-util-core';
 
 import { BLOCK_ALIGNS, SPACE_SIZES, isObject, type Loose } from './article-block.util';
 import type { NewId } from './article-editor.util';
@@ -83,13 +84,18 @@ function followsLink(style: unknown): boolean {
   return objectOf(style)['action'] === ImageActionType.FollowLink;
 }
 
-/** The picture with all its texts; a link that readers of the article cannot follow stays behind. */
+/** Whether a mail can open the target (any origin will do, only the form counts). */
+export function isMailTarget(url: unknown): boolean {
+  return mailTargetUrl(url, 'https://app') !== '';
+}
+
+/** The picture with all its texts; a link that readers of the article cannot follow, or that a mail cannot open, stays behind. */
 export function mailImage(value: unknown, style: unknown): ImageConfig {
   const image = objectOf(value);
   const type = image['type'];
   return {
     label: str(image['label']), type: typeof type === 'number' && type in ImageType ? type : ImageType.Image, url: str(image['url']),
-    actionUrl: followsLink(style) ? str(image['actionUrl']) : '', altText: str(image['altText']), overlay: str(image['overlay']),
+    actionUrl: followsLink(style) && isMailTarget(image['actionUrl']) ? str(image['actionUrl']) : '', altText: str(image['altText']), overlay: str(image['overlay']),
     documentKey: str(image['documentKey']), credit: str(image['credit']),
   };
 }
@@ -131,13 +137,6 @@ function alignOf(block: Loose): { align?: BlockAlign } {
 /** A mail has two tones; a stored one that is unknown is neutral, as readers draw it. */
 function mailTone(tone: unknown): CalloutTone {
   return tone === 'primary' || tone === 'secondary' || tone === 'tertiary' ? 'primary' : 'neutral';
-}
-
-/** The most events a mail lists, and what an unusable number means: the rule of the old mails (functions, `mailEventLimit`). */
-export const MAIL_EVENTS_MAX = 10;
-export function mailEventNumber(stored: unknown): number {
-  const wanted = typeof stored === 'number' && Number.isFinite(stored) && stored >= 1 ? Math.floor(stored) : EVENTS_CONFIG_SHAPE.maxEvents;
-  return Math.min(wanted, MAIL_EVENTS_MAX);
 }
 
 /** The stored sizes when they fill the 12 columns, else equal ones, as readers draw them. */

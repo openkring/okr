@@ -103,6 +103,12 @@ describe('mailBlocksFromSections', () => {
     expect(convert([old({}, { ...content('<p>x</p>'), isArchived: true })])).toEqual([]);
   });
 
+  it.each([['', '/club'], [' ', '/club'], [5, '/club'], ['Los', ''], ['Los', 'club.html'], ['Los', '#top'], ['Los', 'http://a.ch'], ['Los', 'javascript:x'], ['Los', undefined]])(
+    'leaves out the button %j to %j of an article, which the old mail did not draw', (label, url) => expect(convert([old({ cta: { label, url, style: 'primary' } }, content('<p>x</p>'))])).toEqual([{ id: 'n1', type: 'text', html: '<p>x</p>' }]));
+
+  it.each(['https://a.ch', 'mailto:a@b.ch', 'tel:1', '/club'])('keeps the button to %s of an article', (url) =>
+    expect(convert([old({ cta: { label: 'Los', url, style: 'primary' } })])).toEqual([{ id: 'n1', type: 'button', cta: { label: 'Los', url, style: 'primary' } }]));
+
   it('keeps several pictures as a gallery, a hidden one as an image, one without address to be fixed', () => {
     expect(convert([old({ images: [image('a.jpg'), { url: '' }, image('b.jpg')], imageLayout: 'mosaic' }, content('', ViewPosition.None))]))
       .toEqual([{ id: 'n1', type: 'gallery', images: [image('a.jpg'), image('b.jpg')] }]);
