@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
 import { MAIL_SECTION_TYPES } from '@okr/shared-models';
+import type { MailEventLine } from '@okr/shared-util-core';
 
 import { sanitizeEmailBody } from '../../pdf/sanitize';
 import { MAIL_SECTION_TEMPLATES } from './mail-section-templates';
-import { MAX_MAIL_EVENTS, mailButtonUrl, mailEventLimit, MailEventLine, MailPageError, MailSection, renderMailPageContent } from './render-mail-page.logic';
+import { MAX_MAIL_EVENTS, mailButtonUrl, mailEventLimit, MailPageError, MailSection, renderMailPageContent } from './render-mail-page.logic';
 
 async function render(order: string[], sections: MailSection[], events: Record<string, MailEventLine[]> = {}): Promise<string> {
   const { default: hb } = await import('handlebars');

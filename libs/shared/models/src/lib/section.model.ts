@@ -565,7 +565,15 @@ export interface ColumnsBlock extends BaseArticleBlock {
   stackReverse?: boolean;        // stacked on the phone: last column first. Absent = first column first
 }
 
+/** The events block of a Versand mail page (spec 1.176): the next events of a calendar. Mail pages only, never part of an article. */
+export interface EventsBlock { id: string; type: 'events'; calendarKey: string; title?: string; maxEvents: number }
+
+/** The blocks of a Versand mail page: the free article blocks plus the events block. */
+export const MAIL_BLOCK_TYPES = [...ARTICLE_BLOCK_TYPES, 'events'] as const;
+export type MailBlockType = (typeof MAIL_BLOCK_TYPES)[number];
+
 export type ArticleBlock = TextBlock | ImageBlock | GalleryBlock | ButtonBlock | ColumnsBlock | CalloutBlock | DividerBlock | SpaceBlock;
+export type MailBlock = ArticleBlock | EventsBlock;
 
 // --------------------------------------- BUTTON ----------------------------------------
 export interface ButtonSection extends BaseSection {

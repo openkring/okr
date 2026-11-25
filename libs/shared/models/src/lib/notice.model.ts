@@ -1,5 +1,6 @@
 import { DEFAULT_KEY, DEFAULT_TENANTS } from '@okr/shared-constants';
 import { OkrModel } from './base.model';
+import type { ArticleBlock } from './section.model';
 
 /** A file attached to a notice. It lives in Storage and is opened through `getNoticeAttachment` only. */
 export interface NoticeAttachment {
@@ -24,6 +25,8 @@ export class NoticeModel implements OkrModel {
   public subject = '';
   /** The message body as HTML, sanitised on the server. */
   public body = '';
+  /** The Versand's blocks (spec 1.176), when it was written in the block editor; `body` then holds the rendered HTML. Absent on older notices. */
+  public blocks?: ArticleBlock[];
   public attachments: NoticeAttachment[] = [];
   /** personKeys of the persons the notice was sent to. */
   public recipients: string[] = [];

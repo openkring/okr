@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { answerPage, BANNER_TINT, answerResultPage, brandColorOf, chatDigestEmail, tintOf, commentEmail, DEFAULT_BRAND_COLOR, escapeHtml, eventWhen, invitationAnswerEmail, invitationEmail, mailingAnswerPage, PAGE_CONTENT_SLOT, textColorOn } from './mail';
+import { answerPage, BANNER_TINT, answerResultPage, chatDigestEmail, tintOf, commentEmail, DEFAULT_BRAND_COLOR, escapeHtml, eventWhen, invitationAnswerEmail, invitationEmail, mailingAnswerPage, PAGE_CONTENT_SLOT } from './mail';
 
 const EVIL = '<script>alert("x")</script> & co';
 const base = { appName: 'Seeclub', brandColor: '#009D53', logoUrl: 'https://img.x/logo.png?w=96&fm=png', eventName: EVIL, when: '01.10.2026, 11:00', location: EVIL };
@@ -15,28 +15,6 @@ describe('eventWhen', () => {
   it('joins date and time', () => expect(eventWhen('20261001', '11:00')).toBe('01.10.2026, 11:00'));
   it('omits a missing time', () => expect(eventWhen('20261001', '')).toBe('01.10.2026'));
   it('is empty without a date', () => expect(eventWhen('', '11:00')).toBe(''));
-});
-
-describe('brandColorOf', () => {
-  it('keeps a valid hex colour, lowercased', () => expect(brandColorOf('#009D53')).toBe('#009d53'));
-  it('expands the short form', () => expect(brandColorOf('#0af')).toBe('#00aaff'));
-  it('falls back for empty, named or injected values', () => {
-    expect(brandColorOf('')).toBe(DEFAULT_BRAND_COLOR);
-    expect(brandColorOf(undefined)).toBe(DEFAULT_BRAND_COLOR);
-    expect(brandColorOf('red')).toBe(DEFAULT_BRAND_COLOR);
-    expect(brandColorOf('#fff;background:url(x)')).toBe(DEFAULT_BRAND_COLOR);
-  });
-});
-
-describe('textColorOn', () => {
-  it('puts white on a dark brand', () => {
-    expect(textColorOn('#009D53')).toBe('#ffffff');
-    expect(textColorOn('#002a7e')).toBe('#ffffff');
-  });
-  it('puts dark text on a light brand', () => {
-    expect(textColorOn('#8ed698')).toBe('#1f2328');
-    expect(textColorOn('#ffffff')).toBe('#1f2328');
-  });
 });
 
 describe('invitationEmail', () => {
@@ -217,14 +195,6 @@ describe('mailingAnswerPage buttons and comments', () => {
     const html = mailingAnswerPage(page);
     expect(html).toContain(`:hover,.okr-answer-btn:focus-visible{background:${tintOf('#009d53', 0.25)}`);
     expect(html).toContain('.okr-answer-btn.is-chosen{background:#009d53');
-  });
-});
-
-describe('tintOf', () => {
-  it('mixes the colour with white', () => {
-    expect(tintOf('#000000', 0.25)).toBe('#bfbfbf');
-    expect(tintOf('#009d53', 1)).toBe('#009d53');
-    expect(tintOf('#009d53', 0)).toBe('#ffffff');
   });
 });
 

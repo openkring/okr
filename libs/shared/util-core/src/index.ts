@@ -35,6 +35,7 @@ export * from './lib/calevent-attendance.util';
 export * from './lib/invitation.util';
 export * from './lib/location-avatar.util';
 export * from './lib/log.util';
+export * from './lib/mail-events.util';
 export * from './lib/popover.util';
 export * from './lib/membership.util';
 export * from './lib/photo-declaration.util';

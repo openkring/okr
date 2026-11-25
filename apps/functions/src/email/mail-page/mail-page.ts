@@ -7,11 +7,11 @@ import { getFirestore } from 'firebase-admin/firestore';
 
 import { CalEventCollection, MailPageCollection, MailPageSectionCollection } from '@okr/shared-models';
 import type { CalEventModel, MailPageModel } from '@okr/shared-models';
-import { DateFormat, getTodayStr, publicAppOrigin } from '@okr/shared-util-core';
+import { DateFormat, getTodayStr, publicAppOrigin, upcomingEventLines, type MailEventLine } from '@okr/shared-util-core';
 
 import { sanitizeEmailBody } from '../../pdf/sanitize';
-import { isReapableDraft, mailPageRefusal, upcomingEventLines } from './mail-page.logic';
-import { MAX_MAIL_EVENTS, MailPageError, renderMailPageContent, type MailEventLine, type MailSection } from './render-mail-page.logic';
+import { isReapableDraft, mailPageRefusal } from './mail-page.logic';
+import { MAX_MAIL_EVENTS, MailPageError, renderMailPageContent, type MailSection } from './render-mail-page.logic';
 
 const REFUSAL_TEXT = {
   'not-found': 'Die Mailseite existiert nicht.',

@@ -1,6 +1,7 @@
 import { DEFAULT_BLOG_TYPE, DEFAULT_CONTENT_STATE, DEFAULT_INDEX, DEFAULT_KEY, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PAGE_TYPE, DEFAULT_SECTIONS, DEFAULT_TAGS, DEFAULT_TENANTS, DEFAULT_TITLE } from '@okr/shared-constants';
 import { OkrModel, MetaTag, NamedModel, SearchableModel, TaggedModel } from './base.model';
 import { DiaryWeather } from './diary.model';
+import type { EmailLayoutChoice } from './pdf-template.model';
 
 export type BlogLayoutType = 'minimal' | 'grid' | 'classic' | 'magazine' | 'bento' | 'stream';
 export const DEFAULT_BLOG_LAYOUT_TYPE: BlogLayoutType = DEFAULT_BLOG_TYPE;
@@ -65,6 +66,10 @@ export class MailPageModel extends PageModel {
   public groupKey?: string; // FK -> groups; the newsletter group, if any
   public mailingKey?: string; // FK -> mailings; set once the Versand was sent
   public createdAt = ''; // ISO timestamp
+  public subject?: string; // the subject line of the Versand
+  public layout?: EmailLayoutChoice; // the e-mail layout; absent = the tenant's default
+  public webVersion?: boolean; // offer «im Browser ansehen»
+  public changedAt?: string; // ISO timestamp of the last edit
 
   constructor(tenantId: string) {
     super(tenantId);

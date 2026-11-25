@@ -4,15 +4,13 @@
 // the caller reads the page and its sections, loads the event lines and passes Handlebars and the sanitizer.
 // The result goes into the layout's `{{{content}}}` slot exactly like a typed `body`.
 import type { MailSectionType } from '@okr/shared-models';
+import type { MailEventLine } from '@okr/shared-util-core';
 import { EVENTS_CONFIG_SHAPE, MAIL_SECTION_TYPES } from '@okr/shared-models';
 import { IMGIX_BASE, safeSiteUrl, toImgixUrl, type SectionDoc } from '@okr/cms-website-render';
 
 import { MAIL_SECTION_TEMPLATES } from './mail-section-templates';
 
 type HandlebarsEnv = typeof import('handlebars');
-
-/** One calendar event as an events section lists it; the strings are already formatted for the reader. */
-export interface MailEventLine { date: string; time: string; title: string; place: string }
 
 export type MailPageErrorCode = 'unknown-section-type' | 'no-content' | 'not-found' | 'foreign' | 'sent';
 
