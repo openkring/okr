@@ -342,7 +342,46 @@
         "keep": "Continuer la modification"
       },
       "openFailed": "L’éditeur n’a pas pu être ouvert. Vérifie ta connexion et réessaie.",
-      "notLinked": "L’article « {name} » est composé de blocs. Insère l’image dans l’article."
+      "notLinked": "L’article « {name} » est composé de blocs. Insère l’image dans l’article.",
+      "mail": {
+        "canvasLabel": "L'e-mail",
+        "canvasEmpty": "Cet e-mail est encore vide.",
+        "head": "En-tête du modèle",
+        "foot": "Pied du modèle",
+        "full": "Un e-mail peut contenir au maximum {max} blocs.",
+        "writeInMail": "Tu écris le texte directement dans l'e-mail.",
+        "brand": "Couleur de la marque",
+        "image": {
+          "missing": "Choisis une image. Sans image, tu ne peux pas envoyer l'e-mail.",
+          "fromMail": "De cet e-mail",
+          "pickEmpty": "Il n'y a pas d'autres images dans cet e-mail.",
+          "captionHidden": "La légende est masquée. Choisis où elle apparaît.",
+          "width": "Largeur"
+        },
+        "gallery": {
+          "missing": "Ajoute au moins une image. Sans image, tu ne peux pas envoyer l'e-mail."
+        },
+        "target": {
+          "placeholder": "https://… , mailto:… ou /page",
+          "helper": "Un site web (https), une adresse e-mail (mailto:), un numéro de téléphone (tel:) ou une page de l'application (/…)"
+        },
+        "events": {
+          "helper": "Les prochains événements de ce calendrier sont ajoutés lors de l'envoi.",
+          "calendar": "Calendrier",
+          "calendarMissing": "Choisis un calendrier. Sans calendrier, tu ne peux pas envoyer l'e-mail.",
+          "title": {
+            "label": "Titre",
+            "placeholder": "p. ex. Prochains événements"
+          },
+          "max": {
+            "label": "Nombre d'événements",
+            "helper": "1 à {max} événements"
+          },
+          "choose": "Aucun calendrier choisi",
+          "later": "Les prochains événements apparaissent ici.",
+          "none": "Il n'y a pas d'événements à venir dans ce calendrier pour le moment. Sans événements, ce bloc n'apparaît pas dans l'e-mail."
+        }
+      }
     }
   },
   "contract": {

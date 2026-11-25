@@ -16,7 +16,7 @@ import { copiedBlock, headerHtml, isMailTarget, isPicture, mailCta, mailImage, m
  * question; whether it can be sent is decided by `mailBlocksValidations`.
  */
 export function mailBlocksHaveContent(blocks: MailBlock[]): boolean {
-  return Array.isArray(blocks) && blocksInOrder(blocks as Parameters<typeof blocksInOrder>[0]).some((block) => hasContent(block as unknown as Loose));
+  return Array.isArray(blocks) && blocksInOrder(blocks).some((block) => hasContent(block as unknown as Loose));
 }
 
 function hasContent(block: Loose): boolean {

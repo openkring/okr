@@ -1,12 +1,13 @@
 import { staticSuite } from 'vest';
 import { describe, expect, it } from 'vitest';
 
-import { IMAGE_CONFIG_SHAPE, ImageActionType, MAIL_BLOCK_TYPES, type ArticleBlock, type ArticleConfig, type ArticleSection, type ImageConfig } from '@okr/shared-models';
+import { IMAGE_CONFIG_SHAPE, ImageActionType, MAIL_BLOCK_TYPES, type ArticleBlock, type ArticleConfig, type ArticleSection, type ImageConfig, type MailBlock } from '@okr/shared-models';
 
 import { articleBlocksValidations } from './article-blocks.validations';
 import {
   ARTICLE_BLOCK_ICONS, articleImageChoices, articleUses, coverErrors, drawableImages, galleryErrors, isPictureMissing, outdatedLanguagesOf, pickErrors, resizeColumn, restErrors, shownArticleFields, shownBlockFields, typingPath, uniqueFileName, withUpload,
 } from './article-panel.util';
+import { MAIL_PROFILE } from './editor-profile';
 import { blockErrors, type SectionErrors } from './section-errors';
 
 const image = (url: string, more: Partial<ImageConfig> = {}): ImageConfig => ({ ...IMAGE_CONFIG_SHAPE, url, ...more });
@@ -323,5 +324,45 @@ describe('outdatedLanguagesOf', () => {
     const paths = { 'blocks.a.htmlI18n': ['en', 'fr'], 'blocks.a.cta.labelI18n': ['en'], 'blocks.ab.htmlI18n': ['it'], titleI18n: ['es'] };
     expect(outdatedLanguagesOf(paths, 'a')).toEqual(['en', 'fr']);
     expect(outdatedLanguagesOf(paths, 'b')).toEqual([]);
+  });
+});
+
+describe('what the panel of a mail shows', () => {
+  const ok = image('tenant/t/1.jpg');
+  const shown = (block: object): string[] => shownBlockFields(block as MailBlock, MAIL_PROFILE);
+
+  it.each([
+    ['text', { type: 'text' }, ['align', 'html']],
+    ['callout', { type: 'callout' }, ['tone', 'html']],
+    ['button', { type: 'button' }, ['align', 'cta.label', 'cta.url']],
+    ['columns', { type: 'columns' }, ['columns']],
+    ['space', { type: 'space' }, ['size']],
+    ['divider', { type: 'divider' }, []],
+    ['events', { type: 'events' }, ['calendarKey', 'title', 'maxEvents']],
+    // the width, and nothing of a look card, which a mail does not have
+    ['image', { type: 'image', image: ok, imageStyle: { isThumbnail: true, action: ImageActionType.Zoom } }, ['images[', 'image.', 'width', 'imageStyle.width']],
+    ['image without a picture', { type: 'image', image: image('') }, ['images[', 'image.']],
+    ['gallery: the pictures only', { type: 'gallery', images: [ok, ok], layout: 'pair', slideshow: {} }, ['images', 'images[']],
+    ['gallery without pictures', { type: 'gallery', images: [] }, ['images', 'images[']],
+    ['unknown', { type: 'video' }, []],
+  ])('%s', (_name, block, expected) => {
+    expect(shown({ id: 'b', ...block })).toEqual(expected);
+  });
+
+  it('events have no field in the panel of an article', () => {
+    expect(shownBlockFields({ id: 'b', type: 'events', calendarKey: '', maxEvents: 5 })).toEqual([]);
+  });
+
+  it('the number and the title of events are typed', () => {
+    const before = { id: 'e', type: 'events', calendarKey: 'k', maxEvents: 5 };
+    expect(typingPath(before, { ...before, title: 'x' })).toBe('title');
+    expect(typingPath(before, { ...before, maxEvents: 6 })).toBe('maxEvents');
+    expect(typingPath(before, { ...before, calendarKey: 'o' })).toBeUndefined();
+  });
+
+  it('a picture and its upload stand beside events', () => {
+    const blocks = [{ id: 'e', type: 'events', calendarKey: 'k', maxEvents: 5 }, { id: 'b', type: 'image', image: image('') }];
+    const next = withUpload(article({ blocks: blocks as unknown as ArticleConfig['blocks'] }), { kind: 'images', place: { blockId: 'b' }, images: [ok] });
+    expect(next.properties.blocks).toEqual([blocks[0], { id: 'b', type: 'image', image: ok }]);
   });
 });

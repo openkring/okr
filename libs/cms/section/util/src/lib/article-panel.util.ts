@@ -1,8 +1,9 @@
-import { ImageActionType, SLIDESHOW_EFFECTS, articleBlocksOf, blockImages, type ArticleBlock, type ArticleColumn, type ArticleSection, type ImageConfig, type MailBlockType, type SectionModel } from '@okr/shared-models';
+import { ImageActionType, SLIDESHOW_EFFECTS, articleBlocksOf, blockImages, type ArticleBlock, type ArticleColumn, type ArticleSection, type ImageConfig, type MailBlock, type MailBlockType, type SectionModel } from '@okr/shared-models';
 import { resolveImageStyle, sanitizeFileName, suffixFileName } from '@okr/shared-util-core';
 
 import { hasImageUrl, isObject, type Loose } from './article-block.util';
 import { findBlock, replaceBlock } from './article-editor.util';
+import { ARTICLE_PROFILE, type EditorProfile } from './editor-profile';
 import { resolveImageLayout } from './image-layout.util';
 import { ARTICLE_IMAGES_SEGMENT_FIELDS, type SectionErrorEntry, type SectionErrors } from './section-errors';
 import { SLIDESHOW_DURATION_MAX, SLIDESHOW_DURATION_MIN, SLIDESHOW_INTERVAL_MAX, SLIDESHOW_INTERVAL_MIN } from './slideshow.util';
@@ -42,7 +43,7 @@ export function articleImageChoices(section: ArticleSection): ImageConfig[] {
 }
 
 /** An image or gallery block without a picture: readers see nothing of it. */
-export function isPictureMissing(block: ArticleBlock): boolean {
+export function isPictureMissing(block: MailBlock): boolean {
   if (block.type === 'image') return !hasImageUrl(block.image);
   return block.type === 'gallery' && !(Array.isArray(block.images) && block.images.some(hasImageUrl));
 }
@@ -155,7 +156,7 @@ export function resizeColumn(sizes: number[], index: number, size: number): numb
 /** The fields of the panel one types into. Everything else is chosen: each choice is a step of its own. */
 const TYPED_FIELDS: readonly string[] = [
   'title', 'subTitle', 'intro', 'name', 'notes', 'background', 'label', 'url', 'altText', 'overlay', 'actionUrl', 'credit',
-  'width', 'height', 'sizes', 'border', 'borderRadius', 'imgIxParams', 'captionSize', 'interval', 'duration', 'zoomFactor',
+  'width', 'height', 'sizes', 'border', 'borderRadius', 'imgIxParams', 'captionSize', 'interval', 'duration', 'zoomFactor', 'maxEvents',
 ];
 
 function leaves(value: unknown, path: string, out: Map<string, unknown>): Map<string, unknown> {
@@ -181,9 +182,9 @@ export function typingPath(before: unknown, after: unknown): string | undefined 
 /**
  * The error names that the panel of this block shows at a field **as it is drawn now** (see `restErrors`): okr-image-style draws the zoom
  * factor only for that action and the slot only for a thumbnail, the look card needs a picture, the times of a slideshow need a
- * running one. Names as `blockErrors` and `galleryErrors` give them.
+ * running one. A picture of a mail has no look card, only its width. Names as `blockErrors` and `galleryErrors` give them.
  */
-export function shownBlockFields(block: ArticleBlock): string[] {
+export function shownBlockFields(block: MailBlock, profile: EditorProfile = ARTICLE_PROFILE): string[] {
   switch (block.type) {
     case 'text': return ['align', 'html'];
     case 'callout': return ['tone', 'html'];
@@ -191,14 +192,18 @@ export function shownBlockFields(block: ArticleBlock): string[] {
     case 'columns': return ['columns'];
     case 'space': return ['size'];
     // whatever concerns the picture stands under the list of one, at its field or in the note that there is none
-    case 'image': return ['images[', 'image.', ...(isPictureMissing(block) ? [] : shownStyleFields(block.imageStyle))];
+    case 'image': {
+      const style = profile.imageAction === 'link' ? ['width', 'imageStyle.width'] : shownStyleFields(block.imageStyle);
+      return ['images[', 'image.', ...(isPictureMissing(block) ? [] : style)];
+    }
     case 'gallery': {
       const images = drawableImages(block.images);
-      if (images.length === 0) return ['images', 'images['];
+      if (images.length === 0 || profile.galleryPairs) return ['images', 'images['];
       const slider = resolveImageLayout(block.layout, images.length) === 'slider';
       const slideshow = !slider ? [] : isObject(block.slideshow) ? ['slideshow.'] : ['slideshow.effect'];
       return ['images', 'images[', 'imageLayout', ...slideshow, ...shownStyleFields(block.imageStyle)];
     }
+    case 'events': return profile.types.includes('events') ? ['calendarKey', 'title', 'maxEvents'] : [];
     default: return [];
   }
 }
@@ -260,7 +265,7 @@ export function coverErrors(errors: SectionErrors | undefined): SectionErrors {
  * The errors of a gallery as `okr-article-images-config` names them: `layout` is its `imageLayout`, and the one error of a
  * slideshow stands at each of its fields that is wrong.
  */
-export function galleryErrors(errors: SectionErrors | undefined, block: ArticleBlock): SectionErrors {
+export function galleryErrors(errors: SectionErrors | undefined, block: MailBlock): SectionErrors {
   const { layout, slideshow, ...others } = errors ?? {};
   const out: SectionErrors = { ...others, ...(layout?.length ? { imageLayout: layout } : {}) };
   if (!slideshow?.length) return out;

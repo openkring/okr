@@ -342,7 +342,46 @@
         "keep": "Continue editing"
       },
       "openFailed": "The editor could not be opened. Check your connection and try again.",
-      "notLinked": "The article «{name}» is made of blocks. Please insert the image in the article."
+      "notLinked": "The article «{name}» is made of blocks. Please insert the image in the article.",
+      "mail": {
+        "canvasLabel": "The email",
+        "canvasEmpty": "This email is still empty.",
+        "head": "Header of the template",
+        "foot": "Footer of the template",
+        "full": "An email can have at most {max} blocks.",
+        "writeInMail": "You write the text directly in the email.",
+        "brand": "Brand colour",
+        "image": {
+          "missing": "Choose a picture. Without a picture you cannot send the email.",
+          "fromMail": "From this email",
+          "pickEmpty": "There are no other pictures in this email.",
+          "captionHidden": "The caption is hidden. Choose where it appears.",
+          "width": "Width"
+        },
+        "gallery": {
+          "missing": "Add at least one picture. Without a picture you cannot send the email."
+        },
+        "target": {
+          "placeholder": "https://… , mailto:… or /page",
+          "helper": "A website (https), an email address (mailto:), a phone number (tel:) or a page of the app (/…)"
+        },
+        "events": {
+          "helper": "The next events of this calendar are added when the email is sent.",
+          "calendar": "Calendar",
+          "calendarMissing": "Choose a calendar. Without a calendar you cannot send the email.",
+          "title": {
+            "label": "Title",
+            "placeholder": "e.g. Upcoming events"
+          },
+          "max": {
+            "label": "Number of events",
+            "helper": "1 to {max} events"
+          },
+          "choose": "No calendar chosen yet",
+          "later": "The next events appear here.",
+          "none": "There are no upcoming events in this calendar at the moment. Without events this block is left out of the email."
+        }
+      }
     }
   },
   "contract": {

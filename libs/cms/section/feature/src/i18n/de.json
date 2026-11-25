@@ -342,7 +342,46 @@
         "keep": "Weiter bearbeiten"
       },
       "openFailed": "Der Editor konnte nicht geöffnet werden. Prüfe deine Verbindung und versuche es noch einmal.",
-      "notLinked": "Der Artikel «{name}» besteht aus Blöcken. Bitte füge das Bild im Artikel ein."
+      "notLinked": "Der Artikel «{name}» besteht aus Blöcken. Bitte füge das Bild im Artikel ein.",
+      "mail": {
+        "canvasLabel": "Die E-Mail",
+        "canvasEmpty": "Diese E-Mail ist noch leer.",
+        "head": "Kopf der Vorlage",
+        "foot": "Fuss der Vorlage",
+        "full": "Eine E-Mail kann höchstens {max} Blöcke haben.",
+        "writeInMail": "Den Text schreibst du direkt in der E-Mail.",
+        "brand": "Markenfarbe",
+        "image": {
+          "missing": "Wähle ein Bild. Ohne Bild kannst du die E-Mail nicht senden.",
+          "fromMail": "Aus dieser E-Mail",
+          "pickEmpty": "In dieser E-Mail gibt es keine weiteren Bilder.",
+          "captionHidden": "Der Untertitel ist ausgeblendet. Wähle, wo er erscheint.",
+          "width": "Breite"
+        },
+        "gallery": {
+          "missing": "Füge mindestens ein Bild hinzu. Ohne Bild kannst du die E-Mail nicht senden."
+        },
+        "target": {
+          "placeholder": "https://… , mailto:… oder /seite",
+          "helper": "Eine Webseite (https), eine E-Mail-Adresse (mailto:), eine Telefonnummer (tel:) oder eine Seite der App (/…)"
+        },
+        "events": {
+          "helper": "Beim Senden werden die nächsten Anlässe dieses Kalenders eingesetzt.",
+          "calendar": "Kalender",
+          "calendarMissing": "Wähle einen Kalender. Ohne Kalender kannst du die E-Mail nicht senden.",
+          "title": {
+            "label": "Titel",
+            "placeholder": "z.B. Nächste Anlässe"
+          },
+          "max": {
+            "label": "Anzahl Anlässe",
+            "helper": "1 bis {max} Anlässe"
+          },
+          "choose": "Noch kein Kalender gewählt",
+          "later": "Hier stehen die nächsten Anlässe.",
+          "none": "In diesem Kalender stehen zurzeit keine Anlässe an. Ohne Anlässe fehlt dieser Block in der E-Mail."
+        }
+      }
     }
   },
   "contract": {

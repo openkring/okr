@@ -1,12 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
-import { ARTICLE_BLOCK_TYPES, ArticleBlock, IMAGE_CONFIG_SHAPE } from '@okr/shared-models';
+import { ARTICLE_BLOCK_TYPES, ArticleBlock, IMAGE_CONFIG_SHAPE, MailBlock } from '@okr/shared-models';
 
 import { ARTICLE_BLOCKS_MAX } from './article-blocks.validations';
 import {
   COLUMN_PRESETS, allowedTypesAt, blocksInOrder, canAddBlock, createBlock, duplicateBlock, findBlock, insertBlock, joinWithAbove,
   moveBlock, moveBlockBy, removeBlock, replaceBlock, setColumnCount, setColumnSizes,
 } from './article-editor.util';
+import { ARTICLE_PROFILE, MAIL_PROFILE } from './editor-profile';
 
 const text = (id: string, html = '<p>x</p>', o: object = {}) => ({ id, type: 'text', html, ...o }) as ArticleBlock;
 const image = (id: string) => ({ id, type: 'image', image: { ...IMAGE_CONFIG_SHAPE, url: id } }) as ArticleBlock;
@@ -357,5 +358,44 @@ describe('joinWithAbove', () => {
     expect(joinWithAbove([callout('k'), text('l')], 'l')).toBeUndefined();
     expect(joinWithAbove([text('a'), callout('k')], 'k')).toBeUndefined();
     expect(joinWithAbove([text('a'), text('b')], 'zz')).toBeUndefined();
+  });
+});
+
+describe('the blocks of a mail', () => {
+  const events = (id: string): MailBlock => ({ id, type: 'events', calendarKey: 'k', maxEvents: 5 });
+  const mail = (): MailBlock[] => [text('a'), events('e'), columns('c', [[text('x')], [image('y')]])];
+
+  it('may have events on the top level only; an article never has', () => {
+    expect(allowedTypesAt({}, MAIL_PROFILE)).toEqual([...ARTICLE_BLOCK_TYPES, 'events']);
+    expect(allowedTypesAt({ columnsId: 'c' }, MAIL_PROFILE)).toEqual(['text', 'image', 'button']);
+    expect(allowedTypesAt({}, ARTICLE_PROFILE)).toEqual(ARTICLE_BLOCK_TYPES);
+    expect(allowedTypesAt({ columnsId: 'c' }, ARTICLE_PROFILE)).toEqual(['text', 'image', 'button']);
+  });
+  it('are found, added, replaced, moved and removed like those of an article', () => {
+    expect(findBlock(mail(), 'e')).toEqual({ block: events('e'), place: { index: 1 } });
+    expect(blocksInOrder(mail()).map((b) => b.id)).toEqual(['a', 'e', 'c', 'x', 'y']);
+    expect(insertBlock(mail(), events('f'), { index: 0 })[0].id).toBe('f');
+    expect(replaceBlock(mail(), { ...events('e'), title: 'T' } as MailBlock)[1]).toMatchObject({ title: 'T' });
+    expect(moveBlockBy(mail(), 'e', -1).map((b) => b.id)).toEqual(['e', 'a', 'c']);
+    expect(moveBlock(mail(), 'e', { index: 2 }).map((b) => b.id)).toEqual(['a', 'c', 'e']);
+    expect(removeBlock(mail(), 'e').map((b) => b.id)).toEqual(['a', 'c']);
+    expect(canAddBlock(mail())).toBe(true);
+  });
+  it('have no events in a column, new or moved', () => {
+    const blocks = mail();
+    expect(insertBlock(blocks, events('f'), { columnsId: 'c', column: 0, index: 0 })).toBe(blocks);
+    expect(moveBlock(blocks, 'e', { columnsId: 'c', column: 0, index: 0 })).toBe(blocks);
+    expect(replaceBlock(blocks, events('x'))).toBe(blocks);
+  });
+  it('are duplicated with a new id, in a mail only', () => {
+    const copy = duplicateBlock(mail(), 'e', counter(), MAIL_PROFILE);
+    expect(copy?.blocks.map((b) => b.id)).toEqual(['a', 'e', 'n1', 'c']);
+    expect(copy).toMatchObject({ id: 'n1', copies: { e: 'n1' } });
+    expect(duplicateBlock(mail(), 'e', counter())).toBeUndefined();
+    expect(duplicateBlock([{ id: 'v', type: 'video' } as unknown as MailBlock], 'v', counter(), MAIL_PROFILE)).toBeUndefined();
+  });
+  it('texts below events: Backspace removes an empty one, joins nothing', () => {
+    expect(joinWithAbove([text('a'), events('e'), text('b', '<p>b</p>')] as MailBlock[], 'b')).toBeUndefined();
+    expect(joinWithAbove([text('a'), events('e'), text('b', '')] as MailBlock[], 'b')).toMatchObject({ id: 'a', joined: false });
   });
 });

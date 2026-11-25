@@ -1,4 +1,4 @@
-import { ArticleBlock, SectionType } from '@okr/shared-models';
+import { MailBlock, SectionType } from '@okr/shared-models';
 
 import { isObject } from './article-block.util';
 
@@ -246,12 +246,12 @@ export function getJournalInlineErrorFields(type: SectionType): string[] {
   }
 }
 
-// ---- the article editor (spec 1.175 §7.8): errors by block ----
+// ---- the article editor (spec 1.175 §7.8) and the one of a mail (1.176): errors by block ----
 
 const BLOCKS_PREFIX = 'blocks.';
 
 /** The ids of all blocks, columns' content included, in reading order (a columns block before its content). */
-function blockIdsInOrder(blocks: ArticleBlock[] | undefined): string[] {
+function blockIdsInOrder(blocks: MailBlock[] | undefined): string[] {
   const ids: string[] = [];
   const walk = (list: unknown): void => {
     if (!Array.isArray(list)) return;
@@ -282,7 +282,7 @@ function ownerOf(key: string, ids: string[]): { id: string; field: string } | un
  * look for are added: `imageStyle.width` also as `width`, `image.url` also as `images[0].url`. `blocks` is needed so an
  * id that is a prefix of another (`a` and `a.b`) does not take the other's errors.
  */
-export function blockErrors(errors: SectionErrors | undefined, id: string, blocks: ArticleBlock[]): SectionErrors {
+export function blockErrors(errors: SectionErrors | undefined, id: string, blocks: MailBlock[]): SectionErrors {
   const ids = [...new Set([...blockIdsInOrder(blocks), id])];
   const out: SectionErrors = {};
   for (const [key, messages] of Object.entries(errors ?? {})) {
@@ -297,7 +297,7 @@ export function blockErrors(errors: SectionErrors | undefined, id: string, block
 }
 
 /** The ids of the blocks that have an error, in reading order. */
-export function blockIdsWithErrors(errors: SectionErrors | undefined, blocks: ArticleBlock[]): string[] {
+export function blockIdsWithErrors(errors: SectionErrors | undefined, blocks: MailBlock[]): string[] {
   const ids = blockIdsInOrder(blocks);
   const withErrors = new Set<string>();
   for (const [key, messages] of Object.entries(errors ?? {})) {
@@ -312,7 +312,7 @@ export function blockIdsWithErrors(errors: SectionErrors | undefined, blocks: Ar
  * Everything that is not a known block's: the article's own fields, the `blocks` count / id errors, and a `blocks.*`
  * key that no block owns (an empty id in stored data), so such an error is never invisible.
  */
-export function articleOwnErrors(errors: SectionErrors | undefined, blocks: ArticleBlock[]): SectionErrors {
+export function articleOwnErrors(errors: SectionErrors | undefined, blocks: MailBlock[]): SectionErrors {
   const ids = blockIdsInOrder(blocks);
   return Object.fromEntries(Object.entries(errors ?? {}).filter(([key]) => !ownerOf(key, ids)));
 }

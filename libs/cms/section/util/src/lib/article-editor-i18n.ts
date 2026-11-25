@@ -1,11 +1,12 @@
 import type { Signal } from '@angular/core';
 
+import type { EditorProfile } from './editor-profile';
 import type { SectionI18n } from './section-i18n';
 
 const PFX = '@cms/section/feature.';
 
 /**
- * The texts of the article editor (spec 1.175): canvas, panel and modal. In a file of their own, not among SECTION_I18N_KEYS: those
+ * The texts of the article editor (spec 1.175): canvas, panel and modal; and what the editor of a Versand mail says differently. In a file of their own, not among SECTION_I18N_KEYS: those
  * are in the chunk of readers, and several section stores subscribe to every one of them. The editor resolves both:
  * `translateAll({ ...SECTION_I18N_KEYS, ...ARTICLE_EDITOR_I18N_KEYS }) as ArticleEditorI18n`.
  * A value in single braces is filled with `fill()` (`@okr/shared-util-core`).
@@ -131,6 +132,32 @@ export const ARTICLE_EDITOR_I18N_KEYS = {
   article_editor_discard_message:               PFX + 'article.editor.discard.message',
   article_editor_discard_confirm:               PFX + 'article.editor.discard.confirm',
   article_editor_discard_keep:                  PFX + 'article.editor.discard.keep',
+  // a Versand mail (spec 1.176); see `editorTexts`
+  article_editor_mail_canvasLabel:             PFX + 'article.editor.mail.canvasLabel',
+  article_editor_mail_canvasEmpty:             PFX + 'article.editor.mail.canvasEmpty',
+  article_editor_mail_head:                    PFX + 'article.editor.mail.head',
+  article_editor_mail_foot:                    PFX + 'article.editor.mail.foot',
+  article_editor_mail_full:                    PFX + 'article.editor.mail.full',
+  article_editor_mail_writeInMail:             PFX + 'article.editor.mail.writeInMail',
+  article_editor_mail_brand:                   PFX + 'article.editor.mail.brand',
+  article_editor_mail_image_missing:           PFX + 'article.editor.mail.image.missing',
+  article_editor_mail_image_fromMail:          PFX + 'article.editor.mail.image.fromMail',
+  article_editor_mail_image_pickEmpty:         PFX + 'article.editor.mail.image.pickEmpty',
+  article_editor_mail_image_captionHidden:     PFX + 'article.editor.mail.image.captionHidden',
+  article_editor_mail_image_width:             PFX + 'article.editor.mail.image.width',
+  article_editor_mail_gallery_missing:         PFX + 'article.editor.mail.gallery.missing',
+  article_editor_mail_target_placeholder:      PFX + 'article.editor.mail.target.placeholder',
+  article_editor_mail_target_helper:           PFX + 'article.editor.mail.target.helper',
+  article_editor_mail_events_helper:           PFX + 'article.editor.mail.events.helper',
+  article_editor_mail_events_calendar:         PFX + 'article.editor.mail.events.calendar',
+  article_editor_mail_events_calendarMissing:  PFX + 'article.editor.mail.events.calendarMissing',
+  article_editor_mail_events_title_label:      PFX + 'article.editor.mail.events.title.label',
+  article_editor_mail_events_title_placeholder:PFX + 'article.editor.mail.events.title.placeholder',
+  article_editor_mail_events_max_label:        PFX + 'article.editor.mail.events.max.label',
+  article_editor_mail_events_max_helper:       PFX + 'article.editor.mail.events.max.helper',
+  article_editor_mail_events_choose:           PFX + 'article.editor.mail.events.choose',
+  article_editor_mail_events_later:            PFX + 'article.editor.mail.events.later',
+  article_editor_mail_events_none:             PFX + 'article.editor.mail.events.none',
 } satisfies Record<string, string>;
 
 /** What panel, canvas and modal are given: the texts of the editor and those of the section forms whose parts they reuse. */
@@ -140,4 +167,28 @@ export type ArticleEditorI18n = SectionI18n & { [K in keyof typeof ARTICLE_EDITO
 export function blockTypeLabel(i18n: ArticleEditorI18n, type: string): string {
   const key = `article_editor_block_${type}`;
   return key in ARTICLE_EDITOR_I18N_KEYS ? i18n[key as keyof typeof ARTICLE_EDITOR_I18N_KEYS]() : i18n.article_editor_block_unknown();
+}
+
+/** What says «Artikel», or explains something that a mail does not have, and what a mail says instead. */
+const MAIL_TEXTS = {
+  article_editor_canvas_label: 'article_editor_mail_canvasLabel',
+  article_editor_canvas_empty: 'article_editor_mail_canvasEmpty',
+  article_editor_library_full: 'article_editor_mail_full',
+  article_editor_panel_writeInArticle: 'article_editor_mail_writeInMail',
+  article_editor_tone_primary: 'article_editor_mail_brand',
+  article_editor_image_missing: 'article_editor_mail_image_missing',
+  article_editor_image_fromArticle: 'article_editor_mail_image_fromMail',
+  article_editor_image_pickEmpty: 'article_editor_mail_image_pickEmpty',
+  article_editor_image_captionHidden: 'article_editor_mail_image_captionHidden',
+  article_editor_image_link_placeholder: 'article_editor_mail_target_placeholder',
+  article_editor_image_link_helper: 'article_editor_mail_target_helper',
+  article_editor_gallery_missing: 'article_editor_mail_gallery_missing',
+  cta_url_placeholder: 'article_editor_mail_target_placeholder',
+  cta_url_helper: 'article_editor_mail_target_helper',
+} as const satisfies Partial<Record<keyof ArticleEditorI18n, keyof typeof ARTICLE_EDITOR_I18N_KEYS>>;
+
+/** The texts for canvas and panel as the profile says them, under the same names; those of an article are the very object. */
+export function editorTexts(i18n: ArticleEditorI18n, profile: EditorProfile): ArticleEditorI18n {
+  if (profile.kind !== 'mail') return i18n;
+  return { ...i18n, ...Object.fromEntries(Object.entries(MAIL_TEXTS).map(([name, instead]) => [name, i18n[instead]])) };
 }

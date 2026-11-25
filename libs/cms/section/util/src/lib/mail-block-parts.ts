@@ -135,7 +135,7 @@ function alignOf(block: Loose): { align?: BlockAlign } {
 }
 
 /** A mail has two tones; a stored one that is unknown is neutral, as readers draw it. */
-function mailTone(tone: unknown): CalloutTone {
+export function mailTone(tone: unknown): CalloutTone {
   return tone === 'primary' || tone === 'secondary' || tone === 'tertiary' ? 'primary' : 'neutral';
 }
 

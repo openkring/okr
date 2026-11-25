@@ -342,7 +342,46 @@
         "keep": "Seguir editando"
       },
       "openFailed": "No se ha podido abrir el editor. Comprueba tu conexión e inténtalo de nuevo.",
-      "notLinked": "El artículo «{name}» está formado por bloques. Inserta la imagen en el artículo."
+      "notLinked": "El artículo «{name}» está formado por bloques. Inserta la imagen en el artículo.",
+      "mail": {
+        "canvasLabel": "El correo",
+        "canvasEmpty": "Este correo todavía está vacío.",
+        "head": "Cabecera de la plantilla",
+        "foot": "Pie de la plantilla",
+        "full": "Un correo puede tener como máximo {max} bloques.",
+        "writeInMail": "Escribes el texto directamente en el correo.",
+        "brand": "Color de la marca",
+        "image": {
+          "missing": "Elige una imagen. Sin imagen no puedes enviar el correo.",
+          "fromMail": "De este correo",
+          "pickEmpty": "No hay más imágenes en este correo.",
+          "captionHidden": "El pie de foto está oculto. Elige dónde aparece.",
+          "width": "Anchura"
+        },
+        "gallery": {
+          "missing": "Añade al menos una imagen. Sin imagen no puedes enviar el correo."
+        },
+        "target": {
+          "placeholder": "https://… , mailto:… o /pagina",
+          "helper": "Una página web (https), una dirección de correo (mailto:), un número de teléfono (tel:) o una página de la aplicación (/…)"
+        },
+        "events": {
+          "helper": "Al enviar se añaden los próximos eventos de este calendario.",
+          "calendar": "Calendario",
+          "calendarMissing": "Elige un calendario. Sin calendario no puedes enviar el correo.",
+          "title": {
+            "label": "Título",
+            "placeholder": "p. ej. Próximos eventos"
+          },
+          "max": {
+            "label": "Número de eventos",
+            "helper": "De 1 a {max} eventos"
+          },
+          "choose": "Todavía no has elegido un calendario",
+          "later": "Aquí aparecen los próximos eventos.",
+          "none": "En este momento no hay próximos eventos en este calendario. Sin eventos, este bloque no aparece en el correo."
+        }
+      }
     }
   },
   "contract": {

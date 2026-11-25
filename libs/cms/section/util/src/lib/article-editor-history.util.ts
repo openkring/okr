@@ -58,6 +58,12 @@ export function redo<T>(h: EditorHistory<T>): EditorHistory<T> {
 
 export interface ArticleEditorState { section: ArticleSection; selectedId?: string }
 
+/**
+ * A step of the editor of an article, or of a Versand mail (its `section` is the one of `mailArticle`). `copiedFrom` (copy → source,
+ * `prepareArticleForSave`) goes with it, so that an undone copy leaves none.
+ */
+export interface EditorState extends ArticleEditorState { copiedFrom: Record<string, string> }
+
 /** Keeps the selection only while the selected block exists (top level or inside a column). */
 export function withValidSelection(state: ArticleEditorState): ArticleEditorState {
   if (state.selectedId === undefined) return state;
