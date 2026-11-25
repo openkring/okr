@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { brandColorOf, DEFAULT_BRAND_COLOR, textColorOn, tintOf } from './brand-color';
+import { brandColorOf, DEFAULT_BRAND_COLOR, mailColorOf, textColorOn, tintOf } from './brand-color';
 
 describe('brandColorOf', () => {
   it('keeps a valid hex colour, lowercased', () => expect(brandColorOf('#009D53')).toBe('#009d53'));
@@ -32,3 +32,12 @@ describe('tintOf', () => {
   });
 });
 
+describe('mailColorOf', () => {
+  it('keeps a #rrggbb colour, lowercased', () => expect(mailColorOf('#014DA2')).toBe('#014da2'));
+  it('falls back to dark grey for anything unsafe', () => {
+    expect(mailColorOf('red;x')).toBe('#222222');
+    expect(mailColorOf('#0af')).toBe('#222222');
+    expect(mailColorOf(undefined)).toBe('#222222');
+    expect(mailColorOf(42)).toBe('#222222');
+  });
+});

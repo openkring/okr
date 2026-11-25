@@ -33,3 +33,8 @@ export function tintOf(color: string, share: number): string {
   };
   return `#${mix(1)}${mix(3)}${mix(5)}`;
 }
+
+/** A safe '#rrggbb' (lowercased) for a style attribute of a Versand mail; anything else is the dark grey `#222222`. */
+export function mailColorOf(brandColor: unknown): string {
+  return typeof brandColor === 'string' && /^#[0-9a-f]{6}$/i.test(brandColor) ? brandColor.toLowerCase() : '#222222';
+}

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { CalEventModel } from '@okr/shared-models';
 
-import { mailColorOf, upcomingEventLines } from './mail-events.util';
+import { upcomingEventLines } from './mail-events.util';
 
 function ev(name: string, startDate: string, startTime = '1900', extra: Partial<CalEventModel> = {}): CalEventModel {
   return { name, startDate, startTime, isArchived: false, locations: [], ...extra } as CalEventModel;
@@ -27,15 +27,5 @@ describe('upcomingEventLines', () => {
   });
   it('keeps an event of today', () => {
     expect(upcomingEventLines([ev('t', '20261122')], '20261122', 5)).toHaveLength(1);
-  });
-});
-
-describe('mailColorOf', () => {
-  it('keeps a #rrggbb colour, lowercased', () => expect(mailColorOf('#014DA2')).toBe('#014da2'));
-  it('falls back to dark grey for anything unsafe', () => {
-    expect(mailColorOf('red;x')).toBe('#222222');
-    expect(mailColorOf('#0af')).toBe('#222222');
-    expect(mailColorOf(undefined)).toBe('#222222');
-    expect(mailColorOf(42)).toBe('#222222');
   });
 });

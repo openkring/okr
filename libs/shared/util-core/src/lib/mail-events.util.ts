@@ -1,4 +1,4 @@
-// Pure helpers of a Versand mail page (spec 1.172, 1.176): the events block and the colour a mail may use.
+// Pure helper of a Versand mail page (spec 1.172, 1.176): the lines of the events block.
 import type { CalEventModel } from '@okr/shared-models';
 
 import { convertDateFormatToString, DateFormat } from './date.util';
@@ -25,9 +25,4 @@ export function upcomingEventLines(events: CalEventModel[], today: string, max: 
         place: loc ? (loc.label || loc.name1 || loc.name2 || '') : '',
       };
     });
-}
-
-/** A safe '#rrggbb' (lowercased) for a style attribute of a Versand mail; anything else is the dark grey `#222222`. */
-export function mailColorOf(brandColor: unknown): string {
-  return typeof brandColor === 'string' && /^#[0-9a-f]{6}$/i.test(brandColor) ? brandColor.toLowerCase() : '#222222';
 }
