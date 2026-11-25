@@ -12,11 +12,11 @@ import { MAIL_SECTION_TEMPLATES } from './mail-section-templates';
 
 type HandlebarsEnv = typeof import('handlebars');
 
-export type MailPageErrorCode = 'unknown-section-type' | 'no-content' | 'not-found' | 'foreign' | 'sent';
+export type MailPageErrorCode = 'unknown-section-type' | 'no-content' | 'not-found' | 'foreign' | 'sent' | 'unknown-block-type' | 'invalid-block';
 
-/** Why a mail page cannot be rendered or sent. `sendMailing` turns it into a clear refusal. */
+/** Why a mail page cannot be rendered or sent. `sendMailing` turns it into a clear refusal; `blockId` names the block at fault, if any. */
 export class MailPageError extends Error {
-  public constructor(message: string, public readonly code: MailPageErrorCode) {
+  public constructor(message: string, public readonly code: MailPageErrorCode, public readonly blockId?: string) {
     super(message);
     this.name = 'MailPageError';
   }
@@ -53,7 +53,7 @@ export function mailEventLimit(properties: unknown): number {
 const MAIL_IMAGE_WIDTH = 600;
 
 /** The sanitizer prepends this to every <p>; a fragment sanitized twice would carry it twice. */
-const P_MARGIN_REPEAT = /(margin:0 0 16px;)+(?=margin:0 0 16px)/g;
+export const P_MARGIN_REPEAT = /(margin:0 0 16px;)+(?=margin:0 0 16px)/g;
 
 function isMailSectionType(type: unknown): type is MailSectionType {
   return typeof type === 'string' && (MAIL_SECTION_TYPES as readonly string[]).includes(type);
@@ -68,16 +68,16 @@ function rec(v: unknown): Record<string, unknown> {
 }
 
 /** True when sanitized html shows anything: text other than whitespace, or an image. */
-function hasVisibleContent(html: string): boolean {
+export function hasVisibleContent(html: string): boolean {
   if (/<img\b/i.test(html)) return true;
   const text = html.replace(/<[^>]*>/g, '').replace(/&nbsp;|&#160;|&#xa0;/gi, ' ');
   return text.trim().length > 0;
 }
 
-/** An image path as an absolute https URL at mail width; `''` when there is none. */
-export function mailImageUrl(path: string): string {
+/** An image path as an absolute https URL at mail width (an imgix one at `width`); `''` when there is none. */
+export function mailImageUrl(path: string, width = MAIL_IMAGE_WIDTH): string {
   const url = toImgixUrl(path);
-  if (url.startsWith(`${IMGIX_BASE}/`)) return `${url}${url.includes('?') ? '&' : '?'}w=${MAIL_IMAGE_WIDTH}`;
+  if (url.startsWith(`${IMGIX_BASE}/`)) return `${url}${url.includes('?') ? '&' : '?'}w=${width}`;
   return url.startsWith('https://') ? url : '';
 }
 
