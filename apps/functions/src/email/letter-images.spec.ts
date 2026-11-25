@@ -13,7 +13,7 @@ const img = (src: string) => `<img src="${src}" alt="Boot" width="440" style="wi
 
 describe('embedLetterImages', () => {
   it('replaces the address of a picture by its bytes and nothing else', async () => {
-    const fetchImage = vi.fn(async (_url: string) => JPEG);
+    const fetchImage = vi.fn<(url: string) => Promise<Buffer>>(async () => JPEG);
     const html = `<p>Vorher &amp; «so»</p>${img(`${BASE}/tenant/scs/a.jpg?auto=compress,format=jpg&amp;w=880&amp;fit=max`)}<p>nachher</p>`;
     expect(await embedLetterImages(html, fetchImage)).toBe(`<p>Vorher &amp; «so»</p>${img(DATA)}<p>nachher</p>`);
     const asked = new URL(fetchImage.mock.calls[0][0]);
