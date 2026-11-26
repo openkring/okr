@@ -91,6 +91,7 @@
   "deleteConf": {
     "one": "Konto «{name}» wirklich löschen?",
     "tree": "«{name}» und die {count} Konten darunter wirklich löschen?",
-    "inUse": "«{name}» kann nicht gelöscht werden: auf dieses Konto (oder eines darunter) wurde bereits gebucht — {count} Buchungszeilen. Bitte zuerst die Buchungen umbuchen."
+    "inUse": "«{name}» kann nicht gelöscht werden: auf dieses Konto (oder eines darunter) wurde bereits gebucht — {count} Buchungszeilen. Bitte zuerst die Buchungen umbuchen.",
+    "countFailed": "«{name}» wird nicht gelöscht: gerade lässt sich nicht prüfen, ob auf dieses Konto gebucht wurde. Versuch es nochmals, wenn du wieder online bist."
   }
 }

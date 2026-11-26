@@ -91,6 +91,7 @@
   "deleteConf": {
     "one": "Eliminare davvero il conto «{name}»?",
     "tree": "Eliminare davvero «{name}» e i {count} conti sottostanti?",
-    "inUse": "«{name}» non può essere eliminato: su questo conto (o su uno sottostante) sono già state registrate scritture — {count} righe. Riassegna prima quelle scritture."
+    "inUse": "«{name}» non può essere eliminato: su questo conto (o su uno sottostante) sono già state registrate scritture — {count} righe. Riassegna prima quelle scritture.",
+    "countFailed": "«{name}» non viene eliminato: al momento non si può verificare se su questo conto ci sono scritture. Riprova quando sei di nuovo online."
   }
 }

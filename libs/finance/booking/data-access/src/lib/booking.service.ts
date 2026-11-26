@@ -76,6 +76,9 @@ function toWriteLine(line: BookingLineModel): Record<string, unknown> {
   };
 }
 
+/** `__name__ in [...]`: 15 keys × the two-value tenant filter = Firestore's 30 disjunctions. */
+const BOOKING_KEY_CHUNK = 15;
+
 /** Bookings per journal page (spec 1.102). */
 export const JOURNAL_PAGE_SIZE = 100;
 
@@ -140,15 +143,6 @@ export class BookingService {
     return this.firestoreService.searchData<BookingModel>(BookingCollection, query, orderBy, sortOrder);
   }
 
-  /** One-shot, consistent read (no cache-first race). Promise counterpart to {@link list}. */
-  public listOnce(accountingTenantId: string, orderBy = 'date', sortOrder = 'desc'): Promise<BookingModel[]> {
-    const query = [
-      ...getSystemQuery(this.tenantId),
-      { key: 'accountingTenantId', operator: '==' as const, value: accountingTenantId },
-    ];
-    return this.firestoreService.getDataOnce<BookingModel>(BookingCollection, query, orderBy, sortOrder);
-  }
-
   /** tenant + books filter, plus an optional date range ('' = open end) */
   private periodQuery(accountingTenantId: string, from: string, to: string, toExclusive = false): DbQuery[] {
     return [
@@ -181,6 +175,22 @@ export class BookingService {
       this.periodQuery(accountingTenantId, from, before, true), 'date', 'desc');
   }
 
+  /**
+   * The bookings with the given okeys (any status), e.g. the 2–8 bookings an invoice or a bill links (spec 1.177 R6).
+   * `__name__ in [...]`, 15 keys per read (× the two-value tenant filter = 30 disjunctions), in parallel. One-shot;
+   * rejects on a failed read. Keys of other books are not returned.
+   */
+  public async listByKeys(accountingTenantId: string, bookingKeys: string[]): Promise<BookingModel[]> {
+    const keys = [...new Set(bookingKeys.filter(k => !!k))];
+    const chunks: string[][] = [];
+    for (let i = 0; i < keys.length; i += BOOKING_KEY_CHUNK) chunks.push(keys.slice(i, i + BOOKING_KEY_CHUNK));
+    const parts = await Promise.all(chunks.map(chunk => this.firestoreService.getDataOnceStrict<BookingModel>(BookingCollection, [
+      ...this.periodQuery(accountingTenantId, '', ''),
+      { key: '__name__', operator: 'in', value: chunk },
+    ])));
+    return parts.flat();
+  }
+
   /** Bookings awaiting a treasurer decision, all years (the journal's badge); undefined when unreadable. */
   public countForReview(accountingTenantId: string): Promise<number | undefined> {
     return this.firestoreService.countOnce(BookingCollection, [
@@ -193,8 +203,8 @@ export class BookingService {
    * Treasurer decision on a `forReview` booking (spec 1.20).
    *
    * `bookings` / `booking-lines` are CF-write-only, so this goes through the `reviewBooking`
-   * callable. The CF assigns `bookingNo` inside its transaction — do NOT pre-compute it with
-   * {@link nextSequence} here, that races a concurrent approval. `tenantId` is derived
+   * callable. The CF assigns `bookingNo` inside its transaction (`allocateBookingNo`) — never compute
+   * it on the client, that races a concurrent approval. `tenantId` is derived
    * server-side from the caller and is deliberately not part of the payload.
    */
   public async reviewViaFunction(payload: ReviewBookingPayload): Promise<ReviewBookingResult> {
@@ -215,13 +225,4 @@ export class BookingService {
     return result.data as { bookingKey: string; bookingNo: number };
   }
 
-  public async nextSequence(year: number, accountingTenantId: string): Promise<number> {
-    const bookings = await this.listOnce(accountingTenantId);
-    const yearStr = String(year);
-    const maxNo = bookings
-      .filter(b => b.date?.startsWith(yearStr))
-      .map(b => b.bookingNo ?? 0)
-      .reduce((max, n) => Math.max(max, n), 0);
-    return maxNo + 1;
-  }
 }

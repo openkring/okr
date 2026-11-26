@@ -91,6 +91,7 @@
   "deleteConf": {
     "one": "Really delete the account «{name}»?",
     "tree": "Really delete «{name}» and the {count} accounts below it?",
-    "inUse": "«{name}» cannot be deleted: this account (or one below it) is already booked on — {count} booking lines. Please reassign those bookings first."
+    "inUse": "«{name}» cannot be deleted: this account (or one below it) is already booked on — {count} booking lines. Please reassign those bookings first.",
+    "countFailed": "«{name}» is not deleted: right now it cannot be checked whether this account has bookings. Try again when you are back online."
   }
 }

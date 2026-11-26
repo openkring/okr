@@ -60,19 +60,21 @@ export class BookingLineService {
   }
 
   /**
-   * How many booking lines of the accounting tenant book on one of the given accounts.
-   * One read of the tenant's lines plus an in-memory match: a Firestore `in` clause caps at 30
-   * values, and a deleted account subtree easily exceeds that.
+   * How many booking lines of the books are on one of the given accounts (spec 1.177 R11): server-side `count()`
+   * per 15 keys (`accountKey in [...]` × the two-value tenant filter = 30 disjunctions), summed. Reads no line.
+   * `undefined` when any count could not be read (offline, denied): the caller must treat that as «in use»,
+   * never as 0 — an account with bookings would otherwise be deletable.
    * @param accountKeys the account okeys to look for — an empty list is never in use.
    */
-  public async countByAccountKeys(accountingTenantId: string, accountKeys: string[]): Promise<number> {
-    if (accountKeys.length === 0) return 0;
-    const query = [
-      ...getSystemQuery(this.tenantId),
-      { key: 'accountingTenantId', operator: '==' as const, value: accountingTenantId },
-    ];
-    const lines = await this.firestoreService.getDataOnce<BookingLineModel>(BookingLineCollection, query, 'none');
-    const keys = new Set(accountKeys);
-    return lines.filter(line => keys.has(line.accountKey)).length;
+  public async countByAccountKeys(accountingTenantId: string, accountKeys: string[]): Promise<number | undefined> {
+    const keys = [...new Set(accountKeys)];
+    if (keys.length === 0) return 0;
+    const chunks: string[][] = [];
+    for (let i = 0; i < keys.length; i += BOOKING_KEY_CHUNK) chunks.push(keys.slice(i, i + BOOKING_KEY_CHUNK));
+    const counts = await Promise.all(chunks.map(chunk => this.firestoreService.countOnce(BookingLineCollection, [
+      ...this.booksQuery(accountingTenantId),
+      { key: 'accountKey', operator: 'in', value: chunk },
+    ])));
+    return counts.some(c => c === undefined) ? undefined : counts.reduce((sum: number, c) => sum + (c ?? 0), 0);
   }
 }

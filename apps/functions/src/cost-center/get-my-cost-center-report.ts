@@ -105,8 +105,10 @@ export const getMyCostCenterReport = onCall(
     const budgetLines = allBudgetLines.filter(l => keyVisible(l.costCenterKey));
 
     const range = fiscalYearRange(year, fiscalYearStart);
-    const bookingDocs = (await scoped('bookings').get()).docs
-      .filter(b => b.data()['status'] === 'posted' && str(b.data()['date']) >= range.from && str(b.data()['date']) <= range.to);
+    // the fiscal year only (spec 1.177 R14) — index bookings (tenants, accountingTenantId, isArchived, date desc)
+    const bookingDocs = (await scoped('bookings').where('isArchived', '==', false)
+      .where('date', '>=', range.from).where('date', '<=', range.to).orderBy('date', 'desc').get()).docs
+      .filter(b => b.data()['status'] === 'posted');
     const allLines: ReportLine[] = [];
     const keys = bookingDocs.map(b => b.id);
     const chunks: string[][] = [];

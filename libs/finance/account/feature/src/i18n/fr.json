@@ -91,6 +91,7 @@
   "deleteConf": {
     "one": "Supprimer vraiment le compte «{name}» ?",
     "tree": "Supprimer vraiment «{name}» et les {count} comptes en dessous ?",
-    "inUse": "«{name}» ne peut pas être supprimé : ce compte (ou un compte en dessous) est déjà utilisé par des écritures — {count} lignes. Merci de réaffecter ces écritures au préalable."
+    "inUse": "«{name}» ne peut pas être supprimé : ce compte (ou un compte en dessous) est déjà utilisé par des écritures — {count} lignes. Merci de réaffecter ces écritures au préalable.",
+    "countFailed": "«{name}» n'est pas supprimé : impossible de vérifier pour l'instant si ce compte a des écritures. Réessaie quand tu seras de nouveau en ligne."
   }
 }

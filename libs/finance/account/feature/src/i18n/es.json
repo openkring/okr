@@ -91,6 +91,7 @@
   "deleteConf": {
     "one": "¿Eliminar realmente la cuenta «{name}»?",
     "tree": "¿Eliminar realmente «{name}» y las {count} cuentas que contiene?",
-    "inUse": "«{name}» no se puede eliminar: en esta cuenta (o en una inferior) ya se ha contabilizado — {count} líneas de asiento. Primero reasigna esos asientos."
+    "inUse": "«{name}» no se puede eliminar: en esta cuenta (o en una inferior) ya se ha contabilizado — {count} líneas de asiento. Primero reasigna esos asientos.",
+    "countFailed": "«{name}» no se elimina: ahora mismo no se puede comprobar si esta cuenta tiene asientos. Vuelve a intentarlo cuando estés de nuevo en línea."
   }
 }

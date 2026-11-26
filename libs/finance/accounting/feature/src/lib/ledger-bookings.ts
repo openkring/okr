@@ -2,12 +2,12 @@ import { Component, computed, inject, input } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonIcon, IonNote, ModalController } from '@ionic/angular';
-import { combineLatest, of } from 'rxjs';
+import { combineLatest, from, of } from 'rxjs';
 
 import { formatMinorAmount } from '@okr/shared-ui';
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
-import { BookingStatus } from '@okr/shared-models';
+import { BookingLineModel, BookingModel, BookingStatus } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { resourceParams } from '@okr/shared-util-angular';
 import { convertDateFormatToString, DateFormat, hasRole } from '@okr/shared-util-core';
@@ -25,6 +25,9 @@ import { AccountingStore } from './accounting.store';
  * filtered on it.
  * Treasurer only — the journal, bookings and booking lines are not readable for anyone else.
  */
+interface LinkedBookings { bookings: BookingModel[]; lines: BookingLineModel[] }
+const NO_BOOKINGS: LinkedBookings = { bookings: [], lines: [] };
+
 @Component({
   selector: 'okr-ledger-bookings',
   standalone: true,
@@ -129,30 +132,36 @@ export class LedgerBookings {
   protected readonly isTreasurer = computed(() => hasRole('treasurer', this.appStore.currentUser()));
   protected readonly isBookingMode = computed(() => this.bookingKeys().length > 0);
 
-  // the same cached tenant-wide streams the journal reads; bookings only when there are keys to look up
+  // only the document's own bookings and their lines, one-shot (spec 1.177 R6) — never the whole ledger
   protected readonly ledger = rxResource({
     params: resourceParams(() => ({
       accountingTenantId: this.accountingTenantId(),
-      withBookings: this.isBookingMode(),
+      bookingKeys: this.bookingKeys(),
       enabled: this.isTreasurer() && (this.isBookingMode() || this.accountKeys().length > 0),
     })),
     stream: ({ params }) => {
       if (!params.enabled || !params.accountingTenantId) return of(undefined);
       return combineLatest({
         accounts: this.accountService.list(params.accountingTenantId),
-        bookings: params.withBookings ? this.bookingService.list(params.accountingTenantId) : of([]),
-        lines: params.withBookings ? this.bookingLineService.list(params.accountingTenantId) : of([]),
+        ledger: params.bookingKeys.length > 0 ? from(this.loadBookings(params.accountingTenantId, params.bookingKeys)) : of(NO_BOOKINGS),
       });
     },
   });
 
   protected readonly bookings = computed(() => {
     const data = this.ledger.value();
-    return data ? ledgerBookings(this.bookingKeys(), data.bookings, data.lines, data.accounts, this.bookingAmounts()) : [];
+    return data ? ledgerBookings(this.bookingKeys(), data.ledger.bookings, data.ledger.lines, data.accounts, this.bookingAmounts()) : [];
   });
   protected readonly accounts = computed(() => ledgerAccounts(this.accountKeys(), this.ledger.value()?.accounts ?? []));
   protected readonly isVisible = computed(() =>
     this.isTreasurer() && (this.ledger.error() !== undefined || (this.isBookingMode() ? this.bookings().length > 0 : this.accounts().length > 0)));
+
+  /** The linked bookings and their lines; rejects on a failed read (the card then shows its error note). */
+  private async loadBookings(accountingTenantId: string, bookingKeys: string[]): Promise<LinkedBookings> {
+    const bookings = await this.bookingService.listByKeys(accountingTenantId, bookingKeys);
+    const lines = await this.bookingLineService.listForBookings(accountingTenantId, bookings.map(b => b.okey));
+    return { bookings, lines };
+  }
 
   protected viewDate(storeDate: string): string {
     return convertDateFormatToString(storeDate, DateFormat.StoreDate, DateFormat.ViewDate, false) || storeDate;

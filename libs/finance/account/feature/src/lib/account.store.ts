@@ -189,6 +189,11 @@ export const AccountStore = signalStore(
       const subtree = accountSubtree(store.accounts(), account.okey);
 
       const usedLines = await store.bookingLineService.countByAccountKeys(accountingTenantId, subtree.map(a => a.okey));
+      // a count that could not be read never lets a booked-on account go
+      if (usedLines === undefined) {
+        await store.alertService.confirm(fill(store.i18n.delete_countFailed(), { name: account.name }));
+        return;
+      }
       if (usedLines > 0) {
         await store.alertService.confirm(fill(store.i18n.delete_inUse(), { name: account.name, count: usedLines }));
         return;

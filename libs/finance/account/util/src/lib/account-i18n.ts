@@ -19,6 +19,7 @@ export const ACCOUNT_I18N_KEYS = {
   delete_conf_one:      PFX + 'deleteConf.one',
   delete_conf_tree:     PFX + 'deleteConf.tree',
   delete_inUse:         PFX + 'deleteConf.inUse',
+  delete_countFailed:   PFX + 'deleteConf.countFailed',
   select_root:          PFX + 'select.root',
   select_hint:          PFX + 'select.hint',
   select_search:        PFX + 'select.search',

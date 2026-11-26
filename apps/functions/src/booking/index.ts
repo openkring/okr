@@ -56,8 +56,8 @@ interface ReviewBookingData {
  *
  * `bookings` / `booking-lines` are CF-write-only (firestore.rules), so this callable is the only
  * way the treasurer's approve/reject reaches the ledger. Approving assigns the per-year `bookingNo`
- * **inside the transaction** — the client-side `BookingService.nextSequence` computes the same
- * number from a cached list and would race a concurrent approval.
+ * **inside the transaction** (`allocateBookingNo`) — a number computed on the client would race a
+ * concurrent approval.
  *
  * Idempotent: a booking that is already `posted`/`cancelled` returns its current state instead of
  * failing, so a retried call after a dropped response cannot double-number a booking.
