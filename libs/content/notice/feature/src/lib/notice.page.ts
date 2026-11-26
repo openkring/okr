@@ -1,5 +1,5 @@
 // libs/content/notice/feature/src/lib/notice.page.ts
-import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
+import { Component, ComponentRef, Type, ViewContainerRef, computed, effect, inject, input, inputBinding, signal, untracked, viewChild } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import {
   IonBackButton, IonButton, IonButtons, IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle,
@@ -14,11 +14,18 @@ import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, Spinner } from '@okr/shared-ui';
 import { convertDateFormatToString, DateFormat, fill, prettyFormatDateTime } from '@okr/shared-util-core';
 import { AppStore } from '@okr/shared-feature';
+// the blocks are drawn by a lazily loaded component: only the loader and the type are imported here, see the barrel's index.ts
+import { loadArticleBlocks, type ArticleBlocks } from '@okr/cms-article-feature';
 import { CalEventService } from '@okr/calendar-calevent-data-access';
 import { NoticeService } from '@okr/content-notice-data-access';
 import { NOTICE_I18N_KEYS, NoticeI18n } from '@okr/content-notice-util';
 import { NewsletterSubscriptionService } from '@okr/relationship-newsletter-data-access';
 import { isActiveSubscription, NEWSLETTER_I18N_KEYS, NewsletterI18n } from '@okr/relationship-newsletter-util';
+
+/** for every notice: nothing is tried again after a failure */
+const articleBlocksType = signal<Type<ArticleBlocks> | undefined>(undefined);
+/** offline, stale chunk: the notice keeps showing its `body` */
+const articleBlocksFailed = signal(false);
 
 /**
  * One Mitteilung (spec 1.145 §10), opened from the dashboard section or from its push
@@ -59,7 +66,11 @@ import { isActiveSubscription, NEWSLETTER_I18N_KEYS, NewsletterI18n } from '@okr
             </ion-card-subtitle>
           </ion-card-header>
           <ion-card-content>
-            <div class="body" [innerHTML]="notice.body"></div>
+            @if (hasBlocks() && blocksType()) {
+              <div #blocksHost></div>
+            } @else {
+              <div class="body" [innerHTML]="notice.body"></div>
+            }
             @if (newsletterSubscription(); as subscription) {
               <ion-button fill="outline" size="small" class="ion-margin-top" [disabled]="leaving()" (click)="leaveNewsletter(subscription)">
                 {{ newsletterI18n.leave_notice() }}
@@ -125,6 +136,16 @@ export class NoticePage {
     stream: ({ params }) => this.noticeService.read(params).pipe(catchError(() => of(undefined))),
   });
 
+  /** the blocks of the notice (spec 1.176 §9.3), already sanitized by the server; undefined = draw `body` */
+  protected readonly blocks = computed(() => {
+    const blocks = this.notice()?.blocks;
+    return blocks && blocks.length > 0 ? blocks : undefined;
+  });
+  protected readonly hasBlocks = computed(() => !!this.blocks());
+  protected readonly blocksType = articleBlocksType.asReadonly();
+  /** where the blocks are created; a new one whenever its @if block is entered again */
+  private readonly blocksHost = viewChild('blocksHost', { read: ViewContainerRef });
+
   protected readonly isLoading = computed(() => this.noticeResource.isLoading());
   /** undefined for missing, denied, archived or another tenant's notice → not-found state */
   protected readonly notice = computed(() => {
@@ -162,6 +183,18 @@ export class NoticePage {
   private markedRead = '';
 
   constructor() {
+    effect(() => {
+      if (this.hasBlocks() && !articleBlocksType() && !articleBlocksFailed()) void this.loadBlocks();
+    });
+    effect((onCleanup) => {
+      const host = this.blocksHost();
+      const type = this.blocksType();
+      if (!host || !type) return;
+      const ref = untracked(() => this.createBlocks(host, type));
+      // before its first run: what throws there leaves nothing behind
+      onCleanup(() => ref.destroy());
+      untracked(() => ref.changeDetectorRef.detectChanges());
+    });
     // the reader opened it: note that once (the Versand overview shows who read it)
     effect(() => {
       const notice = this.notice();
@@ -172,6 +205,25 @@ export class NoticePage {
         this.markedRead = notice.okey;
         void this.noticeService.markRead(notice, personKey);
       });
+    });
+  }
+
+  private async loadBlocks(): Promise<void> {
+    try {
+      articleBlocksType.set(await loadArticleBlocks());
+    } catch (error) {
+      if (!articleBlocksFailed()) console.warn('NoticePage: the blocks could not be loaded', error);
+      articleBlocksFailed.set(true);
+    }
+  }
+
+  private createBlocks(host: ViewContainerRef, type: Type<ArticleBlocks>): ComponentRef<ArticleBlocks> {
+    return host.createComponent(type, {
+      bindings: [
+        inputBinding('blocks', () => this.blocks() ?? []),
+        // the server wrote the final texts
+        inputBinding('placeholders', () => false),
+      ],
     });
   }
 

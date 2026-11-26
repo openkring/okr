@@ -12,7 +12,7 @@ import { ArticleBlocks } from './article-blocks';
 const appName = signal('Kring');
 
 /** The component without its template (a lib test does not compile one): its own computed over its own input. */
-function viewsComputedOf(blocks: unknown[]): () => ArticleBlockView[] {
+function viewsComputedOf(blocks: unknown[], placeholders = true): () => ArticleBlockView[] {
   TestBed.configureTestingModule({
     providers: [
       { provide: AppStore, useValue: { replacePlaceholders: (text: string) => text.replaceAll('@APPNAME@', appName()) } },
@@ -21,9 +21,11 @@ function viewsComputedOf(blocks: unknown[]): () => ArticleBlockView[] {
   const component = TestBed.runInInjectionContext(() => new ArticleBlocks());
   const node = (component.blocks as InputSignal<ArticleBlock[]>)[SIGNAL];
   node.applyValueToInputSignal(node, blocks as ArticleBlock[]);
+  const flag = (component.placeholders as InputSignal<boolean>)[SIGNAL];
+  flag.applyValueToInputSignal(flag, placeholders);
   return (component as unknown as { views: () => ArticleBlockView[] }).views;
 }
-const viewsOf = (blocks: unknown[]): ArticleBlockView[] => viewsComputedOf(blocks)();
+const viewsOf = (blocks: unknown[], placeholders = true): ArticleBlockView[] => viewsComputedOf(blocks, placeholders)();
 
 describe('ArticleBlocks', () => {
   it('replaces the placeholders in texts and callouts, also in columns', () => {
@@ -33,6 +35,10 @@ describe('ArticleBlocks', () => {
       { type: 'callout', html: 'Kring' },
       { type: 'columns', columns: [{ blocks: [{ html: '<p>Kring und Kring</p>' }] }, { blocks: [{ html: '<p>Kring und Kring</p>' }] }] },
     ]);
+  });
+
+  it('leaves the texts as they are with placeholders off (a Mitteilung)', () => {
+    expect(viewsOf([{ id: 'a', type: 'text', html: '<p>@APPNAME@</p>' }], false)).toMatchObject([{ html: '<p>@APPNAME@</p>' }]);
   });
 
   it('follows a placeholder that changes later (app config arriving late), and keeps the view of a text without one', () => {

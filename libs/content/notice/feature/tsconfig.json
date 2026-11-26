@@ -32,6 +32,9 @@
   ],
   "references": [
     {
+      "path": "../../../cms/article/feature/tsconfig.lib.json"
+    },
+    {
       "path": "../../../calendar/calevent/data-access/tsconfig.lib.json"
     },
     {

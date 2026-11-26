@@ -45,9 +45,11 @@ import { ARTICLE_COLUMNS_STYLES, ARTICLE_LIST_PADDING, ArticleBlockComponent } f
 })
 export class ArticleBlocks {
   private readonly appStore = inject(AppStore);
-  private readonly viewCache = new BlockViewCache((html) => this.appStore.replacePlaceholders(html));
+  private readonly viewCache = new BlockViewCache((html) => this.placeholders() ? this.appStore.replacePlaceholders(html) : html);
 
   // inputs
+  /** replace placeholders such as @APPNAME@ in the texts (an article); false for blocks that are already final (a Mitteilung) */
+  public placeholders = input(true);
   public blocks = input.required<ArticleBlock[]>();
   /** title and subtitle of the article (placeholders replaced): captions fall back to them, and see headerPlace */
   public title = input('');
