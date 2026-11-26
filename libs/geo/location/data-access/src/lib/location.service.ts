@@ -77,4 +77,13 @@ export class LocationService {
     }
     return this.firestoreService.searchData<LocationModel>(LocationCollection, query, orderBy, sortOrder);
   }
+
+  /**
+   * All the tenant's locations as ONE consistent snapshot (server when online), same query as
+   * `list()` — for a one-off pick where `firstValueFrom(list())` could return the cache-first subset.
+   * Rejects when the read fails.
+   */
+  public async listOnce(orderBy = 'address', sortOrder = 'asc'): Promise<LocationModel[]> {
+    return await this.firestoreService.getDataOnceStrict<LocationModel>(LocationCollection, getSystemQuery(this.tenantId), orderBy, sortOrder);
+  }
 }

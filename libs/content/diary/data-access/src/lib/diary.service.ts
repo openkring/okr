@@ -164,6 +164,25 @@ export class DiaryService {
   }
 
   /**
+   * One consistent read of a single entry (server when online) — unlike `readOnce`, never the
+   * cached copy first. Undefined when absent or unreadable.
+   */
+  public async readFresh(key: string): Promise<DiaryModel | undefined> {
+    const diary = await this.firestoreService.readModelOnce<DiaryModel>(DiaryCollection, key);
+    return diary ? withDiaryLocations(diary) : undefined;
+  }
+
+  /**
+   * Every non-archived diary of `authorKey` in `tenantId` as ONE consistent snapshot (server when
+   * online) — for a caller that acts on all of them, where `firstValueFrom(list(...))` could hand back
+   * the cache-first subset. Rejects when the read fails, so «none» and «could not read» stay apart.
+   */
+  public async listOnce(authorKey: string, tenantId: string): Promise<DiaryModel[]> {
+    const diaries = await this.firestoreService.getDataOnceStrict<DiaryModel>(DiaryCollection, this.ownerQuery(authorKey, tenantId));
+    return diaries.map(diary => withDiaryLocations(diary)).filter(diary => !diary.isArchived);
+  }
+
+  /**
    * `okey` is preset by `newDiary` to the deterministic author+date id, and `allowOverwrite` is on
    * because writing over an existing document is the intended behaviour here: `DiaryStore.add`
    * refuses a LIVE entry for that day itself (toast + open the editor) but deliberately lets an

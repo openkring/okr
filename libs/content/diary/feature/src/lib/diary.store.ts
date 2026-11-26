@@ -12,7 +12,7 @@ import {
   DIARY_FIRST_YEAR, DIARY_I18N_KEYS, DiarySectionRoute, DiaryTrackCard, DiaryTrackChange, toDiaryTrackCards, customLocationAvatar, locationAvatar, mainLocation, DiaryFilter, DiaryMediaResult, DiaryRange, DiaryStateFilter, albumKey, albumRefOf,
   buildDiaryRangeTree, decodeDiaryFilter, diaryFilterLabel, diaryListUrl, diaryRangeOfYear, diaryStateMatches, encodeDiaryFilter,
   diaryTrackModeLabel, formatDiaryDate, getDiaryIndex, groupDiariesByMonth, hasDiaryWeather, inDiaryDateRange, newDiary, trackFilterDates, trackFilterTitle,
-  diaryAvatarId, diaryLocationLabel, inChunks, linkLocationInDiary, locationLinkTargets,
+  diaryAvatarId, diariesWithLocationReference, diaryLocationLabel, inChunks, linkLocationInDiary, locationLinkTargets,
 } from '@okr/content-diary-util';
 import { LocationService, PlaceSearchService } from '@okr/location-data-access';
 import { placeHitToLocation } from '@okr/location-util';
@@ -524,7 +524,8 @@ export const DiaryStore = signalStore(
 
     /** Step 1 (spec 1.178 §5): a saved location, a place-search hit or a hand-set pin; undefined on cancel. */
     const searchLocation = async (label: string): Promise<DiaryLocationSearchResult | undefined> => {
-      const locations = await firstValueFrom(store.locationService.list()).catch(() => [] as LocationModel[]);
+      // one server snapshot: the cache-first stream could miss a saved place and invite a duplicate
+      const locations = await store.locationService.listOnce().catch(() => [] as LocationModel[]);
       const { DiaryLocationSearchModal } = await import('./diary-location-search.modal');
       const modal = await store.modalController.create({
         component: DiaryLocationSearchModal,
@@ -580,10 +581,16 @@ export const DiaryStore = signalStore(
      * to this day or to every day of the author with the same text. The writes go out in batches,
      * quietly, and one toast sums them up (failed days named). Returns the linked shown entry, or
      * undefined when cancelled or its own write failed.
+     *
+     * The view may hold a stale copy (a neighbour paged back to after an earlier link): the day is
+     * re-read first, and when it no longer holds this free text the fresh copy is returned as is —
+     * no search, no second location, no write over newer data.
      */
     const createLocation = async (diary: DiaryModel, avatar: AvatarInfo): Promise<DiaryModel | undefined> => {
       const label = diaryLocationLabel(avatar);
       const referenceId = diaryAvatarId(avatar);
+      const current = (await store.diaryService.readFresh(diary.okey).catch(() => undefined)) ?? diary;
+      if (!diariesWithLocationReference([current], referenceId).length) return current;
       const choice = await searchLocation(label);
       if (!choice) return undefined;
       const location = await resolveLocation(choice, label);
@@ -591,10 +598,12 @@ export const DiaryStore = signalStore(
 
       const authorKey = store.authorKey();
       const tenantId = store.tenantId();
+      // one server snapshot of ALL the author's days (spec §6.3) — not the cache-first subset;
+      // when it cannot be read, only the tapped day is linked
       const own = authorKey && tenantId
-        ? await firstValueFrom(store.diaryService.list(authorKey, tenantId)).catch(() => [] as DiaryModel[])
+        ? await store.diaryService.listOnce(authorKey, tenantId).catch(() => [] as DiaryModel[])
         : [];
-      const all = locationLinkTargets(own, diary, referenceId);
+      const all = locationLinkTargets(own, current, referenceId);
       const targets = all.length > 1 && await confirmLinkAll(label, all.length) ? all : [all[0]];
 
       const currentUser = store.currentUser();
@@ -607,7 +616,7 @@ export const DiaryStore = signalStore(
           const ok = !!(await store.diaryService.update(updated, currentUser, true).catch(() => undefined));
           if (!ok) { failed.push(target.date); return; }
           linked++;
-          if (target.okey === diary.okey) shown = updated;
+          if (target.okey === current.okey) shown = updated;
         }));
       }
       const done = fill(store.i18n.locationLink_done(), { name: location.name, count: linked });
