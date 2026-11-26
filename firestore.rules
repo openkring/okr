@@ -784,13 +784,30 @@ service cloud.firestore {
                  || d.kind == 'proxy'
                  || isMandateAdmin());
     }
+    // `actions` and `meetingKey` follow `kind`: a proxy is meeting.represent for one meeting, a family
+    // Vollmacht carries a non-empty subset of the family actions and no meeting. So the chair can never
+    // record a family power in someone else's name.
+    function mandateKindShapeOk(d) {
+      return (d.kind == 'proxy' && d.actions == ['meeting.represent'] && isDocKey(d.meetingKey))
+             || (d.kind == 'family' && d.meetingKey == ''
+                 && d.actions.size() > 0 && d.actions.hasOnly(['calevent.attend', 'invitation.answer']));
+    }
+    // Revoking is one-way and stamped with the caller: only an active Vollmacht can be revoked, revokedAt
+    // becomes non-empty, and revokedByKey is the caller's own person key. A write that touches neither field
+    // (the grantor's validTo edit) leaves them as they are.
+    function mandateRevocationOk(before, after, changed, pk) {
+      return !changed.hasAny(['revokedAt', 'revokedByKey'])
+             || (before.get('revokedAt', '') == '' && after.get('revokedAt', '') != ''
+                 && after.get('revokedByKey', '') == pk);
+    }
     // Create: one tenant, not revoked, createdByKey == caller; by the grantor, privileged / memberAdmin, or —
     // proxy only — the chair of the meeting named by meetingKey.
     function mandateCreateOk(d, pk) {
       return pk != ''
              && d.tenants.size() == 1
-             && d.kind in ['family', 'proxy']
+             && mandateKindShapeOk(d)
              && d.get('revokedAt', '') == ''
+             && d.get('revokedByKey', '') == ''
              && d.get('createdByKey', '') == pk
              && (d.grantorKey == pk
                  || isMandateAdmin()
@@ -801,6 +818,7 @@ service cloud.firestore {
     function mandateUpdateOk(before, after, pk) {
       let changed = after.diff(before).affectedKeys();
       return pk != ''
+             && mandateRevocationOk(before, after, changed, pk)
              && ((before.grantorKey == pk && changed.hasOnly(['revokedAt', 'revokedByKey', 'validTo']))
                  || (changed.hasOnly(['revokedAt', 'revokedByKey'])
                      && (before.granteeKey == pk

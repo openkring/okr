@@ -3029,6 +3029,8 @@ seed("mandates/mFamRevoke", mandate())
 seed("mandates/mProxy", proxy(createdByKey="pVCh"))
 seed("mandates/mProxyRevoke", proxy(createdByKey="pVCh"))
 seed("mandates/mFamT2", mandate(tenants=["t2"]))
+seed("mandates/mFamRevoked", mandate(revokedAt="20261120100000", revokedByKey="pA"))  # already revoked by the grantor
+seed("mandates/mFamStamp", mandate())
 
 def _allowed(code):
     return code in (200, 201)
@@ -3103,6 +3105,29 @@ def test_mandate_update_cannot_change_frozen_fields():
                    ("meetingKey", "mtgV"), ("tenants", ["t1", "t2"]), ("createdByKey", "pE"), ("actions", ["meeting.represent"])])
 def test_mandate_memberadmin_revokes():
     return _patch("mFam", REVOKE_BY("pM"), M)
+# review fixes: revoking is one-way and caller-stamped; actions / meetingKey follow kind
+def test_mandate_grantee_cannot_unrevoke():
+    return not _patch("mFamRevoked", {"revokedAt": "", "revokedByKey": ""}, E)
+def test_mandate_grantor_cannot_unrevoke():
+    return not _patch("mFamRevoked", {"revokedAt": "", "revokedByKey": ""}, A)
+def test_mandate_revoker_cannot_stamp_other_key():
+    return (not _patch("mFamStamp", REVOKE_BY("pA"), E)
+            and not _patch("mFamStamp", REVOKE_BY("pE"), M)
+            and not _patch("mFamStamp", {"revokedAt": "20261126120000"}, E))
+def test_mandate_cannot_rerevoke():
+    return not _patch("mFamRevoked", REVOKE_BY("pA"), A) and not _patch("mFamRevoked", REVOKE_BY("pM"), M)
+def test_mandate_grantor_changes_valid_to_after_revoke():
+    return _patch("mFamRevoked", {"validTo": "20271231"}, A)
+def test_mandate_chair_cannot_create_proxy_with_family_actions():
+    return not _create("cProxyFamActs", proxy(createdByKey="pVCh", actions=["calevent.attend", "invitation.answer"]), VCH)
+def test_mandate_proxy_needs_meeting():
+    return not _create("cProxyNoKey", proxy(grantorKey="pM", createdByKey="pM", meetingKey=""), M)
+def test_mandate_family_shape():
+    return (not _create("cFamRepr", mandate(actions=["meeting.represent"]), A)
+            and not _create("cFamNoActs", mandate(actions=[]), A)
+            and not _create("cFamMeeting", mandate(meetingKey="mtgV"), A))
+def test_mandate_create_needs_empty_revoked_by():
+    return not _create("cRevokedBy", mandate(revokedByKey="pA"), A)
 
 mandate_tests = [v for k, v in list(globals().items()) if k.startswith("test_mandate_") and callable(v)]
 for fn in mandate_tests:
