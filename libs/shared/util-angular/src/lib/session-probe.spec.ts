@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   classifyStoredSession,
   classifyStoredUser,
+  dropExpiredSessionIdb,
   FIREBASE_AUTH_IDB_NAME,
   probeStoredSession,
   probeStoredSessionIdb,
@@ -79,6 +80,7 @@ describe('classifyStoredUser', () => {
  * Requests resolve on a microtask, like the real thing resolves asynchronously.
  */
 function stubIndexedDb(opts: { databases?: string[]; stores?: string[]; rows?: Record<string, unknown>; noDatabases?: boolean }) {
+  const deleted: string[] = [];
   const request = <T>(result: T) => {
     const req: { result: T; error: null; onsuccess?: () => void; onerror?: () => void } = { result, error: null };
     queueMicrotask(() => req.onsuccess?.());
@@ -86,14 +88,17 @@ function stubIndexedDb(opts: { databases?: string[]; stores?: string[]; rows?: R
   };
   const open = vi.fn(() => request({
     objectStoreNames: { contains: (n: string) => (opts.stores ?? []).includes(n) },
-    transaction: () => ({ objectStore: () => ({ get: (k: string) => request(opts.rows?.[k]) }) }),
+    transaction: () => ({ objectStore: () => ({
+      get: (k: string) => request(opts.rows?.[k]),
+      delete: (k: string) => { deleted.push(k); return request(undefined); },
+    }) }),
     close: vi.fn(),
     onversionchange: null,
   }));
   const factory: Record<string, unknown> = { open };
   if (!opts.noDatabases) factory['databases'] = async () => (opts.databases ?? []).map(name => ({ name, version: 1 }));
   vi.stubGlobal('indexedDB', factory);
-  return { open };
+  return { open, deleted };
 }
 
 describe('probeStoredSessionIdb', () => {
@@ -129,5 +134,48 @@ describe('probeStoredSessionIdb', () => {
   it('reports unreadable where there is no IndexedDB at all', async () => {
     vi.stubGlobal('indexedDB', undefined);
     expect(await probeStoredSessionIdb('KEY-1', () => NOW)).toBe('unreadable');
+  });
+});
+
+describe('dropExpiredSessionIdb', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  const STORE = 'firebaseLocalStorage';
+  const KEY = storedSessionKey('KEY-1');
+  const row = (expirationTime: number) => ({ [KEY]: { fbase_key: KEY, value: { stsTokenManager: { expirationTime } } } });
+
+  it('removes an expired session so the retry boot reaches the login page (SCS-AZ)', async () => {
+    const { deleted } = stubIndexedDb({ databases: [FIREBASE_AUTH_IDB_NAME], stores: [STORE], rows: row(NOW - 1) });
+    expect(await dropExpiredSessionIdb('KEY-1', () => NOW)).toBe(true);
+    expect(deleted).toEqual([KEY]);
+  });
+
+  it('keeps a session that is valid again — a renewal that landed meanwhile is never thrown away', async () => {
+    const { deleted } = stubIndexedDb({ databases: [FIREBASE_AUTH_IDB_NAME], stores: [STORE], rows: row(NOW + 60_000) });
+    expect(await dropExpiredSessionIdb('KEY-1', () => NOW)).toBe(false);
+    expect(deleted).toEqual([]);
+  });
+
+  it('keeps a row it cannot read an expiry out of', async () => {
+    const { deleted } = stubIndexedDb({ databases: [FIREBASE_AUTH_IDB_NAME], stores: [STORE], rows: { [KEY]: { value: {} } } });
+    expect(await dropExpiredSessionIdb('KEY-1', () => NOW)).toBe(false);
+    expect(deleted).toEqual([]);
+  });
+
+  it('does nothing when there is no session for this project', async () => {
+    const { deleted } = stubIndexedDb({ databases: [FIREBASE_AUTH_IDB_NAME], stores: [STORE], rows: row(NOW - 1) });
+    expect(await dropExpiredSessionIdb('KEY-2', () => NOW)).toBe(false);
+    expect(deleted).toEqual([]);
+  });
+
+  it('never opens — and so never creates — a database that does not exist', async () => {
+    const { open } = stubIndexedDb({ databases: [] });
+    expect(await dropExpiredSessionIdb('KEY-1', () => NOW)).toBe(false);
+    expect(open).not.toHaveBeenCalled();
+  });
+
+  it('never throws where there is no IndexedDB at all', async () => {
+    vi.stubGlobal('indexedDB', undefined);
+    expect(await dropExpiredSessionIdb('KEY-1', () => NOW)).toBe(false);
   });
 });

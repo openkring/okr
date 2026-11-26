@@ -15,6 +15,9 @@
  *
  * Only the expired case is touched: a still-valid session needs no network to restore, so a
  * stall there is something else, and dropping it would not be justified.
+ *
+ * Chromium keeps the session in IndexedDB, which cannot be cleared synchronously before Auth
+ * starts; that path is handled by `dropExpiredSessionIdb` (@okr/shared-util-angular).
  */
 
 /** localStorage key of the note left by a stalled restore. */

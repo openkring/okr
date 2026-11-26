@@ -11,7 +11,7 @@ import { AUTH, clearStalledRestoreNote, ENV, FIRESTORE, noteStalledExpiredRestor
 import { AppConfigService, AppStoreMin, FirestoreService } from '@okr/shared-data-access';
 import { AddressDirectoryCollection, AddressDirectoryModel, AppConfig, getAddressDirectoryKey, AvailableLanguages, CalEventCollection, CalEventModel, CategoryCollection, CategoryItemModel, CategoryListModel, DefaultLanguage, DefaultLanguageCode, GroupCollection, GroupModel, InvitationCollection, InvitationModel, OrgCollection, OrgModel, PersonCollection, PersonModel, PrivacySettings, privacyUsageToAccessor, ResourceCollection, ResourceModel, ResourceModelName, stricterAccessor, TagCollection, TagModel, TaskCollection, TaskModel, UserCollection, UserModel } from '@okr/shared-models';
 import { appLinkOrigins, countableInvitationsOf, die, getSystemQuery, hasRole, hiddenFieldsOf, isBadgeSourceLoaded, indexBy, openInvitationsOf, pickForTenant, publicAppOrigin, replacePlaceholders, resolveAppOrigin, sortPersons, withOfflineSnapshot } from '@okr/shared-util-core';
-import { AppNavigationService, armStartupStallCheck, HelperVisibility, installScrollDiagnostics, isBrowser, markStartup, probeStoredSession, probeStoredSessionIdb, reportStartupTiming, VersionCheckService, resourceParams } from '@okr/shared-util-angular';
+import { AppNavigationService, armStartupStallCheck, HelperVisibility, installScrollDiagnostics, isBrowser, markStartup, dropExpiredSessionIdb, probeStoredSession, probeStoredSessionIdb, reportStartupTiming, StoredSessionState, VersionCheckService, resourceParams } from '@okr/shared-util-angular';
 
 import { authPhase, isDegradedBoot, openBootGate, type BootState } from './boot-readiness.util';
 import { I18nService } from '@okr/shared-i18n';
@@ -818,8 +818,13 @@ export const AppStore = signalStore(
       // On the IndexedDB-first path (Chromium) the session lives in IndexedDB, so the localStorage
       // reading above is `none` for every signed-in user. `session:idb:*` is the real reading
       // there; its absence in a stall report means the IndexedDB read itself hung.
+      // Kept for the restore watchdog below: still undefined when it fires means the read hung.
+      let idbSession: StoredSessionState | undefined;
       if (!usesLocalStorageOnlySession()) {
-        void probeStoredSessionIdb(store.env.firebase.apiKey).then(state => markStartup(`session:idb:${state}`));
+        void probeStoredSessionIdb(store.env.firebase.apiKey).then(state => {
+          idbSession = state;
+          markStartup(`session:idb:${state}`);
+        });
       }
       void store.auth.authStateReady().then(() => markStartup('session:ready'));
 
@@ -943,6 +948,12 @@ export const AppStore = signalStore(
             // Hung renewing an expired localStorage session: the next boot (the panel's "try
             // again") starts signed out instead of hanging the same way (SCS-AZ, BKA-8).
             if (storedSession === 'expired' && usesLocalStorageOnlySession()) noteStalledExpiredRestore();
+            // Same hang on the IndexedDB-first (Chromium) path. That store cannot be cleared
+            // before Auth starts on the next boot, so drop the expired session now (SCS-AZ).
+            if (idbSession === 'expired') {
+              void dropExpiredSessionIdb(store.env.firebase.apiKey)
+                .then(dropped => { if (dropped) markStartup('session:idb:dropped-after-stall'); });
+            }
             patchState(store, { authRestoreTimedOut: true });
           },
           READINESS_TIMEOUT_MS);

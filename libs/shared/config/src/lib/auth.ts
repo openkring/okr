@@ -48,8 +48,9 @@ export function authFactory() {
   //   (authIframe.js) from being created, which avoids its reCAPTCHA load on every page.
   // The user's "try again" after a restore that hung on an expired session: start signed out
   // instead of hanging on the same renewal again (SCS-AZ, see stalled-restore.ts). Only where
-  // the session lives in localStorage, which is the only store that can be cleared before Auth
-  // reads it — and the only path the expired-session stall was seen on.
+  // the session lives in localStorage, the only store that can be cleared synchronously before
+  // Auth reads it. The IndexedDB-first path drops it on the stalled boot instead
+  // (dropExpiredSessionIdb in @okr/shared-util-angular, called by the restore watchdog).
   if (usesLocalStorageOnlySession()) {
     droppedStalledSession = dropExpiredSessionAfterStall(getApp().options.apiKey ?? '');
   }

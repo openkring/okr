@@ -80,32 +80,18 @@ const FIREBASE_AUTH_IDB_STORE = 'firebaseLocalStorage';
  * result when it arrives — and a mark that never arrives before the stall report is the
  * reading: the IndexedDB read itself hung.
  *
- * Opens the database only when `indexedDB.databases()` lists it. A bare `open()` of a missing
- * database would create an empty one at version 1, and the SDK would then have to delete and
- * recreate it — this probe must not change what it measures. Without `databases()` it reports
- * 'unreadable' rather than risk that. Never rejects.
+ * Opens the database only when it already exists (see `openExistingAuthDb`); without
+ * `indexedDB.databases()` it reports 'unreadable' rather than risk a blind open. Never rejects.
  */
 export async function probeStoredSessionIdb(apiKey: string, nowMs: () => number = Date.now): Promise<StoredSessionState> {
   try {
-    if (typeof indexedDB === 'undefined' || typeof indexedDB.databases !== 'function') return 'unreadable';
-    const dbs = await indexedDB.databases();
-    if (!dbs.some(d => d.name === FIREBASE_AUTH_IDB_NAME)) return 'none';
-    const db = await new Promise<IDBDatabase>((resolve, reject) => {
-      const req = indexedDB.open(FIREBASE_AUTH_IDB_NAME);
-      req.onsuccess = () => resolve(req.result);
-      req.onerror = () => reject(req.error);
-    });
+    const db = await openExistingAuthDb();
+    if (!db) return db === null ? 'none' : 'unreadable';
     try {
-      // Never block the SDK's own delete/upgrade of the database.
-      db.onversionchange = () => db.close();
       if (!db.objectStoreNames.contains(FIREBASE_AUTH_IDB_STORE)) return 'none';
-      const row = await new Promise<unknown>((resolve, reject) => {
-        const req = db.transaction(FIREBASE_AUTH_IDB_STORE, 'readonly')
-          .objectStore(FIREBASE_AUTH_IDB_STORE)
-          .get(storedSessionKey(apiKey));
-        req.onsuccess = () => resolve(req.result);
-        req.onerror = () => reject(req.error);
-      });
+      const row = await idbRequest<unknown>(db.transaction(FIREBASE_AUTH_IDB_STORE, 'readonly')
+        .objectStore(FIREBASE_AUTH_IDB_STORE)
+        .get(storedSessionKey(apiKey)));
       if (!row) return 'none';
       return classifyStoredUser((row as { value?: unknown }).value, nowMs());
     } finally {
@@ -114,4 +100,67 @@ export async function probeStoredSessionIdb(apiKey: string, nowMs: () => number 
   } catch {
     return 'unreadable';
   }
+}
+
+/**
+ * The IndexedDB twin of `dropExpiredSessionAfterStall` (@okr/shared-config): the way out of a
+ * restore that hangs renewing an expired session on the IndexedDB-first (Chromium) path.
+ *
+ * SCS-AZ kept recurring on Android Chrome and Samsung Internet with `session:idb:expired`: the
+ * SDK must renew the expired ID token at securetoken.googleapis.com before it emits, on a weak
+ * network that request hangs, and the localStorage escape could not help — the session is not in
+ * localStorage. Unlike there, this store cannot be cleared synchronously before `initializeAuth`
+ * on the next boot, so the restore watchdog calls this on the STALLED boot instead. Either way
+ * the user ends up where they can act: if the renewal still completes, the SDK writes the user
+ * back; if it does not, the "try again" boot finds no session and shows the login page. The cost
+ * is one sign-in, for a user who could not get in at all.
+ *
+ * Deletes only a row that is expired at the moment of deleting, inside one readwrite transaction,
+ * so a renewal that landed in the meantime is never thrown away. Never rejects.
+ *
+ * @returns true when an expired session was removed
+ */
+export async function dropExpiredSessionIdb(apiKey: string, nowMs: () => number = Date.now): Promise<boolean> {
+  try {
+    const db = await openExistingAuthDb();
+    if (!db) return false;
+    try {
+      if (!db.objectStoreNames.contains(FIREBASE_AUTH_IDB_STORE)) return false;
+      const store = db.transaction(FIREBASE_AUTH_IDB_STORE, 'readwrite').objectStore(FIREBASE_AUTH_IDB_STORE);
+      const key = storedSessionKey(apiKey);
+      const row = await idbRequest<unknown>(store.get(key));
+      if (!row || classifyStoredUser((row as { value?: unknown }).value, nowMs()) !== 'expired') return false;
+      await idbRequest(store.delete(key));
+      return true;
+    } finally {
+      db.close();
+    }
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Open Firebase Auth's database only when `indexedDB.databases()` lists it. A bare `open()` of a
+ * missing database would create an empty one at version 1, and the SDK would then have to delete
+ * and recreate it — these helpers must not change what they look at.
+ *
+ * @returns the open database; null when it does not exist; undefined when that cannot be told
+ *   without the risky blind open (no IndexedDB, or no `databases()`)
+ */
+async function openExistingAuthDb(): Promise<IDBDatabase | null | undefined> {
+  if (typeof indexedDB === 'undefined' || typeof indexedDB.databases !== 'function') return undefined;
+  const dbs = await indexedDB.databases();
+  if (!dbs.some(d => d.name === FIREBASE_AUTH_IDB_NAME)) return null;
+  const db = await idbRequest<IDBDatabase>(indexedDB.open(FIREBASE_AUTH_IDB_NAME));
+  // Never block the SDK's own delete/upgrade of the database.
+  db.onversionchange = () => db.close();
+  return db;
+}
+
+function idbRequest<T>(req: IDBRequest<T> | IDBOpenDBRequest): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    req.onsuccess = () => resolve(req.result as T);
+    req.onerror = () => reject(req.error);
+  });
 }
