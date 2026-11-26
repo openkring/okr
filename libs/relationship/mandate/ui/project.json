@@ -1,0 +1,24 @@
+{
+  "name": "relationship-mandate-ui",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/relationship/mandate/ui/src",
+  "prefix": "okr",
+  "projectType": "library",
+  "tags": ["type:ui", "scope:mandate", "platform:mobile", "platform:web"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/relationship/mandate/ui",
+        "main": "libs/relationship/mandate/ui/src/index.ts",
+        "tsConfig": "libs/relationship/mandate/ui/tsconfig.lib.json",
+        "assets": ["libs/relationship/mandate/ui/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}

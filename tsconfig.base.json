@@ -312,6 +312,8 @@
       "@okr/relationship-household-ui": ["libs/relationship/household/ui/src/index.ts"],
       "@okr/relationship-household-util": ["libs/relationship/household/util/src/index.ts"],
       "@okr/relationship-mandate-data-access": ["libs/relationship/mandate/data-access/src/index.ts"],
+      "@okr/relationship-mandate-feature": ["libs/relationship/mandate/feature/src/index.ts"],
+      "@okr/relationship-mandate-ui": ["libs/relationship/mandate/ui/src/index.ts"],
       "@okr/relationship-mandate-util": ["libs/relationship/mandate/util/src/index.ts"],
       "@okr/relationship-personal-rel-data-access": ["libs/relationship/personal-rel/data-access/src/index.ts"],
       "@okr/relationship-personal-rel-feature": ["libs/relationship/personal-rel/feature/src/index.ts"],

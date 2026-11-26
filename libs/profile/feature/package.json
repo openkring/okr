@@ -31,6 +31,9 @@
     "@okr/relationship-household-data-access": "*",
     "@okr/relationship-household-feature": "*",
     "@okr/relationship-household-util": "*",
-    "@okr/relationship-newsletter-feature": "*"
+    "@okr/relationship-newsletter-feature": "*",
+    "@okr/relationship-mandate-feature": "*",
+    "@okr/relationship-mandate-util": "*",
+    "@okr/shared-pipes": "*"
   }
 }

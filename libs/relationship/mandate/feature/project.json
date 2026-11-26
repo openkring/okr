@@ -1,0 +1,24 @@
+{
+  "name": "relationship-mandate-feature",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/relationship/mandate/feature/src",
+  "prefix": "okr",
+  "projectType": "library",
+  "tags": ["type:feature", "scope:mandate", "platform:mobile", "platform:web"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/relationship/mandate/feature",
+        "main": "libs/relationship/mandate/feature/src/index.ts",
+        "tsConfig": "libs/relationship/mandate/feature/tsconfig.lib.json",
+        "assets": ["libs/relationship/mandate/feature/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}

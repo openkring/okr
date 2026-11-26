@@ -18,6 +18,7 @@ import { DataRightsAccordion } from './data-rights.accordion';
 import { PasskeysAccordion } from '@okr/auth-feature';
 import { MaintenanceAccordion } from './maintenance.accordion';
 import { HouseholdAccordion } from './household.accordion';
+import { MandatesAccordion } from './mandates.accordion';
 import { MyNewsletters } from '@okr/relationship-newsletter-feature';
 
 @Component({
@@ -26,7 +27,7 @@ import { MyNewsletters } from '@okr/relationship-newsletter-feature';
   imports: [
     AvatarToolbar, Header, AddressesAccordion, ProfileDataAccordion,
     ChangeConfirmation, ProfileSettingsAccordion, ProfilePrivacyAccordion, EmailSignatureAccordion,
-    DataRightsAccordion, MaintenanceAccordion, HouseholdAccordion, MyNewsletters, PasskeysAccordion, ProfileDiarySourcesAccordion, ProfileDiaryRequestsAccordion,
+    DataRightsAccordion, MaintenanceAccordion, HouseholdAccordion, MandatesAccordion, MyNewsletters, PasskeysAccordion, ProfileDiarySourcesAccordion, ProfileDiaryRequestsAccordion,
     IonContent, IonItem, IonAccordionGroup, IonLabel, IonCard, IonCardContent
   ],
   providers: [ProfileStore],
@@ -73,6 +74,8 @@ import { MyNewsletters } from '@okr/relationship-newsletter-feature';
             <okr-addresses-accordion [parentKey]="parentKey()" description="@profile.addresses.description" [priv]="priv()" [readOnly]="false" />
             <!-- spec 1.168: renders only while the member belongs to a household -->
             <okr-household-accordion [i18n]="store.i18n" />
+            <!-- spec 1.180: Vollmachten given and received -->
+            <okr-mandates-accordion />
             @if(userFormData(); as userFormData) {
               <okr-profile-settings-accordion
                 [formData]="userFormData"
