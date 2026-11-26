@@ -1,7 +1,7 @@
 import { FieldPath, Filter, getFirestore } from 'firebase-admin/firestore';
 import type { DocumentSnapshot, QueryDocumentSnapshot } from 'firebase-admin/firestore';
 import { ADDRESS_REGISTER_TENANT } from '@okr/shared-constants';
-import { ContractModel, CourseFinanceSubcollection, CourseModel, HouseholdCollection, LegacyMemberFeeCollection, MemberFeeCollection, PROSPECT_PARENT_PREFIX, TripModel } from '@okr/shared-models';
+import { ContractModel, CourseFinanceSubcollection, CourseModel, HouseholdCollection, LegacyMemberFeeCollection, MandateCollection, MemberFeeCollection, PROSPECT_PARENT_PREFIX, TripModel } from '@okr/shared-models';
 import type { AvatarInfo } from '@okr/shared-models';
 import { getContractIndex } from '@okr/business-contract-util';
 import { getCourseIndex } from '@okr/calendar-course-util';
@@ -1214,6 +1214,26 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     anonymizeFields: ['memberKeys'],
     // payer/contact still naming the erased key would make the household unsaveable: re-point them, archive below 2 members (spec §8)
     recomputeDerived: (d) => householdAfterErasure(d),
+    retention: CLUB_RECORD,
+  },
+  {
+    // Vollmacht (spec 1.180): the subject is grantor or grantee. Both sides are theirs to export; an erased
+    // person's mandates go with them (a mandate names two people, but is meaningless once either is gone).
+    collection: MandateCollection,
+    dataClass: 'membership',
+    tier: 'T2',
+    onTenantExit: 'delete',
+    find: (c: SubjectCtx) => db().collection(MandateCollection).where('granteeKey', '==', c.personKey),
+    resolve: async (c: SubjectCtx) => {
+      const [asGrantee, asGrantor] = await Promise.all([
+        db().collection(MandateCollection).where('granteeKey', '==', c.personKey).get(),
+        db().collection(MandateCollection).where('grantorKey', '==', c.personKey).get(),
+      ]);
+      return dedupeById([...asGrantee.docs, ...asGrantor.docs]);
+    },
+    tenantScope: 'tenantsArray',
+    onExport: 'full',
+    onErasure: 'delete',
     retention: CLUB_RECORD,
   },
   {

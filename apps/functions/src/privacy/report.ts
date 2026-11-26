@@ -119,6 +119,7 @@ export const COLLECTION_LABELS: Record<string, string> = {
   'work-entries': 'Trainer-Einsätze', // spec 1.167
   'trainer-invoices': 'Trainerrechnungen', // spec 1.167
   households: 'Haushalte', // spec 1.168: the household a person belongs to
+  mandates: 'Vollmachten', // spec 1.180: Vollmachten, die die Person erteilt oder erhalten hat
   expenses: 'Spesen',
   'payment-orders': 'Zahlungsaufträge',
   paymentOrders: 'Zahlungsaufträge',

@@ -262,7 +262,8 @@ describe('SUBJECT_DATA_MAP — tiers and tenant-exit disposition', () => {
     // `news-subscriptions` joined 2026-11-08 (NewsCenter): a member's own channel picks, doc id = uid — owner-locked and voluntary.
     // `newsletterSubscriptions` / `newsletterSignups` joined 2026-11-21 (1.169): a newsletter subscription rests on double-opt-in consent alone and is withdrawable at any time; a pending sign-up is not even confirmed.
     // `carddavTokens` joined 2026-11-15 (1.159): an admin's own app password for the CardDAV mirror — voluntary, revocable at any time.
-    expect(SUBJECT_DATA_MAP.filter((e) => e.tier === 'T2').map((e) => e.collection)).toEqual(['avatars', 'newsletterSubscriptions', 'newsletterSignups', 'prospects', 'trips/tracker', 'diaries', 'diaryAlbums', 'diarySources', 'diaryImports', 'hearingQuizResults', 'chatReminders', 'ratings', 'news-subscriptions', 'carddavTokens']);
+    // `mandates` joined 2026-11-26 (1.180): a Vollmacht is given voluntarily and revocable at any time; it names grantor and grantee and leaves with either.
+    expect(SUBJECT_DATA_MAP.filter((e) => e.tier === 'T2').map((e) => e.collection)).toEqual(['avatars', 'newsletterSubscriptions', 'newsletterSignups', 'prospects', 'mandates', 'trips/tracker', 'diaries', 'diaryAlbums', 'diarySources', 'diaryImports', 'hearingQuizResults', 'chatReminders', 'ratings', 'news-subscriptions', 'carddavTokens']);
   });
 
   it('names consent, not the membership, as the basis of a newsletter subscription', () => {

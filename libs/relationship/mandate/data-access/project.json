@@ -1,0 +1,24 @@
+{
+  "name": "relationship-mandate-data-access",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/relationship/mandate/data-access/src",
+  "prefix": "okr",
+  "projectType": "library",
+  "tags": ["type:data-access", "scope:mandate", "platform:mobile", "platform:web"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/relationship/mandate/data-access",
+        "main": "libs/relationship/mandate/data-access/src/index.ts",
+        "tsConfig": "libs/relationship/mandate/data-access/tsconfig.lib.json",
+        "assets": ["libs/relationship/mandate/data-access/*.md"],
+        "updateBuildableProjectDepsInPackageJson": false
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}
