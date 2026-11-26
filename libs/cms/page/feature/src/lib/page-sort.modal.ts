@@ -1,5 +1,5 @@
 import { Component, computed, inject, input, output, signal } from '@angular/core';
-import { IonContent, IonItem, IonReorder, IonReorderGroup, ItemReorderEventDetail, ModalController } from '@ionic/angular';
+import { IonContent, IonItem, IonLabel, IonNote, IonReorder, IonReorderGroup, ItemReorderEventDetail, ModalController } from '@ionic/angular';
 
 import { SectionModel } from '@okr/shared-models';
 import { ChangeConfirmation, ChangeConfirmationI18n, Header, Spinner } from '@okr/shared-ui';
@@ -16,9 +16,12 @@ import { PageStore } from './page.store';
   standalone: true,
   imports: [ 
     Spinner, Header, ChangeConfirmation,
-    IonContent, IonReorderGroup, IonReorder, IonItem
+    IonContent, IonReorderGroup, IonReorder, IonItem, IonLabel, IonNote
   ],
   providers: [PageStore],
+  styles: [`
+    .section-meta { display: flex; flex-direction: column; align-items: flex-end; text-align: right; font-size: 0.75rem; }
+  `],
   template: `
     <okr-header [i18n]="{ title: store.i18n.sort_label() }" [isModal]="true" />
     @if (dirty()) {
@@ -29,9 +32,18 @@ import { PageStore } from './page.store';
         <!-- Casting $event to $any is a temporary fix for this bug https://github.com/ionic-team/ionic-framework/issues/24245 -->
         <ion-reorder-group disabled="false" (ionItemReorder)="reorder($any($event))">
           @for(section of sections; track section.okey) {
-            <ion-item>              
-              {{ section.name}}  ({{ section.type }})
+            <ion-item>
               <ion-reorder slot="start" />
+              <ion-label>
+                <h3>{{ section.title || section.name }}</h3>
+                @if (section.subTitle) {
+                  <p>{{ section.subTitle }}</p>
+                }
+              </ion-label>
+              <ion-note slot="end" class="section-meta">
+                <span>{{ section.type }}</span>
+                <span>{{ section.okey }}</span>
+              </ion-note>
             </ion-item>
           }
         </ion-reorder-group>
