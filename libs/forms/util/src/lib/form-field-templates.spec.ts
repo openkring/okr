@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { propertyTypeOf } from '@okr/shared-util-core';
 import { Field } from '@okr/shared-models';
-import { getPrefillFields, PROPERTY_FIELD_TEMPLATES } from './form-field-templates';
+import { getPrefillFields, PROPERTY_FIELD_TEMPLATES, templateChoiceKeys } from './form-field-templates';
 
 describe('getPrefillFields', () => {
   it('returns the curated field set for applications.default', () => {
@@ -79,6 +79,32 @@ describe('getPrefillFields', () => {
     expect(gender?.type).toBe('radio');
     const options = gender?.type === 'radio' ? gender.options : [];
     expect(options.map(o => o.value)).toEqual(['male', 'female']);
+  });
+
+  it('asks for the country with a dropdown that stores the ISO code (countryCode is a code, not a name)', () => {
+    for (const mappingKey of ['applications.default', 'applications.junior']) {
+      const country = getPrefillFields(mappingKey).find(f => f.key === 'countryCode');
+      expect(country?.type).toBe('dropdown');
+      const options = country?.type === 'dropdown' ? country.options : [];
+      expect(options[0]).toEqual({ label: 'Schweiz', value: 'CH' });
+      const values = options.map(o => o.value);
+      expect(values.every(v => /^[A-Z]{2}$/.test(v))).toBe(true);
+      expect(new Set(values).size).toBe(values.length);
+      // a closed list: «Andere …» would store a name where the app reads a code
+      expect(templateChoiceKeys(mappingKey)).toContain('countryCode');
+    }
+  });
+
+  it('gives every field its own option list, so editing one form never changes another', () => {
+    const optionsOf = () => {
+      const field = getPrefillFields('applications.default').find(f => f.key === 'countryCode');
+      return field?.type === 'dropdown' ? field.options : [];
+    };
+    const first = optionsOf();
+    first[0].label = 'geändert';
+    first.pop();
+    expect(optionsOf()[0].label).toBe('Schweiz');
+    expect(optionsOf().length).toBe(first.length + 1);
   });
 
   it('returns an empty array for an unknown mapping key', () => {

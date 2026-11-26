@@ -29,7 +29,7 @@
  * places the form (formKey `mitgliedschaft-beantragen`) where it belongs.
  *
  * Conditions reference the controlling field's `id`, never its `key`, and only fields with a lower
- * `order`. Here `id === key` for every field. `validate()` below checks that before anything is
+ * `order`. Here `id === key`, except for the two fields added in the builder. `validate()` below checks that before anything is
  * printed or written and fails loudly.
  */
 import { initializeApp, getApps } from 'firebase-admin/app';
@@ -52,6 +52,15 @@ const field = (order, key, type, label, extra = {}) => ({
 });
 const rule = (match, ...conditions) => ({ match, conditions });
 const when = (fieldId, op, value) => (value === undefined ? { fieldId, op } : { fieldId, op, value });
+
+// `countryCode` holds the ISO code, so «Land» is a closed list (same as COUNTRY_OPTIONS in
+// libs/forms/util/src/lib/form-field-templates.ts — a script cannot import it).
+const COUNTRIES = [
+  ['Schweiz', 'CH'], ['Liechtenstein', 'LI'], ['Deutschland', 'DE'], ['Österreich', 'AT'], ['Frankreich', 'FR'],
+  ['Italien', 'IT'], ['Belgien', 'BE'], ['Dänemark', 'DK'], ['Finnland', 'FI'], ['Grossbritannien', 'GB'],
+  ['Irland', 'IE'], ['Luxemburg', 'LU'], ['Niederlande', 'NL'], ['Norwegen', 'NO'], ['Polen', 'PL'],
+  ['Portugal', 'PT'], ['Schweden', 'SE'], ['Spanien', 'ES'], ['USA', 'US'],
+].map(([label, value]) => ({ label, value }));
 
 // A divider's rule is the block rule: it governs the divider and every field up to the next divider.
 // Required flags mirror `applicationValidations` (libs/subject/application/util), so a submitted application
@@ -77,7 +86,7 @@ const FIELDS = [
   field(8, 'streetNumber', 'text', 'Nr.', { required: true, width: 'half' }),
   field(9, 'zipCode', 'text', 'PLZ', { required: true, width: 'third' }),
   field(10, 'city', 'text', 'Ort', { required: true, width: 'third' }),
-  field(11, 'countryCode', 'text', 'Land', { required: true, width: 'third' }),
+  field(11, 'countryCode', 'dropdown', 'Land', { required: true, width: 'third', options: COUNTRIES }),
 
   field(12, 'rowingExperience', 'checkbox', 'Ich bin schon gerudert', {
     asProperty: true,
@@ -88,21 +97,23 @@ const FIELDS = [
     visibleIf: rule('all', when('rowingExperience', 'isChecked')),
   }),
   field(14, 'previousClub', 'text', 'Bisheriger Club', { asProperty: true }),
+  // added in the builder: the id is the one it has in production
+  field(15, 'experienceYears', 'number', 'Anzahl Jahre', { id: '492e00bc-292d-4195-adcc-c8079692dbb8', asProperty: true }),
 
   // Under 18 (by year of birth), the age at which applicationValidations requires the guardian's
   // names (`needsGuardian`). An 18- or 19-year-old is still a youth applicant (applicationAs below)
   // but applies without a guardian.
-  field(15, 'guardianBlock', 'divider', 'Erziehungsberechtigte Person', {
+  field(16, 'guardianBlock', 'divider', 'Erziehungsberechtigte Person', {
     visibleIf: rule('all', when('dateOfBirth', 'ageLt', 18)),
   }),
-  field(16, 'parentFirstName', 'text', 'Vorname', { required: true, width: 'half' }),
-  field(17, 'parentLastName', 'text', 'Nachname', { required: true, width: 'half' }),
-  field(18, 'parentEmail', 'email', 'E-Mail', { required: true, width: 'half' }),
-  field(19, 'parentPhone', 'phone', 'Telefon', { width: 'half', region: 'CH' }),
+  field(17, 'parentFirstName', 'text', 'Vorname', { required: true, width: 'half' }),
+  field(18, 'parentLastName', 'text', 'Nachname', { required: true, width: 'half' }),
+  field(19, 'parentEmail', 'email', 'E-Mail', { required: true, width: 'half' }),
+  field(20, 'parentPhone', 'phone', 'Telefon', { width: 'half', region: 'CH' }),
 
   // No rule on this divider: it ends the guardian block so the field below is governed by its own rule.
-  field(20, 'swimBlock', 'divider', ''),
-  field(21, 'canSwim300m', 'checkbox', 'Ich kann 300m schwimmen', {
+  field(21, 'swimBlock', 'divider', ''),
+  field(22, 'canSwim300m', 'checkbox', 'Ich kann 300m schwimmen', {
     required: true,
     asProperty: true,
     visibleIf: rule('all', when('dateOfBirth', 'ageLt', 20)),
@@ -111,10 +122,12 @@ const FIELDS = [
   // 1.152 §7 — the announced courses for the derived applicant type. Optional (A3); the server re-checks
   // audience, announcement and places. The visibleIf matters: without a date of birth `applicationAs`
   // falls back to 'adult', so adult courses would show before the age is known.
-  field(22, 'courseKey', 'course', 'Möchtest du dich gleich für einen Kurs anmelden?', {
+  field(23, 'courseKey', 'course', 'Möchtest du dich gleich für einen Kurs anmelden?', {
     audienceFrom: 'applicationAs',
     visibleIf: rule('all', when('dateOfBirth', 'isFilled')),
   }),
+  // added in the builder: the id is the one it has in production
+  field(24, 'remarks', 'text', 'Bemerkungen', { id: '85c75d5c-9365-4bc2-b289-f55ab5d72ab3', asProperty: true }),
 ];
 
 // Spec §6 — the server derives `applicationAs`; the filler never types it. First matching case wins.
@@ -153,7 +166,7 @@ const formDefinition = {
   derivedValues: DERIVED_VALUES,
   fillerHelpText: 'Je nach Alter und Rudererfahrung siehst du nur die Fragen, die für dich gelten.',
   rateLimit: RATE_LIMIT,
-  version: 1,
+  version: 4,
 };
 
 /** Fails loudly when a rule points to a missing, later or equal-order field. */

@@ -20,6 +20,33 @@ interface FieldTemplate {
 }
 
 /**
+ * The countries a prefilled «Land» field offers: Switzerland and its neighbours, then others by name. The value is
+ * the ISO 3166-1 alpha-2 code `countryCode` holds; as free text the filler's «Schweiz» was stored as the code.
+ * The author adds further countries in the builder.
+ */
+const COUNTRY_OPTIONS: FieldOption[] = [
+  { label: 'Schweiz',         value: 'CH' },
+  { label: 'Liechtenstein',   value: 'LI' },
+  { label: 'Deutschland',     value: 'DE' },
+  { label: 'Österreich',      value: 'AT' },
+  { label: 'Frankreich',      value: 'FR' },
+  { label: 'Italien',         value: 'IT' },
+  { label: 'Belgien',         value: 'BE' },
+  { label: 'Dänemark',        value: 'DK' },
+  { label: 'Finnland',        value: 'FI' },
+  { label: 'Grossbritannien', value: 'GB' },
+  { label: 'Irland',          value: 'IE' },
+  { label: 'Luxemburg',       value: 'LU' },
+  { label: 'Niederlande',     value: 'NL' },
+  { label: 'Norwegen',        value: 'NO' },
+  { label: 'Polen',           value: 'PL' },
+  { label: 'Portugal',        value: 'PT' },
+  { label: 'Schweden',        value: 'SE' },
+  { label: 'Spanien',         value: 'ES' },
+  { label: 'USA',             value: 'US' },
+];
+
+/**
  * Curated form-field templates per collection mapping (keyed by `mappingKey`).
  * These are the fields prefilled into the form builder when a new form targets
  * the given collection. Only fields meaningful as public form inputs are listed;
@@ -40,7 +67,7 @@ const FORM_FIELD_TEMPLATES: Record<string, FieldTemplate[]> = {
     { key: 'streetNumber',  type: 'text',  label: 'Nr.' },
     { key: 'zipCode',       type: 'text',  label: 'PLZ' },
     { key: 'city',          type: 'text',  label: 'Ort' },
-    { key: 'countryCode',   type: 'text',  label: 'Land' },
+    { key: 'countryCode',   type: 'dropdown', label: 'Land', options: COUNTRY_OPTIONS },
     { key: 'applicationAs', type: 'radio', label: 'Bewerbung als', required: true,
       options: [{ label: 'Jugend', value: 'youth' }, { label: 'Erwachsen', value: 'adult' }, { label: 'Übertritt', value: 'transfer' }] },
     // the announced-course choice (spec 1.152): at most one per form, stored as `courseKey`
@@ -58,7 +85,7 @@ const FORM_FIELD_TEMPLATES: Record<string, FieldTemplate[]> = {
     { key: 'streetNumber',  type: 'text',  label: 'Nr.' },
     { key: 'zipCode',       type: 'text',  label: 'PLZ' },
     { key: 'city',          type: 'text',  label: 'Ort' },
-    { key: 'countryCode',   type: 'text',  label: 'Land' },
+    { key: 'countryCode',   type: 'dropdown', label: 'Land', options: COUNTRY_OPTIONS },
     { key: 'ssnId',         type: 'ssn',   label: 'AHV-Nummer' },
     // the announced-course choice (spec 1.152): at most one per form, stored as `courseKey`
     { key: 'courseKey',     type: 'course', label: 'Kurs', audienceFrom: 'applicationAs' },
@@ -81,6 +108,11 @@ const FORM_FIELD_TEMPLATES: Record<string, FieldTemplate[]> = {
   ],
 };
 
+/** A field owns its options: the builder edits them, and the templates are shared by every form. */
+function copyOptions(options: FieldOption[] | undefined): FieldOption[] | undefined {
+  return options?.map(option => ({ ...option }));
+}
+
 function buildField(template: FieldTemplate, order: number): Field {
   const base = {
     id: crypto.randomUUID(),
@@ -93,9 +125,9 @@ function buildField(template: FieldTemplate, order: number): Field {
   switch (template.type) {
     case 'dropdown':
     case 'radio':
-      return { ...base, type: template.type, options: template.options ?? [] };
+      return { ...base, type: template.type, options: copyOptions(template.options) ?? [] };
     case 'checkbox':
-      return { ...base, type: template.type, options: template.options };
+      return { ...base, type: template.type, options: copyOptions(template.options) };
     case 'avatar':
       return { ...base, type: template.type, avatarType: 'person' };
     case 'category':
