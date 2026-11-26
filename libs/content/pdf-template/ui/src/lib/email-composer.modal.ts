@@ -13,7 +13,7 @@ import {
   IonButton, IonContent,
   IonCard, IonCardContent, IonGrid, IonRow, IonCol, IonIcon, IonChip, IonLabel, IonNote,
   IonSegment, IonSegmentButton, IonItem, IonAccordionGroup, IonAccordion, IonPopover,
-  AlertController, ModalController, ToastController,
+  AlertController, IonModalToken, ModalController, ToastController,
 } from '@ionic/angular';
 
 import { SvgIconPipe } from '@okr/shared-pipes';
@@ -32,9 +32,16 @@ import {
   nonPdfAttachmentNames, parseEmails, sharedEmailCount, untickEmailAddress, withLinksInNewTab, toggleDelivery, versandBcc, versandDeliveries,
   EmailComposerFormModel, emailComposerValidations, VersandDeliveries, VersandEvent, VersandRow,
   EMAIL_COMPOSER_I18N_KEYS, EMAIL_COMPOSER_MSG_KEYS, EmailComposerI18n, mailEditorWanted, MailPageMeta, mailPageRefusalKey,
+  choicesWithoutSubject, composerCloseDecision, draftCandidates, START_LOAD_MS, startChoices, startStepWanted,
+  type MailingView, type StartChoice, type StartPage, type StartPick,
 } from '@okr/content-pdf-template-util';
-import { firstTextId, mailArticle, mailBlocksFromBody, type MailEditorContext } from '@okr/cms-section-util';
-import { DocEmailService, InlineAttachment, MailingLetters, PostQuote, SendMailingRequest, TemplateService } from '@okr/content-pdf-template-data-access';
+import {
+  ARTICLE_BLOCKS_MAX, firstTextId, mailArticle, mailBlocksFirstWords, mailBlocksFromBody, mailBlocksHaveContent, type MailEditorContext,
+} from '@okr/cms-section-util';
+import {
+  DocEmailService, InlineAttachment, MailingLetters, MailingService, PostQuote, SendMailingRequest, TemplateService,
+} from '@okr/content-pdf-template-data-access';
+import type { MailBlock } from '@okr/shared-models';
 
 import { EmailLayoutPicker } from './email-layout-picker';
 import { VersandAddressList } from './versand-address-list';
@@ -45,6 +52,10 @@ import { VersandInfoModal } from './versand-info.modal';
 import { APP_STORE_MIN } from '@okr/shared-data-access';
 import { MailPageService } from '@okr/content-pdf-template-data-access';
 import { MailPageDraft } from './mail-page-draft';
+import { MailStartModal } from './mail-start.modal';
+
+/** What the close question answered: keep the draft, throw it away, or stay. */
+type CloseAnswer = 'keep' | 'discard' | 'back';
 
 /** Debounce of the price request while the sender changes options or the draft. */
 const QUOTE_DEBOUNCE_MS = 400;
@@ -248,7 +259,7 @@ interface AddressField {
                 @if (mailEditorFailed() || !mailEditor()) {
                   <div class="mail-message" role="status">
                     <ion-note color="danger">{{ i18n.page_editor_error() }}</ion-note>
-                    @if (mailEditor()) {
+                    @if (mailEditor() && mailContext()) {
                       <ion-button fill="outline" size="small" (click)="retryMailEditor()">{{ i18n.page_editor_retry() }}</ion-button>
                     }
                   </div>
@@ -518,6 +529,9 @@ export class EmailComposerModal {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly destroyRef = inject(DestroyRef);
   private readonly mailPageService = inject(MailPageService);
+  private readonly mailingService = inject(MailingService);
+  /** The modal this composer is shown in; absent when it is rendered elsewhere (then nothing asks before it goes). */
+  private readonly overlay = inject(IonModalToken, { optional: true });
   /** A Versand's content: the draft page `mailPages/{pk}` (spec 1.172), created when the composer opens. */
   protected readonly draft = inject(MailPageDraft);
   protected readonly i18n = this.i18nService.translateAll(EMAIL_COMPOSER_I18N_KEYS) as EmailComposerI18n;
@@ -815,6 +829,10 @@ export class EmailComposerModal {
   private sent = false;
   /** A Versand send under way (flush + `sendMailing`); settles, never rejects, and marks `sent` on success. */
   private sendInFlight: Promise<void> | undefined;
+  /** The close question was answered with «Entwurf behalten» or «Verwerfen»: the dismiss that follows goes through. */
+  private closeAnswered = false;
+  /** The close question (or the one of «Zurücksetzen») is open: a second close waits for its answer instead of asking twice. */
+  private askingClose = false;
 
   /**
    * Where the cursor starts (spec 1.176 §8.1): a mail needs a subject first, so an empty subject takes the focus when the editor
@@ -834,9 +852,10 @@ export class EmailComposerModal {
   /** A Versand's editor segment fills the window; every other view scrolls as before. */
   protected readonly fillWindow = computed(() => this.isVersand() && this.activeSegment() === 'editor');
   /** The hint while a block is invalid: how many blocks, or the mail as a whole (too many blocks). */
-  protected readonly blockErrorsText = computed(() => this.draft.errorCount() > 0
-    ? fill(this.i18n.page_block_errors(), { count: this.draft.errorCount() })
-    : this.i18n.page_blocks_invalid());
+  protected readonly blockErrorsText = computed(() => {
+    if (this.draft.errorCount() > 0) return fill(this.i18n.page_block_errors(), { count: this.draft.errorCount() });
+    return this.draft.blocks().length > ARTICLE_BLOCKS_MAX ? this.i18n.page_blocks_invalid() : this.i18n.page_mail_invalid();
+  });
   /** The template's name on the button of the head line. */
   protected readonly layoutLabel = computed(() => this.layoutLabels()[this.layoutChoices().indexOf(this.layout())] ?? '');
   protected readonly layoutsOpen = signal(false);
@@ -940,10 +959,20 @@ export class EmailComposerModal {
           .catch((err) => console.warn('EmailComposerModal: could not discard the draft page', err));
       }
     });
-    // A Versand composes a page (spec 1.172): its draft is created once, with the prefilled body as its first text.
+    // A Versand composes a page (spec 1.172): its draft is created once, with the prefilled body as its first text. Meanwhile the
+    // start step looks for the sender's drafts and earlier mails (spec 1.176 §8.5).
     effect(() => {
       if (!this.isVersand() || this.draftReady) return;
-      untracked(() => { this.draftReady = this.createDraft(); });
+      untracked(() => {
+        this.draftReady = this.createDraft();
+        void this.offerStart();
+      });
+    });
+    // Closing a Versand with content asks first (spec 1.176 §8.5): the close icon, the back button and the swipe all go through here.
+    // Every other use of the composer closes as before.
+    effect(() => {
+      if (!this.isVersand() || !this.overlay) return;
+      untracked(() => { if (this.overlay) this.overlay.canDismiss = () => this.mayClose(); });
     });
     // The page keeps subject, layout and web version (spec 1.176 §8.5): written with the blocks.
     effect(() => {
@@ -1151,7 +1180,8 @@ export class EmailComposerModal {
 
   /** The top-up screen is for administrators; the composer closes first so the sender lands on it. */
   protected async topUp(): Promise<void> {
-    await dismissOverlay(this.modalController, null, 'cancel');
+    // «Zurück» on the close question stays here
+    if (!(await dismissOverlay(this.modalController, null, 'cancel'))) return;
     await this.router.navigateByUrl('/billing');
   }
 
@@ -1515,7 +1545,18 @@ export class EmailComposerModal {
     this.draft.markSent();
   }
 
-  protected revert(): void {
+  protected async revert(): Promise<void> {
+    // «Zurücksetzen» starts an empty draft; one with content is kept or thrown away as the sender answers (spec 1.176 §8.5)
+    if (this.isVersand() && this.draft.loaded() && this.draft.hasContent()) {
+      const answer = await this.askClose();
+      if (answer === 'back') return;
+      if (answer === 'keep') {
+        if (!(await this.draft.keep())) {
+          await this.showToast(this.i18n.close_keep_failed(), 'danger');
+          return;
+        }
+      }
+    }
     this.isDirty.set(false);
     this.extraAttachments.set([]);
     this.formData.set(this.buildInitial());
@@ -1526,7 +1567,8 @@ export class EmailComposerModal {
     if (this.isVersand()) {
       this.webVersionChoice.set(undefined);
       this.draftResetting = true;
-      // the page starts over too: a fresh draft with the prefilled body, the changed one is thrown away
+      // the page starts over too: a fresh draft with the prefilled body; the changed one is thrown away, unless it was kept just now
+      // (then the discard leaves it)
       this.draftReady = (this.draftReady ?? Promise.resolve()).then(() => this.draft.discard()).catch((err) =>
         console.warn('EmailComposerModal: could not discard the draft page', err)).then(() => this.createDraft());
       this.split.set(new Set());
@@ -1541,6 +1583,180 @@ export class EmailComposerModal {
 
   protected async cancel(): Promise<void> {
     await dismissOverlay(this.modalController, null, 'cancel');
+  }
+
+  // ------------------------------------------------- drafts and earlier mails (spec 1.176 §8.5) -------------------------------------------------
+
+  /**
+   * The start step: while the new empty draft is created and shown, the sender's drafts and earlier mails are looked up (at most
+   * `START_LOAD_MS`). With something to choose, and nothing typed yet, the picker opens above the composer; «Neu» or closing it keeps
+   * the new draft. Never for a prefilled composer or one with a document.
+   */
+  private async offerStart(): Promise<void> {
+    if (!isBrowser(this.platformId) || !startStepWanted({
+      isVersand: this.isVersand(), bodyDefault: this.bodyDefault(), subjectDefault: this.subjectDefault(), storagePath: this.storagePath(), filename: this.filename(),
+    })) return;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const late = new Promise<undefined>((resolve) => { timer = setTimeout(() => resolve(undefined), START_LOAD_MS); });
+    const choices = await Promise.race([this.loadStartChoices().catch((err) => {
+      console.warn('EmailComposerModal: the start choices could not be loaded', err);
+      return undefined;
+    }), late]);
+    clearTimeout(timer);
+    if (!choices || this.destroyed || this.sent || this.isDirty() || this.isSending() || !this.draft.loaded()) return;
+    if (choices.drafts.length === 0 && choices.earlier.length === 0) return;
+    const picker = await this.modalController.create({
+      component: MailStartModal,
+      componentProps: { drafts: choices.drafts, earlier: choices.earlier, i18n: this.i18n },
+      // a list filtered while typing
+      cssClass: 'modal-fixed-height',
+    });
+    await picker.present();
+    const { data } = await picker.onWillDismiss<StartPick>();
+    if (!data || data.kind === 'new' || this.destroyed) return;
+    await this.applyPick(data);
+  }
+
+  /** The own drafts with content and the earlier mails (`startChoices`); each draft and each page without subject is read once. */
+  private async loadStartChoices(): Promise<{ drafts: StartChoice[]; earlier: StartChoice[] }> {
+    const uid = this.appStore.fbUser()?.uid ?? '';
+    const tenantId = this.appStore.tenantId();
+    const user = this.appStore.currentUser();
+    // a group or newsletter admin sees only their own pages: `mailings` are for these two roles
+    const mayReadMailings = hasRole('privileged', user) || hasRole('memberAdmin', user);
+    const [pages, mailings] = await Promise.all([
+      this.mailPageService.ownPages(uid, tenantId),
+      mayReadMailings
+        ? firstValueFrom(this.mailingService.list(tenantId)).catch((): MailingView[] => [])
+        : Promise.resolve([] as MailingView[]),
+    ]);
+    // the composer's own new draft is never a choice
+    await this.draftReady;
+    const exceptKey = this.draft.pageKey();
+    const known = new Map<string, StartPage>(pages.map((page) => [page.okey, { page }]));
+    const read = async (pageKey: string, order?: string[]): Promise<MailBlock[] | undefined> => {
+      try {
+        return await this.mailPageService.loadBlocks(pageKey, order);
+      } catch (err) {
+        console.warn(`EmailComposerModal: the mail page ${pageKey} could not be read`, err);
+        return undefined;
+      }
+    };
+    await Promise.all(draftCandidates(pages, tenantId, exceptKey).map(async (page) => {
+      const blocks = await read(page.okey, page.sections ?? []);
+      if (blocks) known.set(page.okey, { page, hasContent: mailBlocksHaveContent(blocks), firstWords: mailBlocksFirstWords(blocks) });
+    }));
+    const choices = startChoices([...known.values()], mailings, mayReadMailings, tenantId, exceptKey);
+    // an earlier mail without a subject is named by its first words
+    const words = new Map<string, string>();
+    await Promise.all(choicesWithoutSubject(choices.earlier).map(async (pageKey) => {
+      const blocks = await read(pageKey, known.get(pageKey)?.page.sections);
+      if (blocks) words.set(pageKey, mailBlocksFirstWords(blocks));
+    }));
+    return { drafts: choices.drafts, earlier: choices.earlier.map((choice) => ({ ...choice, firstWords: words.get(choice.pageKey) ?? choice.firstWords })) };
+  }
+
+  /**
+   * Continues the chosen draft or copies the chosen mail; the new empty draft goes once the other one is there. A draft sent or deleted
+   * meanwhile, or one the sender may no longer write, leaves the composer with its new empty draft and says why.
+   */
+  private async applyPick(choice: StartChoice): Promise<void> {
+    const ctx = { tenantId: this.appStore.tenantId(), uid: this.appStore.fbUser()?.uid ?? '', groupKey: this.groupKey() || undefined };
+    const run = (this.draftReady ?? Promise.resolve()).then(async () => {
+      this.draftResetting = true;
+      try {
+        if (choice.kind === 'draft') {
+          const result = await this.mailPageService.continueDraft(choice.pageKey, ctx);
+          if (result.status !== 'ok') {
+            const text = result.status === 'refused' ? this.i18n.start_refused() : result.status === 'failed' ? this.i18n.start_failed() : this.i18n.start_gone();
+            void this.showToast(text, 'warning');
+            return;
+          }
+          await this.useDraft(result.pageKey, result.articleKey, result.blocks, result.meta);
+        } else {
+          const started = await this.mailPageService.startFrom(choice.pageKey, ctx, { subject: choice.subject, layout: 'standard', webVersion: this.webVersion() });
+          // the composer closed meanwhile: the copy was never seen, it goes again
+          if (this.destroyed) {
+            await this.mailPageService.discardDraft(started.pageKey);
+            return;
+          }
+          await this.useDraft(started.pageKey, started.articleKey, started.blocks, started.meta);
+        }
+      } catch (err) {
+        console.warn('EmailComposerModal: the chosen mail could not be opened', err);
+        void this.showToast(this.i18n.start_failed(), 'warning');
+      } finally {
+        this.draftResetting = false;
+      }
+    });
+    this.draftReady = run;
+    await run;
+  }
+
+  /**
+   * Works on `pageKey` from now on: the new empty draft is thrown away, subject, template and web version of the page go into the form
+   * (the meta effect then finds them equal and writes nothing), and the send bar shows: the mail has content.
+   */
+  private async useDraft(pageKey: string, articleKey: string, blocks: MailBlock[], meta: Partial<MailPageMeta>): Promise<void> {
+    if (this.destroyed || this.sent) return;
+    await this.draft.discard();
+    const subject = meta.subject ?? '';
+    this.formData.update((vm) => ({ ...vm, subject, layout: meta.layout ?? 'standard' }));
+    this.webVersionChoice.set(meta.webVersion);
+    this.pageBaseline = undefined;
+    this.draft.start({
+      pageKey, articleKey, tenantId: this.appStore.tenantId(), blocks, meta: this.meta(),
+      ...(subject.trim() ? { selectedId: firstTextId(blocks) } : {}),
+    });
+    this.subjectAutofocus.set(subject.trim() === '');
+    this.isDirty.set(true);
+  }
+
+  /**
+   * Whether the modal may close (close icon, back button, swipe, «Guthaben aufladen»). A send under way is awaited first; a draft with
+   * content asks; without content it goes silently (the draft is deleted when the composer is destroyed).
+   */
+  private async mayClose(): Promise<boolean> {
+    if (this.closeAnswered) return true;
+    if (this.askingClose) return false;
+    const state = () => ({ isVersand: this.isVersand(), sent: this.sent, busy: this.isSending(), hasContent: this.draft.loaded() && this.draft.hasContent() });
+    let decision = composerCloseDecision(state());
+    if (decision === 'wait') {
+      // the recipients are still being confirmed: nothing runs yet that could be awaited
+      if (!this.sendInFlight) return false;
+      await this.sendInFlight;
+      decision = composerCloseDecision({ ...state(), busy: false });
+    }
+    if (decision === 'allow') return true;
+    const answer = await this.askClose();
+    if (answer === 'back') return false;
+    if (answer === 'keep' && !(await this.draft.keep())) {
+      await this.showToast(this.i18n.close_keep_failed(), 'danger');
+      return false;
+    }
+    this.closeAnswered = true;
+    return true;
+  }
+
+  /** «Entwurf behalten» / «Verwerfen» / «Zurück»; a tap beside the question is «Zurück». */
+  private async askClose(): Promise<CloseAnswer> {
+    if (this.askingClose) return 'back';
+    this.askingClose = true;
+    try {
+      const alert = await this.alertController.create({
+        message: this.i18n.close_message(),
+        buttons: [
+          { text: this.i18n.close_back(), role: 'cancel' },
+          { text: this.i18n.close_discard(), role: 'discard' },
+          { text: this.i18n.close_keep(), role: 'keep' },
+        ],
+      });
+      await alert.present();
+      const { role } = await alert.onDidDismiss();
+      return role === 'keep' || role === 'discard' ? role : 'back';
+    } finally {
+      this.askingClose = false;
+    }
   }
 
   /**

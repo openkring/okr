@@ -9,3 +9,4 @@ export * from './lib/mailing.util';
 export * from './lib/postversand.util';
 export * from './lib/sending.util';
 export * from './lib/mail-page.util';
+export * from './lib/mail-start.util';

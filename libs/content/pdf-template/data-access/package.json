@@ -12,6 +12,7 @@
     "@okr/shared-i18n": "*",
     "@okr/shared-models": "*",
     "@okr/shared-util-core": "*",
-    "@okr/content-pdf-template-util": "*"
+    "@okr/content-pdf-template-util": "*",
+    "@okr/cms-section-util": "*"
   }
 }

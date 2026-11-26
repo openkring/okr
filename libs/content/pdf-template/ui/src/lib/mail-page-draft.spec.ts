@@ -26,7 +26,7 @@ function setup() {
   const injector = Injector.create({ providers: [{ provide: MailPageService, useValue: service }, { provide: MailPageDraft }] });
   const draft = injector.get(MailPageDraft);
   draft.start({ pageKey: 'p1', articleKey: 'a1', tenantId: 'scs', blocks: [text('t1', '')], meta: META });
-  return { draft, service };
+  return { draft, service, injector };
 }
 
 /** One edit of the editor: the text with `html`. */
@@ -168,6 +168,38 @@ describe('MailPageDraft', () => {
     draft.markSent();
     await draft.discard();
     expect(service.discardDraft).not.toHaveBeenCalled();
+  });
+
+  it('a sent page is never written again: a waiting change is dropped, a later one not scheduled', async () => {
+    const { draft, service } = setup();
+    type(draft, '<p>Hi</p>');
+    draft.markSent();
+    vi.advanceTimersByTime(MAIL_PAGE_SAVE_DEBOUNCE_MS * 2);
+    type(draft, '<p>Hi du</p>');
+    draft.setMeta({ ...META, subject: 'Neu' });
+    vi.advanceTimersByTime(MAIL_PAGE_SAVE_DEBOUNCE_MS * 2);
+    expect(await draft.flush()).toBe(true);
+    expect(service.saveDraft).not.toHaveBeenCalled();
+  });
+
+  it('a change still waiting when the composer goes is never written', () => {
+    const { draft, service, injector } = setup();
+    type(draft, '<p>Hi</p>');
+    (injector as unknown as { destroy(): void }).destroy();
+    vi.advanceTimersByTime(MAIL_PAGE_SAVE_DEBOUNCE_MS * 2);
+    type(draft, '<p>Hi du</p>');
+    vi.advanceTimersByTime(MAIL_PAGE_SAVE_DEBOUNCE_MS * 2);
+    expect(service.saveDraft).not.toHaveBeenCalled();
+  });
+
+  it('a draft whose last change could not be stored is not kept: a discard still deletes it', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const { draft, service } = setup();
+    service.saveDraft.mockRejectedValue(new Error('offline'));
+    type(draft, '<p>Hi</p>');
+    expect(await draft.keep()).toBe(false);
+    await draft.discard();
+    expect(service.discardDraft).toHaveBeenCalledWith('p1');
   });
 
   it('a kept page is written and never deleted', async () => {

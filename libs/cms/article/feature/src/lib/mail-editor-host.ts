@@ -1,5 +1,5 @@
 import { NgTemplateOutlet } from '@angular/common';
-import { Component, DestroyRef, TemplateRef, computed, effect, inject, input, signal, untracked, viewChild } from '@angular/core';
+import { Component, DestroyRef, OnInit, TemplateRef, computed, effect, inject, input, signal, untracked, viewChild } from '@angular/core';
 
 import {
   ARTICLE_EDITOR_I18N_KEYS, MAIL_PROFILE, SECTION_I18N_KEYS, articleImageChoices, firstTextId,
@@ -46,7 +46,7 @@ type History = EditorHistory<EditorState>;
     </okr-article-editor-surface>
   `,
 })
-export class MailEditorHost {
+export class MailEditorHost implements OnInit {
   // inputs, set by name by the composer
   public readonly draft = input.required<MailEditorDraft>();
   public readonly context = input.required<MailEditorContext>();
@@ -74,6 +74,8 @@ export class MailEditorHost {
     .filter((block) => block?.type === 'events' && typeof block.calendarKey === 'string' && block.calendarKey !== '')
     .map((block) => (block as Extract<MailBlock, { type: 'events' }>).calendarKey))], { equal: (a, b) => a.join('\n') === b.join('\n') });
   private destroyed = false;
+  /** The draft page this host was made for; set before its first change detection. */
+  private pageKey: string | undefined;
 
   constructor() {
     inject(DestroyRef).onDestroy(() => { this.destroyed = true; });
@@ -95,6 +97,10 @@ export class MailEditorHost {
     });
   }
 
+  public ngOnInit(): void {
+    this.pageKey = this.draft().pageKey();
+  }
+
   /** The cursor into the first text (from the subject, or when the composer opens with a subject). False without a text. */
   public focusFirstText(): boolean {
     const id = firstTextId(this.blocks());
@@ -108,8 +114,12 @@ export class MailEditorHost {
     this.draft().setHistory(history);
   }
 
-  /** Stable: an upload may end when the host is gone, the picture then goes straight into the draft. */
+  /**
+   * Stable: an upload may end when the host is gone, the picture then goes straight into the draft. One that ends after the composer
+   * moved on to another page («Zurücksetzen», a continued or copied draft) is dropped: it belongs to a page that is no longer edited.
+   */
   protected readonly onUpload = (upload: ArticleUpload): void => {
+    if (this.draft().pageKey() !== this.pageKey) return;
     const go = (history: History): History => uploadInto(history, upload);
     if (this.destroyed || !this.surface()?.change(go)) this.draft().setHistory(go(this.draft().history()));
   };

@@ -260,14 +260,35 @@
       "refused_sent": "Cet e-mail a déjà été envoyé.",
       "refused_gone": "Le brouillon n'existe plus. Ferme la fenêtre et recommence.",
       "refused_section": "L'e-mail contient une section qui ne peut pas être envoyée.",
-      "block_errors": "Blocs avec des erreurs : {count}. Dès qu’ils sont corrigés, tu peux envoyer.",
-      "blocks_invalid": "L’e-mail contient trop de blocs. Supprimes-en quelques-uns, puis tu peux envoyer.",
-      "editor_error": "L’éditeur n’a pas pu être chargé. Ton brouillon est conservé.",
-      "editor_retry": "Réessayer"
+      "block_errors": "Blocs avec des erreurs : {count}. Dès qu'ils sont corrigés, tu peux envoyer.",
+      "blocks_invalid": "L'e-mail contient trop de blocs. Supprimes-en quelques-uns, puis tu peux envoyer.",
+      "editor_error": "L'éditeur n'a pas pu être chargé. Ton brouillon est conservé.",
+      "editor_retry": "Réessayer",
+      "mail_invalid": "L'e-mail ne peut pas être envoyé ainsi. Vérifie ses blocs."
     },
     "web_version": {
       "label": "Proposer une version web",
       "helper": "Avec le lien, toute personne peut lire cet e-mail dans le navigateur, même sans se connecter."
+    },
+    "start": {
+      "title": "Comment veux-tu commencer ?",
+      "new": "Nouveau",
+      "new_helper": "Un e-mail vide",
+      "drafts": "Tes brouillons",
+      "earlier": "Copier un e-mail précédent",
+      "search": "Rechercher",
+      "no_subject": "Sans objet",
+      "none_found": "Aucun e-mail trouvé.",
+      "gone": "Ce brouillon a été envoyé ou supprimé entre-temps. Tu écris un nouvel e-mail.",
+      "refused": "Tu ne peux plus modifier ce brouillon. Il reste tel quel et tu écris un nouvel e-mail.",
+      "failed": "Cela n'a pas fonctionné. Tu écris un nouvel e-mail."
+    },
+    "close": {
+      "message": "Veux-tu garder cet e-mail comme brouillon ? Un brouillon est conservé 30 jours après la dernière modification.",
+      "keep": "Garder le brouillon",
+      "discard": "Supprimer",
+      "back": "Retour",
+      "keep_failed": "Le brouillon n'a pas pu être enregistré. Réessaie."
     }
   },
   "category": {

@@ -263,11 +263,32 @@
       "block_errors": "Bloques con errores: {count}. En cuanto los corrijas, puedes enviar.",
       "blocks_invalid": "El correo tiene demasiados bloques. Quita algunos y podrás enviar.",
       "editor_error": "No se pudo cargar el editor. Tu borrador se conserva.",
-      "editor_retry": "Reintentar"
+      "editor_retry": "Reintentar",
+      "mail_invalid": "El correo no se puede enviar así. Revisa sus bloques."
     },
     "web_version": {
       "label": "Ofrecer versión web",
       "helper": "Con el enlace cualquier persona puede leer este correo en el navegador, incluso sin iniciar sesión."
+    },
+    "start": {
+      "title": "¿Cómo quieres empezar?",
+      "new": "Nuevo",
+      "new_helper": "Un correo vacío",
+      "drafts": "Tus borradores",
+      "earlier": "Copiar un correo anterior",
+      "search": "Buscar",
+      "no_subject": "Sin asunto",
+      "none_found": "No se ha encontrado ningún correo.",
+      "gone": "Este borrador se ha enviado o eliminado mientras tanto. Estás escribiendo un correo nuevo.",
+      "refused": "Ya no puedes editar este borrador. Se queda como está y estás escribiendo un correo nuevo.",
+      "failed": "No ha funcionado. Estás escribiendo un correo nuevo."
+    },
+    "close": {
+      "message": "¿Quieres guardar este correo como borrador? Un borrador se conserva 30 días después del último cambio.",
+      "keep": "Guardar borrador",
+      "discard": "Descartar",
+      "back": "Volver",
+      "keep_failed": "No se pudo guardar el borrador. Inténtalo de nuevo."
     }
   },
   "category": {

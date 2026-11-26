@@ -7,7 +7,7 @@
 // Vorschau or Zustellung. The history must survive that (undo covers everything since opening), the composer needs the blocks (send bar,
 // errors) all the time, and before it asks the server to render, price, test or send the page, the last typed characters must have
 // reached Firestore: the server reads the page from there.
-import { computed, inject, Injectable, signal } from '@angular/core';
+import { computed, DestroyRef, inject, Injectable, signal } from '@angular/core';
 
 import type { ArticleBlock, MailBlock } from '@okr/shared-models';
 import { MailPageService } from '@okr/content-pdf-template-data-access';
@@ -66,8 +66,20 @@ export class MailPageDraft implements MailEditorDraft {
   private readonly inFlight = new Set<Promise<void>>();
   /** No write and no delete any more: thrown away. */
   private discarded = false;
-  /** The page became a mailing, or the sender kept it: a discard leaves it. */
-  private settled = false;
+  /** The page became a mailing: nothing is written to it any more (the rules would refuse it), a discard leaves it. */
+  private sent = false;
+  /** «Entwurf behalten»: a discard leaves the page. */
+  private kept = false;
+  /** The composer went: a change that is still waiting is never written. */
+  private destroyed = false;
+
+  constructor() {
+    inject(DestroyRef).onDestroy(() => {
+      this.destroyed = true;
+      clearTimeout(this.timer);
+      this.timer = undefined;
+    });
+  }
 
   /** Works on a newly created draft from now on (also a fresh one after «Zurücksetzen»). Nothing is written: it was created so. */
   public start(draft: { pageKey: string; articleKey: string; tenantId: string; blocks: MailBlock[]; meta: MailPageMeta; selectedId?: string }): void {
@@ -75,7 +87,8 @@ export class MailPageDraft implements MailEditorDraft {
     this.timer = undefined;
     this.dirty = false;
     this.discarded = false;
-    this.settled = false;
+    this.sent = false;
+    this.kept = false;
     this.tenantId = draft.tenantId;
     this.historyState.set(createHistory({ section: mailArticle(draft.tenantId, draft.blocks), copiedFrom: {}, ...(draft.selectedId ? { selectedId: draft.selectedId } : {}) }));
     this.metaState.set(draft.meta);
@@ -119,22 +132,33 @@ export class MailPageDraft implements MailEditorDraft {
       this.write();
     }
     await Promise.allSettled([...this.inFlight]);
-    if (this.dirty && !this.discarded && this.timer === undefined) {
+    if (this.dirty && !this.discarded && !this.sent && this.timer === undefined) {
       this.write();
       await Promise.allSettled([...this.inFlight]);
     }
-    return !this.dirty || this.discarded;
+    return !this.dirty || this.discarded || this.sent;
   }
 
-  /** The page became a mailing: it belongs to it now, a later discard never deletes it. */
+  /**
+   * The page became a mailing: it belongs to it now. A later discard never deletes it, and nothing is written to it any more: a change
+   * still waiting is dropped (the server sent what was stored).
+   */
   public markSent(): void {
-    this.settled = true;
+    this.sent = true;
+    this.dirty = false;
+    clearTimeout(this.timer);
+    this.timer = undefined;
   }
 
-  /** «Entwurf behalten»: written now and never deleted by a discard. False when the last change could not be stored. */
+  /**
+   * «Entwurf behalten»: written now and never deleted by a discard. False when the last change could not be stored; the draft is then
+   * not kept, so that a later «Verwerfen» still deletes it.
+   */
   public async keep(): Promise<boolean> {
-    this.settled = true;
-    return this.flush();
+    this.kept = true;
+    const stored = await this.flush();
+    if (!stored) this.kept = false;
+    return stored;
   }
 
   /**
@@ -149,11 +173,11 @@ export class MailPageDraft implements MailEditorDraft {
     clearTimeout(this.timer);
     this.timer = undefined;
     await Promise.allSettled([...this.inFlight]);
-    if (pageKey && !this.settled) await this.mailPageService.discardDraft(pageKey);
+    if (pageKey && !this.sent && !this.kept) await this.mailPageService.discardDraft(pageKey);
   }
 
   private schedule(): void {
-    if (this.discarded || !this.pageKey()) return;
+    if (this.discarded || this.sent || this.destroyed || !this.pageKey()) return;
     this.dirty = true;
     clearTimeout(this.timer);
     this.timer = setTimeout(() => {
@@ -165,7 +189,7 @@ export class MailPageDraft implements MailEditorDraft {
   /** Writes the blocks and the meta as they are now: always the whole article, built anew, so that no old field is stored beside them. */
   private write(): void {
     const pageKey = this.pageKey();
-    if (!this.dirty || this.discarded || !pageKey) return;
+    if (!this.dirty || this.discarded || this.sent || !pageKey) return;
     this.dirty = false;
     const article = mailArticle(this.tenantId, this.blocks());
     const written = this.mailPageService.saveDraft(pageKey, this.articleKey(), article, this.meta(), new Date().toISOString()).then(

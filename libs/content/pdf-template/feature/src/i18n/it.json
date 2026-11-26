@@ -261,13 +261,34 @@
       "refused_gone": "La bozza non esiste più. Chiudi la finestra e ricomincia.",
       "refused_section": "L'e-mail contiene una sezione che non può essere inviata.",
       "block_errors": "Blocchi con errori: {count}. Quando sono corretti, puoi inviare.",
-      "blocks_invalid": "L’e-mail ha troppi blocchi. Rimuovine alcuni, poi puoi inviare.",
-      "editor_error": "Non è stato possibile caricare l’editor. La tua bozza resta salvata.",
-      "editor_retry": "Riprova"
+      "blocks_invalid": "L'e-mail ha troppi blocchi. Rimuovine alcuni, poi puoi inviare.",
+      "editor_error": "Non è stato possibile caricare l'editor. La tua bozza resta salvata.",
+      "editor_retry": "Riprova",
+      "mail_invalid": "L'e-mail non può essere inviata così. Controlla i suoi blocchi."
     },
     "web_version": {
       "label": "Offri una versione web",
       "helper": "Con il link chiunque può leggere questa e-mail nel browser, anche senza accedere."
+    },
+    "start": {
+      "title": "Come vuoi iniziare?",
+      "new": "Nuova",
+      "new_helper": "Un'e-mail vuota",
+      "drafts": "Le tue bozze",
+      "earlier": "Copia un'e-mail precedente",
+      "search": "Cerca",
+      "no_subject": "Senza oggetto",
+      "none_found": "Nessuna e-mail trovata.",
+      "gone": "Questa bozza è stata inviata o eliminata nel frattempo. Stai scrivendo una nuova e-mail.",
+      "refused": "Non puoi più modificare questa bozza. Resta com'è e stai scrivendo una nuova e-mail.",
+      "failed": "Non ha funzionato. Stai scrivendo una nuova e-mail."
+    },
+    "close": {
+      "message": "Vuoi tenere quest'e-mail come bozza? Una bozza resta conservata 30 giorni dopo l'ultima modifica.",
+      "keep": "Tieni la bozza",
+      "discard": "Scarta",
+      "back": "Indietro",
+      "keep_failed": "Non è stato possibile salvare la bozza. Riprova."
     }
   },
   "category": {

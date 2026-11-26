@@ -263,11 +263,32 @@
       "block_errors": "Blöcke mit Fehlern: {count}. Sobald sie korrigiert sind, kannst du senden.",
       "blocks_invalid": "Die E-Mail hat zu viele Blöcke. Entferne einige, dann kannst du senden.",
       "editor_error": "Der Editor konnte nicht geladen werden. Dein Entwurf bleibt erhalten.",
-      "editor_retry": "Erneut versuchen"
+      "editor_retry": "Erneut versuchen",
+      "mail_invalid": "Die E-Mail kann so nicht gesendet werden. Prüfe ihre Blöcke."
     },
     "web_version": {
       "label": "Webversion anbieten",
       "helper": "Mit dem Link kann jede Person diese E-Mail im Browser lesen, auch ohne Anmeldung."
+    },
+    "start": {
+      "title": "Wie möchtest du beginnen?",
+      "new": "Neu",
+      "new_helper": "Eine leere E-Mail",
+      "drafts": "Deine Entwürfe",
+      "earlier": "Frühere E-Mail kopieren",
+      "search": "Suchen",
+      "no_subject": "Ohne Betreff",
+      "none_found": "Keine E-Mail gefunden.",
+      "gone": "Dieser Entwurf wurde inzwischen gesendet oder gelöscht. Du schreibst eine neue E-Mail.",
+      "refused": "Du kannst diesen Entwurf nicht mehr bearbeiten. Er bleibt, wie er ist, und du schreibst eine neue E-Mail.",
+      "failed": "Das hat nicht geklappt. Du schreibst eine neue E-Mail."
+    },
+    "close": {
+      "message": "Möchtest du diese E-Mail als Entwurf behalten? Ein Entwurf bleibt 30 Tage nach der letzten Änderung erhalten.",
+      "keep": "Entwurf behalten",
+      "discard": "Verwerfen",
+      "back": "Zurück",
+      "keep_failed": "Der Entwurf konnte nicht gespeichert werden. Versuche es nochmals."
     }
   },
   "category": {

@@ -291,6 +291,25 @@ export const EMAIL_COMPOSER_I18N_KEYS = {
   page_blocks_invalid: PFX + 'composer.page.blocks_invalid',
   page_editor_error:  PFX + 'composer.page.editor_error',
   page_editor_retry:  PFX + 'composer.page.editor_retry',
+  /** the mail cannot be sent, but no single block has an error and it has not too many blocks */
+  page_mail_invalid:  PFX + 'composer.page.mail_invalid',
+  // the start step and closing with a draft (spec 1.176 §8.5)
+  start_title:        PFX + 'composer.start.title',
+  start_new:          PFX + 'composer.start.new',
+  start_new_helper:   PFX + 'composer.start.new_helper',
+  start_drafts:       PFX + 'composer.start.drafts',
+  start_earlier:      PFX + 'composer.start.earlier',
+  start_search:       PFX + 'composer.start.search',
+  start_no_subject:   PFX + 'composer.start.no_subject',
+  start_none_found:   PFX + 'composer.start.none_found',
+  start_gone:         PFX + 'composer.start.gone',
+  start_refused:      PFX + 'composer.start.refused',
+  start_failed:       PFX + 'composer.start.failed',
+  close_message:      PFX + 'composer.close.message',
+  close_keep:         PFX + 'composer.close.keep',
+  close_discard:      PFX + 'composer.close.discard',
+  close_back:         PFX + 'composer.close.back',
+  close_keep_failed:  PFX + 'composer.close.keep_failed',
 } satisfies Record<string, string>;
 
 export type EmailComposerI18n = { [K in keyof typeof EMAIL_COMPOSER_I18N_KEYS]: Signal<string> };

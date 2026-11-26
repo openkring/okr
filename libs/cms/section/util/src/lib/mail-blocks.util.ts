@@ -37,7 +37,7 @@ function hasCta(value: unknown): boolean {
 /**
  * The blocks of a stored mail page, all with new ids (§8.5); `sections` in the order of the page. An article with blocks is copied as it
  * is. The sections of 1.172 become what their mail showed: an article its pictures, heading, text and button in this order, a button
- * section a centred button, events their block. What showed nothing and archived sections are left out. A section of a type
+ * section a centred button (only with a label and a target, as the old mail drew it), events their block. What showed nothing and archived sections are left out. A section of a type
  * that no mail had becomes a block of that unknown type, which is an error to fix.
  */
 export function mailBlocksFromSections(sections: SectionModel[], newId: NewId): MailBlock[] {
@@ -78,10 +78,37 @@ function fromOldButton(section: Loose, newId: NewId): MailBlock[] {
   const properties = objectOf(section['properties']);
   const action = objectOf(properties['action']);
   const cta = mailCta({ label: str(objectOf(properties['style'])['label']) || str(action['altText']), url: action['url'] });
-  return hasCta(cta) ? [{ id: newId(), type: 'button', cta, align: 'center' }] : [];
+  // the old mail drew it only with a label and a target that it could open
+  return cta.label !== '' && isMailTarget(cta.url) ? [{ id: newId(), type: 'button', cta, align: 'center' }] : [];
 }
 
 function fromOldEvents(section: Loose, newId: NewId): MailBlock {
   const title = str(section['title']);
   return { id: newId(), type: 'events', calendarKey: str(section['name']), ...(title ? { title } : {}), maxEvents: mailEventLimit(section['properties']) };
+}
+
+/** At most this many words of a mail name it in the start step when it has no subject (§8.5). */
+export const MAIL_FIRST_WORDS = 8;
+
+/**
+ * The first words of a mail (§8.5): what its texts and callouts say in reading order (also in columns), without markup, at most `max`
+ * words, with «…» when there is more. Empty without a text. Shown as plain text, never as html.
+ */
+export function mailBlocksFirstWords(blocks: MailBlock[], max = MAIL_FIRST_WORDS): string {
+  if (!Array.isArray(blocks)) return '';
+  const words: string[] = [];
+  for (const block of blocksInOrder(blocks) as unknown as Loose[]) {
+    if (!isObject(block) || (block['type'] !== 'text' && block['type'] !== 'callout') || typeof block['html'] !== 'string') continue;
+    words.push(...plainText(block['html']).split(/\s+/).filter(Boolean));
+    if (words.length > max) break;
+  }
+  return words.length > max ? `${words.slice(0, max).join(' ')} …` : words.join(' ');
+}
+
+function plainText(html: string): string {
+  return html.slice(0, 20_000)
+    .replace(/<!--[\s\S]*?-->|<style\b[\s\S]*?<\/style>|<script\b[\s\S]*?<\/script>/gi, ' ')
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/&nbsp;|&#160;|&#xa0;/gi, ' ')
+    .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'").replace(/&amp;/g, '&');
 }

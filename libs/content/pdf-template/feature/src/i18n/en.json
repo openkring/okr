@@ -263,11 +263,32 @@
       "block_errors": "Blocks with errors: {count}. Once they are corrected, you can send.",
       "blocks_invalid": "The email has too many blocks. Remove some, then you can send.",
       "editor_error": "The editor could not be loaded. Your draft is kept.",
-      "editor_retry": "Try again"
+      "editor_retry": "Try again",
+      "mail_invalid": "The email cannot be sent like this. Check its blocks."
     },
     "web_version": {
       "label": "Offer a web version",
       "helper": "With the link anyone can read this email in the browser, even without signing in."
+    },
+    "start": {
+      "title": "How do you want to start?",
+      "new": "New",
+      "new_helper": "An empty email",
+      "drafts": "Your drafts",
+      "earlier": "Copy an earlier email",
+      "search": "Search",
+      "no_subject": "No subject",
+      "none_found": "No email found.",
+      "gone": "This draft has been sent or deleted in the meantime. You are writing a new email.",
+      "refused": "You can no longer edit this draft. It stays as it is, and you are writing a new email.",
+      "failed": "That did not work. You are writing a new email."
+    },
+    "close": {
+      "message": "Do you want to keep this email as a draft? A draft is kept for 30 days after the last change.",
+      "keep": "Keep draft",
+      "discard": "Discard",
+      "back": "Back",
+      "keep_failed": "The draft could not be saved. Please try again."
     }
   },
   "category": {

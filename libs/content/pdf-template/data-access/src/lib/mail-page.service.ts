@@ -8,16 +8,58 @@
 //  - a draft of 1.176 is one article whose blocks are the mail (`mailArticle`), written with the page's subject, layout and web version;
 //  - a section's doc id equals the key in `page.sections`, which is the order the server renders in;
 //  - a discard deletes the sections first, then the page, in one batch.
-// Reads are the sender's own draft only (a document read by key); no query over drafts is made here.
+// Reads (spec 1.176 §8.5): the sender's own pages by the query `senderUid == uid` (the rules allow exactly that one), and a page with
+// its sections by key: the own ones, and sent ones of the tenant for a member admin or privileged user. Copying never writes the source.
 import { inject, Injectable } from '@angular/core';
-import { arrayRemove, arrayUnion, collection, doc, getDoc, getDocs, updateDoc, writeBatch } from 'firebase/firestore';
+import { arrayRemove, arrayUnion, collection, deleteField, doc, DocumentReference, getDoc, getDocs, query, updateDoc, where, writeBatch } from 'firebase/firestore';
 import { docData, collectionData } from 'rxfire/firestore';
 import { combineLatest, map, Observable } from 'rxjs';
 
 import { FIRESTORE } from '@okr/shared-config';
-import { ArticleSection, MailPageCollection, MailPageModel, MailPageSectionCollection, OkrModel, SectionModel } from '@okr/shared-models';
+import {
+  articleBlocksOf, ArticleSection, MailBlock, MailPageCollection, MailPageModel, MailPageSectionCollection, OkrModel, SectionModel,
+} from '@okr/shared-models';
 import { removeKeyFromOkrModel, removeUndefinedFields } from '@okr/shared-util-core';
 import { newMailPage, type MailPageMeta } from '@okr/content-pdf-template-util';
+import { mailArticle, mailBlocksFromBody, mailBlocksFromSections } from '@okr/cms-section-util';
+
+/** A draft the composer works on: the page, its one article and what the page keeps besides the blocks. */
+export interface StartedDraft {
+  pageKey: string;
+  articleKey: string;
+  blocks: MailBlock[];
+  meta: MailPageMeta;
+}
+
+/**
+ * Continuing an own draft (§8.5): `ok` with the draft to start; `sent` / `gone` when it was sent or deleted meanwhile (or is not the
+ * caller's any more); `refused` when the rules refused the write (the role or the group lost), the draft is then untouched; `failed`
+ * for anything else (offline).
+ */
+export type ContinueResult =
+  | ({ status: 'ok' } & Omit<StartedDraft, 'meta'> & { meta: Partial<MailPageMeta> })
+  | { status: 'sent' | 'gone' | 'refused' | 'failed' };
+
+function errorCode(err: unknown): string {
+  const code = (err as { code?: unknown } | undefined)?.code;
+  return typeof code === 'string' ? code.replace(/^firestore\//, '') : '';
+}
+
+/** The sections in the order of the page (the order the server renders in); with no order stored, as read. Unlisted ones are left out. */
+function inPageOrder(sections: SectionModel[], order: unknown): SectionModel[] {
+  if (!Array.isArray(order) || order.length === 0) return sections;
+  const byKey = new Map(sections.map((section) => [section.okey, section]));
+  return order.map((key) => byKey.get(key)).filter((section): section is SectionModel => !!section);
+}
+
+/** Subject, layout and web version as a page stores them; absent fields stay absent. */
+function storedMeta(page: Partial<MailPageModel> | undefined): Partial<MailPageMeta> {
+  return {
+    ...(typeof page?.subject === 'string' ? { subject: page.subject } : {}),
+    ...(typeof page?.layout === 'string' && page.layout !== '' ? { layout: page.layout } : {}),
+    ...(typeof page?.webVersion === 'boolean' ? { webVersion: page.webVersion } : {}),
+  };
+}
 
 @Injectable({ providedIn: 'root' })
 export class MailPageService {
@@ -64,6 +106,110 @@ export class MailPageService {
     batch.set(doc(this.sectionsRef(pageKey), articleKey), this.stored({ ...article, okey: articleKey }));
     batch.update(this.pageRef(pageKey), this.stored({ ...meta, changedAt }));
     await batch.commit();
+  }
+
+  /**
+   * The caller's own pages of the tenant, drafts and sent ones (§8.5). The query is `senderUid == uid`, the one the rules allow; the
+   * tenant is filtered here, so that the query needs no composite index. A sender has a few dozen pages at most: the nightly job reaps
+   * unsent drafts after 30 days.
+   */
+  public async ownPages(uid: string, tenantId: string): Promise<MailPageModel[]> {
+    if (!uid) return [];
+    const snap = await getDocs(query(collection(this.firestore, MailPageCollection), where('senderUid', '==', uid)));
+    return snap.docs
+      .map((d) => ({ ...d.data(), okey: d.id }) as MailPageModel)
+      .filter((page) => Array.isArray(page.tenants) && page.tenants.includes(tenantId));
+  }
+
+  private async readSections(pageKey: string): Promise<{ sections: SectionModel[]; refs: DocumentReference[] }> {
+    const snap = await getDocs(this.sectionsRef(pageKey));
+    return { sections: snap.docs.map((d) => ({ ...d.data(), okey: d.id }) as SectionModel), refs: snap.docs.map((d) => d.ref) };
+  }
+
+  /**
+   * The blocks of a page as copies with new ids (one read of its sections; a 1.172 page is converted as its mail showed it). `order` is
+   * the page's `sections`; without it the page is read first. Throws when a read is refused.
+   */
+  public async loadBlocks(pageKey: string, order?: string[]): Promise<MailBlock[]> {
+    const sectionOrder = order ?? ((await getDoc(this.pageRef(pageKey))).data()?.['sections'] as string[] | undefined);
+    const { sections } = await this.readSections(pageKey);
+    return mailBlocksFromSections(inPageOrder(sections, sectionOrder), () => crypto.randomUUID());
+  }
+
+  /**
+   * Continues an own draft (§8.5). The page is read again: sent or deleted meanwhile, nothing is written. Otherwise one batch: `groupKey`
+   * becomes the current composer's (removed without one) and `changedAt` is set; a draft of 1.172 (sections) has its sections replaced
+   * by the one article of their blocks in the same batch, so that an older server cannot send the old content. The rules decide whether
+   * the caller may still write it: a refusal leaves the draft as it was.
+   */
+  public async continueDraft(pageKey: string, ctx: { tenantId: string; uid: string; groupKey?: string }): Promise<ContinueResult> {
+    let page: Partial<MailPageModel> | undefined;
+    let read: { sections: SectionModel[]; refs: DocumentReference[] };
+    try {
+      page = (await getDoc(this.pageRef(pageKey))).data() as Partial<MailPageModel> | undefined;
+      if (!page) return { status: 'gone' };
+      if (typeof page.mailingKey === 'string' && page.mailingKey !== '') return { status: 'sent' };
+      if (page.senderUid !== ctx.uid || !page.tenants?.includes(ctx.tenantId)) return { status: 'gone' };
+      read = await this.readSections(pageKey);
+    } catch (err) {
+      console.warn('MailPageService.continueDraft: reading the draft failed', err);
+      return { status: errorCode(err) === 'permission-denied' ? 'gone' : 'failed' };
+    }
+
+    const ordered = inPageOrder(read.sections, page.sections);
+    const only = ordered.length === 1 && read.sections.length === 1 ? ordered[0] : undefined;
+    const stored = only?.type === 'article' ? articleBlocksOf(only) : undefined;
+    const batch = writeBatch(this.firestore);
+    const changes: Record<string, unknown> = { groupKey: ctx.groupKey ? ctx.groupKey : deleteField(), changedAt: new Date().toISOString() };
+    let articleKey: string;
+    let blocks: MailBlock[];
+    if (only && stored) {
+      articleKey = only.okey;
+      blocks = structuredClone(stored) as MailBlock[];
+    } else {
+      // a draft of 1.172: its sections become the one article of a mail, in the same batch
+      blocks = mailBlocksFromSections(ordered, () => crypto.randomUUID());
+      const articleRef = doc(this.sectionsRef(pageKey));
+      articleKey = articleRef.id;
+      read.refs.forEach((ref) => batch.delete(ref));
+      batch.set(articleRef, this.stored({ ...mailArticle(ctx.tenantId, blocks), okey: articleKey }));
+      changes['sections'] = [articleKey];
+    }
+    batch.update(this.pageRef(pageKey), changes);
+    try {
+      await batch.commit();
+    } catch (err) {
+      console.warn('MailPageService.continueDraft: writing the draft failed', err);
+      const code = errorCode(err);
+      return { status: code === 'permission-denied' ? 'refused' : code === 'not-found' ? 'gone' : 'failed' };
+    }
+    return { status: 'ok', pageKey, articleKey, blocks, meta: storedMeta(page) };
+  }
+
+  /**
+   * A new draft (§8.5): empty without `sourceKey`, else a copy of that page — its blocks with new ids, its subject (else
+   * `fallback.subject`, e.g. the mailing's), template and web version (else `fallback.webVersion`). Created in one batch by `createDraft`;
+   * the source is only read, never written. Throws when the source cannot be read or the draft cannot be created.
+   */
+  public async startFrom(
+    sourceKey: string | undefined,
+    ctx: { tenantId: string; uid: string; groupKey?: string },
+    fallback: MailPageMeta,
+  ): Promise<StartedDraft> {
+    const newId = () => crypto.randomUUID();
+    let blocks: MailBlock[] = [];
+    let meta: MailPageMeta = { ...fallback };
+    if (sourceKey) {
+      const source = (await getDoc(this.pageRef(sourceKey))).data() as Partial<MailPageModel> | undefined;
+      if (!source) throw Object.assign(new Error('The mail to copy does not exist.'), { code: 'not-found' });
+      blocks = await this.loadBlocks(sourceKey, source.sections ?? []);
+      const stored = storedMeta(source);
+      meta = { subject: stored.subject || fallback.subject, layout: stored.layout ?? fallback.layout, webVersion: stored.webVersion ?? fallback.webVersion };
+    }
+    // a mail starts with one text, also a copy of a page whose content is gone
+    if (blocks.length === 0) blocks = mailBlocksFromBody('', newId);
+    const { pageKey, articleKey } = await this.createDraft(ctx.tenantId, ctx.uid, ctx.groupKey, mailArticle(ctx.tenantId, blocks), meta);
+    return { pageKey, articleKey, blocks, meta };
   }
 
   /** The page's sections in the order of `page.sections`; keys without a section doc are left out, live. */

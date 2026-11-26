@@ -108,8 +108,8 @@ export async function openBulkEmailFlow(
  * What the editor of a Versand mail reads about the tenant (spec 1.176 §8.1, §8.3), each at most once per opened composer and only when
  * it is asked for. A read that fails answers empty, as `getDataOnce` does.
  * - calendars: those of the tenant, as `loadVersandEvents` finds them;
- * - event lines: the tenant's events from today on, read once, of the calendar, listed as the server lists them when it sends
- *   (`upcomingEventLines`). Firestore allows one `array-contains` per query and `tenants` takes it, so the calendar is filtered here;
+ * - event lines: the tenant's events from today up to `MAIL_EVENT_MONTHS` ahead, read once, of the calendar, listed as the server lists
+ *   them when it sends (`upcomingEventLines`; a block shows at most ten, so a year ahead is plenty, and the read stays bounded). Firestore allows one `array-contains` per query and `tenants` takes it, so the calendar is filtered here;
  * - articles: the tenant's sections as `SectionService.list()` reads them, those the sender may insert (`articlesToInsert`);
  * - site: `websites/{tenantId}`.
  */
@@ -118,6 +118,7 @@ export function mailEditorContext(ctx: BulkEmailContext): MailEditorContext {
   const upcoming = once(() => {
     const query = getSystemQuery(ctx.tenantId);
     query.push({ key: 'startDate', operator: '>=', value: today });
+    query.push({ key: 'startDate', operator: '<=', value: addDuration(today, { months: MAIL_EVENT_MONTHS }) });
     return ctx.firestoreService.getDataOnce<CalEventModel>(CalEventCollection, query, 'startDate');
   });
   return {
@@ -138,6 +139,9 @@ export function mailEditorContext(ctx: BulkEmailContext): MailEditorContext {
     }),
   };
 }
+
+/** How far ahead the editor of a mail reads events for its events blocks (the same index as `loadVersandEvents`). */
+const MAIL_EVENT_MONTHS = 12;
 
 /** `read` on the first call; every later call gets the same answer. */
 function once<T>(read: () => Promise<T>): () => Promise<T> {

@@ -29,6 +29,8 @@ export interface MailEditorContext {
 
 /** The draft as the host sees it: the history of the mail's article, which outlives the host, and the errors of its blocks. */
 export interface MailEditorDraft {
+  /** The draft page the history belongs to: a host made for one page drops what ends late for another (an upload after «Zurücksetzen»). */
+  readonly pageKey: Signal<string>;
   readonly history: Signal<EditorHistory<EditorState>>;
   setHistory(history: EditorHistory<EditorState>): void;
   readonly errors: Signal<SectionErrors>;

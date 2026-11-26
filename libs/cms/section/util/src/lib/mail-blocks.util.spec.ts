@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { ARTICLE_BLOCK_TYPES, ImageActionType, ImageType, ViewPosition, type MailBlock, type SectionModel } from '@okr/shared-models';
 
 import { createBlock } from './article-editor.util';
-import { mailBlocksFromSections, mailBlocksHaveContent } from './mail-blocks.util';
+import { mailBlocksFirstWords, mailBlocksFromSections, mailBlocksHaveContent } from './mail-blocks.util';
 
 const counter = () => { let n = 0; return () => `n${++n}`; };
 function deepFreeze<T>(value: T): T {
@@ -123,11 +123,15 @@ describe('mailBlocksFromSections', () => {
 
   it('converts buttons', () => {
     const button = (label: unknown, url: unknown, altText: unknown = '') => ({ okey: 'b', type: 'button', properties: { style: { label }, action: { url, altText } } });
-    expect(convert([button('Los', '/club'), button('', 'https://a.ch', 'Alt'), button('Halb', ''), button('', '')])).toEqual([
+    expect(convert([button('Los', '/club'), button('', 'https://a.ch', 'Alt')])).toEqual([
       { id: 'n1', type: 'button', cta: { label: 'Los', url: '/club', style: 'primary' }, align: 'center' },
       { id: 'n2', type: 'button', cta: { label: 'Alt', url: 'https://a.ch', style: 'primary' }, align: 'center' },
-      { id: 'n3', type: 'button', cta: { label: 'Halb', url: '', style: 'primary' }, align: 'center' },
     ]);
+  });
+
+  it('leaves out a half filled button section, which the old mail did not draw', () => {
+    const button = (label: unknown, url: unknown) => ({ okey: 'b', type: 'button', properties: { style: { label }, action: { url } } });
+    expect(convert([button('Halb', ''), button('', '/club'), button('', ''), button('Los', 'javascript:alert(1)')])).toEqual([]);
   });
 
   it('converts events with the number the old mail listed', () => {
@@ -186,5 +190,25 @@ describe('mailBlocksFromSections', () => {
     ];
     expect(() => convert(malformed)).not.toThrow();
     for (const sections of [undefined, null, 'x', {}]) expect(mailBlocksFromSections(sections as unknown as SectionModel[], counter())).toEqual([]);
+  });
+});
+
+describe('mailBlocksFirstWords', () => {
+  const text = (html: unknown, type = 'text') => ({ id: 't', type, html }) as unknown as MailBlock;
+
+  it('takes the first words of the texts in reading order, without markup', () => {
+    expect(mailBlocksFirstWords([text('<h2>Liebe&nbsp;Mitglieder</h2>'), text('<p>Am <b>Samstag</b> rudern wir &amp; feiern.</p>')]))
+      .toBe('Liebe Mitglieder Am Samstag rudern wir & feiern.');
+    const inColumn = { id: 'c', type: 'columns', columns: [{ blocks: [text('<p>Spalte</p>')] }, { blocks: [] }] } as unknown as MailBlock;
+    expect(mailBlocksFirstWords([inColumn, text('<p>danach</p>', 'callout')])).toBe('Spalte danach');
+  });
+
+  it('cuts after the given number of words', () => {
+    expect(mailBlocksFirstWords([text('<p>eins zwei drei vier</p>')], 3)).toBe('eins zwei drei …');
+  });
+
+  it('answers empty without a text and for malformed data', () => {
+    expect(mailBlocksFirstWords([{ id: 'i', type: 'image' } as unknown as MailBlock, text(5), text('<style>p{}</style><p> </p>')])).toBe('');
+    for (const blocks of [undefined, null, 'x', {}]) expect(mailBlocksFirstWords(blocks as unknown as MailBlock[])).toBe('');
   });
 });

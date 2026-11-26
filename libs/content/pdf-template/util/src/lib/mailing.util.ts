@@ -42,6 +42,8 @@ export interface MailingView {
   householdContacts?: Record<string, string>;
   /** `household.<okey>` → the household name at send time */
   householdNames?: Record<string, string>;
+  /** The mail page the Versand was written in (spec 1.172); absent before. «Frühere E-Mail kopieren» offers only these. */
+  pageKey?: string;
 }
 
 /**
