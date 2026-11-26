@@ -3,7 +3,6 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController, ToastController } from '@ionic/angular';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { getFunctions, httpsCallable } from 'firebase/functions';
-import { getApp } from 'firebase/app';
 import { Capacitor } from '@capacitor/core';
 import { Geolocation, Position } from '@capacitor/geolocation';
 
@@ -23,6 +22,7 @@ import { createSection, narrowSection, newArticleFrom, SECTION_I18N_KEYS, usesAr
 import { allowedSectionTypesForPage } from '@okr/cms-website-render';
 
 import { openArticleEditor, type OpenedArticleEditor } from './article-editor.loader';
+import { activeFirebaseApp } from '@okr/shared-config';
 
 export type Coordinates = {
   latitude: number;
@@ -453,7 +453,7 @@ export const _SectionStore = signalStore(
 
       async sendEmail(to: string[], subject: string, body: string, from: string, cc: string[] = [], bcc: string[] = [], layout: EmailLayoutChoice = 'standard'): Promise<void> {
         try {
-          const fn = httpsCallable(getFunctions(getApp(), 'europe-west6'), 'sendEmail');
+          const fn = httpsCallable(getFunctions(activeFirebaseApp(), 'europe-west6'), 'sendEmail');
           await fn({ to, cc, bcc, appId: store.appStore.env.appId, body, layout, from, subject });
           await showToast(store.toastController, store.i18n.email_conf());
         } catch (ex) {

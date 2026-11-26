@@ -1,11 +1,10 @@
 import { Injectable, inject } from '@angular/core';
 import { ToastController } from '@ionic/angular';
 
-import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 
 import { TOAST_LENGTH } from '@okr/shared-constants';
-import { ENV } from '@okr/shared-config';
+import { ENV, activeFirebaseApp } from '@okr/shared-config';
 
 /** What kind of item the `deleteGroupContent` callable should delete. */
 export type GroupContentTarget = 'folder' | 'document';
@@ -44,7 +43,7 @@ export interface DeleteGroupContentResponse {
 export class GroupContentService {
   private readonly env = inject(ENV);
   private readonly toastController = inject(ToastController);
-  private readonly functions = getFunctions(getApp(), 'europe-west6');
+  private readonly functions = getFunctions(activeFirebaseApp(), 'europe-west6');
 
   /**
    * Deletes `okey` from the group's files segment. Returns true on success; on failure it

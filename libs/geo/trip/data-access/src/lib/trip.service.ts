@@ -1,10 +1,9 @@
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { deleteField } from 'firebase/firestore';
-import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 
-import { ENV } from '@okr/shared-config';
+import { ENV, activeFirebaseApp } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import { I18nService } from '@okr/shared-i18n';
 import { NON_TRACKER_TRIP_TYPES, TripCollection, TripModel, UserModel } from '@okr/shared-models';
@@ -47,7 +46,7 @@ export class TripService {
    * hard-coded responsibility lookup by name in TripStore is now configuration.
    */
   public async reportIncidentViaFunction(payload: ReportIncidentPayload): Promise<string> {
-    const fn = httpsCallable(getFunctions(getApp(), 'europe-west6'), 'reportIncident');
+    const fn = httpsCallable(getFunctions(activeFirebaseApp(), 'europe-west6'), 'reportIncident');
     const result = await fn(payload);
     return (result.data as { event: string }).event;
   }

@@ -1,8 +1,7 @@
 import { inject, Injectable } from '@angular/core';
-import { getApp } from 'firebase/app';
 import { connectFunctionsEmulator, getFunctions, httpsCallable } from 'firebase/functions';
 
-import { ENV } from '@okr/shared-config';
+import { ENV, activeFirebaseApp } from '@okr/shared-config';
 import type { PlaceHit } from '@okr/location-util';
 
 // Redeclared from the `getTerrainElevations` callable (see TerrainElevationService in mobility-tracker-data-access)
@@ -28,7 +27,7 @@ export class PlaceSearchService {
   private readonly env = inject(ENV);
 
   private get functions() {
-    const fns = getFunctions(getApp(), 'europe-west6');
+    const fns = getFunctions(activeFirebaseApp(), 'europe-west6');
     if (this.env.useEmulators) {
       try { connectFunctionsEmulator(fns, 'localhost', 5001); } catch { /* already connected */ }
     }

@@ -1,7 +1,6 @@
 import { computed, effect, inject, Injectable, Injector, signal, untracked } from '@angular/core';
 import { rxResource, toSignal } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withHooks, withMethods, withProps, withState } from '@ngrx/signals';
-import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { catchError, from, map, of, startWith, switchMap, timer } from 'rxjs';
 import { Visibility, type MatrixCall } from 'matrix-js-sdk';

@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
+import { activeFirebaseApp } from '@okr/shared-config';
 
 /** Mirrors the server GatewayResult<M>. */
 export interface ExternalDataResult<M> {
@@ -17,7 +17,7 @@ export interface ExternalDataResult<M> {
  */
 @Injectable({ providedIn: 'root' })
 export class ExternalDataService {
-  private readonly functions = getFunctions(getApp(), 'europe-west6');
+  private readonly functions = getFunctions(activeFirebaseApp(), 'europe-west6');
 
   /** Invoke a gateway callable by its operation id (== the exported callable name). */
   async call<P, M>(operation: string, params: P): Promise<ExternalDataResult<M>> {

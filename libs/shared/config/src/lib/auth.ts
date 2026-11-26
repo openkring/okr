@@ -1,6 +1,6 @@
+import { activeFirebaseApp } from './firebase-app';
 import { inject, InjectionToken } from "@angular/core";
 import { browserLocalPersistence, connectAuthEmulator, indexedDBLocalPersistence, initializeAuth } from "firebase/auth";
-import { getApp } from "firebase/app";
 import { ENV } from "./env";
 import { isFirefox, isIos, isSafari } from "./firestore";
 import { dropExpiredSessionAfterStall } from "./stalled-restore";
@@ -52,10 +52,10 @@ export function authFactory() {
   // Auth reads it. The IndexedDB-first path drops it on the stalled boot instead
   // (dropExpiredSessionIdb in @okr/shared-util-angular, called by the restore watchdog).
   if (usesLocalStorageOnlySession()) {
-    droppedStalledSession = dropExpiredSessionAfterStall(getApp().options.apiKey ?? '');
+    droppedStalledSession = dropExpiredSessionAfterStall(activeFirebaseApp().options.apiKey ?? '');
   }
 
-  const auth = initializeAuth(getApp(), { persistence });
+  const auth = initializeAuth(activeFirebaseApp(), { persistence });
   const _env = inject(ENV);
 
   if (_env.useEmulators) {

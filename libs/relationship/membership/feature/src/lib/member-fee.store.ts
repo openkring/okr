@@ -2,7 +2,6 @@ import { computed, inject, Injectable } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController, ToastController } from '@ionic/angular';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
-import { getApp } from 'firebase/app';
 import { connectFunctionsEmulator, getFunctions, httpsCallable } from 'firebase/functions';
 import { doc } from 'firebase/firestore';
 import { map, of } from 'rxjs';
@@ -24,6 +23,7 @@ import { MembershipEditModal } from './membership-edit.modal';
 import { MemberFeesTotalsModal } from './member-fee-totals.modal';
 import { BexioPosition, billedCategoryKey, billedMemberships, buildPositions, feeRowsOfBooks, feeScreenState, getFeeTotal, reloadRefusal, rowMemberKeysOfBooks, MemberFeesScreenState, rebatePosition, getRelLogEntry, MEMBERSHIP_I18N_KEYS } from '@okr/relationship-membership-util';
 import { MemberFeeUploadModal } from '@okr/relationship-membership-ui';
+import { activeFirebaseApp } from '@okr/shared-config';
 
 export type MemberFeesState = {
   searchTerm: string;
@@ -43,7 +43,7 @@ export const _MemberFeesStore = signalStore(
   withState(initialState),
   withProps(() => {
     const appStore = inject(AppStore);
-    const functions = getFunctions(getApp(), 'europe-west6');
+    const functions = getFunctions(activeFirebaseApp(), 'europe-west6');
     if (appStore.env.useEmulators) {
       connectFunctionsEmulator(functions, 'localhost', 5001);
     }

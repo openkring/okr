@@ -1,8 +1,8 @@
-import { getApp } from 'firebase/app';
 import { doc, getFirestore, setDoc } from 'firebase/firestore';
 
 import { badgeCountsPath } from '@okr/shared-models';
 import { BadgeParts, DateFormat, getTodayStr, ledgerPartsFromApp } from '@okr/shared-util-core';
+import { activeFirebaseApp } from '@okr/shared-config';
 
 /**
  * The app's half of the server badge ledger `users/{uid}/badge/counts` (spec 1.127 N1, §3.7 B):
@@ -15,7 +15,7 @@ import { BadgeParts, DateFormat, getTodayStr, ledgerPartsFromApp } from '@okr/sh
 export async function writeServerBadgeLedger(uid: string, parts: Partial<BadgeParts>): Promise<void> {
   if (!uid) return;
   try {
-    const db = getFirestore(getApp());
+    const db = getFirestore(activeFirebaseApp());
     await setDoc(
       doc(db, badgeCountsPath(uid)),
       { ...ledgerPartsFromApp(parts), updatedAt: getTodayStr(DateFormat.StoreDateTime) },

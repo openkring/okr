@@ -1,6 +1,5 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable, catchError, combineLatest, from, map, of } from 'rxjs';
-import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 
 import { FirestoreService } from '@okr/shared-data-access';
@@ -11,6 +10,7 @@ import { getArchiveInclusiveQuery } from '@okr/shared-util-core';
 import { getRestorePatch, getTaskIndex, getTaskShareKey } from '@okr/project-task-util';
 import { ActivityService } from '@okr/activity-data-access';
 import { PFX } from './scope';
+import { activeFirebaseApp } from '@okr/shared-config';
 
 @Injectable({
   providedIn: 'root'
@@ -18,7 +18,7 @@ import { PFX } from './scope';
 export class TaskService {
   private readonly firestoreService = inject(FirestoreService);
   private readonly activityService = inject(ActivityService);
-  private readonly functions = getFunctions(getApp(), 'europe-west6');
+  private readonly functions = getFunctions(activeFirebaseApp(), 'europe-west6');
   private i18nService = inject(I18nService);
 
   // i18n

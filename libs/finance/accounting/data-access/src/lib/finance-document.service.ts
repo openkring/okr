@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
-import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 
 import { Voucher } from '@okr/finance-accounting-util';
+import { activeFirebaseApp } from '@okr/shared-config';
 
 const REGION = 'europe-west6';
 
@@ -18,7 +18,7 @@ export class FinanceDocumentService {
   public async sign(documentKeys: string[]): Promise<Voucher[]> {
     const keys = documentKeys.filter(Boolean);
     if (keys.length === 0) return [];
-    const fn = httpsCallable<{ documentKeys: string[] }, { vouchers: Voucher[] }>(getFunctions(getApp(), REGION), 'signFinanceDocuments');
+    const fn = httpsCallable<{ documentKeys: string[] }, { vouchers: Voucher[] }>(getFunctions(activeFirebaseApp(), REGION), 'signFinanceDocuments');
     const result = await fn({ documentKeys: keys });
     // keep the caller's order (the first key is the booking's primary voucher)
     return keys.map(k => result.data.vouchers.find(v => v.key === k)).filter((v): v is Voucher => !!v);
@@ -31,7 +31,7 @@ export class FinanceDocumentService {
    * @returns the new finance-documents okey
    */
   public async addBookingVoucher(accountingTenantId: string, bookingKey: string, file: File): Promise<string> {
-    const functions = getFunctions(getApp(), REGION);
+    const functions = getFunctions(activeFirebaseApp(), REGION);
     const request = { accountingTenantId, bookingKey, fileName: file.name };
     const prepare = httpsCallable<typeof request, BookingVoucherUpload>(functions, 'prepareBookingVoucherUpload');
     const { data } = await prepare(request);

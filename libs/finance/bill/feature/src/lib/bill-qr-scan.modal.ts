@@ -1,5 +1,4 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { getApp } from 'firebase/app';
 import { connectFunctionsEmulator, FunctionsError, getFunctions, httpsCallable } from 'firebase/functions';
 import { IonContent, ModalController } from '@ionic/angular';
 
@@ -9,6 +8,7 @@ import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-
 import { dismissOverlay } from '@okr/shared-util-angular';
 import { BILL_I18N_KEYS, BillI18n, BillQrScanFormModel, newBillQrScanFormModel } from '@okr/finance-bill-util';
 import { BillQrScanForm } from '@okr/finance-bill-ui';
+import { activeFirebaseApp } from '@okr/shared-config';
 
 /**
  * Takes the content of a Swiss QR-bill and parses it through the parseQrInvoice callable;
@@ -46,7 +46,7 @@ export class BillQrScanModal {
   private readonly modalController = inject(ModalController);
   private readonly appStore = inject(AppStore);
   private readonly functions = (() => {
-    const fns = getFunctions(getApp(), 'europe-west6');
+    const fns = getFunctions(activeFirebaseApp(), 'europe-west6');
     if (this.appStore.env.useEmulators) {
       connectFunctionsEmulator(fns, 'localhost', 5001);
     }

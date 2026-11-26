@@ -7,7 +7,7 @@ import { Browser } from '@capacitor/browser';
 import { from, Observable, of } from 'rxjs';
 import { map, switchMap } from 'rxjs/operators';
 
-import { ENV } from '@okr/shared-config';
+import { ENV, activeFirebaseApp } from '@okr/shared-config';
 import { AppStore, SelectedBooks, withErrorState } from '@okr/shared-feature';
 import { CategoryListModel, MenuItemModel } from '@okr/shared-models';
 import { die, fill, nameMatches, safeStructuredClone, warn } from '@okr/shared-util-core';
@@ -412,9 +412,8 @@ export const _MenuStore = signalStore(
         if (!menuItem.okey) return;
         try {
           const { getFunctions, httpsCallable } = await import('firebase/functions');
-          const { getApp } = await import('firebase/app');
           const fn = httpsCallable<{ tenantId: string; kind: string; sourceKey: string; linkKey: string }, unknown>(
-            getFunctions(getApp(), 'europe-west6'), 'emitUiEvent',
+            getFunctions(activeFirebaseApp(), 'europe-west6'), 'emitUiEvent',
           );
           await fn({
             tenantId: store.appStore.tenantId(),

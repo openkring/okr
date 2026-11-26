@@ -1,5 +1,4 @@
 import { Injectable, inject } from '@angular/core';
-import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { Observable, of } from 'rxjs';
 
@@ -8,6 +7,7 @@ import { I18nService } from '@okr/shared-i18n';
 import { UserModel, WebsiteCollection, WebsiteModel } from '@okr/shared-models';
 
 import { PFX } from './scope';
+import { activeFirebaseApp } from '@okr/shared-config';
 
 /** Result of the `publishWebsite` callable (apps/functions/src/website/publish-website.ts). `problems` non-empty = nothing was published. */
 export interface PublishWebsiteResult {
@@ -85,7 +85,7 @@ export class WebsiteService {
    */
   public async publish(siteId: string, dryRun = false): Promise<PublishWebsiteResult> {
     const fn = httpsCallable<{ siteId: string; dryRun?: boolean }, PublishWebsiteResult>(
-      getFunctions(getApp(), 'europe-west6'), 'publishWebsite',
+      getFunctions(activeFirebaseApp(), 'europe-west6'), 'publishWebsite',
       // the function may run up to 300 s (clone polling); the SDK default would give up after 70 s while it still releases
       { timeout: 310_000 });
     return (await fn({ siteId, dryRun })).data;
@@ -94,7 +94,7 @@ export class WebsiteService {
   /** Put the previous published state back (callable `rollbackWebsite`, admin). Rejects on refusal. */
   public async rollback(siteId: string): Promise<RollbackWebsiteResult> {
     const fn = httpsCallable<{ siteId: string }, RollbackWebsiteResult>(
-      getFunctions(getApp(), 'europe-west6'), 'rollbackWebsite',
+      getFunctions(activeFirebaseApp(), 'europe-west6'), 'rollbackWebsite',
       { timeout: 130_000 });
     return (await fn({ siteId })).data;
   }

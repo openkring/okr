@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
 import { getFunctions, httpsCallable } from 'firebase/functions';
-import { getApp } from 'firebase/app';
 
 import { LocationModel } from '@okr/shared-models';
+import { activeFirebaseApp } from '@okr/shared-config';
 
 interface ConvertLocationRequest {
   address?: string;
@@ -32,7 +32,7 @@ export class LocationConversionService {
     if ((hasCoords && hasAddress && hasW3w) || (!hasCoords && !hasAddress && !hasW3w)) return undefined;
 
     const fn = httpsCallable<ConvertLocationRequest, ConvertLocationResponse>(
-      getFunctions(getApp(), 'europe-west6'),
+      getFunctions(activeFirebaseApp(), 'europe-west6'),
       'convertLocation'
     );
 

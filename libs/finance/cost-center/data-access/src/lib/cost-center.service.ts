@@ -1,9 +1,8 @@
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 
-import { ENV } from '@okr/shared-config';
+import { ENV, activeFirebaseApp } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import { I18nService } from '@okr/shared-i18n';
 import { CostCenterCollection, CostCenterModel, UserModel } from '@okr/shared-models';
@@ -67,7 +66,7 @@ export class CostCenterService {
   /** One-off migration (spec 1.65 §6.4) via the treasurer callable; `dryRun` only counts and lists; `fiscalYear` only for the backfill. */
   public async migrate(accountingTenantId: string, step: CostCenterMigrationStep, dryRun: boolean, fiscalYear?: number): Promise<CostCenterMigrationResult> {
     const fn = httpsCallable<{ accountingTenantId: string; step: CostCenterMigrationStep; dryRun: boolean; fiscalYear?: number }, CostCenterMigrationResult>(
-      getFunctions(getApp(), 'europe-west6'), 'migrateCostCenters');
+      getFunctions(activeFirebaseApp(), 'europe-west6'), 'migrateCostCenters');
     return (await fn(fiscalYear === undefined ? { accountingTenantId, step, dryRun } : { accountingTenantId, step, dryRun, fiscalYear })).data;
   }
 
@@ -77,7 +76,7 @@ export class CostCenterService {
    */
   public async getMyReport(accountingTenantId: string, fiscalYear?: number): Promise<MyCostCenterReport> {
     const fn = httpsCallable<{ accountingTenantId: string; fiscalYear?: number }, MyCostCenterReport>(
-      getFunctions(getApp(), 'europe-west6'), 'getMyCostCenterReport');
+      getFunctions(activeFirebaseApp(), 'europe-west6'), 'getMyCostCenterReport');
     return (await fn(fiscalYear === undefined ? { accountingTenantId } : { accountingTenantId, fiscalYear })).data;
   }
 

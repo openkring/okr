@@ -1,12 +1,11 @@
 import { Injectable, inject } from '@angular/core';
 import { Capacitor } from '@capacitor/core';
-import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { firstValueFrom, timeout } from 'rxjs';
 import { WebAuthnAbortService, browserSupportsWebAuthn, browserSupportsWebAuthnAutofill, platformAuthenticatorIsAvailable, startAuthentication, startRegistration } from '@simplewebauthn/browser';
 import type { PublicKeyCredentialCreationOptionsJSON, PublicKeyCredentialRequestOptionsJSON } from '@simplewebauthn/browser';
 
-import { ENV } from '@okr/shared-config';
+import { ENV, activeFirebaseApp } from '@okr/shared-config';
 import { offersPasskeys } from '@okr/auth-util';
 import { AppConfigService } from '@okr/shared-data-access';
 import { PasskeyItem } from '@okr/shared-models';
@@ -158,7 +157,7 @@ export class PasskeyService {
   }
 
   private async call<R>(op: string, data: Record<string, unknown>): Promise<R> {
-    const fn = httpsCallable<Record<string, unknown>, R>(getFunctions(getApp(), 'europe-west6'), 'passkey');
+    const fn = httpsCallable<Record<string, unknown>, R>(getFunctions(activeFirebaseApp(), 'europe-west6'), 'passkey');
     return (await fn({ op, ...data })).data;
   }
 }

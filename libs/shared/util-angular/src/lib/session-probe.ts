@@ -1,3 +1,5 @@
+import { activeFirebaseAppName } from '@okr/shared-config';
+
 /**
  * What the browser had stored for the signed-in session at boot.
  *
@@ -17,11 +19,11 @@
 export type StoredSessionState = 'none' | 'fresh' | 'expired' | 'unreadable';
 
 /**
- * The localStorage key Firebase Auth persists the current user under. `[DEFAULT]` is the default
- * FirebaseApp name — the only one this app creates.
+ * The key Firebase Auth persists the current user under: per FirebaseApp name. Tenant apps use the
+ * default app (`[DEFAULT]`); the iOS portal names the app after the tenant (spec 1.179).
  */
-export function storedSessionKey(apiKey: string): string {
-  return `firebase:authUser:${apiKey}:[DEFAULT]`;
+export function storedSessionKey(apiKey: string, appName = activeFirebaseAppName()): string {
+  return `firebase:authUser:${apiKey}:${appName}`;
 }
 
 /**

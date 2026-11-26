@@ -1,9 +1,8 @@
 import { inject, Injectable } from '@angular/core';
-import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { Observable } from 'rxjs';
 
-import { ENV } from '@okr/shared-config';
+import { ENV, activeFirebaseApp } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import { LedgerBalanceCollection, LedgerBalanceModel } from '@okr/shared-models';
 import { getSystemQuery } from '@okr/shared-util-core';
@@ -43,7 +42,7 @@ export class LedgerBalanceService {
 
   /** Recomputes the balances on the server; `full` skips the reuse of locked years. Rejects on failure or offline. */
   public async refresh(accountingTenantId: string, full = false): Promise<LedgerRefreshResult> {
-    const fn = httpsCallable<{ op: string; accountingTenantId: string; full: boolean }, LedgerRefreshResult>(getFunctions(getApp(), REGION), 'ledger');
+    const fn = httpsCallable<{ op: string; accountingTenantId: string; full: boolean }, LedgerRefreshResult>(getFunctions(activeFirebaseApp(), REGION), 'ledger');
     const { data } = await fn({ op: 'refreshLedgerBalances', accountingTenantId, full });
     return data;
   }

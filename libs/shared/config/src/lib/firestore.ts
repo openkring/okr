@@ -1,3 +1,4 @@
+import { activeFirebaseApp } from './firebase-app';
 import { inject, InjectionToken } from "@angular/core";
 import {
   connectFirestoreEmulator,
@@ -10,7 +11,6 @@ import {
   persistentMultipleTabManager,
 } from "firebase/firestore";
 import { ENV } from "./env";
-import { getApp } from "firebase/app";
 
 export const FIRESTORE_EMULATOR_PORT = 8080;
 let isFirestoreInitialized = false;
@@ -124,7 +124,7 @@ export function isWebStorageAvailable(): boolean {
 export const FIRESTORE = new InjectionToken<Firestore>('Firebase Firestore', {
   providedIn: 'root',
   factory: () => {
-    const app = getApp();
+    const app = activeFirebaseApp();
     const isSafariBrowser = isSafari();
     const isFirefoxBrowser = isFirefox();
     const isIosDevice = isIos();

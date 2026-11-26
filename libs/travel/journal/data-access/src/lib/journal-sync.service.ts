@@ -1,12 +1,11 @@
 import { Injectable, inject, signal } from '@angular/core';
-import { getApp } from 'firebase/app';
 import {
   collection, doc, DocumentSnapshot, getDocFromServer, getDocsFromServer, limit, onSnapshot, orderBy, query, serverTimestamp, setDoc, startAfter,
   Timestamp, Unsubscribe, where, writeBatch,
 } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 
-import { FIRESTORE, ensureAppCheckToken } from '@okr/shared-config';
+import { FIRESTORE, ensureAppCheckToken, activeFirebaseApp } from '@okr/shared-config';
 import { DiaryWeather, JournalChange, JournalChangeCollection, JournalCollection } from '@okr/shared-models';
 import {
   acceptRecord, advanceCursor, remoteChangeOf, withCheckedBases, classifyUploadError, DOWNLOAD_PAGE, downloadStart, JournalPhotoMode, pagesOf, pendingVideoStats, shouldRefreshPeerSecret, uploadOrder, UPLOAD_PAGE,
@@ -437,7 +436,7 @@ export class JournalSyncService {
   }
 
   private async call<T>(name: string, payload: unknown): Promise<T> {
-    const functions = getFunctions(getApp(), 'europe-west6');
+    const functions = getFunctions(activeFirebaseApp(), 'europe-west6');
     return (await withTimeout(httpsCallable<unknown, T>(functions, name)(payload))).data;
   }
 }

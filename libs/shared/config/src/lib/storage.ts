@@ -1,7 +1,7 @@
+import { activeFirebaseApp } from './firebase-app';
 import { Inject, InjectionToken } from "@angular/core";
 import { OkrEnvironment, ENV } from "./env";
 import { connectStorageEmulator, FirebaseStorage, getStorage, ref, uploadBytesResumable, UploadTask } from "firebase/storage";
-import { getApp } from "firebase/app";
 
 export const STORAGE_EMULATOR_PORT = 9199;
 
@@ -32,7 +32,7 @@ export function uploadToFirebaseStorage(path: string, file: File, bucket: Storag
 // see: https://firebase.google.com/docs/storage/web/start?_gl=1*1mibu5l*_up*MQ..*_ga*OTYxNzQxOTMxLjE3MjU1MjMzNTQ.*_ga_CW55HF8NVT*MTcyNTUyMzM1NC4xLjAuMTcyNTUyMzM1NC4wLjAuMA..
 export function getBkStorage(bucket: StorageBucket = 'default'): FirebaseStorage {
   try {
-    const _firebaseApp = getApp();
+    const _firebaseApp = activeFirebaseApp();
     const _storage = getStorage(_firebaseApp, BUCKET_URLS[bucket]);
   
     const _env = Inject(ENV) as OkrEnvironment;

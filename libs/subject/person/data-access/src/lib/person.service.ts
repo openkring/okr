@@ -1,10 +1,9 @@
 import { inject, Injectable } from '@angular/core';
 import { map, Observable, of, take } from 'rxjs';
 
-import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 
-import { ENV } from '@okr/shared-config';
+import { ENV, activeFirebaseApp } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import { AddressCollection, AddressModel, PersonCollection, PersonModel, UserModel } from '@okr/shared-models';
 import { getFullName, getStoreDateYear, getSystemQuery, hasRole } from '@okr/shared-util-core';
@@ -43,7 +42,7 @@ export class PersonService {
   private readonly firestoreService = inject(FirestoreService);
   private readonly activityService = inject(ActivityService);
   private i18nService = inject(I18nService);
-  private readonly functions = getFunctions(getApp(), 'europe-west6');
+  private readonly functions = getFunctions(activeFirebaseApp(), 'europe-west6');
 
   // i18n
   protected readonly i18n = this.i18nService.translateAll({

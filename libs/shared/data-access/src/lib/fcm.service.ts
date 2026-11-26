@@ -2,14 +2,13 @@ import { inject, Injectable, PLATFORM_ID } from '@angular/core';
 import { Capacitor } from '@capacitor/core';
 import { PushNotifications } from '@capacitor/push-notifications';
 import { Badge } from '@capawesome/capacitor-badge';
-import { getApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getMessaging, getToken, onMessage, isSupported as isMessagingSupported, Messaging } from 'firebase/messaging';
 import { getFirestore, doc, setDoc, deleteDoc, serverTimestamp, collection, query, where, documentId, getDocs, writeBatch } from 'firebase/firestore';
 import { EMPTY, Observable, fromEvent } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
 
-import { ENV } from '@okr/shared-config';
+import { ENV, activeFirebaseApp } from '@okr/shared-config';
 import { fcmTokenDocId, isBrowser, type PushPermissionState, type PushTokenPlatform } from '@okr/shared-util-core';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { ensureNativePushChannels } from './native-push-channel';
@@ -107,7 +106,7 @@ export class FcmService {
     this.messagingReady = isMessagingSupported().then((supported) => {
       if (!supported) return null;
       try {
-        this.messaging = getMessaging(getApp());
+        this.messaging = getMessaging(activeFirebaseApp());
       } catch (error) {
         console.error('FcmService: Failed to initialize Firebase Messaging', error);
       }
@@ -205,13 +204,13 @@ export class FcmService {
     if (token) {
       try {
         const unregister = httpsCallable<{ pushkey: string }, { removed: boolean }>(
-          getFunctions(getApp(), 'europe-west6'), 'unregisterMatrixPusher');
+          getFunctions(activeFirebaseApp(), 'europe-west6'), 'unregisterMatrixPusher');
         // A step may run late (after the awaited in-flight registration, or after the logout timeout
         // let signOut happen). Another member may be signed in by then, and the web token is the same
         // for every user of one browser: such a step would delete THEIR pusher / registration.
         let skippedLogged = false;
         const stillThisLogout = (): boolean => {
-          const ok = this.loggedOut && this.generation === gen && getAuth(getApp()).currentUser?.uid === uid;
+          const ok = this.loggedOut && this.generation === gen && getAuth(activeFirebaseApp()).currentUser?.uid === uid;
           if (!ok && !skippedLogged) {
             skippedLogged = true;
             console.log('FcmService.disablePush: logout step skipped, another session began');
@@ -259,7 +258,7 @@ export class FcmService {
     if (this.loggedOut || generation !== this.generation) return;
     try {
       // Via a Cloud Function so the push-gateway secret and URL never ship in the bundle (S3, SEC-2).
-      const registerPusher = httpsCallable(getFunctions(getApp(), 'europe-west6'), 'registerMatrixPusher');
+      const registerPusher = httpsCallable(getFunctions(activeFirebaseApp(), 'europe-west6'), 'registerMatrixPusher');
       await registerPusher({
         pushkey: token,
         deviceDisplayName: (navigator.userAgent ?? 'Unknown').substring(0, 100),
@@ -457,7 +456,7 @@ export class FcmService {
    */
   async removeToken(uid: string, token: string): Promise<void> {
     try {
-      const db = getFirestore(getApp());
+      const db = getFirestore(activeFirebaseApp());
       await deleteDoc(doc(db, 'users', uid, 'fcmTokens', fcmTokenDocId(token)));
     } catch (error) {
       console.warn('FcmService.removeToken: Failed to remove token:', error);
@@ -548,7 +547,7 @@ export class FcmService {
   }
 
   private async saveToken(uid: string, token: string): Promise<void> {
-    const db = getFirestore(getApp());
+    const db = getFirestore(activeFirebaseApp());
     const tokenDocId = fcmTokenDocId(token);
     await setDoc(
       doc(db, 'users', uid, 'fcmTokens', tokenDocId),

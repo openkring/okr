@@ -1,10 +1,9 @@
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { getDownloadURL, getMetadata, listAll, ref } from 'firebase/storage';
 
-import { ENV, STORAGE } from '@okr/shared-config';
+import { ENV, STORAGE, activeFirebaseApp } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import {
   BookingCollection, BookingLineCollection, BookingLineModel, BookingModel,
@@ -58,7 +57,7 @@ export class ExpenseService {
   // callable, which derives accountingTenantId server-side (= tenantId) and owns the initial
   // 'processing' status. Do NOT write 'expenses' from the client SDK.
   public async createViaFunction(payload: CreateExpensePayload): Promise<string> {
-    const fn = httpsCallable(getFunctions(getApp(), 'europe-west6'), 'createExpense');
+    const fn = httpsCallable(getFunctions(activeFirebaseApp(), 'europe-west6'), 'createExpense');
     const result = await fn(payload);
     return (result.data as { expenseKey: string }).expenseKey;
   }
@@ -69,19 +68,19 @@ export class ExpenseService {
 
   /** Soft-delete an expense via the deleteExpense CF (client can't write the expenses collection). */
   public async deleteViaFunction(expenseKey: string): Promise<void> {
-    const fn = httpsCallable(getFunctions(getApp(), 'europe-west6'), 'deleteExpense');
+    const fn = httpsCallable(getFunctions(activeFirebaseApp(), 'europe-west6'), 'deleteExpense');
     await fn({ expenseKey });
   }
 
   /** Treasurer edit. `expenses` is CF-write-only, so the callable is the only update path. */
   public async updateViaFunction(payload: UpdateExpensePayload): Promise<void> {
-    const fn = httpsCallable(getFunctions(getApp(), 'europe-west6'), 'updateExpense');
+    const fn = httpsCallable(getFunctions(activeFirebaseApp(), 'europe-west6'), 'updateExpense');
     await fn(payload);
   }
 
   /** Treasurer-only: re-run OCR for a failed (unbooked) expense. Returns the number of receipts re-processed. */
   public async redoOcrViaFunction(expenseKey: string): Promise<number> {
-    const fn = httpsCallable(getFunctions(getApp(), 'europe-west6'), 'redoExpenseOcr');
+    const fn = httpsCallable(getFunctions(activeFirebaseApp(), 'europe-west6'), 'redoExpenseOcr');
     const result = await fn({ expenseKey });
     return (result.data as { reprocessed: number }).reprocessed;
   }

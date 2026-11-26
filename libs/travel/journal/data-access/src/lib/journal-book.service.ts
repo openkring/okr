@@ -1,11 +1,11 @@
 import { inject, Injectable } from '@angular/core';
-import { getApp } from 'firebase/app';
 import { arrayRemove, arrayUnion, deleteField, doc, setDoc } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { map, Observable } from 'rxjs';
 import { FirestoreService } from '@okr/shared-data-access';
 import { JournalBookCollection, JournalBookModel } from '@okr/shared-models';
 import { BookLabels, retryWithBackoff, stripUndefined } from '@okr/travel-journal-util';
+import { activeFirebaseApp } from '@okr/shared-config';
 
 /** Response of the exportJournalBook callable: signed links (24 h), page count and warning count. */
 export interface JournalBookExportResult { bookUrl: string; coverUrl?: string; pageCount: number; warnings: number }
@@ -92,7 +92,7 @@ export class JournalBookService {
    * to the private bucket and reports progress in `export` of the book document. Resolves when the PDF is written.
    */
   public async exportBook(journalKey: string, kind: 'print' | 'screen', labels: BookLabels, authorNames: Record<string, string>): Promise<JournalBookExportResult> {
-    const fn = httpsCallable<unknown, JournalBookExportResult>(getFunctions(getApp(), REGION), 'exportJournalBook', { timeout: EXPORT_TIMEOUT_MS });
+    const fn = httpsCallable<unknown, JournalBookExportResult>(getFunctions(activeFirebaseApp(), REGION), 'exportJournalBook', { timeout: EXPORT_TIMEOUT_MS });
     return (await fn({ op: 'export', journalKey, kind, labels, authorNames })).data;
   }
 
@@ -101,7 +101,7 @@ export class JournalBookService {
    * set: then book maps (`book-map-*.jpg`, ruling R9) get a URL anyway, every other file still comes back `done`.
    */
   public async prepareUploads(journalKey: string, files: string[], overwrite = false): Promise<JournalFileUpload[]> {
-    const fn = httpsCallable<unknown, { uploads: JournalFileUpload[] }>(getFunctions(getApp(), REGION), 'prepareJournalPhotoUploads');
+    const fn = httpsCallable<unknown, { uploads: JournalFileUpload[] }>(getFunctions(activeFirebaseApp(), REGION), 'prepareJournalPhotoUploads');
     const out: JournalFileUpload[] = [];
     for (let i = 0; i < files.length; i += UPLOAD_CHUNK) {
       out.push(...(await fn({ journalKey, files: files.slice(i, i + UPLOAD_CHUNK), ...(overwrite ? { overwrite: true } : {}) })).data.uploads);
@@ -114,7 +114,7 @@ export class JournalBookService {
    * backoff (ruling R14): both instances of the function may be busy with exports (resource-exhausted).
    */
   public async exportLinks(journalKey: string): Promise<Partial<JournalBookExportResult>> {
-    const fn = httpsCallable<unknown, Partial<JournalBookExportResult>>(getFunctions(getApp(), REGION), 'exportJournalBook');
+    const fn = httpsCallable<unknown, Partial<JournalBookExportResult>>(getFunctions(activeFirebaseApp(), REGION), 'exportJournalBook');
     return retryWithBackoff(async () => (await fn({ op: 'links', journalKey })).data, LINKS_TRIES, LINKS_BACKOFF_MS);
   }
 
@@ -130,7 +130,7 @@ export class JournalBookService {
 
   /** Signed PUT URL for the original of a browser video (`<name>-source`, at most 500 MB). */
   public async prepareVideoUpload(journalKey: string, name: string, contentType: string): Promise<JournalFileUpload> {
-    const fn = httpsCallable<unknown, { url: string; headers?: Record<string, string> }>(getFunctions(getApp(), REGION), 'prepareJournalVideoUpload');
+    const fn = httpsCallable<unknown, { url: string; headers?: Record<string, string> }>(getFunctions(activeFirebaseApp(), REGION), 'prepareJournalVideoUpload');
     const { url, headers } = (await fn({ journalKey, name, contentType })).data;
     return { file: `${name}-source`, done: false, url, headers };
   }
@@ -140,7 +140,7 @@ export class JournalBookService {
    * clip). A refusal is an HttpsError whose message is `tooLong`, `tooLarge` or `unreadable`.
    */
   public async convertVideo(journalKey: string, name: string): Promise<JournalVideoConverted> {
-    const fn = httpsCallable<unknown, JournalVideoConverted>(getFunctions(getApp(), REGION), 'convertJournalVideo', { timeout: CONVERT_TIMEOUT_MS });
+    const fn = httpsCallable<unknown, JournalVideoConverted>(getFunctions(activeFirebaseApp(), REGION), 'convertJournalVideo', { timeout: CONVERT_TIMEOUT_MS });
     return (await fn({ journalKey, name })).data;
   }
 }

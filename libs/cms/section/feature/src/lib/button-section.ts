@@ -14,6 +14,7 @@ import { ReservationService } from '@okr/relationship-reservation-data-access';
 import { ButtonWidget, EmergencyButtonWidget, RequestStatusNote } from '@okr/cms-section-ui';
 import { resolveButtonModal } from '@okr/cms-section-util';
 import { SectionStore } from './section.store';
+import { activeFirebaseApp } from '@okr/shared-config';
 
 /** Result of the `requestContract` callable (spec 1.87); re-declared, the client never imports functions code. */
 type ContractRequestResult =
@@ -174,9 +175,8 @@ export class ButtonSectionComponent {
     if (!sectionKey) return;
     try {
       const { getFunctions, httpsCallable } = await import('firebase/functions');
-      const { getApp } = await import('firebase/app');
       const fn = httpsCallable<{ tenantId: string; sectionKey: string }, RequestStatus>(
-        getFunctions(getApp(), 'europe-west6'), 'getContractRequestStatus');
+        getFunctions(activeFirebaseApp(), 'europe-west6'), 'getContractRequestStatus');
       this.requestStatus.set((await fn({ tenantId: this.store.tenantId(), sectionKey })).data);
     } catch (ex) {
       // the page must stay usable: keep the button, no toast
@@ -220,9 +220,8 @@ export class ButtonSectionComponent {
     if (!okey) return;
     try {
       const { getFunctions, httpsCallable } = await import('firebase/functions');
-      const { getApp } = await import('firebase/app');
       const fn = httpsCallable<{ tenantId: string; kind: string; sourceKey: string; linkKey: string }, unknown>(
-        getFunctions(getApp(), 'europe-west6'), 'emitUiEvent',
+        getFunctions(activeFirebaseApp(), 'europe-west6'), 'emitUiEvent',
       );
       await fn({ tenantId: this.store.tenantId(), kind: 'button', sourceKey: okey, linkKey: `section.${okey}` });
     } catch (ex) {
@@ -251,9 +250,8 @@ export class ButtonSectionComponent {
     };
     try {
       const { getFunctions, httpsCallable } = await import('firebase/functions');
-      const { getApp } = await import('firebase/app');
       const fn = httpsCallable<{ tenantId: string; sectionKey: string; confirm: boolean }, ContractRequestResult>(
-        getFunctions(getApp(), 'europe-west6'), 'requestContract');
+        getFunctions(activeFirebaseApp(), 'europe-west6'), 'requestContract');
       const tenantId = this.store.tenantId();
       const first = (await fn({ tenantId, sectionKey, confirm: false })).data;
       if ('refused' in first) { await this.toast(refusal(first.refused)); return; }
@@ -290,9 +288,8 @@ export class ButtonSectionComponent {
     if (tab) tab.opener = null;
     try {
       const { getFunctions, httpsCallable } = await import('firebase/functions');
-      const { getApp } = await import('firebase/app');
       const fn = httpsCallable<{ contractKey: string }, { documents: { title: string; url: string }[] }>(
-        getFunctions(getApp(), 'europe-west6'), 'openSharedContractDocument');
+        getFunctions(activeFirebaseApp(), 'europe-west6'), 'openSharedContractDocument');
       const { documents } = (await fn({ contractKey })).data;
       if (documents.length === 1) {
         if (tab) tab.location.href = documents[0].url;

@@ -1,13 +1,13 @@
 // libs/finance/collection/feature/src/lib/pay.page.ts
 import { Component, effect, inject, input, signal, untracked } from '@angular/core';
 import { IonButton, IonCard, IonCardContent, IonContent, IonSpinner } from '@ionic/angular';
-import { getApp } from 'firebase/app';
 import { connectFunctionsEmulator, getFunctions, httpsCallable } from 'firebase/functions';
 
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { Header } from '@okr/shared-ui';
 import { COLLECTION_I18N_KEYS, CollectionI18n, PayErrorKind, payErrorKind } from '@okr/finance-collection-util';
+import { activeFirebaseApp } from '@okr/shared-config';
 
 type PayState = 'redirecting' | 'done' | 'cancel' | PayErrorKind;
 
@@ -52,7 +52,7 @@ type PayState = 'redirecting' | 'done' | 'cancel' | PayErrorKind;
 })
 export class PayPage {
   protected readonly i18n = inject(I18nService).translateAll(COLLECTION_I18N_KEYS) as CollectionI18n;
-  private readonly functions = getFunctions(getApp(), 'europe-west6');
+  private readonly functions = getFunctions(activeFirebaseApp(), 'europe-west6');
 
   /** route param */
   public readonly invoiceKey = input<string | undefined>(undefined);

@@ -2,7 +2,6 @@ import { computed, inject, Injector, runInInjectionContext } from '@angular/core
 import { rxResource } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { firstValueFrom, from, of } from 'rxjs';
-import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 
 import { AlertController, ModalController, ToastController } from '@ionic/angular';
@@ -19,6 +18,7 @@ import { CHAT_MAINTENANCE_I18N_KEYS, findGroupOfRoom, getMatrixLogLevel, groupKe
 import { ArticleBlocksGate } from '@okr/cms-section-data-access';
 import { articlesToWrite } from '@okr/cms-section-util';
 import type { MatrixMediaService } from '@okr/chat-data-access';
+import { activeFirebaseApp } from '@okr/shared-config';
 
 // ─── types mirroring the cloud-function interfaces ───────────────────────────
 export interface AdminRoom {
@@ -183,7 +183,7 @@ const initialState: ChatMaintenanceState = {
 };
 
 function getFn() {
-  return getFunctions(getApp(), 'europe-west6');
+  return getFunctions(activeFirebaseApp(), 'europe-west6');
 }
 
 /** One `matrixAdmin` router op (3.41): the old callable name travels as `op`, payload and result stay as they were. */

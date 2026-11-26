@@ -2,11 +2,10 @@ import { computed, inject } from '@angular/core';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { Router } from '@angular/router';
 import { AlertController, ModalController, ToastController } from '@ionic/angular';
-import { getApp } from 'firebase/app';
 import { connectFunctionsEmulator, getFunctions, httpsCallable } from 'firebase/functions';
 import { rxResource } from '@angular/core/rxjs-interop';
 
-import { isFirestoreInitializedCheck } from '@okr/shared-config';
+import { isFirestoreInitializedCheck, activeFirebaseApp } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
@@ -371,7 +370,7 @@ export const MembershipSrvStore = signalStore(
       for (const pick of parentPicks) parentByMemberKey.set(pick.membership.memberKey, pick);
 
       // ── Fetch Regasoft contacts ──────────────────────────────────────────
-      const functions = getFunctions(getApp(), 'europe-west6');
+      const functions = getFunctions(activeFirebaseApp(), 'europe-west6');
       if (store.appStore.env.useEmulators) {
         connectFunctionsEmulator(functions, 'localhost', 5001);
       }
@@ -679,7 +678,7 @@ export const MembershipSrvStore = signalStore(
       const { role } = await alert.onDidDismiss();
       if (role !== 'confirm') return;
 
-      const functions = getFunctions(getApp(), 'europe-west6');
+      const functions = getFunctions(activeFirebaseApp(), 'europe-west6');
       if (store.appStore.env.useEmulators) {
         connectFunctionsEmulator(functions, 'localhost', 5001);
       }
@@ -744,7 +743,7 @@ export const MembershipSrvStore = signalStore(
         return;
       }
 
-      const functions = getFunctions(getApp(), 'europe-west6');
+      const functions = getFunctions(activeFirebaseApp(), 'europe-west6');
       if (store.appStore.env.useEmulators) {
         connectFunctionsEmulator(functions, 'localhost', 5001);
       }

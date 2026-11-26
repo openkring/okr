@@ -1,8 +1,8 @@
-import { getApp } from 'firebase/app';
 import { connectFunctionsEmulator, getFunctions, httpsCallable } from 'firebase/functions';
 
 import { FirebaseUserModel } from '@okr/shared-models';
 import { isAuthUserNotFound } from '@okr/user-util';
+import { activeFirebaseApp } from '@okr/shared-config';
 
 /*
  * The account callables behind the «Benutzer & Zugänge» row actions (spec 1.101 phase 4). Moved
@@ -11,7 +11,7 @@ import { isAuthUserNotFound } from '@okr/user-util';
  */
 
 function functions(useEmulators = false) {
-  const fns = getFunctions(getApp(), 'europe-west6');
+  const fns = getFunctions(activeFirebaseApp(), 'europe-west6');
   if (useEmulators) connectFunctionsEmulator(fns, 'localhost', 5001);
   return fns;
 }

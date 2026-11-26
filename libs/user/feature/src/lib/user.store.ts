@@ -2,7 +2,6 @@ import { computed, inject, signal } from '@angular/core';
 import { rxResource, toSignal } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { ModalController, ToastController } from '@ionic/angular';
-import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { authState } from 'rxfire/auth';
 import { catchError, from, of } from 'rxjs';
@@ -11,7 +10,7 @@ import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { ExportFormat, MembershipCollection, MembershipModel, PersonCollection, PersonModel, UserModel } from '@okr/shared-models';
-import { AUTH } from '@okr/shared-config';
+import { AUTH, activeFirebaseApp } from '@okr/shared-config';
 import { exportCsv, showToast } from '@okr/shared-util-angular';
 import { DateFormat, debugListLoaded, generateRandomString, getDataRow, getFullName, getSystemQuery, getTodayStr, isAfterDate, isUser, OPERATOR_TENANT_ID } from '@okr/shared-util-core';
 import { ExportFormats } from '@okr/shared-categories';
@@ -73,7 +72,7 @@ export const UserStore = signalStore(
       params: () => store.fbUser(),   // reload on login/logout
       stream: () => {
         store.loadStarted('users');
-        const fn = httpsCallable<{ op: string }, { users: UserModel[] }>(getFunctions(getApp(), 'europe-west6'), 'authAdmin');
+        const fn = httpsCallable<{ op: string }, { users: UserModel[] }>(getFunctions(activeFirebaseApp(), 'europe-west6'), 'authAdmin');
         return from(fn({ op: 'listBkUsers' }).then(result => result.data.users).catch((ex: unknown) => { store.loadFailed('users', ex); return [] as UserModel[]; }));
       }
     }),
@@ -83,7 +82,7 @@ export const UserStore = signalStore(
       params: () => store.fbUser(),
       stream: () => {
         store.loadStarted('logins');
-        const fn = httpsCallable<{ op: string }, { users: FirebaseLogin[] }>(getFunctions(getApp(), 'europe-west6'), 'authAdmin');
+        const fn = httpsCallable<{ op: string }, { users: FirebaseLogin[] }>(getFunctions(activeFirebaseApp(), 'europe-west6'), 'authAdmin');
         return from(fn({ op: 'listFirebaseUsers' }).then(result => result.data.users).catch((ex: unknown) => { store.loadFailed('logins', ex); return [] as FirebaseLogin[]; }));
       }
     }),

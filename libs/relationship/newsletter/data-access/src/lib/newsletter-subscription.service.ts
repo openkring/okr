@@ -1,13 +1,13 @@
 import { inject, Injectable } from '@angular/core';
 import { AlertController, ToastController } from '@ionic/angular';
 import { Observable } from 'rxjs';
-import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 
 import { FirestoreService } from '@okr/shared-data-access';
 import { confirm, showToast } from '@okr/shared-util-angular';
 import { DbQuery, NewsletterSubscriptionCollection, NewsletterSubscriptionModel } from '@okr/shared-models';
 import { ImportRow, isActiveSubscription } from '@okr/relationship-newsletter-util';
+import { activeFirebaseApp } from '@okr/shared-config';
 
 /** The outcome of an import: how many rows ended where. */
 export interface ImportSummary {
@@ -42,7 +42,7 @@ export class NewsletterSubscriptionService {
   private readonly firestoreService = inject(FirestoreService);
   private readonly alertController = inject(AlertController);
   private readonly toastController = inject(ToastController);
-  private readonly functions = getFunctions(getApp(), 'europe-west6');
+  private readonly functions = getFunctions(activeFirebaseApp(), 'europe-west6');
 
   /** All subscriptions of a newsletter, ended and archived ones included (filter with `isActiveSubscription`). */
   public listByGroup(tenantId: string, groupKey: string): Observable<NewsletterSubscriptionModel[]> {

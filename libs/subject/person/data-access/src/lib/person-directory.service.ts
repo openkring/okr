@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
-import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 
 import { PersonDirectoryResult } from '@okr/subject-person-util';
+import { activeFirebaseApp } from '@okr/shared-config';
 
 // `tenantId` is no longer sent: the callable runs on the external-data gateway
 // (1.18), which derives the tenant from users/{uid}.tenants[0] server-side. A
@@ -23,7 +23,7 @@ interface GatewayEnvelope<T> {
 
 @Injectable({ providedIn: 'root' })
 export class PersonDirectoryService {
-  private readonly functions = getFunctions(getApp(), 'europe-west6');
+  private readonly functions = getFunctions(activeFirebaseApp(), 'europe-west6');
 
   async searchPerson(firstName: string, lastName: string, location = ''): Promise<PersonDirectoryResult[]> {
     const fn = httpsCallable<SearchRequest, GatewayEnvelope<{ results: PersonDirectoryResult[] }>>(

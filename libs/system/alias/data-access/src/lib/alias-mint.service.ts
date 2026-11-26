@@ -1,8 +1,7 @@
 import { Injectable, inject } from '@angular/core';
-import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 
-import { ENV } from '@okr/shared-config';
+import { ENV, activeFirebaseApp } from '@okr/shared-config';
 import type { AliasTargetType, AliasTrackingSetting } from '@okr/shared-models';
 
 /**
@@ -63,7 +62,7 @@ function toFailure(error: unknown): MintAliasFailure {
 @Injectable({ providedIn: 'root' })
 export class AliasMintService {
   private readonly env = inject(ENV);
-  private readonly functions = getFunctions(getApp(), 'europe-west6');
+  private readonly functions = getFunctions(activeFirebaseApp(), 'europe-west6');
 
   /**
    * Prägt IMMER einen neuen Code — der Messpunkt-Fall. Plakat und Newsletter zeigen auf

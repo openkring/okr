@@ -1,11 +1,11 @@
 import { inject, Injectable } from '@angular/core';
-import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { ModalController } from '@ionic/angular';
 
 import { I18nService } from '@okr/shared-i18n';
 import { AlertService } from '@okr/shared-util-angular';
 import { ContactsDavAdminRequest, ContactsDavStatus, VCARD_I18N_KEYS, VcardI18n } from '@okr/vcard-util';
+import { activeFirebaseApp } from '@okr/shared-config';
 
 const REGION = 'europe-west6';
 
@@ -18,7 +18,7 @@ export class ContactsDavService {
   private readonly modalController = inject(ModalController);
   private readonly alertService = inject(AlertService);
   private readonly i18n = inject(I18nService).translateAll(VCARD_I18N_KEYS) as VcardI18n;
-  private readonly functions = getFunctions(getApp(), REGION);
+  private readonly functions = getFunctions(activeFirebaseApp(), REGION);
 
   /** One op of the admin callable; the answer always carries the current status. */
   public async call(request: ContactsDavAdminRequest): Promise<ContactsDavStatus> {

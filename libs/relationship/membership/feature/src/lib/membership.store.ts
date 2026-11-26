@@ -4,7 +4,6 @@ import { AlertController, ModalController, ToastController } from '@ionic/angula
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { Router } from '@angular/router';
 import { firstValueFrom, of } from 'rxjs';
-import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { doc } from 'firebase/firestore';
 
@@ -33,6 +32,7 @@ import { MemberNewModal } from './member-new.modal';
 
 import { MembershipEditModal } from './membership-edit.modal';
 import { ActivityService } from '@okr/activity-data-access';
+import { activeFirebaseApp } from '@okr/shared-config';
 
 export type MembershipState = {
   orgId: string;  // the organization to which the memberships belong (can be org or group)
@@ -103,12 +103,12 @@ export const _MembershipStore = signalStore(
     // Tiered vault read (spec 1.19 Phase 4, D-P4-1): full dob for exports comes from the
     // getAddressView callable (memberAdmin tier), never from the person doc.
     getAddressViewFn: httpsCallable<{ parentKeys: string[] }, { views: Record<string, AddressModel[]> }>(
-      getFunctions(getApp(), 'europe-west6'),
+      getFunctions(activeFirebaseApp(), 'europe-west6'),
       'getAddressView'
     ),
     // a group admin's mail to the members: `mailJobs` stays closed to them, see group-mail.ts
     sendGroupEmailFn: httpsCallable<object, { recipients: number }>(
-      getFunctions(getApp(), 'europe-west6'),
+      getFunctions(activeFirebaseApp(), 'europe-west6'),
       'sendGroupEmail'
     )
   })),

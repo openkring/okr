@@ -1,9 +1,8 @@
 import { inject, Injectable } from '@angular/core';
 import { map, Observable } from 'rxjs';
-import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 
-import { ENV } from '@okr/shared-config';
+import { ENV, activeFirebaseApp } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import { I18nService } from '@okr/shared-i18n';
 import { PaymentOrderCollection, PaymentOrderModel, UserModel } from '@okr/shared-models';
@@ -53,12 +52,12 @@ export class PaymentOrderService {
 
   /** Approval is server-side only (status changes are denied to clients by the rules). Throws the callable's HttpsError. */
   public async approve(orderKey: string): Promise<void> {
-    const fn = httpsCallable(getFunctions(getApp(), 'europe-west6'), 'approvePaymentOrder');
+    const fn = httpsCallable(getFunctions(activeFirebaseApp(), 'europe-west6'), 'approvePaymentOrder');
     await fn({ paymentOrderKey: orderKey });
   }
 
   public async generatePain001(orderKey: string): Promise<string> {
-    const fn = httpsCallable(getFunctions(getApp(), 'europe-west6'), 'generatePain001');
+    const fn = httpsCallable(getFunctions(activeFirebaseApp(), 'europe-west6'), 'generatePain001');
     const result = await fn({ paymentOrderKey: orderKey });
     return (result.data as { xml: string }).xml;
   }

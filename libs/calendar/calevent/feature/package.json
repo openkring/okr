@@ -38,6 +38,7 @@
     "@okr/mobility-transit-feature": "*",
     "@okr/mobility-transit-util": "*",
     "@okr/relationship-mandate-feature": "*",
-    "@okr/relationship-mandate-util": "*"
+    "@okr/relationship-mandate-util": "*",
+    "@okr/shared-config": "*"
   }
 }

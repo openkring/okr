@@ -1,6 +1,5 @@
 import { Injectable, inject } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { createNewMatrixCall, CallEvent, MsgType, type MatrixCall, type MatrixClient } from 'matrix-js-sdk';
 
@@ -13,6 +12,7 @@ import { findGroupOfRoom } from '@okr/chat-util';
 
 import { isServiceAccount } from './matrix-helpers';
 import { APP_STORE_MIN } from '@okr/shared-data-access';
+import { activeFirebaseApp } from '@okr/shared-config';
 
 /**
  * Power level a caller must hold in the call room before an unattended kiosk device
@@ -167,7 +167,7 @@ export class MatrixCallService {
     const alias = room.getCanonicalAlias() ?? undefined;
     const roomKey = findGroupOfRoom(this.appStore.allGroupsAndChats(), roomId, alias)?.okey;
 
-    const functions = getFunctions(getApp(), 'europe-west6');
+    const functions = getFunctions(activeFirebaseApp(), 'europe-west6');
     const fn = httpsCallable(functions, 'sendCallNotification');
     await fn({ roomId, roomName: room.name || '', roomKey: roomKey ?? '', callerName, calleeMatrixUserIds: calleeIds });
   }

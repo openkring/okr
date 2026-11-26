@@ -1,12 +1,11 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { Network } from '@capacitor/network';
-import { getApp } from 'firebase/app';
 import {
   collection, doc, getDocFromServer, getDocsFromServer, limit, query, serverTimestamp, setDoc, where, writeBatch,
 } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 
-import { ensureAppCheckToken, FIRESTORE } from '@okr/shared-config';
+import { ensureAppCheckToken, FIRESTORE, activeFirebaseApp } from '@okr/shared-config';
 import { JournalChange, JournalChangeCollection, JournalCollection, TripModel } from '@okr/shared-models';
 import {
   BoundAuthor, classifyUploadError, deliverEach, DeliveryOutcome, mergeOutboxJournals, nextBoundAuthor, orphanedDeliveries, OutboxDelivery, OutboxJournal,
@@ -386,7 +385,7 @@ export class JournalOutboxService {
   }
 
   private async call<T>(name: string, payload: unknown): Promise<T> {
-    const functions = getFunctions(getApp(), 'europe-west6');
+    const functions = getFunctions(activeFirebaseApp(), 'europe-west6');
     return (await withTimeout(httpsCallable<unknown, T>(functions, name)(payload))).data;
   }
 }

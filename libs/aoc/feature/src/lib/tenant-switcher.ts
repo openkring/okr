@@ -2,7 +2,6 @@ import { Component, computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { combineLatest, from, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
-import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { IonButton, IonContent, IonIcon, IonPopover } from '@ionic/angular';
 
@@ -22,6 +21,7 @@ import {
 import { TenantSwitcherGrid } from './tenant-switcher-grid';
 
 import { contextMenuId } from '@okr/shared-util-core';
+import { activeFirebaseApp } from '@okr/shared-config';
 @Component({
   selector: 'okr-tenant-switcher',
   standalone: true,
@@ -70,7 +70,7 @@ export class TenantSwitcher {
     stream: ({ params }) => {
       if (!params.uid) return of([] as string[]);
       const fn = httpsCallable<void, { tenants: string[] }>(
-        getFunctions(getApp(), 'europe-west6'), 'listMyLoginTenants');
+        getFunctions(activeFirebaseApp(), 'europe-west6'), 'listMyLoginTenants');
       return from(fn().then((result) => result.data.tenants ?? [])).pipe(
         // A failed lookup hides the switcher rather than guessing from person.tenants.
         catchError(() => of([] as string[])),

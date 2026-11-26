@@ -21,6 +21,7 @@
     { "path": "../../avatar/util/tsconfig.lib.json" },
     { "path": "../../relationship/personal-rel/data-access/tsconfig.lib.json" },
     { "path": "../../relationship/workrel/data-access/tsconfig.lib.json" },
+    { "path": "../../shared/config/tsconfig.lib.json" },
     { "path": "../../shared/data-access/tsconfig.lib.json" },
     { "path": "../../shared/i18n/tsconfig.lib.json" },
     { "path": "../../shared/models/tsconfig.lib.json" },

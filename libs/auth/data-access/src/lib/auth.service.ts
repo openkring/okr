@@ -2,10 +2,9 @@ import { Injectable, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { AlertController } from '@ionic/angular';
 import { browserLocalPersistence, confirmPasswordReset, setPersistence, signInWithCustomToken, signInWithEmailAndPassword, signOut, verifyPasswordResetCode } from 'firebase/auth';
-import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 
-import { AUTH, ENV } from '@okr/shared-config';
+import { AUTH, ENV, activeFirebaseApp } from '@okr/shared-config';
 import { AuthCredentials, UserModel } from '@okr/shared-models';
 import { AlertService, confirm, navigateByUrl } from '@okr/shared-util-angular';
 import { clearOfflineSnapshots, die, warn } from '@okr/shared-util-core';
@@ -124,7 +123,7 @@ export class AuthService {
   /** Benutzername login (spec 1.71 §5.1): the server checks the password and hands back a custom token. */
   private async signInWithLoginId(loginId: string, password: string): Promise<void> {
     const fn = httpsCallable<{ tenantId: string; loginId: string; password: string }, { token: string }>(
-      getFunctions(getApp(), 'europe-west6'), 'loginWithLoginId');
+      getFunctions(activeFirebaseApp(), 'europe-west6'), 'loginWithLoginId');
     const { data } = await fn({ tenantId: this.env.tenantId, loginId, password });
     await signInWithCustomToken(this.auth, data.token);
   }
@@ -231,7 +230,7 @@ export class AuthService {
   public async resetPassword(loginEmailOrId: string): Promise<boolean> {
     try {
       if (!loginEmailOrId || loginEmailOrId.length === 0) die('AuthService.resetPassword: loginEmail is mandatory.');
-      const fn = httpsCallable(getFunctions(getApp(), 'europe-west6'), 'sendEmail');
+      const fn = httpsCallable(getFunctions(activeFirebaseApp(), 'europe-west6'), 'sendEmail');
       const input = loginEmailOrId.trim();
       // Benutzername (spec 1.71 §5.2): the client never resolves it to an address — the server
       // looks up the account and mails the person's favourite email, so `to` is empty here.

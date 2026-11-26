@@ -1,9 +1,8 @@
 import { inject, Injectable } from '@angular/core';
-import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { Observable } from 'rxjs';
 
-import { ENV } from '@okr/shared-config';
+import { ENV, activeFirebaseApp } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import { ProspectCollection, ProspectModel } from '@okr/shared-models';
 import { getSystemQuery } from '@okr/shared-util-core';
@@ -33,7 +32,7 @@ export interface RevokeProspectResponse {
 export class ProspectService {
   private readonly env = inject(ENV);
   private readonly firestoreService = inject(FirestoreService);
-  private readonly functions = getFunctions(getApp(), 'europe-west6');
+  private readonly functions = getFunctions(activeFirebaseApp(), 'europe-west6');
 
   private readonly tenantId = this.env.tenantId;
 

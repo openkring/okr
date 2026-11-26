@@ -1,8 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { connectFunctionsEmulator, getFunctions, httpsCallable } from 'firebase/functions';
-import { getApp } from 'firebase/app';
 
-import { ENV } from '@okr/shared-config';
+import { ENV, activeFirebaseApp } from '@okr/shared-config';
 
 export interface GenerateDocumentRequest {
   templateId?: string;
@@ -38,7 +37,7 @@ export class DocGenerationService {
   private readonly env = inject(ENV);
 
   private get functions() {
-    const fns = getFunctions(getApp(), 'europe-west6');
+    const fns = getFunctions(activeFirebaseApp(), 'europe-west6');
     // Only route to the emulator when it is actually running (env flag), not for
     // every dev build — otherwise calls hang against a dead localhost:5001.
     if (this.env.useEmulators) {

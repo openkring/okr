@@ -1,10 +1,9 @@
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { getApp } from 'firebase/app';
 import { collection, getDocs, limit, query, QueryDocumentSnapshot, startAfter } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 
-import { ENV } from '@okr/shared-config';
+import { ENV, activeFirebaseApp } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import {
   AvatarInfo, BillCollection, BillLine, BillModel, BillPayment, BookingCollection, BookingLineCollection, BookingLineModel, BookingModel, DbQuery, UserModel,
@@ -205,7 +204,7 @@ export class BillService {
   }
 
   private functions() {
-    return getFunctions(getApp(), 'europe-west6');
+    return getFunctions(activeFirebaseApp(), 'europe-west6');
   }
 
   /** A one-shot read that rejects on failure (FirestoreService.getDataOnce would return [] instead). */

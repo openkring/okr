@@ -2,7 +2,6 @@ import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController, ToastController } from '@ionic/angular';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
-import { getApp } from 'firebase/app';
 import { connectFunctionsEmulator, getFunctions, httpsCallable } from 'firebase/functions';
 import { firstValueFrom, from, of } from 'rxjs';
 import { take } from 'rxjs/operators';
@@ -39,6 +38,7 @@ import { PersonService } from '@okr/subject-person-data-access';
 
 import { InvoiceEditModal, InvoiceEditResult } from './invoice-edit.modal';
 import { MemberInvoiceService } from './member-invoice.service';
+import { activeFirebaseApp } from '@okr/shared-config';
 
 export type InvoiceState = {
   listId: string;         // 'all' | 'my' | personKey
@@ -89,7 +89,7 @@ export const InvoiceStore = signalStore(
   withState(initialState),
   withProps((store) => {
     const appStore = inject(AppStore);
-    const functions = getFunctions(getApp(), 'europe-west6');
+    const functions = getFunctions(activeFirebaseApp(), 'europe-west6');
     if (appStore.env.useEmulators) {
       connectFunctionsEmulator(functions, 'localhost', 5001);
     }

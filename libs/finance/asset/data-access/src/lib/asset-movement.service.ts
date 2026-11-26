@@ -1,9 +1,8 @@
 import { inject, Injectable } from '@angular/core';
-import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { Observable } from 'rxjs';
 
-import { ENV } from '@okr/shared-config';
+import { ENV, activeFirebaseApp } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import { I18nService } from '@okr/shared-i18n';
 import { AssetMovementCollection, AssetMovementModel, UserModel } from '@okr/shared-models';
@@ -30,7 +29,7 @@ export class AssetMovementService {
    * callable's error (`details.reason`: already-booked, nothing-to-book, asset-accounts-missing, period-locked).
    */
   public async postDepreciation(accountingTenantId: string, year: number): Promise<PostDepreciationResult> {
-    const fn = httpsCallable(getFunctions(getApp(), 'europe-west6'), 'postDepreciation');
+    const fn = httpsCallable(getFunctions(activeFirebaseApp(), 'europe-west6'), 'postDepreciation');
     return (await fn({ accountingTenantId, year })).data as PostDepreciationResult;
   }
 

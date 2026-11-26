@@ -6,10 +6,11 @@
   "sideEffects": false,
   "private": true,
   "dependencies": {
-    "tslib": "^2.8.1",
+    "@okr/relationship-newsletter-util": "*",
+    "@okr/shared-config": "*",
     "@okr/shared-data-access": "*",
     "@okr/shared-models": "*",
     "@okr/shared-util-angular": "*",
-    "@okr/relationship-newsletter-util": "*"
+    "tslib": "^2.8.1"
   }
 }

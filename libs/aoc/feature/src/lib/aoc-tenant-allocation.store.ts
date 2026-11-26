@@ -1,7 +1,6 @@
 import { computed, inject } from '@angular/core';
 import { ModalController, ToastController } from '@ionic/angular';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
-import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { firstValueFrom } from 'rxjs';
 
@@ -22,6 +21,7 @@ import {
 } from '@okr/aoc-util';
 
 import { AllocationConfirmResult, TenantAllocationConfirmModal } from './tenant-allocation-confirm.modal';
+import { activeFirebaseApp } from '@okr/shared-config';
 
 /**
  * The record being allocated, flattened to what every card needs: a key, something to show,
@@ -215,7 +215,7 @@ export const AocTenantAllocationStore = signalStore(
         .filter(a => a.addressChannel === 'email' && !!a.email?.trim())
         .map(a => a.email.trim());
       try {
-        const functions = getFunctions(getApp(), 'europe-west6');
+        const functions = getFunctions(activeFirebaseApp(), 'europe-west6');
         const lookup = httpsCallable(functions, 'getAllocationEmails');
         const result = await lookup({ okey });
         return (result.data as { taken: string[] }).taken ?? [];
@@ -315,7 +315,7 @@ export const AocTenantAllocationStore = signalStore(
       if (role !== 'confirm' || !data) return;
 
       try {
-        const functions = getFunctions(getApp(), 'europe-west6');
+        const functions = getFunctions(activeFirebaseApp(), 'europe-west6');
         const allocate = httpsCallable(functions, 'allocateTenant');
         const result = await allocate({
           modelType: store.modelType(),

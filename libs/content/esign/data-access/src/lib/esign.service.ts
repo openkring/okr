@@ -1,11 +1,10 @@
 // libs/content/esign/data-access/src/lib/esign.service.ts
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { getStorage, ref, uploadBytes } from 'firebase/storage';
 
-import { ENV } from '@okr/shared-config';
+import { ENV, activeFirebaseApp } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import {
   EsignCollection,
@@ -48,7 +47,7 @@ export interface EsignScanPredefinedResponse {
 export class EsignService {
   private readonly env = inject(ENV);
   private readonly firestoreService = inject(FirestoreService);
-  private readonly functions = getFunctions(getApp(), 'europe-west6');
+  private readonly functions = getFunctions(activeFirebaseApp(), 'europe-west6');
 
   public list(): Observable<EsignRecord[]> {
     return this.firestoreService.searchData<EsignRecord>(

@@ -1,10 +1,11 @@
 import { Functions, httpsCallable } from 'firebase/functions';
 
 import { GroupRoomDrift } from '@okr/subject-group-util';
+import { activeFirebaseApp } from '@okr/shared-config';
 
 /**
  * Thin wrappers around the group-chat Cloud Functions (region europe-west6; the caller passes
- * `getFunctions(getApp(), 'europe-west6')`). One copy of each callable call, shared by the group
+ * `getFunctions(activeFirebaseApp(), 'europe-west6')`). One copy of each callable call, shared by the group
  * context menu and the AOC chat page's read-only drift scan.
  */
 

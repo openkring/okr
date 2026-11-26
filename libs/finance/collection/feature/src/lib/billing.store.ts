@@ -4,7 +4,6 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { AlertController, ModalController, ToastController } from '@ionic/angular';
 import { patchState, signalStore, withComputed, withHooks, withMethods, withProps, withState } from '@ngrx/signals';
-import { getApp } from 'firebase/app';
 import { connectFunctionsEmulator, getFunctions, httpsCallable } from 'firebase/functions';
 import { of } from 'rxjs';
 
@@ -24,6 +23,7 @@ import {
   MyBillingInvoice, nextInvoiceEstimate, optionI18nKey, optionRows, paymentMethodLabel, sameOptions, topUpAmountError,
   topUpBounds,
 } from '@okr/finance-collection-util';
+import { activeFirebaseApp } from '@okr/shared-config';
 
 /** subscriptions/{tenantId} as read: every field may be missing on a doc written before it existed. */
 type SubscriptionDoc = Partial<{
@@ -61,7 +61,7 @@ export const BillingStore = signalStore(
   withState<BillingState>({ busy: false, invoices: [], invoicesLoading: false, invoicesError: false, pendingOptions: null }),
   withProps(() => {
     const appStore = inject(AppStore);
-    const functions = getFunctions(getApp(), 'europe-west6');
+    const functions = getFunctions(activeFirebaseApp(), 'europe-west6');
     if (appStore.env.useEmulators) {
       connectFunctionsEmulator(functions, 'localhost', 5001);
     }

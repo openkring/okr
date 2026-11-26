@@ -1,6 +1,5 @@
 import { inject, Injectable } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
-import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { ModalController } from '@ionic/angular';
 
@@ -32,6 +31,7 @@ import {
 
 import { downloadVcfResponse } from './download.util';
 import { VcardExportScopeModal } from './vcard-export-scope.modal';
+import { activeFirebaseApp } from '@okr/shared-config';
 
 const REGION = 'europe-west6';
 const CHANNEL_ORDER: VcardChannelType[] = ['phone', 'email', 'postal', 'web'];
@@ -80,7 +80,7 @@ export class VcardExportService {
   private readonly modalController = inject(ModalController);
   private readonly alertService = inject(AlertService);
   private readonly i18n = inject(I18nService).translateAll(VCARD_I18N_KEYS) as VcardI18n;
-  private readonly functions = getFunctions(getApp(), REGION);
+  private readonly functions = getFunctions(activeFirebaseApp(), REGION);
 
   public async exportSingle(target: VcardExportTarget, kind: VcardTargetKind, roles: Roles | undefined, tenantId: string): Promise<void> {
     const cap = resolveVcardCapability(roles, 1);

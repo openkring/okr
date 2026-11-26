@@ -1,10 +1,9 @@
 // libs/content/pdf-template/data-access/src/lib/doc-email.service.ts
 import { inject, Injectable } from '@angular/core';
 import { connectFunctionsEmulator, getFunctions, httpsCallable } from 'firebase/functions';
-import { getApp } from 'firebase/app';
 import { Observable } from 'rxjs';
 
-import { ENV } from '@okr/shared-config';
+import { ENV, activeFirebaseApp } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import type { EmailLayoutChoice, PostOptions } from '@okr/shared-models';
 import type { MailingHousehold, MailingRecipientChannels } from '@okr/shared-util-core';
@@ -174,7 +173,7 @@ export class DocEmailService {
   private readonly firestoreService = inject(FirestoreService);
 
   private get functions() {
-    const fns = getFunctions(getApp(), 'europe-west6');
+    const fns = getFunctions(activeFirebaseApp(), 'europe-west6');
     if (this.env.useEmulators) {
       try { connectFunctionsEmulator(fns, 'localhost', 5001); } catch { /* already connected */ }
     }

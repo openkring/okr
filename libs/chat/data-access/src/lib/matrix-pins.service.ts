@@ -1,9 +1,9 @@
 import { Injectable } from '@angular/core';
-import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { MatrixClient } from 'matrix-js-sdk';
 
 import { expiredSharedPins, MATRIX_PINNED_EVENTS, OKR_PIN_EXPIRY_EVENT } from '@okr/chat-util';
+import { activeFirebaseApp } from '@okr/shared-config';
 
 export interface SetChatPinsRequest {
   roomId: string;
@@ -98,7 +98,7 @@ export class MatrixPinsService {
   }
 
   private async callPins(req: SetChatPinsRequest): Promise<void> {
-    await httpsCallable<SetChatPinsRequest, unknown>(getFunctions(getApp(), 'europe-west6'), 'setChatPins')(req);
+    await httpsCallable<SetChatPinsRequest, unknown>(getFunctions(activeFirebaseApp(), 'europe-west6'), 'setChatPins')(req);
   }
 
   private stateContent(roomId: string, type: string): Record<string, unknown> | undefined {

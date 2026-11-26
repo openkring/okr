@@ -1,8 +1,7 @@
 import { Injectable, inject } from '@angular/core';
-import { getApp } from 'firebase/app';
 import { connectFunctionsEmulator, getFunctions, httpsCallable } from 'firebase/functions';
 
-import { ENV } from '@okr/shared-config';
+import { ENV, activeFirebaseApp } from '@okr/shared-config';
 import type { DiaryWeather } from '@okr/shared-models';
 
 /** One calendar day at one coordinate — what `fetchDiaryWeather` needs and nothing more. */
@@ -19,7 +18,7 @@ export class DiaryWeatherService {
   private readonly env = inject(ENV);
 
   private get functions() {
-    const fns = getFunctions(getApp(), 'europe-west6');
+    const fns = getFunctions(activeFirebaseApp(), 'europe-west6');
     if (this.env.useEmulators) {
       try { connectFunctionsEmulator(fns, 'localhost', 5001); } catch { /* already connected */ }
     }

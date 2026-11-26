@@ -1,11 +1,10 @@
 // libs/content/notice/data-access/src/lib/notice.service.ts
 import { inject, Injectable } from '@angular/core';
-import { getApp } from 'firebase/app';
 import { connectFunctionsEmulator, getFunctions, httpsCallable } from 'firebase/functions';
 import { collection, doc, getDoc, getDocs, setDoc } from 'firebase/firestore';
 import { map, Observable, of } from 'rxjs';
 
-import { ENV, FIRESTORE } from '@okr/shared-config';
+import { ENV, FIRESTORE, activeFirebaseApp } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import { NoticeCollection, NoticeModel, NoticeReadModel, NoticeReadsSubcollection } from '@okr/shared-models';
 import { DateFormat, getTodayStr } from '@okr/shared-util-core';
@@ -22,7 +21,7 @@ export class NoticeService {
   private readonly firestore = inject(FIRESTORE);
 
   private get functions() {
-    const fns = getFunctions(getApp(), 'europe-west6');
+    const fns = getFunctions(activeFirebaseApp(), 'europe-west6');
     if (this.env.useEmulators) {
       try { connectFunctionsEmulator(fns, 'localhost', 5001); } catch { /* already connected */ }
     }

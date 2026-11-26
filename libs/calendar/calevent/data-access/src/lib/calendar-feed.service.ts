@@ -4,6 +4,7 @@ import { Browser } from '@capacitor/browser';
 
 import { CalEventModel } from '@okr/shared-models';
 import { buildGoogleCalendarUrl } from '@okr/calendar-calevent-util';
+import { activeFirebaseApp } from '@okr/shared-config';
 
 const FEED_URL = 'https://europe-west6-bkaiser-org.cloudfunctions.net/calendarFeed';
 const PUBLIC_ICS_URL = 'https://europe-west6-bkaiser-org.cloudfunctions.net/generateCalendarICS';
@@ -19,8 +20,8 @@ type Device = 'ios' | 'android' | 'desktop';
  * Follows the repo's established callable-client convention (no `@angular/fire` wrapper exists
  * in this codebase — see `FeatureSelectionService`/`PersonService`): a plain `firebase/functions`
  * `httpsCallable` against the `europe-west6` region. The `firebase/functions` import is dynamic
- * (rather than a module-level `getFunctions(getApp(), …)` field like `FeatureSelectionService`)
- * so this service stays safe to construct during SSR, where `getApp()` may not be initialised yet.
+ * (rather than a module-level `getFunctions(activeFirebaseApp(), …)` field like `FeatureSelectionService`)
+ * so this service stays safe to construct during SSR, where `activeFirebaseApp()` may not be initialised yet.
  */
 @Injectable({ providedIn: 'root' })
 export class CalendarFeedService {

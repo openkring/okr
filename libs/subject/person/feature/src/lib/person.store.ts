@@ -4,7 +4,6 @@ import { Router } from '@angular/router';
 import { ModalController, ToastController } from '@ionic/angular';
 import { patchState, signalStore, withComputed, withHooks, withMethods, withProps, withState } from '@ngrx/signals';
 import { Photo } from '@capacitor/camera';
-import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 
 import { FirestoreService, ChatStatusService } from '@okr/shared-data-access';
@@ -25,6 +24,7 @@ import { browseUrl, getDirectoryPostalAddress, readsAddressVault, stringifyPosta
 import { AvatarService } from '@okr/avatar-data-access';
 import { ContactsDavService, VcardExportService, VcardImportService } from '@okr/vcard-feature';
 import { ActivityService } from '@okr/activity-data-access';
+import { activeFirebaseApp } from '@okr/shared-config';
 
 
 export type PersonState = {
@@ -578,7 +578,7 @@ export const PersonStore = signalStore(
 
         async syncUserAccount(person: PersonModel, action: 'open' | 'close', confirmation: string): Promise<void> {
             try {
-                const functions = getFunctions(getApp(), 'europe-west6');
+                const functions = getFunctions(activeFirebaseApp(), 'europe-west6');
                 const syncPersonAccount = httpsCallable(functions, 'authAdmin');
                 await syncPersonAccount({ op: 'syncPersonAccount', personKey: person.okey, tenantId: store.tenantId(), action });
                 await showToast(store.toastController, confirmation);

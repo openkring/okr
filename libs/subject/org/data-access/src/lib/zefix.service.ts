@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
+import { activeFirebaseApp } from '@okr/shared-config';
 
 export interface ZefixSearchResult {
   name: string;
@@ -21,7 +21,7 @@ export interface ZefixCompanyDetails {
 
 @Injectable({ providedIn: 'root' })
 export class ZefixService {
-  private readonly functions = getFunctions(getApp(), 'europe-west6');
+  private readonly functions = getFunctions(activeFirebaseApp(), 'europe-west6');
 
   async searchCompany(name: string): Promise<ZefixSearchResult[]> {
     const fn = httpsCallable<{ name: string; op: string }, { data: { results: ZefixSearchResult[] } }>(

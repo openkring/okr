@@ -1,8 +1,8 @@
 import { Injectable, signal } from '@angular/core';
-import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 
 import { chunkKeys, mergeSigned, missingKeys, settleKeys, SignedVideo } from '@okr/content-document-util';
+import { activeFirebaseApp } from '@okr/shared-config';
 
 type Req = { docKeys: string[]; download?: boolean };
 type Res = { videos: SignedVideo[]; expires: number };
@@ -24,7 +24,7 @@ export class VideoUrlService {
   public readonly settled = this._settled.asReadonly();
 
   private call(req: Req): Promise<Res> {
-    const fn = httpsCallable<Req, Res>(getFunctions(getApp(), 'europe-west6'), 'signVideoUrls');
+    const fn = httpsCallable<Req, Res>(getFunctions(activeFirebaseApp(), 'europe-west6'), 'signVideoUrls');
     return fn(req).then(r => r.data);
   }
 

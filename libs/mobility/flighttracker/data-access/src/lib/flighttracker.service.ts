@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { getFunctions, httpsCallable } from 'firebase/functions';
-import { getApp } from 'firebase/app';
+import { activeFirebaseApp } from '@okr/shared-config';
 
 export interface FlightInfoRequest {
   flightNumber: string;
@@ -46,7 +46,7 @@ export interface FlightInfoResponse {
 export class FlightTrackerService {
   public async getFlightInfo(flightNumber: string, date: string): Promise<FlightInfoResponse> {
     const fn = httpsCallable<FlightInfoRequest, FlightInfoResponse>(
-      getFunctions(getApp(), 'europe-west6'),
+      getFunctions(activeFirebaseApp(), 'europe-west6'),
       'getFlightInfo'
     );
     const { data } = await fn({ flightNumber, date });

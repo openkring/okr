@@ -1,10 +1,9 @@
 import { Injectable, inject } from '@angular/core';
-import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { Observable, map } from 'rxjs';
 
 import { PublicLearningSection, roomDocs } from '@okr/content-learning-util';
-import { ENV } from '@okr/shared-config';
+import { ENV, activeFirebaseApp } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import { CommentCollection, CommentModel, DbQuery, DocumentCollection, DocumentModel } from '@okr/shared-models';
 import { getSystemQuery } from '@okr/shared-util-core';
@@ -35,7 +34,7 @@ function toFailure(error: unknown): LearningError {
 export class LearningService {
   private readonly env = inject(ENV);
   private readonly firestoreService = inject(FirestoreService);
-  private readonly functions = getFunctions(getApp(), 'europe-west6');
+  private readonly functions = getFunctions(activeFirebaseApp(), 'europe-west6');
   private readonly tenantId = this.env.tenantId;
 
   /** Live documents of the room folder, by title. Filtered in code: no composite index needed. */

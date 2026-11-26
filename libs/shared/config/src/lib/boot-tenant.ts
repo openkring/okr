@@ -13,7 +13,7 @@ import { ENV, OkrEnvironment, TenantMode } from './env';
 export const PORTAL_TENANT_KEY = 'okr.portal.tenantId';
 
 /** The id ends up in asset URLs and Firestore queries: lower-case letters and digits only. */
-const TENANT_ID_PATTERN = /^[a-z][a-z0-9]{1,30}$/;
+export const TENANT_ID_PATTERN = /^[a-z][a-z0-9]{1,30}$/;
 
 export function isValidTenantId(id: unknown): id is string {
   return typeof id === 'string' && TENANT_ID_PATTERN.test(id);

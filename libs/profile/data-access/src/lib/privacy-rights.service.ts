@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
-import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import type { ErasurePreview, EraseMyDataResponse, ExportMyDataResponse } from '@okr/shared-models';
+import { activeFirebaseApp } from '@okr/shared-config';
 
 /**
  * Client wrapper for the three data-subject-rights callables (privacy 1.19, Phase 5B):
@@ -51,7 +51,7 @@ function toFailure(error: unknown): PrivacyRightsFailure {
 
 @Injectable({ providedIn: 'root' })
 export class PrivacyRightsService {
-  private readonly functions = getFunctions(getApp(), 'europe-west6');
+  private readonly functions = getFunctions(activeFirebaseApp(), 'europe-west6');
 
   /**
    * D-P5-1: assembles the caller's own export server-side and returns a 15-minute signed

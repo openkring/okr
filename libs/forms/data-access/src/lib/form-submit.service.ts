@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 
 import { DerivedValue, FormDefinitionModel } from '@okr/shared-models';
 import { FormAvailability, ModelSelectChoice, PublicCourseOption, sanitizeFileName } from '@okr/shared-util-core';
+import { activeFirebaseApp } from '@okr/shared-config';
 
 /** What a submitted file becomes once it is in storage — plain, or encrypted at rest. */
 export interface UploadedFileRef {
@@ -102,8 +103,7 @@ export class FormSubmitService {
 
   private async callable<TReq, TRes>(name: string) {
     const { getFunctions, httpsCallable } = await import('firebase/functions');
-    const { getApp } = await import('firebase/app');
-    return httpsCallable<TReq, TRes>(getFunctions(getApp(), this.region), name);
+    return httpsCallable<TReq, TRes>(getFunctions(activeFirebaseApp(), this.region), name);
   }
 
   /**

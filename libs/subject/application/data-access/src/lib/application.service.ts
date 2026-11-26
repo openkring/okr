@@ -1,9 +1,8 @@
 import { inject, Injectable } from '@angular/core';
 import { Observable, firstValueFrom } from 'rxjs';
-import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 
-import { ENV } from '@okr/shared-config';
+import { ENV, activeFirebaseApp } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import { I18nService } from '@okr/shared-i18n';
 import {
@@ -73,7 +72,7 @@ export class ApplicationService {
   });
 
   private readonly sendEmailFn = httpsCallable<unknown, void>(
-    getFunctions(getApp(), 'europe-west6'),
+    getFunctions(activeFirebaseApp(), 'europe-west6'),
     'sendEmail'
   );
 

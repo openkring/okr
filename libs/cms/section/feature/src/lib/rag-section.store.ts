@@ -2,7 +2,6 @@ import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { ToastController } from '@ionic/angular';
-import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { of } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -19,6 +18,7 @@ import { DocumentService } from '@okr/content-document-data-access';
 import { buildDocumentModel } from '@okr/content-document-util';
 import { FolderService } from '@okr/content-folder-data-access';
 import { SECTION_I18N_KEYS } from '@okr/cms-section-util';
+import { activeFirebaseApp } from '@okr/shared-config';
 
 const RAG_FOLDER_KEY = 'rag';
 /** The PDF hint is long: the default toast is gone before it can be read. */
@@ -154,7 +154,7 @@ export const RagStore = signalStore(
             patchState(store, { isLoading: true, error: null });
 
             try {
-                const functions = getFunctions(getApp(), 'europe-west6');
+                const functions = getFunctions(activeFirebaseApp(), 'europe-west6');
                 const queryRag = httpsCallable<
                     { sectionKey: string; question: string; history: RagMessage[] },
                     { answer: string; sources: RagSource[] }

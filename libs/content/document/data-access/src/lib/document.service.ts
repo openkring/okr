@@ -1,10 +1,9 @@
 import { Injectable, inject } from '@angular/core';
-import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { FullMetadata, deleteObject, getDownloadURL, getMetadata, listAll, ref } from "firebase/storage";
 import { Observable, firstValueFrom, of } from 'rxjs';
 
-import { ENV, STORAGE } from '@okr/shared-config';
+import { ENV, STORAGE, activeFirebaseApp } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import { I18nService } from '@okr/shared-i18n';
 import { DocumentCollection, DocumentModel, DocumentRendering, UserModel } from '@okr/shared-models';
@@ -147,7 +146,7 @@ export class DocumentService {
    */
   public async vectorize(docKey: string, preset: 'logo' | 'photo' = 'logo', detail?: number): Promise<DocumentRendering> {
     const fn = httpsCallable<{ docKey: string; tenantId: string; preset: string; detail?: number }, DocumentRendering>(
-      getFunctions(getApp(), 'europe-west6'), 'vectorizeDocument'
+      getFunctions(activeFirebaseApp(), 'europe-west6'), 'vectorizeDocument'
     );
     const result = await fn({ docKey, tenantId: this.tenantId, preset, detail });
     return result.data;

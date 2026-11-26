@@ -1,9 +1,8 @@
 import { Injectable, inject } from '@angular/core';
-import { getApp } from 'firebase/app';
 import { connectFunctionsEmulator, getFunctions, httpsCallable } from 'firebase/functions';
 import { Observable } from 'rxjs';
 
-import { ENV } from '@okr/shared-config';
+import { ENV, activeFirebaseApp } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import { ApprovalCollection, ApprovalModel, ApprovalState } from '@okr/shared-models';
 import { getSystemQuery } from '@okr/shared-util-core';
@@ -24,7 +23,7 @@ export class ApprovalService {
   private readonly tenantId = this.env.tenantId;
 
   private get functions() {
-    const fns = getFunctions(getApp(), 'europe-west6');
+    const fns = getFunctions(activeFirebaseApp(), 'europe-west6');
     if (this.env.useEmulators) {
       try { connectFunctionsEmulator(fns, 'localhost', 5001); } catch { /* already connected */ }
     }

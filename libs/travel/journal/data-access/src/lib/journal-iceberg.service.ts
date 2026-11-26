@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { IcebergsRes, IcebergSnapshot, parseStoredIcebergs } from '@okr/travel-journal-util';
-import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
+import { activeFirebaseApp } from '@okr/shared-config';
 
 const STORED_KEY = 'okr.journal.icebergs'; // the last snapshot received, for offline use (spec 2.122)
 const ON_KEY = 'okr.journal.icebergsOn'; // the layer switch, per device like the base layer
@@ -14,7 +14,7 @@ const ON_KEY = 'okr.journal.icebergsOn'; // the layer switch, per device like th
 export class JournalIcebergService {
   /** Calls `getIcebergs` and stores the answer on the device; throws offline or when the function fails. */
   public async fetch(): Promise<IcebergsRes> {
-    const res = await httpsCallable<unknown, IcebergsRes>(getFunctions(getApp(), 'europe-west6'), 'getIcebergs')({});
+    const res = await httpsCallable<unknown, IcebergsRes>(getFunctions(activeFirebaseApp(), 'europe-west6'), 'getIcebergs')({});
     this.store({ revisedAt: res.data.revisedAt, icebergs: res.data.icebergs });
     return res.data;
   }

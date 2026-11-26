@@ -5,7 +5,7 @@ import { IonicRouteStrategy, provideIonicAngular } from '@ionic/angular';
 import { provideServiceWorker } from '@angular/service-worker';
 
 import * as Sentry from '@sentry/angular';
-import { provideBootEnv } from '@okr/shared-config';
+import { initOkrFirebaseApp, provideBootEnv } from '@okr/shared-config';
 import { AvailableLanguages, DefaultLanguageCode } from '@okr/shared-models';
 import { ChunkLoadErrorHandler, isBrowser, httpBreadcrumbInterceptor, VersionCheckService } from '@okr/shared-util-angular';
 import { AppStore, provideModelSelector, SentryContextService } from '@okr/shared-feature';
@@ -17,7 +17,6 @@ import { environment } from '../environments/environment';
 import { appRoutes } from './app.routes';
 
 // plain firebase with rxfire
-import { initializeApp } from 'firebase/app';
 
 // i18n with transloco
 import { APP_STORE_MIN, I18nOverrideService } from '@okr/shared-data-access';
@@ -27,7 +26,7 @@ import { TranslateModule } from '@ngx-translate/core';
 
 // Initialize Firebase. This is safe to run on the server.
 try {
-  initializeApp(environment.firebase);
+  initOkrFirebaseApp(environment);
 } catch (e) {
   // This can happen with HMR, ignore "already exists" error.
   console.error('Firebase initialization error (can happen with HMR, ignore "already exists" error', e);

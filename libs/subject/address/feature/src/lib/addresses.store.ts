@@ -4,12 +4,11 @@ import { Router } from '@angular/router';
 import { ModalController, Platform, ToastController } from '@ionic/angular';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { map, of } from 'rxjs';
-import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { getDownloadURL, ref } from 'firebase/storage';
 
 import { FirestoreService } from '@okr/shared-data-access';
-import { STORAGE } from '@okr/shared-config';
+import { STORAGE, activeFirebaseApp } from '@okr/shared-config';
 import { AppStore } from '@okr/shared-feature';
 import { AddressCollection, AddressDirectoryCollection, AddressDirectoryModel, AddressModel, AddressModelName, CategoryListModel, DbQuery, DefaultLanguage, DocumentModel, getAddressDirectoryKey, isSensitiveScalarChannel, OrgModel, PersonModel, TaskModel } from '@okr/shared-models';
 import { AlertService, downloadToBrowser, showToast } from '@okr/shared-util-angular';
@@ -70,7 +69,7 @@ export const AddressStore = signalStore(
     i18n: inject(I18nService).translateAll(ADDRESSES_I18N_KEYS),
     storage: inject(STORAGE),
     qrBillFn: httpsCallable<{ tenantId: string; addressOkey: string; data: Record<string, unknown> }, { storagePath: string }>(
-      getFunctions(getApp(), 'europe-west6'),
+      getFunctions(activeFirebaseApp(), 'europe-west6'),
       'generateQrBill'
     )
   })),

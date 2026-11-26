@@ -3,6 +3,7 @@ export * from './lib/app-check-provider';
 export * from './lib/auth';
 export * from './lib/boot-tenant';
 export * from './lib/env';
+export * from './lib/firebase-app';
 export * from './lib/firestore';
 export * from './lib/masks';
 export * from './lib/stalled-restore';

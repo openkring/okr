@@ -1,10 +1,9 @@
 import { inject, Injectable } from '@angular/core';
 import { map, Observable } from 'rxjs';
-import { getApp } from 'firebase/app';
 import { collection, getDocs, limit, query, QueryDocumentSnapshot, startAfter } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 
-import { ENV } from '@okr/shared-config';
+import { ENV, activeFirebaseApp } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import { AvatarInfo, BookingCollection, BookingLineModel, BookingModel, BookingStatus, DbQuery, UserModel } from '@okr/shared-models';
 import { getQuery, getSystemQuery } from '@okr/shared-util-core';
@@ -202,7 +201,7 @@ export class BookingService {
    * server-side from the caller and is deliberately not part of the payload.
    */
   public async reviewViaFunction(payload: ReviewBookingPayload): Promise<ReviewBookingResult> {
-    const fn = httpsCallable(getFunctions(getApp(), 'europe-west6'), 'reviewBooking');
+    const fn = httpsCallable(getFunctions(activeFirebaseApp(), 'europe-west6'), 'reviewBooking');
     const result = await fn(payload);
     return result.data as ReviewBookingResult;
   }
@@ -214,7 +213,7 @@ export class BookingService {
    * must go through {@link reviewViaFunction}.
    */
   public async writeViaFunction(payload: WriteBookingPayload): Promise<{ bookingKey: string; bookingNo: number }> {
-    const fn = httpsCallable(getFunctions(getApp(), 'europe-west6'), 'writeBooking');
+    const fn = httpsCallable(getFunctions(activeFirebaseApp(), 'europe-west6'), 'writeBooking');
     const result = await fn(payload);
     return result.data as { bookingKey: string; bookingNo: number };
   }

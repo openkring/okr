@@ -1,11 +1,10 @@
 import { computed, inject } from '@angular/core';
 import { deleteObject, getDownloadURL, ref } from 'firebase/storage';
-import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { AlertController, ToastController } from '@ionic/angular';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 
-import { STORAGE } from '@okr/shared-config';
+import { STORAGE, activeFirebaseApp } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore } from '@okr/shared-feature';
 import { DocumentCollection, DocumentModel, UserModel } from '@okr/shared-models';
@@ -61,7 +60,7 @@ export const BULK_CREATE_THRESHOLD = 10;
  */
 async function listTenantStorageFiles(tenantId: string): Promise<TenantStorageFile[]> {
   const fn = httpsCallable<{ tenantId: string }, { files: TenantStorageFile[] }>(
-    getFunctions(getApp(), 'europe-west6'), 'listTenantStorageFiles'
+    getFunctions(activeFirebaseApp(), 'europe-west6'), 'listTenantStorageFiles'
   );
   const result = await fn({ tenantId });
   return result.data.files ?? [];

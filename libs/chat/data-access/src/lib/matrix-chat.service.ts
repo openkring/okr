@@ -5,7 +5,6 @@ import { createClient, IndexedDBStore, MatrixClient, MatrixEvent, Room, RoomMemb
 import { BehaviorSubject, combineLatest, Observable, Subject, timer } from 'rxjs';
 import { distinctUntilChanged, map } from 'rxjs/operators';
 
-import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 
 import { MatrixConfig, MatrixMessage, MatrixReadReceipt, MatrixRoom, TypingNotification, UserModel } from '@okr/shared-models';
@@ -22,6 +21,7 @@ import { MatrixRoomListService } from './matrix-room-list.service';
 import { MatrixRoomPrefsService } from './matrix-room-prefs.service';
 import { MatrixPinsService } from './matrix-pins.service';
 import { MatrixJumpResult, MatrixJumpState, MatrixMessageService } from './matrix-message.service';
+import { activeFirebaseApp } from '@okr/shared-config';
 
 /**
  * SCS-92: refresh a Matrix access token this long before it lapses, so a session that
@@ -52,7 +52,7 @@ export interface MatrixPollData {
 
 /** One `matrixUser` router op (3.41): the old callable name travels as `op`, payload and result stay as they were. */
 function matrixUserOp(op: string) {
-  const fn = httpsCallable<object, unknown>(getFunctions(getApp(), 'europe-west6'), 'matrixUser');
+  const fn = httpsCallable<object, unknown>(getFunctions(activeFirebaseApp(), 'europe-west6'), 'matrixUser');
   return (data: object) => fn({ ...data, op });
 }
 
@@ -296,7 +296,7 @@ export class MatrixChatService {
         this.clearStoredCredentials();
       }
 
-      const fn = httpsCallable(getFunctions(getApp(), 'europe-west6'), 'getMatrixCredentials');
+      const fn = httpsCallable(getFunctions(activeFirebaseApp(), 'europe-west6'), 'getMatrixCredentials');
       const result = await fn();
       const credentials = result.data as MatrixConfig;
       if (!credentials?.accessToken) throw new Error('Cloud Function returned invalid credentials');
@@ -1058,7 +1058,7 @@ export class MatrixChatService {
       if (bytes.length === 0 || bytes.length > MAX_CHAT_HEIC_BYTES) throw new Error(`size ${bytes.length}`);
       let binary = '';
       for (let i = 0; i < bytes.length; i += 0x8000) binary += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
-      const fn = httpsCallable<ConvertChatHeicReq, ConvertChatHeicRes>(getFunctions(getApp(), 'europe-west6'), 'convertChatHeic', { timeout: 70_000 });
+      const fn = httpsCallable<ConvertChatHeicReq, ConvertChatHeicRes>(getFunctions(activeFirebaseApp(), 'europe-west6'), 'convertChatHeic', { timeout: 70_000 });
       const { data } = await fn({ fileName: file.name, data: btoa(binary) });
       const jpeg = Uint8Array.from(atob(data.data), c => c.charCodeAt(0));
       return new File([jpeg], data.fileName, { type: 'image/jpeg' });
@@ -1184,7 +1184,7 @@ export class MatrixChatService {
     // PUT: GCS accepts it (range 0,max), the message goes out and the card stays blank forever.
     if (file.size === 0) throw new VideoUploadError(0, `refusing to upload empty video ${file.name}`);
 
-    const fn = httpsCallable<PrepareChatVideoUploadReq, PrepareChatVideoUploadRes>(getFunctions(getApp(), 'europe-west6'), 'prepareChatVideoUpload');
+    const fn = httpsCallable<PrepareChatVideoUploadReq, PrepareChatVideoUploadRes>(getFunctions(activeFirebaseApp(), 'europe-west6'), 'prepareChatVideoUpload');
     const { data } = await fn({ roomId, roomName, fileName: file.name, size: file.size, mimeType: resolveFileMimeType(file) });
 
     onUploadStart?.();
@@ -1665,7 +1665,7 @@ export class MatrixChatService {
    */
   async assignMatrixRoomTenants(roomId: string, tenants: string[]): Promise<string[]> {
     const fn = httpsCallable<{ roomId: string; tenants: string[] } & { op: string }, { roomId: string; tenants: string[] }>(
-      getFunctions(getApp(), 'europe-west6'), 'matrixAdmin');
+      getFunctions(activeFirebaseApp(), 'europe-west6'), 'matrixAdmin');
     return (await fn({ op: 'assignMatrixRoomTenants', roomId, tenants })).data.tenants;
   }
 

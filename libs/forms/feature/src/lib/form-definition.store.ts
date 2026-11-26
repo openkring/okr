@@ -14,6 +14,7 @@ export type { FormI18n };
 
 import { FormDefinitionEditModal } from '@okr/forms-ui';
 import { FormBuilderEditor } from './form-builder-editor';
+import { activeFirebaseApp } from '@okr/shared-config';
 
 export type FormDefinitionState = {
   searchTerm: string;
@@ -162,9 +163,8 @@ export const FormDefinitionStore = signalStore(
       if (docsData.length === 0) return;
 
       const { getFunctions, httpsCallable } = await import('firebase/functions');
-      const { getApp } = await import('firebase/app');
       const fn = httpsCallable<Record<string, unknown>, { url: string; filename: string }>(
-        getFunctions(getApp(), 'europe-west6'),
+        getFunctions(activeFirebaseApp(), 'europe-west6'),
         'generateDocument',
       );
 

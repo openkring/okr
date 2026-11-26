@@ -1,11 +1,10 @@
 import { computed, inject } from '@angular/core';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { I18nService } from '@okr/shared-i18n';
-import { getApp } from 'firebase/app';
 import { connectFunctionsEmulator, getFunctions, httpsCallable } from 'firebase/functions';
 import { firstValueFrom } from 'rxjs';
 
-import { isFirestoreInitializedCheck } from '@okr/shared-config';
+import { isFirestoreInitializedCheck, activeFirebaseApp } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore } from '@okr/shared-feature';
 import { AddressCollection, AddressModel, MembershipCollection, MembershipModel, OrgCollection, OrgModel, PersonCollection, PersonModel } from '@okr/shared-models';
@@ -231,7 +230,7 @@ export const PersonBexioStore = signalStore(
 
       // 6. Fetch Bexio contacts via Cloud Function
       try {
-        const functions = getFunctions(getApp(), 'europe-west6');
+        const functions = getFunctions(activeFirebaseApp(), 'europe-west6');
         if (store.appStore.env.useEmulators) {
           connectFunctionsEmulator(functions, 'localhost', 5001);
         }
@@ -334,7 +333,7 @@ export const PersonBexioStore = signalStore(
     },
 
     async addToBexio(item: BexioIndex): Promise<void> {
-      const functions = getFunctions(getApp(), 'europe-west6');
+      const functions = getFunctions(activeFirebaseApp(), 'europe-west6');
       if (store.appStore.env.useEmulators) {
         connectFunctionsEmulator(functions, 'localhost', 5001);
       }
@@ -420,7 +419,7 @@ export const PersonBexioStore = signalStore(
     },
 
     async updateInBexio(item: BexioIndex): Promise<void> {
-      const functions = getFunctions(getApp(), 'europe-west6');
+      const functions = getFunctions(activeFirebaseApp(), 'europe-west6');
       if (store.appStore.env.useEmulators) {
         connectFunctionsEmulator(functions, 'localhost', 5001);
       }

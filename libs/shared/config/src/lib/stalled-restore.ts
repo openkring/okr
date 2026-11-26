@@ -1,3 +1,5 @@
+import { activeFirebaseAppName } from './firebase-app';
+
 /**
  * The way out of a session restore that hangs on an expired login (SCS-AZ, BKA-8).
  *
@@ -29,9 +31,9 @@ export const STALLED_RESTORE_NOTE_TTL_MS = 10 * 60_000;
 /** Minimal Storage surface, so tests can pass a plain map. */
 export type NoteStorage = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>;
 
-/** The localStorage key Firebase Auth persists the current user under (default app). */
-export function firebaseSessionKey(apiKey: string): string {
-  return `firebase:authUser:${apiKey}:[DEFAULT]`;
+/** The localStorage key Firebase Auth persists the current user under (the active app, spec 1.179). */
+export function firebaseSessionKey(apiKey: string, appName = activeFirebaseAppName()): string {
+  return `firebase:authUser:${apiKey}:${appName}`;
 }
 
 function defaultStorage(): NoteStorage | undefined {

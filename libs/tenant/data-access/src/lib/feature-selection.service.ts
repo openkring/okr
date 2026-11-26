@@ -2,8 +2,8 @@ import { Injectable } from '@angular/core';
 
 import type { ApplyFeatureRequest, ApplyFeatureResponse, BooksSetupInput, FeatureIntent, StructuralField } from '@okr/tenant-util';
 
-import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
+import { activeFirebaseApp } from '@okr/shared-config';
 
 /**
  * The single client entry point for changing a tenant's feature selection. All writes
@@ -15,7 +15,7 @@ import { getFunctions, httpsCallable } from 'firebase/functions';
  */
 @Injectable({ providedIn: 'root' })
 export class FeatureSelectionService {
-  private readonly functions = getFunctions(getApp(), 'europe-west6');
+  private readonly functions = getFunctions(activeFirebaseApp(), 'europe-west6');
 
   private async send(
     tenantId: string, intent: FeatureIntent, options: { dryRun?: boolean } = {},

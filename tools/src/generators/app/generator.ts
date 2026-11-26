@@ -1,7 +1,9 @@
 import { Tree, formatFiles, generateFiles, joinPathFragments, logger } from '@nx/devkit';
 import { AppGeneratorSchema } from './schema';
 
-const TENANT_ID_RE = /^[a-z][a-z0-9-]+$/;
+// Same rule as TENANT_ID_PATTERN in @okr/shared-config (boot-tenant.ts): the iOS portal only accepts
+// such ids in links and asset paths (spec 1.179). No hyphens, 2–31 characters.
+const TENANT_ID_RE = /^[a-z][a-z0-9]{1,30}$/;
 
 export async function appGenerator(tree: Tree, options: AppGeneratorSchema): Promise<void> {
   const { tenantId, appName, force = false } = options;

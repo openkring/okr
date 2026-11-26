@@ -1,7 +1,6 @@
 import { inject } from '@angular/core';
 import { AlertController, LoadingController, ModalController, ToastController } from '@ionic/angular';
 import { patchState, signalStore, withMethods, withProps, withState } from '@ngrx/signals';
-import { getApp } from 'firebase/app';
 import { getFunctions } from 'firebase/functions';
 
 import { AppStore } from '@okr/shared-feature';
@@ -13,9 +12,10 @@ import { fill, hasRole } from '@okr/shared-util-core';
 
 import { auditGroupRooms, pruneGroupRoomExtras, reconcileGroupRoomMembers, syncRoomPostPolicy } from '@okr/subject-group-data-access';
 import { GROUP_I18N_KEYS, groupDriftFindings, GroupRoomDrift } from '@okr/subject-group-util';
+import { activeFirebaseApp } from '@okr/shared-config';
 
 function getFn() {
-  return getFunctions(getApp(), 'europe-west6');
+  return getFunctions(activeFirebaseApp(), 'europe-west6');
 }
 
 export type GroupChatSyncState = {

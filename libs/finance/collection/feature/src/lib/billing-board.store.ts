@@ -2,7 +2,6 @@
 import { computed, inject } from '@angular/core';
 import { AlertController, ToastController } from '@ionic/angular';
 import { patchState, signalStore, withComputed, withHooks, withMethods, withProps, withState } from '@ngrx/signals';
-import { getApp } from 'firebase/app';
 import { connectFunctionsEmulator, getFunctions, httpsCallable } from 'firebase/functions';
 
 import { AppStore } from '@okr/shared-feature';
@@ -13,6 +12,7 @@ import {
   BillingOverviewRow, boardFlags, BoardStateFilter, clearFlagRequest, COLLECTION_I18N_KEYS, CollectionI18n, filterBoardRows,
   flagI18nKey, optionI18nKey,
 } from '@okr/finance-collection-util';
+import { activeFirebaseApp } from '@okr/shared-config';
 
 interface BillingBoardState {
   rows: BillingOverviewRow[];
@@ -35,7 +35,7 @@ export const BillingBoardStore = signalStore(
   withState<BillingBoardState>({ rows: [], loading: false, loadError: '', busy: false, stateFilter: 'all', flagFilter: 'all' }),
   withProps(() => {
     const appStore = inject(AppStore);
-    const functions = getFunctions(getApp(), 'europe-west6');
+    const functions = getFunctions(activeFirebaseApp(), 'europe-west6');
     if (appStore.env.useEmulators) {
       connectFunctionsEmulator(functions, 'localhost', 5001);
     }

@@ -1,8 +1,7 @@
 import { Injectable, inject } from '@angular/core';
-import { getApp } from 'firebase/app';
 import { connectFunctionsEmulator, getFunctions, httpsCallable } from 'firebase/functions';
 
-import { ENV } from '@okr/shared-config';
+import { ENV, activeFirebaseApp } from '@okr/shared-config';
 import type { DiarySource } from '@okr/shared-models';
 
 /** One line for the caller's own diary entry of a day — what `recordDiaryLine` needs. */
@@ -53,7 +52,7 @@ export class DiaryLineService {
   private readonly env = inject(ENV);
 
   private get functions() {
-    const fns = getFunctions(getApp(), 'europe-west6');
+    const fns = getFunctions(activeFirebaseApp(), 'europe-west6');
     if (this.env.useEmulators) {
       try { connectFunctionsEmulator(fns, 'localhost', 5001); } catch { /* already connected */ }
     }

@@ -1,6 +1,5 @@
 import { Component, inject, input, linkedSignal, computed, signal } from '@angular/core';
 import { IonContent } from '@ionic/angular';
-import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 
 import { MembershipModel } from '@okr/shared-models';
@@ -10,6 +9,7 @@ import { dismissOverlay, showToast } from '@okr/shared-util-angular';
 import { BexioInvoiceFormModel, BexioInvoicePosition, newInvoiceFormModel } from '@okr/finance-invoice-util';
 import { BexioInvoiceNewForm } from '@okr/finance-invoice-ui';
 import { InvoiceStore } from './invoice.store';
+import { activeFirebaseApp } from '@okr/shared-config';
 
 @Component({
   selector: 'okr-invoice-new-modal',
@@ -62,7 +62,7 @@ export class InvoiceNewModal {
 
   protected async save(): Promise<void> {
     const data = this.formData();
-    const functions = getFunctions(getApp(), 'europe-west6');
+    const functions = getFunctions(activeFirebaseApp(), 'europe-west6');
     const fn = httpsCallable<{
       title: string;
       bexioId: string;

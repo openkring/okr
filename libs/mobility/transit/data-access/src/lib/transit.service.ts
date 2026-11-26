@@ -1,8 +1,7 @@
 import { inject, Injectable } from '@angular/core';
-import { getApp } from 'firebase/app';
 import { connectFunctionsEmulator, getFunctions, httpsCallable } from 'firebase/functions';
 
-import { ENV } from '@okr/shared-config';
+import { ENV, activeFirebaseApp } from '@okr/shared-config';
 import type { DeparturesReq, DeparturesRes, PlanTripReq, PlanTripRes, SearchStopsReq, SearchStopsRes } from '@okr/mobility-transit-util';
 
 /**
@@ -15,7 +14,7 @@ export class TransitService {
   private readonly env = inject(ENV);
 
   private get functions() {
-    const fns = getFunctions(getApp(), 'europe-west6');
+    const fns = getFunctions(activeFirebaseApp(), 'europe-west6');
     if (this.env.useEmulators) {
       try { connectFunctionsEmulator(fns, 'localhost', 5001); } catch { /* already connected */ }
     }

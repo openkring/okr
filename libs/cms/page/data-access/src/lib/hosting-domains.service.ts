@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
+import { activeFirebaseApp } from '@okr/shared-config';
 
 /** Which Hosting site to ask for: the tenant's app, or a website (`websites/{siteId}`). */
 export type HostingKind = 'app' | 'website';
@@ -24,7 +24,7 @@ export interface HostingDomainsResult {
 export class HostingDomainsService {
   public async list(kind: HostingKind, siteId = ''): Promise<HostingDomainsResult> {
     const fn = httpsCallable<{ kind: HostingKind; siteId?: string }, HostingDomainsResult>(
-      getFunctions(getApp(), 'europe-west6'), 'getHostingDomains');
+      getFunctions(activeFirebaseApp(), 'europe-west6'), 'getHostingDomains');
     return (await fn(kind === 'website' ? { kind, siteId } : { kind })).data;
   }
 }

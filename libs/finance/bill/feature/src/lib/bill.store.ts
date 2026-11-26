@@ -2,7 +2,6 @@ import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, LoadingController, ModalController, ToastController } from '@ionic/angular';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
-import { getApp } from 'firebase/app';
 import { connectFunctionsEmulator, getFunctions, httpsCallable } from 'firebase/functions';
 import { firstValueFrom, from, of, Subscription } from 'rxjs';
 import { take } from 'rxjs/operators';
@@ -30,6 +29,7 @@ import { AccountingStore } from '@okr/finance-accounting-feature';
 
 import { BillEditModal, BillEditResult } from './bill-edit.modal';
 import { BillQrScanModal } from './bill-qr-scan.modal';
+import { activeFirebaseApp } from '@okr/shared-config';
 
 export type { BillI18n };
 
@@ -72,7 +72,7 @@ export const BillStore = signalStore(
   withState(initialState),
   withProps((store) => {
     const appStore = inject(AppStore);
-    const functions = getFunctions(getApp(), 'europe-west6');
+    const functions = getFunctions(activeFirebaseApp(), 'europe-west6');
     if (appStore.env.useEmulators) {
       connectFunctionsEmulator(functions, 'localhost', 5001);
     }

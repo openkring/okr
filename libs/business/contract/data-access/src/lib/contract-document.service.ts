@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
-import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 
 import { ContractDocState, ContractDocumentRef, ContractDocumentRole } from '@okr/shared-models';
+import { activeFirebaseApp } from '@okr/shared-config';
 
 export interface SignedContractDocument {
   key: string;
@@ -15,7 +15,7 @@ export interface SignedContractDocument {
 
 @Injectable({ providedIn: 'root' })
 export class ContractDocumentService {
-  private readonly functions = getFunctions(getApp(), 'europe-west6');
+  private readonly functions = getFunctions(activeFirebaseApp(), 'europe-west6');
 
   /** Signed-PUT upload. The same `file.name` goes to both callables; the PUT sends `file.type` exactly as declared. */
   public async upload(

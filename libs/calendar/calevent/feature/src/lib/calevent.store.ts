@@ -5,7 +5,6 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 import { Router } from '@angular/router';
 import { addMonths, format } from 'date-fns';
 import { deleteField, doc, updateDoc, WriteBatch } from 'firebase/firestore';
-import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { from, firstValueFrom, map, of } from 'rxjs';
 
@@ -33,6 +32,7 @@ import { GrantorAttendanceService } from '@okr/relationship-mandate-feature';
 import { MANDATE_I18N_KEYS } from '@okr/relationship-mandate-util';
 import { createComment } from '@okr/comment-util';
 import { openReport } from '@okr/shared-ui';
+import { activeFirebaseApp } from '@okr/shared-config';
 
 /**
  * Der Alias-Space der Termin-Kurzlinks: ein `redirect`-Space mit `targetTypes: ['url']`
@@ -576,7 +576,7 @@ export const CalEventStore = signalStore(
         // 1.107: a side effect of the poll — while the chat is blocked it is skipped silently
         if (this.isChatBlocked()) return;
         try {
-          const functions = getFunctions(getApp(), 'europe-west6');
+          const functions = getFunctions(activeFirebaseApp(), 'europe-west6');
           const fn = httpsCallable<{ groupId: string; op: string }, { roomId: string }>(functions, 'matrixUser');
           const { data } = await fn({ groupId, op: 'requestGroupRoomAccess' });
           const matrix = await store.matrixChatService();

@@ -1,5 +1,4 @@
 import { Injectable, inject } from '@angular/core';
-import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { Observable, map } from 'rxjs';
 
@@ -7,7 +6,7 @@ import {
   FileTransferView, PrepareFileTransferUploadRequest, PrepareFileTransferUploadResponse,
   SendFileTransferRequest, SendFileTransferResponse,
 } from '@okr/content-file-transfer-util';
-import { ENV } from '@okr/shared-config';
+import { ENV, activeFirebaseApp } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import {
   DbQuery, FileTransferCollection, FileTransferEventCollection, FileTransferEventModel, FileTransferModel,
@@ -65,7 +64,7 @@ const byDesc = <T>(field: keyof T) => (a: T, b: T): number =>
 export class FileTransferService {
   private readonly env = inject(ENV);
   private readonly firestoreService = inject(FirestoreService);
-  private readonly functions = getFunctions(getApp(), 'europe-west6');
+  private readonly functions = getFunctions(activeFirebaseApp(), 'europe-west6');
   private readonly tenantId = this.env.tenantId;
 
   /** Public API base, derived from the project id exactly like PublicGalleryService. */

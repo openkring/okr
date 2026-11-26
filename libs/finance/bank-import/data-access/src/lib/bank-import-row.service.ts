@@ -1,11 +1,10 @@
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { doc } from 'firebase/firestore';
 
-import { ENV } from '@okr/shared-config';
+import { ENV, activeFirebaseApp } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import { BankImportRowCollection, BankImportRowModel, UserModel } from '@okr/shared-models';
 import { getSystemQuery, removeKeyFromOkrModel, removeUndefinedFields } from '@okr/shared-util-core';
@@ -114,14 +113,14 @@ export class BankImportRowService {
   public async postViaFunction(payload: PostBankImportPayload): Promise<PostBankImportResult> {
     // ~2 s per row server-side (full-ledger read for nextBookingNo): 100 rows outlast the SDK's 70 s
     // default, which aborted the remaining chunks with deadline-exceeded. Match the function's 540 s.
-    const fn = httpsCallable(getFunctions(getApp(), 'europe-west6'), 'postBankImport', { timeout: 540_000 });
+    const fn = httpsCallable(getFunctions(activeFirebaseApp(), 'europe-west6'), 'postBankImport', { timeout: 540_000 });
     const result = await fn(payload);
     return result.data as PostBankImportResult;
   }
 
   /** Spec §12.3: mapped bexio journal entries → bookings; ≤ 100 entries per call, the store chunks. */
   public async postJournalViaFunction(payload: PostJournalImportPayload): Promise<PostJournalImportResult> {
-    const fn = httpsCallable(getFunctions(getApp(), 'europe-west6'), 'postJournalImport');
+    const fn = httpsCallable(getFunctions(activeFirebaseApp(), 'europe-west6'), 'postJournalImport');
     const result = await fn(payload);
     return result.data as PostJournalImportResult;
   }

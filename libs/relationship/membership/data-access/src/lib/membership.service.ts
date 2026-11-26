@@ -1,9 +1,8 @@
 import { inject, Injectable } from '@angular/core';
 import { map, Observable, of } from 'rxjs';
-import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 
-import { ENV } from '@okr/shared-config';
+import { ENV, activeFirebaseApp } from '@okr/shared-config';
 import { END_FUTURE_DATE_STR } from '@okr/shared-constants';
 import { FirestoreService } from '@okr/shared-data-access';
 import { I18nService } from '@okr/shared-i18n';
@@ -38,7 +37,7 @@ export class MembershipService {
   });
 
   private readonly settleExitFn = httpsCallable<{ taskKey: string; choice: SettlementChoice | 'preview' }, SettleResult>(
-    getFunctions(getApp(), 'europe-west6'),
+    getFunctions(activeFirebaseApp(), 'europe-west6'),
     'settleMembershipExit'
   );
 

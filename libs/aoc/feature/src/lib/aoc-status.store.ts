@@ -1,5 +1,4 @@
 import { computed, inject } from '@angular/core';
-import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { patchState, signalStore, withComputed, withHooks, withMethods, withProps, withState } from '@ngrx/signals';
 
@@ -7,6 +6,7 @@ import { I18nService } from '@okr/shared-i18n';
 import { fill } from '@okr/shared-util-core';
 import { FeatureStore } from '@okr/tenant-feature';
 import { AOC_STATUS_I18N_KEYS, AOC_STATUS_SERVICES, PINGEN_SERVICE_ID, ServiceStatusResult, sortByProblem, statusSummary, visibleStatusServices } from '@okr/aoc-util';
+import { activeFirebaseApp } from '@okr/shared-config';
 
 export type AocStatusState = {
   result: ServiceStatusResult | undefined;
@@ -52,7 +52,7 @@ export const AocStatusStore = signalStore(
     async load(): Promise<void> {
       patchState(store, { loading: true, failed: false });
       try {
-        const fn = httpsCallable<void, ServiceStatusResult>(getFunctions(getApp(), 'europe-west6'), 'getServiceStatus');
+        const fn = httpsCallable<void, ServiceStatusResult>(getFunctions(activeFirebaseApp(), 'europe-west6'), 'getServiceStatus');
         const { data } = await fn();
         patchState(store, { result: data, loading: false });
       } catch (e) {
@@ -66,7 +66,7 @@ export const AocStatusStore = signalStore(
       const i18n = store.i18n;
       patchState(store, { testing: true, testMessage: i18n.test_running() });
       try {
-        const fn = httpsCallable<void, SelftestAnswer>(getFunctions(getApp(), 'europe-west6'), 'runWebhookSelftestNow', { timeout: 120_000 });
+        const fn = httpsCallable<void, SelftestAnswer>(getFunctions(activeFirebaseApp(), 'europe-west6'), 'runWebhookSelftestNow', { timeout: 120_000 });
         const { data } = await fn();
         const step = { http: i18n.step_http, stored: i18n.step_stored, processed: i18n.step_processed }[data.failedStep ?? 'http'];
         patchState(store, { testMessage: data.level === 'ok' ? i18n.test_ok() : fill(i18n.test_failed(), { step: step() }) });

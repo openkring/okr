@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
 import { SectionFeedback, TransportMode } from '@okr/shared-models';
 import { JournalSectionType, ReactionSummary, TrackCopy, TrackCopyPhoto } from '@okr/travel-journal-util';
-import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
+import { activeFirebaseApp } from '@okr/shared-config';
 
 /**
  * The guest callables of the travel journal (spec 1.113 §7, plan 7): `manageJournalGuest` for the authors
@@ -70,7 +70,7 @@ export interface GuestJournalView {
 @Injectable({ providedIn: 'root' })
 export class JournalGuestService {
   private call<T>(name: string, payload: unknown): Promise<T> {
-    return httpsCallable<unknown, T>(getFunctions(getApp(), 'europe-west6'), name)(payload).then((r) => r.data);
+    return httpsCallable<unknown, T>(getFunctions(activeFirebaseApp(), 'europe-west6'), name)(payload).then((r) => r.data);
   }
 
   // ---- authors ----

@@ -1,10 +1,9 @@
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { getApp } from 'firebase/app';
 import { collection, getDocs, limit, query, QueryDocumentSnapshot, startAfter } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 
-import { ENV } from '@okr/shared-config';
+import { ENV, activeFirebaseApp } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import {
   BookingCollection, BookingLineCollection, BookingLineModel, BookingModel, DbQuery, EmailLayoutChoice, InvoiceCollection, InvoiceModel, InvoicePayment,
@@ -180,7 +179,7 @@ export class InvoiceService {
 
   /** Issues a draft: number, PDF, finance-document and the Debitoren booking — all on the server. */
   public async issue(invoiceKey: string, currentUser?: UserModel): Promise<IssueInvoiceResult> {
-    const fn = httpsCallable<{ invoiceKey: string }, IssueInvoiceResult>(getFunctions(getApp(), 'europe-west6'), 'issueInvoice');
+    const fn = httpsCallable<{ invoiceKey: string }, IssueInvoiceResult>(getFunctions(activeFirebaseApp(), 'europe-west6'), 'issueInvoice');
     const result = await fn({ invoiceKey });
     void this.activityService.log('invoice', 'issue', currentUser, `${invoiceKey}: ${result.data.invoiceNo}`);
     return result.data;
@@ -364,7 +363,7 @@ export class InvoiceService {
   }
 
   public async writeViaFunction(payload: WriteInvoicePayload): Promise<{ invoiceKey: string }> {
-    const fn = httpsCallable<WriteInvoicePayload, { invoiceKey: string }>(getFunctions(getApp(), 'europe-west6'), 'writeInvoice');
+    const fn = httpsCallable<WriteInvoicePayload, { invoiceKey: string }>(getFunctions(activeFirebaseApp(), 'europe-west6'), 'writeInvoice');
     const result = await fn(payload);
     return result.data;
   }
@@ -401,7 +400,7 @@ export class InvoiceService {
   }
 
   private functions() {
-    return getFunctions(getApp(), 'europe-west6');
+    return getFunctions(activeFirebaseApp(), 'europe-west6');
   }
 
   /** A one-shot read that rejects on failure (FirestoreService.getDataOnce would return [] instead). */
