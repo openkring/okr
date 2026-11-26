@@ -117,7 +117,11 @@ export interface RetentionRule {
  *    overwrite a nested `AvatarInfo` group whose `.key` equals `ctx.personKey`, and
  *    for array fields MUST remove only the matching element. A `'<array>[].<prop>'`
  *    path instead keeps the element and pseudonymises only its `<prop>` avatar
- *    (`contracts.parties[].avatar`: the party slot and its role survive).
+ *    (`contracts.parties[].avatar`: the party slot and its role survive). A
+ *    `'<array>[].<prop>='` path keeps every element and clears only `<prop>` (a person-key
+ *    stamp) on the elements where it equals the subject's key
+ *    (`calevents.attendees[].actedByKey=`: the grantee who signed someone else up under a
+ *    Vollmacht, spec 1.180 — the attendee's entry stays).
  */
 export interface SubjectDataEntry {
   readonly collection: string;
@@ -198,7 +202,12 @@ export interface ArrayItemAnonymization {
    * `recipientPersonKeys array-contains`). Over-fetching is harmless: only elements whose
    * `keyProp` is the subject are touched. */
   readonly find: (ctx: SubjectCtx) => Query;
-  /** The array of embedded records, e.g. `'recipients'`. */
+  /**
+   * The array of embedded records, e.g. `'recipients'`. `''` = the document itself is the record:
+   * a top-level stamp of the subject on someone else's document (`invitations.actedByKey`, the
+   * grantee who answered another member's invitation under a Vollmacht, spec 1.180), where
+   * `keyProp` and `clearProps` name top-level fields.
+   */
   readonly arrayField: string;
   /** The element property holding the RAW person key, e.g. `'personKey'`. */
   readonly keyProp: string;

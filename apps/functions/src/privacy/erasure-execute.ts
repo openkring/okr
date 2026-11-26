@@ -102,6 +102,14 @@ function elementIdentifies(element: unknown, personKey: string): boolean {
 const ELEMENT_AVATAR_PATH = /^(.+)\[\]\.([^.[\]]+)$/;
 
 /**
+ * `'attendees[].actedByKey='` — an array of records where `<prop>` is a person-key STAMP of a second
+ * party (the grantee who signed the attendee up under a Vollmacht, spec 1.180). Every element stays;
+ * only `<prop>` is cleared on the elements where it equals the subject's key. Checked before
+ * `ELEMENT_AVATAR_PATH`, which the same string would otherwise match.
+ */
+const ELEMENT_STAMP_PATH = /^(.+)\[\]\.([^.[\]=]+)=$/;
+
+/**
  * `'attendance{}'` — a MAP keyed by personKey whose values carry an `AvatarInfo` in `person` and the
  * writer's personKey in `by` (`CalEventModel.attendance`). Erasure
  *  - deletes the subject's own entry (`attendance.<key>` = FieldValue.delete(); an entry keyed
@@ -152,6 +160,17 @@ function attendancePatch(field: string, value: unknown, personKey: string): Reco
   return patch;
 }
 
+function clearElementStamps(value: unknown, prop: string, personKey: string): unknown[] | undefined {
+  if (!personKey || !Array.isArray(value)) return undefined;
+  let changed = false;
+  const next = value.map((el) => {
+    if (el === null || typeof el !== 'object' || (el as Record<string, unknown>)[prop] !== personKey) return el;
+    changed = true;
+    return { ...(el as Record<string, unknown>), [prop]: '' };
+  });
+  return changed ? next : undefined;
+}
+
 function pseudonymiseElementAvatars(
   value: unknown, prop: string, personKey: string, pseudonym: string,
 ): unknown[] | undefined {
@@ -181,7 +200,8 @@ const PARENT_OWNED = new Set(['persons', 'users', 'addresses', 'avatars']);
  * admins). Dotted keys are Firestore field paths, so a patch never rewrites a whole map.
  * `'<array>[].<prop>'` keeps the element and pseudonymises its embedded avatar instead
  * (see `ELEMENT_AVATAR_PATH`); `'<map>{}'` drops the subject's entry from a map keyed by person
- * key (see `MAP_BY_PERSON_PATH`).
+ * key (see `MAP_BY_PERSON_PATH`); `'<array>[].<prop>='` clears a second party's person-key stamp
+ * on the elements and keeps them (see `ELEMENT_STAMP_PATH`).
  *
  * Returns `{ anonymizedAt }` alone when the subject appears in none of the row's fields;
  * the executor treats that as "nothing to do" and does not write it.
@@ -196,10 +216,22 @@ export function anonymizePatch(
   const patch: Record<string, unknown> = { anonymizedAt: now };
 
   for (const field of entry.anonymizeFields ?? []) {
+    // several paths may rewrite the same array (`attendees`, then `attendees[].actedByKey=`):
+    // each works on the result of the previous one, never on the stale snapshot
+    const current = (path: string): unknown => (path in patch ? patch[path] : doc.get(path));
+
+    const elementStamp = ELEMENT_STAMP_PATH.exec(field);
+    if (elementStamp) {
+      const [, arrayField, prop] = elementStamp;
+      const next = clearElementStamps(current(arrayField), prop, ctx.personKey);
+      if (next) patch[arrayField] = next;
+      continue;
+    }
+
     const elementAvatar = ELEMENT_AVATAR_PATH.exec(field);
     if (elementAvatar) {
       const [, arrayField, prop] = elementAvatar;
-      const next = pseudonymiseElementAvatars(doc.get(arrayField), prop, ctx.personKey, pseudonym);
+      const next = pseudonymiseElementAvatars(current(arrayField), prop, ctx.personKey, pseudonym);
       if (next) patch[arrayField] = next;
       continue;
     }
@@ -210,7 +242,7 @@ export function anonymizePatch(
       continue;
     }
 
-    const value = doc.get(field);
+    const value = current(field);
 
     if (Array.isArray(value)) {
       const kept = value.filter((el) => !elementIdentifies(el, ctx.personKey));
@@ -258,6 +290,16 @@ export function arrayItemsPatch(
 ): Record<string, unknown> | undefined {
   const spec = entry.anonymizeArrayItems;
   if (!spec || !ctx.personKey) return undefined;
+  if (spec.arrayField === '') {
+    // the document itself is the record: a top-level stamp (`invitations.actedByKey`)
+    if (doc.get(spec.keyProp) !== ctx.personKey) return undefined;
+    const patch: Record<string, unknown> = {};
+    for (const prop of spec.clearProps) {
+      const v = doc.get(prop);
+      if (v !== undefined && v !== '') patch[prop] = '';
+    }
+    return Object.keys(patch).length > 0 ? patch : undefined;
+  }
   const value = doc.get(spec.arrayField);
   if (!Array.isArray(value)) return undefined;
   let changed = false;

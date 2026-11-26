@@ -144,6 +144,40 @@ describe('anonymizePatch — course rows (spec 1.132)', () => {
     expect(p['attendanceConfirmedBy.subType']).toBe('');
   });
 
+  // spec 1.180: the grantee who signed somebody else up under a Vollmacht leaves `actedByKey`
+  it('calevents clears the subject\'s actedByKey on other attendees and keeps their entries', () => {
+    const doc = snap('c1', {
+      attendees: [
+        { person: { key: 'p2' }, state: 'accepted', actedByKey: 'p1' },
+        { person: { key: 'p3' }, state: 'accepted', actedByKey: 'p9' },
+        { person: { key: 'p4' }, state: 'declined' },
+      ],
+    });
+    const p = anonymizePatch(mapRow('calevents'), doc, ctx, pseudo, '20260729');
+    expect(p['attendees']).toEqual([
+      { person: { key: 'p2' }, state: 'accepted', actedByKey: '' },
+      { person: { key: 'p3' }, state: 'accepted', actedByKey: 'p9' },
+      { person: { key: 'p4' }, state: 'declined' },
+    ]);
+  });
+
+  it('calevents drops the subject\'s own entry AND clears their stamp on another in one patch', () => {
+    const doc = snap('c1', {
+      attendees: [
+        { person: { key: 'p1' }, state: 'accepted' },
+        { person: { key: 'p2' }, state: 'accepted', actedByKey: 'p1' },
+      ],
+    });
+    const p = anonymizePatch(mapRow('calevents'), doc, ctx, pseudo, '20260729');
+    expect(p['attendees']).toEqual([{ person: { key: 'p2' }, state: 'accepted', actedByKey: '' }]);
+  });
+
+  it('calevents writes no attendees patch when the subject stamped nobody', () => {
+    const doc = snap('c1', { attendees: [{ person: { key: 'p2' }, state: 'accepted', actedByKey: 'p9' }] });
+    const p = anonymizePatch(mapRow('calevents'), doc, ctx, pseudo, '20260729');
+    expect(p['attendees']).toBeUndefined();
+  });
+
   it('calevents leaves a confirmer who is somebody else untouched', () => {
     const doc = snap('c1', { attendance: { p1: { person: { key: 'p1' } } }, attendanceConfirmedBy: avatar('p2', 'Bea', 'Probst') });
     const p = anonymizePatch(mapRow('calevents'), doc, ctx, pseudo, '20260729');
@@ -471,6 +505,28 @@ describe('arrayItemsPatch (file-transfers recipients)', () => {
 
   it('does nothing for a row without the spec', () => {
     expect(arrayItemsPatch(mapRow('file-transfer-events'), transfer(), ctx)).toBeUndefined();
+  });
+});
+
+// The subject as the GRANTEE who answered someone else's invitation under a Vollmacht (spec 1.180):
+// the invitation is the invitee's and stays; only the `actedByKey` stamp goes.
+describe('arrayItemsPatch (invitations actedByKey)', () => {
+  const invitations = mapRow('invitations');
+
+  it('is declared on the invitations row as a top-level stamp, while the row still deletes its own', () => {
+    expect(invitations.onErasure).toBe('delete');
+    expect(invitations.anonymizeArrayItems).toMatchObject({ arrayField: '', keyProp: 'actedByKey', clearProps: ['actedByKey'] });
+  });
+
+  it('clears only actedByKey on the invitee\'s invitation', () => {
+    const doc = snap('i1', { inviteeKey: 'p2', inviterKey: 'p9', state: 'accepted', actedByKey: 'p1' });
+    expect(arrayItemsPatch(invitations, doc, ctx)).toEqual({ actedByKey: '' });
+  });
+
+  it('returns undefined for another actor, a missing stamp or an already cleared one (idempotent)', () => {
+    expect(arrayItemsPatch(invitations, snap('i1', { inviteeKey: 'p2', actedByKey: 'p9' }), ctx)).toBeUndefined();
+    expect(arrayItemsPatch(invitations, snap('i1', { inviteeKey: 'p2' }), ctx)).toBeUndefined();
+    expect(arrayItemsPatch(invitations, snap('i1', { inviteeKey: 'p2', actedByKey: '' }), ctx)).toBeUndefined();
   });
 });
 

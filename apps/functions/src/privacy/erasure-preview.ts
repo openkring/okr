@@ -216,7 +216,10 @@ export async function buildPreview(
       continue;
     }
 
-    if (elementDocs.length > 0) willAnonymize.push(toPreviewRow(entry, elementDocs, true));
+    // a document of the row's own set (deleted or retained) is reported there, not twice
+    const own = new Set(docs.map((d) => d.ref?.path ?? d.id));
+    const othersDocs = elementDocs.filter((d) => !own.has(d.ref?.path ?? d.id));
+    if (othersDocs.length > 0) willAnonymize.push(toPreviewRow(entry, othersDocs, true));
     if (docs.length === 0) continue;
 
     const row = toPreviewRow(entry, docs, entry.onErasure !== 'delete');

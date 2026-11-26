@@ -527,6 +527,17 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     tenantScope: 'tenantsArray',
     onExport: 'full',
     onErasure: 'delete',
+    // The subject as the GRANTEE who answered someone else's invitation under a Vollmacht (spec
+    // 1.180): `actedByKey` is their stamp on the invitee's record. That invitation is the invitee's
+    // and is never deleted with the grantee; only the stamp is cleared. An invitation the subject
+    // also sent or received is deleted in step 1 first, so step 2b no longer finds it. Open: the
+    // data export does not list these invitations (as for file-transfer recipients).
+    anonymizeArrayItems: {
+      find: (c: SubjectCtx) => db().collection('invitations').where('actedByKey', '==', c.personKey),
+      arrayField: '',
+      keyProp: 'actedByKey',
+      clearProps: ['actedByKey'],
+    },
     retention: KEEP_WHILE_MEMBER,
   },
   {
@@ -1260,18 +1271,20 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     // matched too, and so is the writer of somebody else's entry (`attendance[*].by`). A training is a
     // club record (T4): erasure deletes the person's attendance entry and clears their `by` on others'
     // entries (`attendance{}`, field-path updates, see erasure-execute) and clears a confirmer's
-    // identity; the event stays.
+    // identity; the event stays. Likewise the grantee who signed somebody else up under a Vollmacht
+    // (`attendees[*].actedByKey`, spec 1.180) is matched — their export lists the event — and on
+    // erasure only that stamp is cleared; the attendee's entry stays (`attendees[].actedByKey=`).
     find: (c: SubjectCtx) => db().collection('calevents').where('tenants', 'array-contains', c.tenantId),
     tenantScope: 'inQuery',
     matches: (doc, c) => avatarArrayHolds(doc, 'responsiblePersons', c.personKey)
-      || (!!c.personKey && ((doc.get('attendees') as { person?: AvatarInfo }[] | undefined) ?? [])
-        .some((a) => a?.person?.key === c.personKey))
+      || (!!c.personKey && ((doc.get('attendees') as { person?: AvatarInfo; actedByKey?: string }[] | undefined) ?? [])
+        .some((a) => a?.person?.key === c.personKey || a?.actedByKey === c.personKey))
       || attendanceHolds(doc, c.personKey)
       || (!!c.personKey && doc.get('attendanceConfirmedBy.key') === c.personKey),
     onExport: 'index',
     indexFields: { title: 'name', date: 'startDate', route: '/calevent' },
     onErasure: 'anonymize',
-    anonymizeFields: ['responsiblePersons', 'attendees', 'attendance{}', ...avatarPaths('attendanceConfirmedBy')],
+    anonymizeFields: ['responsiblePersons', 'attendees', 'attendees[].actedByKey=', 'attendance{}', ...avatarPaths('attendanceConfirmedBy')],
     retention: CLUB_RECORD,
   },
   {

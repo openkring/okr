@@ -499,6 +499,14 @@ describe('SUBJECT_DATA_MAP — matches() post-filters', () => {
     expect(m?.(snap({ attendees: [{ person: { key: 'p9' } }] }), ctx)).toBe(false);
   });
 
+  // spec 1.180: the grantee who signed somebody else up under a Vollmacht
+  it('calevents matches the grantee stamped as actedByKey on somebody else\'s attendee entry', () => {
+    const m = entry('calevents').matches;
+    expect(m?.(snap({ attendees: [{ person: { key: 'p2' }, actedByKey: 'p1' }] }), ctx)).toBe(true);
+    expect(m?.(snap({ attendees: [{ person: { key: 'p2' }, actedByKey: 'p9' }] }), ctx)).toBe(false);
+    expect(m?.(snap({ attendees: [{ person: { key: 'p2' }, actedByKey: '' }] }), { ...ctx, personKey: '' })).toBe(false);
+  });
+
   // spec 1.132 §13: attendance is a map keyed by personKey — a person only there must be found
   it('calevents matches a person who appears only in attendance or as its confirmer', () => {
     const m = entry('calevents').matches;

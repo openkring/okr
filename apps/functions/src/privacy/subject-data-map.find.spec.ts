@@ -279,6 +279,17 @@ describe('find() query shapes', () => {
     expect(predicates).toEqual([{ field: 'recipientPersonKeys', op: 'array-contains', value: CTX.personKey }]);
   });
 
+  // spec 1.180: the grantee's stamp on the invitee's invitation; a RAW personKey, like inviteeKey
+  it('finds invitations answered under a Vollmacht by actedByKey == the RAW personKey', () => {
+    const spec = SUBJECT_DATA_MAP.find((x) => x.collection === 'invitations')?.anonymizeArrayItems;
+    expect(spec).toBeDefined();
+    const q = spec!.find(CTX) as unknown as { root: string; raw: unknown[] };
+    const predicates: Predicate[] = [];
+    for (const r of q.raw) flatten(r, predicates);
+    expect(q.root).toBe('invitations');
+    expect(predicates).toEqual([{ field: 'actedByKey', op: '==', value: CTX.personKey }]);
+  });
+
   it('targets the collection its row is named after', () => {
     // the documented exceptions: subcollections reached via a parent doc, and the
     // esignAudit collection group whose leaf name differs from the row name

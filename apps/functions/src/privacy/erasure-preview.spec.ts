@@ -197,6 +197,17 @@ describe('buildPreview — anonymizeArrayItems', () => {
     expect(a.previewToken).not.toBe(b.previewToken);
   });
 
+  // spec 1.180: invitations the subject answered for someone else under a Vollmacht (`actedByKey`)
+  it('lists the stamped documents of a delete row under willAnonymize, its own under willDelete, never both', async () => {
+    const invitations = row({
+      collection: 'invitations', onErasure: 'delete',
+      anonymizeArrayItems: { find: () => null as never, arrayField: '', keyProp: 'actedByKey', clearProps: ['actedByKey'] },
+    });
+    const p = await buildPreview(ctx, [invitations], some('own1', 'both'), 2, [], some('both', 'theirs'));
+    expect(p.willDelete.map((r) => [r.collection, r.count])).toEqual([['invitations', 2]]);
+    expect(p.willAnonymize.map((r) => [r.collection, r.count])).toEqual([['invitations', 1]]);
+  });
+
   it('never asks a row without the option', async () => {
     let asked = 0;
     await buildPreview(ctx, [row({ collection: 'users', onErasure: 'anonymize' })], some('1'), 2, [], async () => { asked++; return []; });

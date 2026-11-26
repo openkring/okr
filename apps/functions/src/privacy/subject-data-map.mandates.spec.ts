@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { resolveDocs, SUBJECT_DATA_MAP } from './subject-data-map';
+import { resolveArrayItemDocs, resolveDocs, SUBJECT_DATA_MAP } from './subject-data-map';
 import type { SubjectCtx } from './types';
 
 /** Spec 1.180 — a Vollmacht names a grantor and a grantee; both are data subjects of it. */
@@ -13,6 +13,16 @@ const DATA: Record<string, Doc[]> = {
     { id: 'M-SELF', data: { grantorKey: 'PK-1', granteeKey: 'PK-1', tenants: ['TENANT-1'] } },
     { id: 'M-THIRD', data: { grantorKey: 'PK-2', granteeKey: 'PK-3', tenants: ['TENANT-1'] } },
     { id: 'M-FOREIGN', data: { grantorKey: 'PK-1', granteeKey: 'PK-2', tenants: ['TENANT-2'] } },
+  ],
+  // what a grantee (PK-1) leaves on other members' records when acting for them
+  invitations: [
+    { id: 'I-ACTED', data: { inviteeKey: 'PK-2', inviterKey: 'PK-9', actedByKey: 'PK-1', tenants: ['TENANT-1'] } },
+    { id: 'I-OTHER', data: { inviteeKey: 'PK-3', inviterKey: 'PK-9', actedByKey: 'PK-4', tenants: ['TENANT-1'] } },
+    { id: 'I-FOREIGN', data: { inviteeKey: 'PK-2', inviterKey: 'PK-9', actedByKey: 'PK-1', tenants: ['TENANT-2'] } },
+  ],
+  calevents: [
+    { id: 'C-ACTED', data: { tenants: ['TENANT-1'], attendees: [{ person: { key: 'PK-2' }, state: 'accepted', actedByKey: 'PK-1' }] } },
+    { id: 'C-OTHER', data: { tenants: ['TENANT-1'], attendees: [{ person: { key: 'PK-3' }, state: 'accepted', actedByKey: 'PK-4' }] } },
   ],
 };
 
@@ -41,11 +51,12 @@ vi.mock('firebase-admin/firestore', () => {
 
 const CTX: SubjectCtx = { uid: 'UID-1', personKey: 'PK-1', parentKey: 'person.PK-1', tenantId: 'TENANT-1', email: 'a@b.ch' };
 
-const row = () => {
-  const e = SUBJECT_DATA_MAP.find((x) => x.collection === 'mandates');
-  if (!e) throw new Error('no mandates row');
+const rowOf = (collection: string) => {
+  const e = SUBJECT_DATA_MAP.find((x) => x.collection === collection);
+  if (!e) throw new Error(`no ${collection} row`);
   return e;
 };
+const row = () => rowOf('mandates');
 
 describe('mandates — Vollmacht of a data subject (spec 1.180)', () => {
   it('finds the mandates where the subject is grantee or grantor, once each, in the tenant', async () => {
@@ -59,5 +70,18 @@ describe('mandates — Vollmacht of a data subject (spec 1.180)', () => {
 
   it('exports in full and deletes on erasure and tenant exit', () => {
     expect(row()).toMatchObject({ dataClass: 'membership', tier: 'T2', onTenantExit: 'delete', onExport: 'full', onErasure: 'delete', tenantScope: 'tenantsArray' });
+  });
+});
+
+describe('acting under a Vollmacht — the grantee\'s stamps on other members\' records (spec 1.180)', () => {
+  it('reaches the invitations the grantee answered, in the tenant, for the stamp-only anonymization', async () => {
+    const docs = await resolveArrayItemDocs(rowOf('invitations'), CTX);
+    expect(docs.map((d) => d.id)).toEqual(['I-ACTED']);
+  });
+
+  it('lists the events the grantee signed somebody up for in the grantee\'s calevents (index export)', async () => {
+    const docs = await resolveDocs(rowOf('calevents'), CTX);
+    expect(docs.map((d) => d.id)).toEqual(['C-ACTED']);
+    expect(rowOf('calevents')).toMatchObject({ onExport: 'index', onErasure: 'anonymize' });
   });
 });
