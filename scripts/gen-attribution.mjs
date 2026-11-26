@@ -129,7 +129,8 @@ const TARGETS = {
     // self-hosted since 2026-08-04 (spec C6, defect W6) — the OFL text must travel with the files
     selfHostedFonts: 'apps/kring-website/assets/fonts',
     vendored: 'apps/kring-website/assets',
-    out: 'dist/apps/kring-website/licenses.html',
+    // under assets/: «Veröffentlichen» (publishWebsite) drops every root *.html it did not render (plan 2026-11-26)
+    out: 'dist/apps/kring-website/assets/licenses.html',
   },
   'okr-website': {
     label: 'openkring',

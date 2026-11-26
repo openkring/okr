@@ -46,7 +46,9 @@ async function main() {
   const tailwind = ['exec', 'tailwindcss', '-c', `apps/${tenant}-website/tailwind.config.js`, '-i', `apps/${tenant}-website/tailwind.input.css`, '-o', css, '--minify'];
   const build = ['nx', 'build', `${tenant}-website`];
   const upload = ['scripts/website-templates-upload.mjs', tenant];
-  step(0, 'Rebuild Tailwind (the committed tailwind.css is the source)', `pnpm ${tailwind.join(' ')}`);
+  // kring-website styles itself with its own site.css and has no Tailwind config: skip step 0 there.
+  const usesTailwind = existsSync(join(ROOT, 'apps', `${tenant}-website`, 'tailwind.config.js'));
+  step(0, 'Rebuild Tailwind (the committed tailwind.css is the source)', usesTailwind ? `pnpm ${tailwind.join(' ')}` : 'skipped: no tailwind.config.js');
   step(1, 'Build the static assets', `pnpm ${build.join(' ')}`);
   step(2, 'Upload the templates', `node ${upload.join(' ')}`);
   step(3, `Render the current Firestore content into ${out.replace(ROOT + '/', '')}`, 'in-process (read-only)');
@@ -73,12 +75,15 @@ async function main() {
     return;
   }
 
-  const before = existsSync(join(ROOT, css)) ? readFileSync(join(ROOT, css)) : Buffer.alloc(0);
-  sh('pnpm', tailwind);
-  const after = readFileSync(join(ROOT, css));
-  if (!before.equals(after)) {
-    console.warn(`\nWARNING: ${css} changed (${before.length} -> ${after.length} bytes, ${after.length - before.length >= 0 ? '+' : ''}${after.length - before.length}). Bump the ?v= cache-bust on the stylesheet link in the templates and commit before relying on this deploy (immutable-CSS trap, website skill).\n`);
+  if (usesTailwind) {
+    const before = existsSync(join(ROOT, css)) ? readFileSync(join(ROOT, css)) : Buffer.alloc(0);
+    sh('pnpm', tailwind);
+    const after = readFileSync(join(ROOT, css));
+    if (!before.equals(after)) {
+      console.warn(`\nWARNING: ${css} changed (${before.length} -> ${after.length} bytes, ${after.length - before.length >= 0 ? '+' : ''}${after.length - before.length}). Bump the ?v= cache-bust on the stylesheet link in the templates and commit before relying on this deploy (immutable-CSS trap, website skill).\n`);
+    }
   }
+
   sh('pnpm', build);
   // Render (and refuse on problems) BEFORE anything is uploaded or templateVersion is written.
   const source = await loadLiveSource(tenant);

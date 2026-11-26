@@ -1176,6 +1176,10 @@
     {
       "site": "kring-website-54aef",
       "public": "dist/apps/kring-website",
+      "redirects": [
+        { "source": "/licenses", "destination": "/assets/licenses", "type": 301 },
+        { "source": "/licenses.html", "destination": "/assets/licenses", "type": 301 }
+      ],
       "cleanUrls": true,
       "ignore": [
         "firebase.json",
