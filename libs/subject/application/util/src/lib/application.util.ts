@@ -218,13 +218,23 @@ export function buildApplicationExportRows(
   const header = [labels.submitted, labels.firstName, labels.lastName, labels.type, labels.dateOfBirth,
     labels.email, labels.phone, labels.streetName, labels.streetNumber, labels.zipCode, labels.city,
     labels.state, labels.course];
+  const cell = (v: string | undefined | null) => neutralizeCsvFormula(v ?? '');
   return [header, ...apps.map(a => [
     convertDateFormatToString((a.submittedAt ?? '').substring(0, 10), DateFormat.IsoDate, DateFormat.ViewDate, false),
-    a.firstName ?? '', a.lastName ?? '', kindLabel(a.applicationAs),
+    cell(a.firstName), cell(a.lastName), kindLabel(a.applicationAs),
     convertDateFormatToString(a.dateOfBirth ?? '', DateFormat.StoreDate, DateFormat.ViewDate, false),
-    a.email ?? '', a.phone ?? '', a.streetName ?? '', a.streetNumber ?? '', a.zipCode ?? '', a.city ?? '',
-    stateLabel(a), courseName(a),
+    cell(a.email), cell(a.phone), cell(a.streetName), cell(a.streetNumber), cell(a.zipCode), cell(a.city),
+    stateLabel(a), cell(courseName(a)),
   ])];
+}
+
+/**
+ * CSV/formula injection guard: applications are written by anonymous website visitors and the export is opened in
+ * Excel, which evaluates a cell starting with `=`, `+`, `-`, `@`, tab or CR as a formula. Such a cell gets a leading
+ * `'`, so the spreadsheet shows it as text. Phone numbers like `+41 …` are affected too; that is the accepted cost.
+ */
+export function neutralizeCsvFormula(value: string): string {
+  return /^[=+\-@\t\r]/.test(value) ? `'${value}` : value;
 }
 
 function normName(s: string | undefined | null): string {

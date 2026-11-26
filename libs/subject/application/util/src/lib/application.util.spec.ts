@@ -12,6 +12,7 @@ import {
   buildApplicationExportRows,
   compareApplicationsBySubmitted,
   matchesKindFilter,
+  neutralizeCsvFormula,
   newApplication,
   getApplicationIndex,
   needsGuardian,
@@ -568,7 +569,7 @@ describe('buildApplicationExportRows', () => {
     });
     const rows = buildApplicationExportRows([app], labels, k => `kind:${k}`, () => 'Offen', () => 'Juniorenkurs');
     expect(rows[0]).toEqual(Object.values(labels));
-    expect(rows[1]).toEqual(['26.11.2026', 'Anna', 'Muster', 'kind:youth', '15.03.2012', 'anna@example.com', '+41 79 000 00 00',
+    expect(rows[1]).toEqual(['26.11.2026', 'Anna', 'Muster', 'kind:youth', '15.03.2012', 'anna@example.com', "'+41 79 000 00 00",
       '', '', '8712', 'Stäfa', 'Offen', 'Juniorenkurs']);
   });
   it('leaves missing dates empty', () => {
@@ -576,5 +577,25 @@ describe('buildApplicationExportRows', () => {
     const rows = buildApplicationExportRows([app], labels, () => '', () => '', () => '');
     expect(rows[1][0]).toBe('');
     expect(rows[1][4]).toBe('');
+  });
+});
+
+describe('neutralizeCsvFormula', () => {
+  it('prefixes cells a spreadsheet would evaluate', () => {
+    for (const v of ['=HYPERLINK("http://x")', '+1', '-2+3', '@SUM(A1)', '\tx', '\rx']) {
+      expect(neutralizeCsvFormula(v)).toBe(`'${v}`);
+    }
+  });
+  it('leaves ordinary values alone', () => {
+    for (const v of ['', 'Anna', 'Müller-Meier', 'a=b', '8712']) expect(neutralizeCsvFormula(v)).toBe(v);
+  });
+  it('is applied to the user-supplied cells of the export', () => {
+    const app = Object.assign(newApplication('scs'), { firstName: '=cmd|"/c calc"!A1', city: '@x' });
+    const labels = { submitted: '', firstName: '', lastName: '', type: '', dateOfBirth: '', email: '', phone: '',
+      streetName: '', streetNumber: '', zipCode: '', city: '', state: '', course: '' };
+    const row = buildApplicationExportRows([app], labels, () => '', () => '', () => '-course')[1];
+    expect(row[1]).toBe(`'=cmd|"/c calc"!A1`);
+    expect(row[10]).toBe("'@x");
+    expect(row[12]).toBe("'-course");
   });
 });
