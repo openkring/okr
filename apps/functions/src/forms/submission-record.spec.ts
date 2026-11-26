@@ -86,4 +86,13 @@ describe('buildSubmissionTask', () => {
     expect(undefinedKeys(task)).toEqual([]);
     expect(task).not.toHaveProperty('okey');
   });
+
+  it('is named after the applicant of an application, capped to the name length', () => {
+    expect(buildSubmissionTask({ tenantId: 'scs', formName: 'Anmeldung', assignee, notes: '{}', applicantName: ' Anna Muster ' })['name'])
+      .toBe('Anmeldung: Anna Muster');
+    expect(buildSubmissionTask({ tenantId: 'scs', formName: 'Anmeldung', assignee, notes: '{}', applicantName: '' })['name'])
+      .toBe('Anmeldung – Formulareinreichung');
+    expect((buildSubmissionTask({ tenantId: 'scs', formName: 'Anmeldung', assignee, notes: '{}', applicantName: 'x'.repeat(200) })['name'] as string).length)
+      .toBe(100);
+  });
 });

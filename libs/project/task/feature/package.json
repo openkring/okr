@@ -34,6 +34,9 @@
     "@okr/project-project-data-access": "*",
     "@okr/finance-expense-feature": "*",
     "@okr/calendar-course-ui": "*",
-    "@okr/calendar-course-util": "*"
+    "@okr/calendar-course-util": "*",
+    "@okr/application-data-access": "*",
+    "@okr/application-ui": "*",
+    "@okr/application-util": "*"
   }
 }

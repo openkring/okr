@@ -1,4 +1,5 @@
 import { ApplicationCollection, ApplicationModel, TaskModel, type AvatarInfo } from '@okr/shared-models';
+import { LONG_NAME_LENGTH } from '@okr/shared-constants';
 import { getTaskIndex } from '@okr/project-task-util';
 import { getApplicationIndex } from '@okr/application-util';
 
@@ -66,9 +67,13 @@ export function buildSubmissionTask(input: {
   formName: string;
   assignee: AvatarInfo;
   notes: string;
+  /** «Vorname Nachname» of an application; names the task «Anmeldung: Anna Muster» in the task list */
+  applicantName?: string;
 }): Record<string, unknown> {
   const task = new TaskModel(input.tenantId);
-  task.name = `${input.formName} – Formulareinreichung`;
+  const applicant = (input.applicantName ?? '').trim();
+  // LONG_NAME_LENGTH: the task form refuses a longer name, so the task could not be saved again
+  task.name = (applicant ? `${input.formName}: ${applicant}` : `${input.formName} – Formulareinreichung`).slice(0, LONG_NAME_LENGTH);
   task.author = SYSTEM_AUTHOR;
   task.assignee = input.assignee;
   task.notes = input.notes;

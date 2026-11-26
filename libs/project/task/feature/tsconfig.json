@@ -90,6 +90,15 @@
     },
     {
       "path": "../../../calendar/course/util/tsconfig.lib.json"
+    },
+    {
+      "path": "../../../subject/application/data-access/tsconfig.lib.json"
+    },
+    {
+      "path": "../../../subject/application/ui/tsconfig.lib.json"
+    },
+    {
+      "path": "../../../subject/application/util/tsconfig.lib.json"
     }
   ]
 }

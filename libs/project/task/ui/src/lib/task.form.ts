@@ -66,14 +66,17 @@ import { getRelatedIcon, getRelatedModelType, getRelatedRoute, getTaskLinkRows, 
                 }
               </ion-col>
             </ion-row>
-            <ion-row>
-              <ion-col size="12">
-                <ion-textarea class="payload"
-                  [value]="notes()" (ionInput)="onFieldChange('notes', $any($event.target).value ?? '')"
-                  placeholder="{{ i18n().notes_placeholder() }}"
-                  [readonly]="isReadOnly()" [autoGrow]="true" [rows]="2" />
-              </ion-col>
-            </ion-row>
+            <!-- a payload the parent renders itself (the applicant card of an Anmeldung) shows raw only expanded -->
+            @if(showAdvanced() || showPayload()) {
+              <ion-row>
+                <ion-col size="12">
+                  <ion-textarea class="payload"
+                    [value]="notes()" (ionInput)="onFieldChange('notes', $any($event.target).value ?? '')"
+                    placeholder="{{ i18n().notes_placeholder() }}"
+                    [readonly]="isReadOnly()" [autoGrow]="true" [rows]="2" />
+                </ion-col>
+              </ion-row>
+            }
             @if(relatedRoute()) {
               <ion-row>
                 <ion-col size="12" size-md="6">
@@ -175,6 +178,8 @@ export class TaskForm {
   public readonly importances = input.required<CategoryListModel>();
   public readonly projects = input<ProjectModel[]>([]);   // archived ones included, so a linked archived project keeps its name
   public readonly readOnly = input(true);
+  /** false when the parent shows the notes in a better form; the raw text then shows in the expanded view only */
+  public readonly showPayload = input(true);
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
   // shared with the parent modal: author/calendars live there and follow the same toggle

@@ -160,5 +160,26 @@
       "label": "Archiver les tâches terminées après (jours)",
       "helper": "0 signifie : ne jamais archiver automatiquement"
     }
+  },
+  "application": {
+    "title": "Inscription",
+    "born": "né·e le {date} · {age} ans",
+    "kind": {
+      "youth": "Jeune",
+      "adult": "Adulte",
+      "transfer": "Transfert"
+    },
+    "parent": "Parents",
+    "mail": {
+      "label": "Répondre par e-mail",
+      "subject": "Ton inscription",
+      "body": "Bonjour {firstName}\n\nmerci pour ton inscription. Nous l’avons bien reçue et te recontactons bientôt.\n\nMeilleures salutations\n{senderName}"
+    },
+    "call": "Appeler",
+    "edit": {
+      "label": "Modifier l’inscription",
+      "notFound": "Cette inscription n’existe plus. Elle a peut-être été fusionnée ou supprimée.",
+      "error": "L’inscription n’a pas pu être ouverte. Réessaie plus tard."
+    }
   }
 }

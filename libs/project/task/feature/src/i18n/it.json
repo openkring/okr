@@ -160,5 +160,26 @@
       "label": "Archivia le attività completate dopo (giorni)",
       "helper": "0 significa: mai archiviare automaticamente"
     }
+  },
+  "application": {
+    "title": "Iscrizione",
+    "born": "nato/a il {date} · {age} anni",
+    "kind": {
+      "youth": "Giovane",
+      "adult": "Adulto/a",
+      "transfer": "Trasferimento"
+    },
+    "parent": "Genitori",
+    "mail": {
+      "label": "Rispondi via e-mail",
+      "subject": "La tua iscrizione",
+      "body": "Ciao {firstName}\n\ngrazie per la tua iscrizione. L’abbiamo ricevuta e ti ricontatteremo presto.\n\nCordiali saluti\n{senderName}"
+    },
+    "call": "Chiama",
+    "edit": {
+      "label": "Modifica iscrizione",
+      "notFound": "Questa iscrizione non esiste più. Forse è stata unita o eliminata.",
+      "error": "Non è stato possibile aprire l’iscrizione. Riprova più tardi."
+    }
   }
 }

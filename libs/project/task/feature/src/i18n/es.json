@@ -160,5 +160,26 @@
       "label": "Archivar tareas completadas después de (días)",
       "helper": "0 significa: nunca archivar automáticamente"
     }
+  },
+  "application": {
+    "title": "Inscripción",
+    "born": "nacido/a el {date} · {age} años",
+    "kind": {
+      "youth": "Joven",
+      "adult": "Adulto/a",
+      "transfer": "Traspaso"
+    },
+    "parent": "Padres",
+    "mail": {
+      "label": "Responder por correo",
+      "subject": "Tu inscripción",
+      "body": "Hola {firstName}\n\ngracias por tu inscripción. La hemos recibido y te contactaremos pronto.\n\nSaludos cordiales\n{senderName}"
+    },
+    "call": "Llamar",
+    "edit": {
+      "label": "Modificar inscripción",
+      "notFound": "Esta inscripción ya no existe. Quizá se fusionó o se eliminó.",
+      "error": "No se pudo abrir la inscripción. Inténtalo de nuevo más tarde."
+    }
   }
 }

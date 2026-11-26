@@ -114,6 +114,21 @@ export const TASK_I18N_KEYS = {
   settings_taskArchiveDays_label:       PFX + 'settings.taskArchiveDays.label',
   settings_taskArchiveDays_helper:      PFX + 'settings.taskArchiveDays.helper',
 
+  // the applicant card of an Anmeldung task (form submission into `applications`)
+  application_title:                    PFX + 'application.title',
+  application_born:                     PFX + 'application.born',
+  application_kind_youth:               PFX + 'application.kind.youth',
+  application_kind_adult:               PFX + 'application.kind.adult',
+  application_kind_transfer:            PFX + 'application.kind.transfer',
+  application_parent:                   PFX + 'application.parent',
+  application_mail:                     PFX + 'application.mail.label',
+  application_mail_subject:             PFX + 'application.mail.subject',
+  application_mail_body:                PFX + 'application.mail.body',
+  application_call:                     PFX + 'application.call',
+  application_edit:                     PFX + 'application.edit.label',
+  application_edit_not_found:           PFX + 'application.edit.notFound',
+  application_edit_error:               PFX + 'application.edit.error',
+
 } satisfies Record<string, string>;
 
 export type TaskI18n = { [K in keyof typeof TASK_I18N_KEYS]: Signal<string> };
