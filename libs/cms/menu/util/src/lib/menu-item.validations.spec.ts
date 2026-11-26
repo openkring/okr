@@ -6,12 +6,13 @@ import { MenuItemModel } from '@okr/shared-models';
 import { menuItemValidations as suite } from './menu-item.validations';
 
 /**
- * The app's main bundle is the authority for validation messages: `okr-error-note`
- * resolves a Vest message as `validation.<message>` (and only an '@'-prefixed one as a
- * top-level key, which is why '@menuDataProperty' & co. used to render nothing).
+ * The main bundle is the authority for validation messages: `okr-error-note` resolves a
+ * Vest message as `validation.<message>` (and only an '@'-prefixed one as a top-level key,
+ * which is why '@menuDataProperty' & co. used to render nothing). Since spec 1.179 every
+ * app ships the one shared main bundle from `libs/shared/i18n/src/root`.
  */
 const validation = JSON.parse(
-  readFileSync('apps/scs-app/src/assets/i18n/de.json', 'utf8'),
+  readFileSync('libs/shared/i18n/src/root/de.json', 'utf8'),
 ).validation as Record<string, string>;
 
 function menuItem(overrides: Partial<MenuItemModel> = {}): MenuItemModel {
