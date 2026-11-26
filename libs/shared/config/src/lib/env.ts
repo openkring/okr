@@ -1,5 +1,8 @@
 import { InjectionToken } from "@angular/core";
 
+/** `fixed`: the tenant comes from the build. `runtime`: chosen on the device (spec 1.179, see boot-tenant.ts). */
+export type TenantMode = 'fixed' | 'runtime';
+
 export interface OkrEnvironment {
   production: boolean;
   useEmulators: boolean;
