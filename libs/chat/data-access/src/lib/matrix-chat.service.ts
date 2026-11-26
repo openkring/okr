@@ -11,7 +11,7 @@ import { MatrixConfig, MatrixMessage, MatrixReadReceipt, MatrixRoom, TypingNotif
 import { APP_STORE_MIN, ChatStatusService } from '@okr/shared-data-access';
 import { checkVideoLimits, debugData, debugMessage, MAX_CHAT_VIDEO_BYTES } from '@okr/shared-util-core';
 import { OKR_VIDEO_FIELD, videoLink } from '@okr/content-document-util';
-import { convertHeicToJpeg, isHeicFile, materializeFile, resolveFileMimeType, extractVideoPoster, UploadTooLargeError, initMatrixLogLevel, ensurePromiseWithResolvers, buildMentionContent, escapeHtml, MentionRef, OKR_TENANT_EVENT, resolveMatrixDisplayName, canPostWithPower, VideoLimitError, VideoUploadError, buildPollContent, PollAnswerDef, POLL_START_EVENT, PinboardInput, AvailablePinboard, UNREAD_FROM_EVENT, MARKED_UNREAD_EVENT, flaggedUnreadFrom, countUnmutedUnread, filterRoomsOfTenant, serverNameOf, indexBookmarkEntries, bookmarkedMessageIds, PinPreview, pinPreviewOf } from '@okr/chat-util';
+import { convertHeicToJpeg, isHeicFile, materializeFile, resolveFileMimeType, extractVideoPoster, UploadTooLargeError, initMatrixLogLevel, ensurePromiseWithResolvers, buildMentionContent, escapeHtml, MentionRef, OKR_TENANT_EVENT, resolveMatrixDisplayName, canPostWithPower, VideoLimitError, VideoUploadError, buildPollContent, PollAnswerDef, POLL_START_EVENT, PinboardInput, AvailablePinboard, UNREAD_FROM_EVENT, MARKED_UNREAD_EVENT, flaggedUnreadFrom, countUnmutedUnread, filterRoomsOfTenant, serverNameOf, indexBookmarkEntries, bookmarkedMessageIds, PinPreview, pinPreviewOf, storedCredentialsAction } from '@okr/chat-util';
 
 import { mediaMimeHint, mxcAvatarHttpUrl } from './matrix-helpers';
 import { MatrixMediaService } from './matrix-media.service';
@@ -22,6 +22,9 @@ import { MatrixRoomPrefsService } from './matrix-room-prefs.service';
 import { MatrixPinsService } from './matrix-pins.service';
 import { MatrixJumpResult, MatrixJumpState, MatrixMessageService } from './matrix-message.service';
 import { activeFirebaseApp } from '@okr/shared-config';
+
+/** IndexedDB of matrix-js-sdk's sync store (one per origin). */
+const MATRIX_STORE_DB_NAME = 'okr-matrix';
 
 /**
  * SCS-92: refresh a Matrix access token this long before it lapses, so a session that
@@ -285,7 +288,8 @@ export class MatrixChatService {
       const stored = this.getStoredCredentials();
       if (stored) {
         const expectedUserId = `@${user.personKey.toLowerCase()}:${serverName}`;
-        if (stored.userId === expectedUserId && this.isTokenUsable(stored)) {
+        const action = storedCredentialsAction(stored.userId, expectedUserId, this.isTokenUsable(stored));
+        if (action === 'reuse') {
           return {
             ...stored,
             homeserverUrl: stored.homeserverUrl || 'https://' + serverName,
@@ -294,6 +298,9 @@ export class MatrixChatService {
         }
         // Stale (old UID-based id) or expiring (SCS-92) — discard and mint a fresh token.
         this.clearStoredCredentials();
+        // Another person's credentials (two tenants, two persons on the portal's one origin, spec 1.179):
+        // their cached sync must not seed this user's client.
+        if (action === 'reset') await this.deleteSyncStore();
       }
 
       const fn = httpsCallable(getFunctions(activeFirebaseApp(), 'europe-west6'), 'getMatrixCredentials');
@@ -481,13 +488,26 @@ export class MatrixChatService {
    * hook). initialize() calls `store.startup()` itself right before `startClient()`;
    * matrix-js-sdk does NOT do this for us.
    */
+  /** Drops the cached sync of the previous Matrix user (see `storedCredentialsAction`). Never throws. */
+  private async deleteSyncStore(): Promise<void> {
+    if (typeof window === 'undefined' || !window.indexedDB) return;
+    await new Promise<void>((resolve) => {
+      try {
+        const req = window.indexedDB.deleteDatabase(MATRIX_STORE_DB_NAME);
+        req.onsuccess = req.onerror = req.onblocked = () => resolve();
+      } catch {
+        resolve();
+      }
+    });
+  }
+
   private createPersistentStore(): Store | undefined {
     if (typeof window === 'undefined' || !window.indexedDB) return undefined;
     try {
       return new IndexedDBStore({
         indexedDB: window.indexedDB,
         localStorage: window.localStorage,
-        dbName: 'okr-matrix',
+        dbName: MATRIX_STORE_DB_NAME,
       });
     } catch (e) {
       console.warn('MatrixChatService: IndexedDB store creation failed, using in-memory store:', e);

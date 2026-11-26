@@ -34,3 +34,4 @@ export * from './lib/email-delivery.util';
 export * from './lib/room-details.util';
 export * from './lib/message-info.util';
 export * from './lib/message-edit.validations';
+export * from './lib/matrix-credentials.util';
