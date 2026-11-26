@@ -2118,6 +2118,7 @@ export async function resolveArrayItemDocs(entry: SubjectDataEntry, ctx: Subject
 // not personal data: formDefinitions — form templates (field definitions, no submissions)
 // not personal data: i18nDefault — translation keys and default texts
 // not personal data: i18nTenantOverride — per-tenant translation overrides
+// not personal data: ledger-balances — sums per books, month, account, Kostenstelle and project (spec 1.177)
 // not personal data: icons — icon catalogue
 // not personal data: menuItems — navigation configuration
 // not personal data: ocr-rules — vendor→account mapping rules

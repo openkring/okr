@@ -37,6 +37,7 @@ export const NON_PERSONAL_COLLECTIONS: ReadonlySet<string> = new Set([
   'hearingQuizNodes',
   'i18nDefault',
   'i18nTenantOverride',
+  'ledger-balances',
   'icons',
   'menuItems',
   'news-channels',

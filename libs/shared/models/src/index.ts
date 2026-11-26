@@ -24,6 +24,7 @@ export * from './lib/budget.model';
 export * from './lib/payment-order.model';
 export * from './lib/payment.model';
 export * from './lib/period.model';
+export * from './lib/ledger-balance.model';
 export * from './lib/accounting-config.model';
 export * from './lib/billing.model';
 export * from './lib/asset-category.model';

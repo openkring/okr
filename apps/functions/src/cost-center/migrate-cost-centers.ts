@@ -21,6 +21,8 @@ import { fiscalYear } from '../bank-import/bank-import.util';
 import { loadFiscalYearStart, touchedPeriodKeys } from '../booking/period-lock';
 import { costCenterKeyForLine, loadCostCenterContext } from './cost-center-context';
 import { backfillYear, bookOfDoc, decideFreeText, freeTextBlocker, lockedBookingKeys } from './cost-center-migration.util';
+import { booksOf } from '../ledger/ledger-books';
+import { refreshLedgerBalances } from '../ledger/refresh-ledger-balances';
 
 const REGION = 'europe-west6';
 const CF_NAME = 'migrateCostCenters';
@@ -80,6 +82,14 @@ export const migrateCostCenters = onCall(
       ? await migrateFreeText(db, tenantId, accountingTenantId, dryRun)
       : await backfillFiscalYear(db, tenantId, accountingTenantId, request.data?.fiscalYear, dryRun);
     logger.info(`${CF_NAME}: ${step} ${dryRun ? 'dry run' : 'applied'} year=${result.fiscalYear} scanned=${result.scanned} updated=${result.updated} unmatched=${result.unmatched.length} inLockedPeriods=${result.inLockedPeriods}`);
+    // the migration fills locked years on purpose (D19), which the reuse of locked balances cannot see (spec 1.177 §6.2)
+    if (!dryRun && result.updated > 0) {
+      try {
+        await refreshLedgerBalances(db, booksOf(accountingTenantId, config.data() ?? {}).books, { full: true });
+      } catch (err) {
+        logger.error(`${CF_NAME}: ledger balance refresh failed`, err);
+      }
+    }
     return result;
   },
 );

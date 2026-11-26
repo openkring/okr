@@ -12,8 +12,11 @@ import { pingenClientId, pingenClientSecret, pingenOrganisationId } from '../pin
 const names = (jobs: { name: string }[]) => jobs.map((j) => j.name);
 
 describe('time-slot schedulers', () => {
-  it('nightly runs its eighteen jobs in order', () => {
-    expect(names(NIGHTLY_JOBS)).toEqual(['tripStatsReconcile', 'crewTrackCleanup', 'trackerExpiry', 'departureCleanup', 'roomPostPolicySweep', 'expiredMembershipSweep', 'pinboardSweep', 'billScanReap', 'privacyExportReap', 'mailingLettersReap', 'mailPageDraftReap', 'newsletterSignupReap', 'courseEndTasks', 'energyFiguresFetch', 'webhookStuckCheck', 'residenceSwitch', 'contactsDavRebuild', 'postVersandReconcile']);
+  it('nightly runs its nineteen jobs in order; the ledger balance check only on Sundays', () => {
+    expect(names(NIGHTLY_JOBS)).toEqual(['tripStatsReconcile', 'crewTrackCleanup', 'trackerExpiry', 'departureCleanup', 'roomPostPolicySweep', 'expiredMembershipSweep', 'pinboardSweep', 'billScanReap', 'privacyExportReap', 'mailingLettersReap', 'mailPageDraftReap', 'newsletterSignupReap', 'courseEndTasks', 'energyFiguresFetch', 'webhookStuckCheck', 'residenceSwitch', 'contactsDavRebuild', 'ledgerBalanceWeekly', 'postVersandReconcile']);
+    const ledger = NIGHTLY_JOBS.find((j) => j.name === 'ledgerBalanceWeekly');
+    expect(ledger?.when?.(new Date('2026-11-29T02:15:00Z'))).toBe(true);  // Sunday 03:15 Zurich
+    expect(ledger?.when?.(new Date('2026-11-30T02:15:00Z'))).toBe(false);
   });
 
   it('morning runs its eight jobs in order; monthlyBilling only on the 1st in Zurich, billingDaily every day', () => {

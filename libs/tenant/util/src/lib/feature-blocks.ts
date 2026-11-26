@@ -1561,6 +1561,8 @@ const finance: FeatureBlock = {
     'bills', 'bookings', 'booking-lines', 'exchange-rates',
     'invoices', 'invoice-positions', 'ocr-results', 'payments', 'payment-orders',
     'periods', 'vat-codes',
+    // spec 1.177: balances per books and year, recomputed from bookings/booking-lines by the `ledger` function
+    'ledger-balances',
   ],
   menu: [
     // «Finanzen»: the parent only — finance's rows under it are tenant-bespoke (see `financeMenuParent`).

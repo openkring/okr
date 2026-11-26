@@ -1496,6 +1496,8 @@ service cloud.firestore {
     }
     match /booking-lines/{id}      { allow read: if tenantRead() && (isLedgerReader() || isOwnExpense(resource.data.bookingKey)); allow write: if false; }
     match /bookings/{id}          { allow read: if tenantRead() && (isLedgerReader() || isOwnExpense(id)); allow write: if false; }
+    // spec 1.177: balances per books and year, written only by the `ledger` function — same readers as the ledger
+    match /ledger-balances/{id}   { allow read: if tenantRead() && isLedgerReader(); allow write: if false; }
     match /exchange-rates/{id}    { allow read: if tenantRead(); allow write: if false; }
     match /expense-documents/{id} { allow read: if tenantRead(); allow write: if false; }
     // An expense carries the payee's IBAN (for 'an Mitglied' copied from that member's profile by

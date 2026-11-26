@@ -457,6 +457,8 @@ export { postMemberFees } from './member-fee/post-member-fees';
 // Kostenrechnung 1.65 §6.4: free-text → cost-centre key and current-year backfill (treasurer)
 export { migrateCostCenters } from './cost-center/migrate-cost-centers';
 export { getMyCostCenterReport } from './cost-center/get-my-cost-center-report';
+// ledger: balances per books and year, recomputed from the ledger (spec 1.177) — op refreshLedgerBalances
+export { ledger } from './ledger';
 
 // address-directory projection rebuild/backfill (privacy 1.19 Phase 4)
 export { rebuildAddressDirectory } from './address/rebuild-address-directory';

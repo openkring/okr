@@ -35,6 +35,7 @@ import { stripeSecretKey } from '../collection/stripe-port';
 import { runPostReconcile } from '../pingen/reconcile';
 import { runContactsDavRebuild } from '../contacts-dav/book';
 import { runResidenceSwitch } from '../address/residence-switch';
+import { isSundayInZurich, runLedgerBalanceWeekly } from '../ledger/ledger-books';
 import { pingenClientId, pingenClientSecret, pingenOrganisationId } from '../pingen/pingen-client';
 
 const REGION = 'europe-west6';
@@ -60,6 +61,8 @@ export const NIGHTLY_JOBS: NamedJob[] = [
   { name: 'residenceSwitch', run: runResidenceSwitch },
   // spec 1.159: rebuilds a CardDAV book only when due (weekly by default) — one read per tenant otherwise
   { name: 'contactsDavRebuild', run: runContactsDavRebuild },
+  // spec 1.177: Sundays, a full rebuild of every set of books with ledger balances (about 34,000 reads for scs)
+  { name: 'ledgerBalanceWeekly', run: (now) => runLedgerBalanceWeekly(now), when: isSundayInZurich },
   // last: the one job that calls an external API per item; it stops itself after RECONCILE_BUDGET_MS (120 s), so it
   // can neither starve the jobs above nor be cut off mid-letter by the slot's timeout
   { name: 'postVersandReconcile', run: runPostReconcile },
