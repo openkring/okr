@@ -2,22 +2,26 @@ import { computed, inject, Signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController, ToastController } from '@ionic/angular';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
-import { map, of } from 'rxjs';
+import { combineLatest, map, of } from 'rxjs';
 
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
-import { Attendee, CalendarCollection, CalendarModel, CalEventCollection, CalEventModel, CategoryListModel, GroupCollection, GroupModel, InvitationCollection, InvitationModel } from '@okr/shared-models';
-import { getAttendanceStates, getAttendee, getAvatarInfoForCurrentUser, getInvitationStates, getSystemQuery, getTodayStr, isAfterDate, isAfterOrEqualDate } from '@okr/shared-util-core';
+import { Attendee, CalendarCollection, CalendarModel, CalEventCollection, CalEventModel, CalEventModelName, CategoryListModel, GroupCollection, GroupModel, InvitationCollection, InvitationModel, MandateModel } from '@okr/shared-models';
+import { fill, getAttendanceStates, getAttendee, getAvatarInfoForCurrentUser, getInvitationStates, getSystemQuery, getTodayStr, isAfterDate, isAfterOrEqualDate, newAvatarInfo } from '@okr/shared-util-core';
 import { notify, resourceParams, showToast } from '@okr/shared-util-angular';
 
 import { CalEventService } from '@okr/calendar-calevent-data-access';
-import { isAttendanceClosed, seenKeyFor, toSeenCounts, unseenActivityFor } from '@okr/calendar-calevent-util';
+import { applyAttendanceFor, CALEVENT_I18N_KEYS, formatDateTimeLabel, grantorAttendOptions, GrantorContext, isAttendanceClosed, mayJoinOpenCalevent, seenKeyFor, toSeenCounts, unseenActivityFor } from '@okr/calendar-calevent-util';
 import { SeenService } from '@okr/user-data-access';
 import { getVisibleGroupKeys } from '@okr/subject-group-util';
 
 import { InvitationService } from '@okr/relationship-invitation-data-access';
 import { MembershipService } from '@okr/relationship-membership-data-access';
 import { SECTION_I18N_KEYS } from '@okr/cms-section-util';
+import { MandateService, notifyGrantor } from '@okr/relationship-mandate-data-access';
+import { MandateStore } from '@okr/relationship-mandate-feature';
+import { MANDATE_I18N_KEYS } from '@okr/relationship-mandate-util';
+import { TaskService } from '@okr/project-task-data-access';
 
 export type CalendarState = {
   calendarName: string | undefined; // all, my, or specific calendar name
@@ -45,6 +49,15 @@ export const CalendarStore = signalStore(
     toastController: inject(ToastController),
     seenService: inject(SeenService),
     i18n: inject(I18nService).translateAll(SECTION_I18N_KEYS),
+    // Vollmacht (spec 1.180 §5.2): sign-up for a grantor, same rules as in the calendar list
+    mandateStore: inject(MandateStore),
+    mandateService: inject(MandateService),
+    taskService: inject(TaskService),
+    mandateI18n: inject(I18nService).translateAll(MANDATE_I18N_KEYS),
+  })),
+  withProps((store) => ({
+    /** grantors who gave me `calevent.attend` and whose Vollmacht is active today */
+    attendGrantorKeys: store.mandateStore.grantorKeysFor('calevent.attend'),
   })),
   withProps((store) => ({
     // returns a list of unigue organization keys for the current user
@@ -75,6 +88,29 @@ export const CalendarStore = signalStore(
         if (!personKey) return of([]);
         return store.appStore.firestoreService.searchData<InvitationModel>(InvitationCollection, getSystemQuery(store.appStore.env.tenantId), 'inviteeKey', 'asc').pipe(
           map(invitations => invitations.filter(inv => inv.inviteeKey === personKey))
+        );
+      }
+    }),
+
+    /** Per grantor, the orgs they belong to (their group reach). Loads nothing without a `calevent.attend` Vollmacht. */
+    grantorMembershipsResource: rxResource({
+      params: resourceParams(() => ({ grantorKeys: store.attendGrantorKeys() })),
+      stream: ({ params }) => {
+        const keys = params.grantorKeys;
+        if (keys.length === 0) return of([] as { key: string; orgKeys: string[] }[]);
+        return combineLatest(keys.map(key =>
+          store.membershipService.listOrgsOfMember(key, 'person').pipe(map(orgKeys => ({ key, orgKeys })))));
+      }
+    }),
+
+    /** The grantors' invitations: the same cached tenant stream as above, filtered by `inviteeKey`. */
+    grantorInvitationsResource: rxResource({
+      params: resourceParams(() => ({ grantorKeys: store.attendGrantorKeys() })),
+      stream: ({ params }) => {
+        const keys = params.grantorKeys;
+        if (keys.length === 0) return of([] as InvitationModel[]);
+        return store.appStore.firestoreService.searchData<InvitationModel>(InvitationCollection, getSystemQuery(store.appStore.env.tenantId), 'inviteeKey', 'asc').pipe(
+          map(invitations => invitations.filter(inv => keys.includes(inv.inviteeKey)))
         );
       }
     }),
@@ -152,6 +188,23 @@ export const CalendarStore = signalStore(
     return {
       calendarsOfCurrentUser: computed(() => state.calendarsForCurrentUserResource.value() ?? []),
       allCalendars: computed(() => state.calendarsResource.value() ?? []),
+
+      /** Per active `calevent.attend` grantor: first name, the calendars of their orgs, their invitations (spec 1.180 §5.2). */
+      grantorContexts: computed((): GrantorContext[] => {
+        const calendars = state.calendarsResource.value() ?? [];
+        const memberships = state.grantorMembershipsResource.value() ?? [];
+        const invitations = state.grantorInvitationsResource.value() ?? [];
+        const mandates = state.mandateStore.activeAsGrantee();
+        return state.attendGrantorKeys().map(key => {
+          const orgKeys = memberships.find(m => m.key === key)?.orgKeys ?? [];
+          return {
+            key,
+            name: mandates.find(m => m.grantorKey === key)?.grantor?.name1 || state.appStore.getPerson(key)?.firstName || '',
+            calendarKeys: calendars.filter(cal => orgKeys.includes(cal.owner)).map(cal => cal.okey),
+            invitations: invitations.filter(inv => inv.inviteeKey === key),
+          };
+        });
+      }),
     }
   }),
 
@@ -356,6 +409,73 @@ export const CalendarStore = signalStore(
         // sign-up writes only `attendees`; the whole model would resend attendance fields (trainer-only)
         const key = await store.appStore.firestoreService.updateFields(CalEventCollection, calEvent.okey, { attendees: calEvent.attendees }, store.i18n.calevent_update_error());
         if (key) await showToast(store.toastController, store.i18n.calevent_update_conf());
+      },
+
+      /** The grantors I may sign up or off for on this event, with their state — the checks run for the grantor. */
+      grantorAttendOptions(calEvent: CalEventModel): { key: string; name: string; state: string }[] {
+        const contexts = store.grantorContexts();
+        if (contexts.length === 0) return [];
+        const groupCalendarKeys = store.allCalendars().filter(cal => cal.owner?.startsWith('group.')).map(cal => cal.okey);
+        return grantorAttendOptions(calEvent, contexts.map(ctx => ({
+          key: ctx.key,
+          name: ctx.name,
+          hasInvitation: ctx.invitations.some(inv => inv.caleventKey === calEvent.okey),
+          mayJoinOpen: mayJoinOpenCalevent(calEvent.calendars, groupCalendarKeys, ctx.calendarKeys),
+        })));
+      },
+
+      /**
+       * Signs a grantor up for, or off from, an event under a family Vollmacht — the same flow as
+       * `CalEventStore.changeAttendanceFor`: re-read the Vollmacht from the server (refuse if gone or unreachable),
+       * respect the closed event, answer the grantor's invitation if there is one (else write `attendees` only),
+       * stamp `actedByKey` = me, then tell the grantor with a task (spec 1.180 §5.2, §5.3).
+       */
+      async changeAttendanceFor(calEvent: CalEventModel, grantorKey: string, newState: 'accepted' | 'declined'): Promise<void> {
+        const currentUser = store.currentUser();
+        const actor = currentUser ? getAvatarInfoForCurrentUser(currentUser) : undefined;
+        if (!currentUser || !actor?.key) return;
+        if (isAttendanceClosed(calEvent)) return;   // past, locked or cancelled: no An-/Abmeldung
+        const context = store.grantorContexts().find(ctx => ctx.key === grantorKey);
+        const held = store.mandateStore.activeAsGrantee()
+          .find(m => m.kind === 'family' && m.grantorKey === grantorKey && m.actions.includes('calevent.attend'));
+        if (!context || !held) return;
+
+        let mandate: MandateModel | undefined;
+        try {
+          mandate = await store.mandateService.readActive(held.okey, store.appStore.tenantId());
+        } catch (ex) {
+          console.warn('CalendarStore.changeAttendanceFor:', ex);
+          await showToast(store.toastController, store.mandateI18n.mandate_check_error());
+          return;
+        }
+        if (!mandate || mandate.granteeKey !== actor.key || !mandate.actions.includes('calevent.attend')) {
+          await showToast(store.toastController, fill(store.mandateI18n.mandate_inactive(), { name: context.name }));
+          store.mandateStore.reload();
+          return;
+        }
+        const grantor = mandate.grantor ?? newAvatarInfo(grantorKey, context.name, '', 'person', '', '', '');
+
+        const { attendees, waitlisted } = applyAttendanceFor(calEvent.attendees, grantor, newState, actor.key, calEvent.maxAttendees);
+        const invitation = context.invitations.find(inv => inv.caleventKey === calEvent.okey);
+        if (invitation) {
+          if (invitation.isLocked) {
+            await notify(store.alertController, store.i18n.invitation_locked_title(), store.i18n.invitation_locked_hint(), store.i18n.ok());
+            return;
+          }
+          if (!await store.invitationService.respond(invitation, newState, currentUser, undefined, actor.key)) return;
+        } else {
+          const key = await store.appStore.firestoreService.updateFields(CalEventCollection, calEvent.okey, { attendees }, store.i18n.calevent_update_error());
+          if (!key) return;
+          calEvent.attendees = attendees;
+          await showToast(store.toastController, store.i18n.calevent_update_conf());
+        }
+        if (waitlisted) await showToast(store.toastController, CALEVENT_I18N_KEYS.attendance_waitlist_hint);
+
+        const text = fill(newState === 'accepted' ? store.mandateI18n.notice_attend() : store.mandateI18n.notice_unattend(), {
+          actor: actor.name1,
+          event: `${calEvent.name}, ${formatDateTimeLabel(calEvent.startDate, calEvent.startTime)}`,
+        });
+        await notifyGrantor(store.taskService, mandate, actor, grantor, text, { modelType: CalEventModelName, key: calEvent.okey });
       },
 
       /**

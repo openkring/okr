@@ -42,6 +42,8 @@
   "revoke_error": "Das hat nicht geklappt. Bitte versuche es nochmals.",
   "person_unknown": "Unbekannte Person",
   "cancel": "Abbrechen",
+  "mandate_inactive": "Die Vollmacht von {name} gilt nicht mehr.",
+  "mandate_check_error": "Die Vollmacht konnte gerade nicht geprüft werden. Bitte versuche es nochmals.",
   "validation": {
     "grantee_required": "Bitte wähle, wer die Vollmacht erhält.",
     "grantee_is_grantor": "Du kannst dir nicht selbst eine Vollmacht erteilen.",

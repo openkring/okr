@@ -5,12 +5,12 @@ import { ActionSheetController, ActionSheetOptions, IonBadge, IonCard, IonCardCo
 
 import { CalEventModel, EventsConfig, EventsSection } from '@okr/shared-models';
 import { MoreButton, OptionalCardHeader, Spinner } from '@okr/shared-ui';
-import { convertDateFormatToString, DateFormat, debugMessage, getAttendanceColor, getAttendanceIcon, getAttendanceState, hasRole } from '@okr/shared-util-core';
+import { convertDateFormatToString, DateFormat, debugMessage, fill, getAttendanceColor, getAttendanceIcon, getAttendanceState, hasRole } from '@okr/shared-util-core';
 import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, isBrowser, navigateByUrl } from '@okr/shared-util-angular';
 import { SvgIconPipe, WeekdayPipe } from '@okr/shared-pipes';
 import { I18nService, TranslatePipe } from '@okr/shared-i18n';
 
-import { CALEVENT_I18N_KEYS, canAttendCalevent, isCaleventAttendee, mayJoinOpenCalevent } from '@okr/calendar-calevent-util';
+import { CALEVENT_I18N_KEYS, canAttendCalevent, isCaleventAttendee, mayJoinOpenCalevent, SUBSCRIBE_FOR, UNSUBSCRIBE_FOR } from '@okr/calendar-calevent-util';
 import { showCalEventInfo } from '@okr/calendar-calevent-ui';
 import { CalendarFeedService } from '@okr/calendar-calevent-data-access';
 import { isAdminMember } from '@okr/subject-group-util';
@@ -204,6 +204,20 @@ export class EventsSectionComponent implements OnInit {
       if (state !== 'declined') {
         actionSheetOptions.buttons.push(createActionSheetButton('calevent.unsubscribe', this.store.i18n.calevent_unsubscribe(), this.imgixBaseUrl, 'cancel'));
       }
+    }
+    // Vollmacht (spec 1.180 §5.2): after my own entries, one pair per grantor — every check ran for the grantor
+    const grantorOptions = calevent.state === 'proposed' ? [] : this.store.grantorAttendOptions(calevent);
+    for (const option of grantorOptions) {
+      if (option.state !== 'accepted') {
+        actionSheetOptions.buttons.push(createActionSheetButton(`${SUBSCRIBE_FOR}${option.key}`,
+          fill(this.store.mandateI18n.attend_for(), { name: option.name }), this.imgixBaseUrl, 'checkbox-circle'));
+      }
+      if (option.state !== 'declined') {
+        actionSheetOptions.buttons.push(createActionSheetButton(`${UNSUBSCRIBE_FOR}${option.key}`,
+          fill(this.store.mandateI18n.unattend_for(), { name: option.name }), this.imgixBaseUrl, 'cancel'));
+      }
+    }
+    if (calevent.state !== 'proposed' && (this.canAttend(calevent) || grantorOptions.length > 0)) {
       actionSheetOptions.buttons.push(createActionSheetDivider());
     }
     actionSheetOptions.buttons.push(createActionSheetButton('calevent.view', this.store.i18n.calevent_view(), this.imgixBaseUrl, 'eye-on'));
@@ -235,6 +249,15 @@ export class EventsSectionComponent implements OnInit {
       await actionSheet.present();
       const { data } = await actionSheet.onDidDismiss();
       if (!data) return;
+      const action = String(data.action ?? '');
+      if (action.startsWith(SUBSCRIBE_FOR)) {
+        await this.store.changeAttendanceFor(calEvent, action.substring(SUBSCRIBE_FOR.length), 'accepted');
+        return;
+      }
+      if (action.startsWith(UNSUBSCRIBE_FOR)) {
+        await this.store.changeAttendanceFor(calEvent, action.substring(UNSUBSCRIBE_FOR.length), 'declined');
+        return;
+      }
       switch (data.action) {
         case 'calevent.edit': {
           await this.store.edit(calEvent, false, !this.canChange(calEvent), false);

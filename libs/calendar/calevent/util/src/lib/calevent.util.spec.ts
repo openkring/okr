@@ -1,7 +1,7 @@
 import { AttendanceEntry, Attendee, AvatarInfo, CalEventModel, CategoryItemModel, CategoryListModel, InvitationState } from '@okr/shared-models';
 import * as coreUtils from '@okr/shared-util-core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { ATTENDANCE_FIELDS, newCalEvent, isTripCalevent, confirmedOccurrences, resetAttendance, withoutAttendance, withoutCourseFields, addInvitedAttendee, removeInvitedAttendee, bestScheduleColumn, buildCalEventLink, canAttendCalevent, isCaleventAttendee, buildSchedulePollLink, convertCalEventToFullCalendar, formatDurationLabel, formatScheduleCloseMessage, formatSchedulePollInviteMessage, getCalEventCssClass, getCaleventGroupKey, getCaleventIndex, getPublicCaleventIndex, getSeriesUpdateFields, isCaleventInView, isCalEvent, isFullDayEvent, isAttendanceClosed, isPastCalevent, isPersonalCalendarName, isPersonalCalevent, isCaleventFull, isSchedulePoll, resolveCalendars, mayJoinOpenCalevent, mergeAttendee, nextInvitationState, planSeriesReconcile, splitAttendees, toInvitationState } from './calevent.util';
+import { applyAttendanceFor, ATTENDANCE_FIELDS, grantorAttendOptions, newCalEvent, stampActedBy, isTripCalevent, confirmedOccurrences, resetAttendance, withoutAttendance, withoutCourseFields, addInvitedAttendee, removeInvitedAttendee, bestScheduleColumn, buildCalEventLink, canAttendCalevent, isCaleventAttendee, buildSchedulePollLink, convertCalEventToFullCalendar, formatDurationLabel, formatScheduleCloseMessage, formatSchedulePollInviteMessage, getCalEventCssClass, getCaleventGroupKey, getCaleventIndex, getPublicCaleventIndex, getSeriesUpdateFields, isCaleventInView, isCalEvent, isFullDayEvent, isAttendanceClosed, isPastCalevent, isPersonalCalendarName, isPersonalCalevent, isCaleventFull, isSchedulePoll, resolveCalendars, mayJoinOpenCalevent, mergeAttendee, nextInvitationState, planSeriesReconcile, splitAttendees, toInvitationState } from './calevent.util';
 
 // Mock shared utility functions
 vi.mock('@okr/shared-util-core', async importOriginal => {
@@ -824,5 +824,122 @@ describe('newCalEvent', () => {
   it('keeps the default type while the list is not loaded', () => {
     expect(newCalEvent('t', undefined).type).toBe('training');
     expect(newCalEvent('t', types()).type).toBe('training');
+  });
+});
+
+describe('applyAttendanceFor (Vollmacht, spec 1.180 §5.2)', () => {
+  const person = (key: string): AvatarInfo =>
+    ({ key, name1: key, name2: '', modelType: 'person', type: '', subType: '', label: '' });
+  const att = (key: string, state: Attendee['state'] = 'accepted', actedByKey?: string): Attendee =>
+    actedByKey ? { person: person(key), state, actedByKey } : { person: person(key), state };
+  const keys = (attendees: Attendee[]): string[] => attendees.map(a => a.person.key);
+
+  it('adds a new attendee at the end', () => {
+    const result = applyAttendanceFor([att('a')], person('anna'), 'accepted', 'beat', 0);
+    expect(keys(result.attendees)).toEqual(['a', 'anna']);
+    expect(result.attendees[1].state).toBe('accepted');
+  });
+
+  it('moves a grantor who accepts from a non-accepted state to the end', () => {
+    const result = applyAttendanceFor([att('anna', 'declined'), att('a'), att('b')], person('anna'), 'accepted', 'beat', 0);
+    expect(keys(result.attendees)).toEqual(['a', 'b', 'anna']);
+    expect(result.attendees[2].state).toBe('accepted');
+  });
+
+  it('declines in place', () => {
+    const result = applyAttendanceFor([att('anna'), att('a')], person('anna'), 'declined', 'beat', 0);
+    expect(keys(result.attendees)).toEqual(['anna', 'a']);
+    expect(result.attendees[0].state).toBe('declined');
+  });
+
+  it('reports the waiting list when the event was full before the sign-up', () => {
+    const result = applyAttendanceFor([att('a'), att('b')], person('anna'), 'accepted', 'beat', 2);
+    expect(result.isFull).toBe(true);
+    expect(result.waitlisted).toBe(true);
+  });
+
+  it('does not report the waiting list on an event with a free seat, nor for somebody already accepted', () => {
+    expect(applyAttendanceFor([att('a')], person('anna'), 'accepted', 'beat', 2).waitlisted).toBe(false);
+    const already = applyAttendanceFor([att('anna'), att('a')], person('anna'), 'accepted', 'beat', 2);
+    expect(already.isFull).toBe(true);
+    expect(already.waitlisted).toBe(false);
+  });
+
+  it('never reports the waiting list for a cancellation', () => {
+    expect(applyAttendanceFor([att('a'), att('b')], person('anna'), 'declined', 'beat', 2).waitlisted).toBe(false);
+  });
+
+  it('stamps actedByKey when a delegate answers', () => {
+    const result = applyAttendanceFor([], person('anna'), 'accepted', 'beat', 0);
+    expect(result.attendees[0].actedByKey).toBe('beat');
+  });
+
+  it('clears actedByKey when the subject answers themself', () => {
+    const result = applyAttendanceFor([att('anna', 'accepted', 'beat')], person('anna'), 'declined', 'anna', 0);
+    expect(result.attendees[0]).toEqual({ person: person('anna'), state: 'declined' });
+    expect('actedByKey' in result.attendees[0]).toBe(false);
+  });
+
+  it('keeps the stored person of an existing entry and leaves everybody else untouched', () => {
+    const stored = { ...att('anna', 'declined'), person: { ...person('anna'), name1: 'Anna' } };
+    const other = att('a');
+    const result = applyAttendanceFor([stored, other], person('anna'), 'accepted', 'beat', 0);
+    expect(result.attendees[0]).toBe(other);
+    expect(result.attendees[1].person.name1).toBe('Anna');
+  });
+
+  it('does not mutate its input', () => {
+    const input = [att('anna', 'declined')];
+    applyAttendanceFor(input, person('anna'), 'accepted', 'beat', 0);
+    expect(input).toEqual([att('anna', 'declined')]);
+  });
+
+  it('treats an undefined list as empty', () => {
+    expect(keys(applyAttendanceFor(undefined, person('anna'), 'accepted', 'anna', 0).attendees)).toEqual(['anna']);
+  });
+});
+
+describe('stampActedBy', () => {
+  const person = (key: string): AvatarInfo =>
+    ({ key, name1: key, name2: '', modelType: 'person', type: '', subType: '', label: '' });
+
+  it('stamps only the subject entry for a delegate', () => {
+    const other: Attendee = { person: person('a'), state: 'accepted' };
+    const result = stampActedBy([other, { person: person('anna'), state: 'invited' }], 'anna', 'beat');
+    expect(result[0]).toBe(other);
+    expect(result[1].actedByKey).toBe('beat');
+  });
+
+  it('removes the stamp for a self answer and returns the same list when there is nothing to remove', () => {
+    const stamped = stampActedBy([{ person: person('anna'), state: 'accepted', actedByKey: 'beat' }], 'anna', 'anna');
+    expect('actedByKey' in stamped[0]).toBe(false);
+    const plain: Attendee[] = [{ person: person('anna'), state: 'accepted' }];
+    expect(stampActedBy(plain, 'anna', undefined)).toBe(plain);
+  });
+});
+
+describe('grantorAttendOptions', () => {
+  const groupEvent = (over: Partial<CalEventModel> = {}): CalEventModel =>
+    ({ ...new CalEventModel('t1'), okey: 'e1', startDate: '20990101', calendars: ['group-cal'], ...over });
+  const grantor = (key: string, over: Partial<{ hasInvitation: boolean; mayJoinOpen: boolean }> = {}) =>
+    ({ key, name: key.toUpperCase(), hasInvitation: false, mayJoinOpen: true, ...over });
+
+  it('leaves out a grantor outside the group without an invitation', () => {
+    expect(grantorAttendOptions(groupEvent(), [grantor('anna', { mayJoinOpen: false })])).toEqual([]);
+  });
+
+  it('includes a grantor who holds an invitation', () => {
+    expect(grantorAttendOptions(groupEvent(), [grantor('anna', { mayJoinOpen: false, hasInvitation: true })]))
+      .toEqual([{ key: 'anna', name: 'ANNA', state: 'invited' }]);
+  });
+
+  it('includes a group member with the current attendance state', () => {
+    const event = groupEvent({ attendees: [{ person: { key: 'anna', name1: 'Anna', name2: '', modelType: 'person', type: '', subType: '', label: '' }, state: 'accepted' }] });
+    expect(grantorAttendOptions(event, [grantor('anna'), grantor('max', { mayJoinOpen: false })]))
+      .toEqual([{ key: 'anna', name: 'ANNA', state: 'accepted' }]);
+  });
+
+  it('offers nothing on a closed event', () => {
+    expect(grantorAttendOptions(groupEvent({ state: 'cancelled' }), [grantor('anna', { hasInvitation: true })])).toEqual([]);
   });
 });

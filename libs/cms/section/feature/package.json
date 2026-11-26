@@ -63,6 +63,9 @@
     "@okr/content-notice-data-access": "*",
     "@okr/content-notice-util": "*",
     "@okr/cms-icon-feature": "*",
-    "@okr/relationship-responsibility-util": "*"
+    "@okr/relationship-responsibility-util": "*",
+    "@okr/relationship-mandate-data-access": "*",
+    "@okr/relationship-mandate-feature": "*",
+    "@okr/relationship-mandate-util": "*"
   }
 }

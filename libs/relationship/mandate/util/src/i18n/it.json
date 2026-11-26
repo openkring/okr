@@ -42,6 +42,8 @@
   "revoke_error": "Non ha funzionato. Riprova.",
   "person_unknown": "Persona sconosciuta",
   "cancel": "Annulla",
+  "mandate_inactive": "La delega di {name} non è più valida.",
+  "mandate_check_error": "Non è stato possibile verificare la delega in questo momento. Riprova.",
   "validation": {
     "grantee_required": "Scegli chi riceve la delega.",
     "grantee_is_grantor": "Non puoi conferire una delega a te stesso.",

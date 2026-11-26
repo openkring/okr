@@ -1,8 +1,8 @@
 import type { EventInput } from '@fullcalendar/core';
 
 import { DEFAULT_CALEVENT_TYPE, PERSONAL_CALENDAR_KEY, TRIP_CALEVENT_TYPE } from '@okr/shared-constants';
-import { Attendee, AvatarInfo, CalendarModel, CalEventModel, CategoryListModel, InvitationState } from '@okr/shared-models';
-import { addTime, applyInvitationAnswer, defaultItemName, convertDateFormatToString, DateFormat, getAttendee, getEventLocationName, getIsoDateTime, isCaleventAttendanceClosed, isPastDate, isType, toAttendeeState } from '@okr/shared-util-core';
+import { Attendee, AvatarInfo, CalendarModel, CalEventModel, CategoryListModel, InvitationModel, InvitationState } from '@okr/shared-models';
+import { addTime, applyInvitationAnswer, defaultItemName, convertDateFormatToString, DateFormat, getAttendanceState, getAttendee, getEventLocationName, getIsoDateTime, isCaleventAttendanceClosed, isPastDate, isType, toAttendeeState } from '@okr/shared-util-core';
 
 export { applyInvitationAnswer, toAttendeeState };
 
@@ -533,6 +533,102 @@ export function isCaleventFull(calevent: CalEventModel): boolean {
   const cap = calevent.maxAttendees ?? 0;
   if (cap <= 0) return false;
   return (calevent.attendees ?? []).filter(attendee => attendee.state === 'accepted').length >= cap;
+}
+
+/**
+ * The attendee list with `actedByKey` set on the subject's entry when somebody else answered for them
+ * (Vollmacht, spec 1.180 §4.3), or removed when the subject answered themself (or no actor is given).
+ * Everybody else's entries are carried over untouched. Returns the same array when nothing changes,
+ * so a self answer on a list that never carried a stamp writes exactly what it wrote before.
+ *
+ * @param attendees  the list after the answer was applied
+ * @param subjectKey personKey of the person whose entry it is
+ * @param actedByKey personKey of who answered; undefined or equal to `subjectKey` = a self answer
+ */
+export function stampActedBy(attendees: Attendee[], subjectKey: string, actedByKey: string | undefined): Attendee[] {
+  const delegated = !!actedByKey && actedByKey !== subjectKey;
+  const current = attendees.find(attendee => attendee.person.key === subjectKey);
+  if (!current) return attendees;
+  if (!delegated && !('actedByKey' in current)) return attendees;
+  const stamped: Attendee = { ...current };
+  if (delegated) stamped.actedByKey = actedByKey;
+  else delete stamped.actedByKey;
+  return attendees.map(attendee => attendee === current ? stamped : attendee);
+}
+
+/**
+ * One person's sign-up or cancellation on an event, written by them or for them (Vollmacht, spec 1.180 §5.2).
+ *
+ * The same two rules as every other attendance write, both inherited from the participant cap, which
+ * is derived from ARRAY ORDER (`splitAttendees`):
+ *
+ * - accepting from a non-accepted state moves the person to the END — re-joining a queue means
+ *   joining at the back, never reclaiming an early position;
+ * - every other answer is written in place.
+ *
+ * An existing entry keeps its stored `person`; a new one gets `subject`. `actedByKey` is stamped only
+ * when somebody else answers and removed when the subject answers themself (see {@link stampActedBy}).
+ *
+ * Pure and non-mutating: the caller writes the returned list.
+ *
+ * @param attendees    `calevent.attendees`; undefined on a legacy document
+ * @param subject      the person signed up or off
+ * @param newState     the answer
+ * @param actedByKey   personKey of who gives the answer (the subject's own key for a self answer)
+ * @param maxAttendees `calevent.maxAttendees`; 0, negative or undefined = unrestricted
+ * @returns the new list; `isFull` = the cap was reached BEFORE this write; `waitlisted` = this
+ *          sign-up lands on the waiting list (it is still recorded)
+ */
+export function applyAttendanceFor(
+  attendees: Attendee[] | undefined,
+  subject: AvatarInfo,
+  newState: 'accepted' | 'declined',
+  actedByKey: string,
+  maxAttendees: number | undefined,
+): { attendees: Attendee[]; waitlisted: boolean; isFull: boolean } {
+  const all = attendees ?? [];
+  const cap = maxAttendees ?? 0;
+  const isFull = cap > 0 && all.filter(attendee => attendee.state === 'accepted').length >= cap;
+  const current = all.find(attendee => attendee.person.key === subject.key);
+  const waitlisted = newState === 'accepted' && current?.state !== 'accepted' && isFull;
+  let next: Attendee[];
+  if (!current) {
+    next = [...all, { person: subject, state: newState }];
+  } else if (newState === 'accepted' && current.state !== 'accepted') {
+    next = [...all.filter(attendee => attendee !== current), { ...current, state: newState }];
+  } else {
+    next = all.map(attendee => attendee === current ? { ...attendee, state: newState } : attendee);
+  }
+  return { attendees: stampActedBy(next, subject.key, actedByKey), waitlisted, isFull };
+}
+
+/** ActionSheet action prefixes of a sign-up / cancellation for a grantor; the grantor's personKey follows. */
+export const SUBSCRIBE_FOR = 'calevent.subscribeFor.';
+export const UNSUBSCRIBE_FOR = 'calevent.unsubscribeFor.';
+
+/**
+ * What the attendance checks need about one grantor (spec 1.180 §5.2), loaded by the stores per active
+ * `calevent.attend` Vollmacht: first name, the calendars of the orgs they belong to, and their invitations.
+ */
+export type GrantorContext = { key: string; name: string; calendarKeys: string[]; invitations: InvitationModel[] };
+
+/** One person the current user may sign up or off for (Vollmacht), as the ActionSheet needs it. */
+export type GrantorAttendCandidate = { key: string; name: string; hasInvitation: boolean; mayJoinOpen: boolean };
+
+/**
+ * The grantors for whom the current user may offer «Für {name} anmelden / abmelden» on this event, with
+ * each one's current attendance state (`'invited'` when they are not on the list). Every check that
+ * runs for the user themself runs for the GRANTOR here (spec 1.180 §5.2): `canAttendCalevent` with
+ * the grantor's invitation, the grantor's group reach and the grantor's own attendee entry.
+ *
+ * @param calevent the event
+ * @param grantors per grantor: first name, whether they hold an invitation to this event, and
+ *                 `mayJoinOpenCalevent` evaluated with THEIR calendars
+ */
+export function grantorAttendOptions(calevent: CalEventModel, grantors: GrantorAttendCandidate[]): { key: string; name: string; state: string }[] {
+  return grantors
+    .filter(g => canAttendCalevent(calevent, g.hasInvitation, g.mayJoinOpen, isCaleventAttendee(calevent, g.key)))
+    .map(g => ({ key: g.key, name: g.name, state: getAttendanceState(calevent, g.key) ?? 'invited' }));
 }
 
 /**

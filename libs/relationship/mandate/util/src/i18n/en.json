@@ -42,6 +42,8 @@
   "revoke_error": "That did not work. Please try again.",
   "person_unknown": "Unknown person",
   "cancel": "Cancel",
+  "mandate_inactive": "The proxy from {name} is no longer valid.",
+  "mandate_check_error": "The proxy could not be checked just now. Please try again.",
   "validation": {
     "grantee_required": "Please choose who receives the proxy.",
     "grantee_is_grantor": "You cannot give a proxy to yourself.",

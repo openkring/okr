@@ -19,7 +19,7 @@ import { Menu } from '@okr/cms-menu-feature';
 import { AvatarDisplay } from '@okr/avatar-ui';
 import { isAdminMember } from '@okr/subject-group-util';
 
-import { CalEventDurationPipe, canAttendCalevent, isCaleventAttendee, courseKeysOf, courseOfKey, courseSeriesPatch, isCourseOver, isCourseTrainerFor, countPollAcceptances, countPollResponses, formatDateTimeLabel, getCalEventCssClass, isAttendanceClosed, isPastCalevent, isPersonalCalendarName, isPersonalCalevent, mayJoinOpenCalevent, newCalEvent, resetActivity, resetAttendance, resolveCalendars, upcomingOccurrences } from '@okr/calendar-calevent-util';
+import { CalEventDurationPipe, canAttendCalevent, isCaleventAttendee, courseKeysOf, courseOfKey, courseSeriesPatch, isCourseOver, isCourseTrainerFor, countPollAcceptances, countPollResponses, formatDateTimeLabel, getCalEventCssClass, isAttendanceClosed, isPastCalevent, isPersonalCalendarName, isPersonalCalevent, mayJoinOpenCalevent, newCalEvent, SUBSCRIBE_FOR, UNSUBSCRIBE_FOR, resetActivity, resetAttendance, resolveCalendars, upcomingOccurrences } from '@okr/calendar-calevent-util';
 import { OrganiserContactModal, showCalendarSync } from '@okr/calendar-calevent-ui';
 import { CalendarFeedService } from '@okr/calendar-calevent-data-access';
 import type { OrganiserContactAction, OrganiserContactResult } from '@okr/calendar-calevent-ui';
@@ -1074,6 +1074,17 @@ export class CalEventList implements OnInit {
         actionSheetOptions.buttons.push(createActionSheetButton('calevent.unsubscribe', this.store.i18n.invitation_unsubscribe(), this.imgixBaseUrl, 'cancel'));
       }
     }
+    // Vollmacht (spec 1.180 §5.2): after my own entries, one pair per grantor — every check ran for the grantor
+    for (const option of this.store.grantorAttendOptions(calevent)) {
+      if (option.state !== 'accepted') {
+        actionSheetOptions.buttons.push(createActionSheetButton(`${SUBSCRIBE_FOR}${option.key}`,
+          fill(this.store.mandateI18n.attend_for(), { name: option.name }), this.imgixBaseUrl, 'checkbox-circle'));
+      }
+      if (option.state !== 'declined') {
+        actionSheetOptions.buttons.push(createActionSheetButton(`${UNSUBSCRIBE_FOR}${option.key}`,
+          fill(this.store.mandateI18n.unattend_for(), { name: option.name }), this.imgixBaseUrl, 'cancel'));
+      }
+    }
 
     // a trainer with an agreement active on the event's date records his work here (spec 1.167 §7.3)
     if (work) {
@@ -1165,6 +1176,15 @@ export class CalEventList implements OnInit {
       await actionSheet.present();
       const { data } = await actionSheet.onDidDismiss();
       if (!data) return;
+      const action = String(data.action ?? '');
+      if (action.startsWith(SUBSCRIBE_FOR)) {
+        await this.store.changeAttendanceFor(calEvent, action.substring(SUBSCRIBE_FOR.length), 'accepted');
+        return;
+      }
+      if (action.startsWith(UNSUBSCRIBE_FOR)) {
+        await this.store.changeAttendanceFor(calEvent, action.substring(UNSUBSCRIBE_FOR.length), 'declined');
+        return;
+      }
       switch (data.action) {
         case 'calevent.subscribe':
           await this.store.subscribe(calEvent);

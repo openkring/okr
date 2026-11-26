@@ -42,6 +42,8 @@
   "revoke_error": "No ha funcionado. Inténtalo de nuevo.",
   "person_unknown": "Persona desconocida",
   "cancel": "Cancelar",
+  "mandate_inactive": "El poder de {name} ya no es válido.",
+  "mandate_check_error": "No se ha podido comprobar el poder ahora mismo. Inténtalo de nuevo.",
   "validation": {
     "grantee_required": "Elige quién recibe el poder.",
     "grantee_is_grantor": "No puedes otorgarte un poder a ti mismo.",

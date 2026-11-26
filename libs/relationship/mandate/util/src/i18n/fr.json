@@ -42,6 +42,8 @@
   "revoke_error": "Cela n’a pas fonctionné. Réessaie, s’il te plaît.",
   "person_unknown": "Personne inconnue",
   "cancel": "Annuler",
+  "mandate_inactive": "La procuration de {name} n’est plus valable.",
+  "mandate_check_error": "La procuration n’a pas pu être vérifiée pour l’instant. Réessaie, s’il te plaît.",
   "validation": {
     "grantee_required": "Choisis qui reçoit la procuration.",
     "grantee_is_grantor": "Tu ne peux pas te donner une procuration à toi-même.",

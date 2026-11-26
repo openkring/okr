@@ -1,5 +1,5 @@
 import { inject, Injectable } from '@angular/core';
-import { doc, runTransaction } from 'firebase/firestore';
+import { deleteField, doc, runTransaction } from 'firebase/firestore';
 import { firstValueFrom, Observable } from 'rxjs';
 
 import { ENV } from '@okr/shared-config';
@@ -8,7 +8,7 @@ import { I18nService } from '@okr/shared-i18n';
 import { AvatarInfo, CalEventCollection, CalEventModel, CommentCollection, InvitationCollection, InvitationModel, InvitationModelName, InvitationState, PersonModelName, UserModel } from '@okr/shared-models';
 import { DateFormat, getFullName, getSystemQuery, getTodayStr, removeKeyFromOkrModel } from '@okr/shared-util-core';
 
-import { applyInvitationAnswer, removeInvitedAttendee } from '@okr/calendar-calevent-util';
+import { applyAttendanceFor, applyInvitationAnswer, removeInvitedAttendee, stampActedBy } from '@okr/calendar-calevent-util';
 import { createComment } from '@okr/comment-util';
 import { getInvitationIndex, getLockCommentKey, getResponseComment, isInvitationAnswerable, normaliseInvitation } from '@okr/relationship-invitation-util';
 
@@ -82,17 +82,28 @@ export class InvitationService {
    * @param newState   the invitee's answer
    * @param currentUser the responding user — also the comment's author
    * @param note       optional free text the invitee added to their answer
+   * @param actedByKey personKey of who answers FOR the invitee under a Vollmacht (spec 1.180 §4.3); omitted or equal
+   *                   to `inviteeKey` = the invitee answers themself. Stamped on the invitation and the attendee entry,
+   *                   and removed from both on a self answer. The comment author stays `currentUser` (the one acting).
    * @returns true when the answer was written, false when the invitation is locked
    */
-  public async respond(invitation: InvitationModel, newState: InvitationState, currentUser?: UserModel, note?: string): Promise<boolean> {
+  public async respond(invitation: InvitationModel, newState: InvitationState, currentUser?: UserModel, note?: string, actedByKey?: string): Promise<boolean> {
     if (invitation.isLocked) return false;
+    const delegatedBy = actedByKey && actedByKey !== invitation.inviteeKey ? actedByKey : undefined;
+    const hadStamp = !!invitation.actedByKey;
     invitation.state = newState;
     invitation.respondedAt = getTodayStr(DateFormat.StoreDateTime);
+    if (delegatedBy) invitation.actedByKey = delegatedBy;
+    else delete invitation.actedByKey;
     // deliberately without currentUser: that would add FirestoreService's generic 'record changed'
     // comment on top of the specific one below, and every answer would show up twice in the thread
     await this.update(invitation);
+    // update() merges, so an omitted field stays: a self answer after a delegated one removes the stamp explicitly
+    if (!delegatedBy && hadStamp) {
+      await this.firestoreService.updateFields(InvitationCollection, invitation.okey, { actedByKey: deleteField() }, this.i18n.update_error());
+    }
     await this.addResponseComment(invitation, getResponseComment(newState, note), currentUser);
-    await this.recordAnswerOnCalevent(invitation, newState);
+    await this.recordAnswerOnCalevent(invitation, newState, delegatedBy);
     return true;
   }
 
@@ -122,8 +133,12 @@ export class InvitationService {
    *
    * Best-effort by design: an event that no longer exists (deleted while an invitation survived)
    * is skipped rather than failing the response the invitee just gave.
+   *
+   * A delegated yes/no (`actedByKey`, Vollmacht) goes through `applyAttendanceFor`, the write every sign-up for
+   * somebody else uses; a self answer keeps `applyInvitationAnswer` and only loses a stamp an earlier delegated
+   * answer may have left (`stampActedBy` returns the list unchanged when there is none).
    */
-  private async recordAnswerOnCalevent(invitation: InvitationModel, newState: InvitationState): Promise<void> {
+  private async recordAnswerOnCalevent(invitation: InvitationModel, newState: InvitationState, actedByKey?: string): Promise<void> {
     if (!invitation.caleventKey || !invitation.inviteeKey) return;
     const ref = doc(this.firestoreService.firestore, `${CalEventCollection}/${invitation.caleventKey}`);
     const person: AvatarInfo = {
@@ -138,8 +153,12 @@ export class InvitationService {
     await runTransaction(this.firestoreService.firestore, async (transaction) => {
       const snapshot = await transaction.get(ref);
       if (!snapshot.exists()) return;
-      const attendees = (snapshot.data() as CalEventModel).attendees ?? [];
-      transaction.update(ref, { attendees: applyInvitationAnswer(attendees, person, newState) });
+      const calevent = snapshot.data() as CalEventModel;
+      const attendees = calevent.attendees ?? [];
+      const next = actedByKey && (newState === 'accepted' || newState === 'declined')
+        ? applyAttendanceFor(attendees, person, newState, actedByKey, calevent.maxAttendees).attendees
+        : stampActedBy(applyInvitationAnswer(attendees, person, newState), person.key, actedByKey);
+      transaction.update(ref, { attendees: next });
     });
   }
 
