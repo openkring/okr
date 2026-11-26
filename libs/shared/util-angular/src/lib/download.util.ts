@@ -11,6 +11,7 @@ import { FirebaseStorage, deleteObject, getDownloadURL, ref } from "firebase/sto
 import { DateFormat, getTodayStr, toStoragePath } from '@okr/shared-util-core';
 
 import { error, showToast } from './alert.util';
+import { recoverFromStaleChunk } from './chunk-load-error-handler';
 // import * as papa from 'papaparse'; // for csv conversions
 
 /**
@@ -247,6 +248,10 @@ export function downloadFileAndStore(file: File) {
     try {
       await Browser.open({ url: downloadUrl });
     } catch (ex) {
+      // Browser.open lazy-imports its web implementation; an app left open across a deploy asks
+      // for a chunk that no longer exists. Reload into the current build instead of a dead toast
+      // that every further tap repeats (SCS-KX, SCS-KW).
+      if (recoverFromStaleChunk(ex)) return;
       // only the scheme: a download url can carry an access token
       const scheme = /^[a-z][a-z0-9+.-]*:/i.exec(downloadUrl)?.[0] ?? 'none';
       captureException(ex, { tags: { download: 'browser-open-failed' }, extra: { scheme } });
