@@ -12,11 +12,11 @@ import { onRequest } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions/v2';
 import { projectID } from 'firebase-functions/params';
 import { getFirestore } from 'firebase-admin/firestore';
-import { applyInvitationAnswer, getEventLocationName } from '@okr/shared-util-core';
+import { getEventLocationName } from '@okr/shared-util-core';
 import { AvatarInfo, Attendee } from '@okr/shared-models';
 
 import { isAnswerChoice, invitationLinkSecret, mailingAnswerFunctionUrl, verifyMailing } from '../calendar/answer-link';
-import { answerCommentDoc } from '../calendar/answer';
+import { answerCommentDoc, selfAnswerAttendees, selfAnswerInvitationFields } from '../calendar/answer';
 import { brandOf, NO_TENANT_LINKS, tenantLinks } from '../calendar/deliver';
 import { AnswerableEvent, eventInTenant, InvitationDoc } from '../calendar/invitation';
 import { answerResultPage, Brand, eventWhen, MAILING_COMMENT_MAX, mailingAnswerPage, MailingAnswerEvent, PAGE_CONTENT_SLOT } from '../calendar/mail';
@@ -190,11 +190,12 @@ export const mailingAnswer = onRequest(
         const invData = freshInv?.exists ? (freshInv.data() as InvitationDoc) : undefined;
         const invLocked = invitationRefusal(invData);
         if (invLocked) return { refusal: invLocked };
-        const attendees = applyInvitationAnswer(freshEvent.data()?.['attendees'] as Attendee[] | undefined, person, state);
+        // the person's own answer: a stamp left by an earlier answer under a Vollmacht goes (spec 1.180)
+        const attendees = selfAnswerAttendees(freshEvent.data()?.['attendees'] as Attendee[] | undefined, person, state);
         tx.update(eventRef, { attendees });
         if (invRef && invData && !invData.isArchived) {
           const invitationKey = invRef.id;
-          tx.update(invRef, { state, respondedAt: now });
+          tx.update(invRef, selfAnswerInvitationFields(state, now));
           tx.set(db.collection('comments').doc(), answerCommentDoc(invitationKey, personKey, authorName, state, now, tenantId));
         }
         return { saved: true };

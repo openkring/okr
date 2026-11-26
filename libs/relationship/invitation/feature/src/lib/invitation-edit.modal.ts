@@ -3,13 +3,15 @@ import { IonAccordionGroup, IonCard, IonCardContent, IonContent, ModalController
 
 import { InvitationModel, InvitationModelName, RoleName, UserModel } from '@okr/shared-models';
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
-import { coerceBoolean, hasRole, safeStructuredClone } from '@okr/shared-util-core';
+import { coerceBoolean, fill, hasRole, safeStructuredClone } from '@okr/shared-util-core';
 import { ModelSelectService, AppStore } from '@okr/shared-feature';
 
 import { CommentsAccordion } from '@okr/comment-feature';
 
 import { InvitationAnswer, InvitationAnswerState, InvitationForm } from '@okr/relationship-invitation-ui';
 import { isOwnInvitation, normaliseInvitation } from '@okr/relationship-invitation-util';
+import { MANDATE_I18N_KEYS } from '@okr/relationship-mandate-util';
+import { I18nService } from '@okr/shared-i18n';
 import { dismissOverlay } from '@okr/shared-util-angular';
 import { InvitationStore } from './invitation.store';
 
@@ -30,7 +32,7 @@ import { InvitationStore } from './invitation.store';
     }
     <ion-content class="ion-no-padding">
       @if(canAnswer()) {
-        <okr-invitation-answer [i18n]="store.i18n" [state]="invitation().state" (answered)="answer($event)" />
+        <okr-invitation-answer [i18n]="store.i18n" [state]="invitation().state" [actedFor]="actedFor()" (answered)="answer($event)" />
       }
       @if(currentUser(); as currentUser) {
         @if(formData(); as formData) {
@@ -98,6 +100,16 @@ export class InvitationEditModal {
     loader: ({ params }) => this.store.isAnswerable(params),
   });
   protected readonly canAnswer = computed(() => this.answerable.hasValue() && this.answerable.value());
+  private readonly mandateI18n = inject(I18nService).translateAll({ acted_for: MANDATE_I18N_KEYS.acted_for });
+  /** who answered for the invitee under a Vollmacht (spec 1.180 §4.3); empty for the invitee's own answer */
+  protected readonly actedFor = computed(() => {
+    const invitation = this.invitation();
+    const actedByKey = invitation.actedByKey;
+    if (!actedByKey || actedByKey === invitation.inviteeKey) return '';
+    const actor = this.appStore.getPerson(actedByKey)?.firstName;
+    if (!actor) return '';
+    return fill(this.mandateI18n.acted_for(), { actor, subject: invitation.inviteeFirstName });
+  });
   protected readonly changeConfirmationI18n = computed(() => ({ cancel: this.store.i18n.cancel(), save: this.store.i18n.save()} as ChangeConfirmationI18n));
 
   /******************************* actions *************************************** */

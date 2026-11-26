@@ -1,15 +1,16 @@
 
 import { CUSTOM_ELEMENTS_SCHEMA, Component, OnInit, PLATFORM_ID, computed, effect, inject, input } from '@angular/core';
-import { ActionSheetController, ActionSheetOptions, IonCard, IonCardContent, IonCol, IonGrid, IonLabel, IonRow, ModalController } from '@ionic/angular';
+import { ActionSheetController, ActionSheetOptions, IonCard, IonCardContent, IonChip, IonCol, IonGrid, IonLabel, IonRow, ModalController } from '@ionic/angular';
 
 import { InvitationModel, InvitationsConfig, InvitationsSection, InvitationState } from '@okr/shared-models';
 import { MoreButton, OptionalCardHeader, Spinner } from '@okr/shared-ui';
-import { getAttendanceColor, getAttendanceIcon, hasRole, isPastDate } from '@okr/shared-util-core';
+import { fill, getAttendanceColor, getAttendanceIcon, hasRole, isPastDate } from '@okr/shared-util-core';
 import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, isBrowser } from '@okr/shared-util-angular';
 import { PrettyDatePipe, SvgIconPipe } from '@okr/shared-pipes';
 import { I18nService } from '@okr/shared-i18n';
 import { CALEVENT_I18N_KEYS } from '@okr/calendar-calevent-util';
 import { showCalEventInfo } from '@okr/calendar-calevent-ui';
+import { MANDATE_I18N_KEYS } from '@okr/relationship-mandate-util';
 import { InvitationSectionStore } from './invitations-section.store';
 import { reservedListHeight } from './list-reservation';
 
@@ -36,13 +37,14 @@ import { reservedListHeight } from './list-reservation';
         color: var(--ion-color-medium);
         white-space: normal;
       }
+      .for-marker { margin: 0 0 0 4px; height: 20px; font-size: 0.8em; vertical-align: middle; }
     `,
   ],
   providers: [InvitationSectionStore], 
   imports: [
     SvgIconPipe, PrettyDatePipe,
     OptionalCardHeader, Spinner, MoreButton,
-    IonCard, IonCardContent, IonGrid, IonRow, IonCol, IonLabel
+    IonCard, IonCardContent, IonGrid, IonRow, IonCol, IonLabel, IonChip
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
@@ -66,6 +68,9 @@ import { reservedListHeight } from './list-reservation';
                 </ion-col>
                 <ion-col>
                   <ion-label>{{inv.name}}</ion-label>
+                  @if(isForGrantor(inv)) {
+                    <ion-chip class="for-marker" color="tertiary" [outline]="true">{{ forMarker(inv) }}</ion-chip>
+                  }
                   @if(inv.notes) {
                     <ion-label class="invitation-text">{{ inv.notes }}</ion-label>
                   }
@@ -133,6 +138,12 @@ export class InvitationsSectionComponent implements OnInit {
 
   /** Only the label of the info button — the explainer itself lives in the calevent domain. */
   protected readonly caleventI18n = inject(I18nService).translateAll({ info_open: CALEVENT_I18N_KEYS.info_open });
+  /** The Vollmacht labels: the «für {name}» marker and the two answers in the grantor's name (spec 1.180 §5.2). */
+  protected readonly mandateI18n = inject(I18nService).translateAll({
+    for_marker: MANDATE_I18N_KEYS.for_marker,
+    attend_for: MANDATE_I18N_KEYS.attend_for,
+    unattend_for: MANDATE_I18N_KEYS.unattend_for,
+  });
 
   /** Opens the shared 'Kalender & Einladungen' explainer. */
   protected async showInfo(): Promise<void> {
@@ -193,6 +204,16 @@ export class InvitationsSectionComponent implements OnInit {
       // only the invitee may answer; on the 'all' scope the rows of other people are read-only,
       // and a locked invitation (or one whose event was cancelled, locked or is over) is nobody's
       // to answer any more
+      if (this.isForGrantor(inv) && answerable) {
+        // a grantor's invitation: the full checks (Vollmacht re-read included) run again when the answer is chosen
+        const name = inv.inviteeFirstName;
+        if (inv.state !== 'accepted') {
+          actionSheetOptions.buttons.push(createActionSheetButton('invitation.subscribeFor', fill(this.mandateI18n.attend_for(), { name }), this.imgixBaseUrl, 'checkbox-circle'));
+        }
+        if (inv.state !== 'declined') {
+          actionSheetOptions.buttons.push(createActionSheetButton('invitation.unsubscribeFor', fill(this.mandateI18n.unattend_for(), { name }), this.imgixBaseUrl, 'cancel'));
+        }
+      }
       if (inv.inviteeKey === this.currentUser()?.personKey && answerable) {
         if (inv.state !== 'accepted') {
           actionSheetOptions.buttons.push(createActionSheetButton('invitation.subscribe', this.store.i18n.invitation_subscribe(), this.imgixBaseUrl, 'checkbox-circle'));
@@ -228,11 +249,27 @@ export class InvitationsSectionComponent implements OnInit {
         case 'invitation.unsubscribe':
           await this.store.changeState(invitation, 'declined');
           break;
+        case 'invitation.subscribeFor':
+          await this.store.answerFor(invitation, 'accepted');
+          break;
+        case 'invitation.unsubscribeFor':
+          await this.store.answerFor(invitation, 'declined');
+          break;
         case 'invitation.openCalevent':
           await this.store.openCalevent(invitation);
           break;
       }
     }
+  }
+
+  /** A grantor's invitation in the 'my' / 'open' scope: someone else's, which I may answer under a Vollmacht. */
+  protected isForGrantor(inv: InvitationModel): boolean {
+    const scope = this.scope();
+    return (scope === 'my' || scope === 'open') && this.store.isGrantorInvitation(inv);
+  }
+
+  protected forMarker(inv: InvitationModel): string {
+    return fill(this.mandateI18n.for_marker(), { name: inv.inviteeFirstName });
   }
 
   protected getAttendanceIcon(state: InvitationState): string {

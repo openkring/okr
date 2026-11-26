@@ -11,10 +11,10 @@
 import { onRequest } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions/v2';
 import { projectID } from 'firebase-functions/params';
-import { DocumentReference, getFirestore } from 'firebase-admin/firestore';
+import { DocumentReference, FieldValue, getFirestore } from 'firebase-admin/firestore';
 import { applyInvitationAnswer, getEventLocationName } from '@okr/shared-util-core';
 import { AvatarInfo, Attendee } from '@okr/shared-models';
-import { splitAttendees } from '@okr/calendar-calevent-util';
+import { splitAttendees, stampActedBy } from '@okr/calendar-calevent-util';
 
 import { allowedAnswers, answerFunctionUrl, invitationLinkSecret, isAnswerChoice } from './answer-link';
 import { brandOf, eventUrl, NO_TENANT_LINKS, tenantLinks } from './deliver';
@@ -84,6 +84,19 @@ export function answerCommentDoc(invitationKey: string, personKey: string, autho
   };
 }
 
+/**
+ * The invitee's own answer on the event's attendee list. An earlier answer given for them under a Vollmacht
+ * (spec 1.180) left `actedByKey` on their entry; their own answer replaces it, so the stamp goes too.
+ */
+export function selfAnswerAttendees(attendees: Attendee[] | undefined, person: AvatarInfo, state: 'accepted' | 'declined'): Attendee[] {
+  return stampActedBy(applyInvitationAnswer(attendees, person, state), person.key, person.key);
+}
+
+/** The invitation fields of the invitee's own answer; a delegated answer's `actedByKey` is deleted (spec 1.180). */
+export function selfAnswerInvitationFields(state: 'accepted' | 'declined', now: string): { state: 'accepted' | 'declined'; respondedAt: string; actedByKey: FieldValue } {
+  return { state, respondedAt: now, actedByKey: FieldValue.delete() };
+}
+
 interface FullInvitation extends InvitationDoc { inviteeFirstName?: string; inviteeLastName?: string }
 
 /** GET reads the query (the email link), POST only the form body (the confirm page). */
@@ -116,8 +129,8 @@ async function recordAnswer(invRef: DocumentReference, eventRef: DocumentReferen
       todayStoreDate(),
     );
     if (refusal) return { refusal };
-    const attendees = applyInvitationAnswer(freshEvent.data()?.['attendees'] as Attendee[] | undefined, person, state);
-    tx.update(invRef, { state, respondedAt: now });
+    const attendees = selfAnswerAttendees(freshEvent.data()?.['attendees'] as Attendee[] | undefined, person, state);
+    tx.update(invRef, selfAnswerInvitationFields(state, now));
     tx.update(eventRef, { attendees });
     tx.set(db.collection('comments').doc(), answerCommentDoc(invitationKey, person.key, authorName, state, now, tenantId));
     return { waiting: splitAttendees(attendees, freshEvent.data()?.['maxAttendees'] as number | undefined).waiting.some((attendee) => attendee.person.key === person.key) };

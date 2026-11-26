@@ -11,6 +11,7 @@ import { confirm, notify } from '@okr/shared-util-angular';
 import { I18nService } from '@okr/shared-i18n';
 
 import { InvitationService } from '@okr/relationship-invitation-data-access';
+import { GrantorAttendanceService, MandateStore } from '@okr/relationship-mandate-feature';
 import { getInvitationIndex, isInvitation, sortInvitees, INVITATION_I18N_KEYS, InvitationI18n } from '@okr/relationship-invitation-util';
 
 export type { InvitationI18n };
@@ -46,10 +47,14 @@ export const InvitationStore = signalStore(
     modalController: inject(ModalController),
     modelSelectService: inject(ModelSelectService),
     alertController: inject(AlertController),
-    i18nService: inject(I18nService)
+    i18nService: inject(I18nService),
+    grantorAttendance: inject(GrantorAttendanceService),
+    mandateStore: inject(MandateStore),
   })),
   withProps((store) => ({
     i18n: store.i18nService.translateAll(INVITATION_I18N_KEYS),
+    /** the persons whose invitations I may answer today under a family Vollmacht (spec 1.180 §5.2) */
+    grantorKeys: store.mandateStore.grantorKeysFor('invitation.answer'),
 
     invitationsResource: rxResource({
       stream: () => {
@@ -85,8 +90,10 @@ export const InvitationStore = signalStore(
     return {
       filteredInvitations: computed(() =>
         state.allInvitations()?.filter((invitation: InvitationModel) =>
-          // 'my' scope: only invitations addressed to me (invitee), never the ones I sent
-          (!state.inviteeKey() || invitation.inviteeKey === state.inviteeKey()) &&
+          // 'my' scope: only invitations addressed to me (invitee), never the ones I sent — plus the current ones of
+          // the persons whose invitations I may answer under a Vollmacht, mixed in by date
+          (!state.inviteeKey() || invitation.inviteeKey === state.inviteeKey() ||
+            (state.grantorKeys().includes(invitation.inviteeKey) && !isPastDate(invitation.date))) &&
           nameMatches(invitation.index, state.searchTerm()) &&
           nameMatches(invitation.state, state.selectedState()) &&
           chipMatches(invitation.tags, state.selectedTag()))
@@ -220,6 +227,22 @@ export const InvitationStore = signalStore(
         }
         if (!await this.isAnswerable(invitation)) return false;   // the event was cancelled, locked or is over
         const answered = await store.invitationService.respond(invitation, newState, store.currentUser());
+        this.reload();
+        return answered;
+      },
+
+      /** Whether `invitation` is addressed to a person whose invitations I may answer under a Vollmacht. */
+      isGrantorInvitation(invitation: InvitationModel): boolean {
+        return store.grantorKeys().includes(invitation.inviteeKey);
+      },
+
+      /**
+       * Answer a grantor's invitation in my name: the checks, the Vollmacht re-read, the answer and the notice to the
+       * grantor live in `GrantorAttendanceService`, shared with the invitations section.
+       * @returns true when the answer was written
+       */
+      async answerFor(invitation: InvitationModel, newState: 'accepted' | 'declined'): Promise<boolean> {
+        const answered = await store.grantorAttendance.answerInvitationFor(invitation, newState);
         this.reload();
         return answered;
       },

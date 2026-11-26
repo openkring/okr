@@ -10,7 +10,7 @@ import { MANDATE_I18N_KEYS } from '@okr/relationship-mandate-util';
 import { MembershipService } from '@okr/relationship-membership-data-access';
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
-import { CalendarCollection, CalendarModel, CalEventCollection, CalEventModel, CalEventModelName, InvitationCollection, InvitationModel, MandateModel } from '@okr/shared-models';
+import { CalendarCollection, CalendarModel, CalEventCollection, CalEventModel, CalEventModelName, InvitationCollection, InvitationModel, InvitationModelName, MandateAction, MandateModel } from '@okr/shared-models';
 import { lazyService, notify, resourceParams, showToast } from '@okr/shared-util-angular';
 import { fill, getAvatarInfoForCurrentUser, getSystemQuery, newAvatarInfo, warn } from '@okr/shared-util-core';
 
@@ -32,6 +32,8 @@ const NO_CALENDARS: CalendarModel[] = [];
  * - **The write** (`changeAttendanceFor`): it re-reads the Vollmacht from the server, honours the event's lock and
  *   closed state, answers the grantor's invitation if there is one (otherwise it writes `attendees` only), stamps
  *   `actedByKey`, and tells the grantor with a task (§5.3).
+ * - **Answering a grantor's invitation** (`answerInvitationFor`): the same re-read, for `invitation.answer`, used by the
+ *   invitations list and the invitations section.
  */
 @Injectable({ providedIn: 'root' })
 export class GrantorAttendanceService {
@@ -125,24 +127,9 @@ export class GrantorAttendanceService {
     }
     if (isAttendanceClosed(calEvent)) return;
     const context = this.contexts().find(ctx => ctx.key === grantorKey);
-    const held = this.mandateStore.activeAsGrantee()
-      .find(m => m.kind === 'family' && m.grantorKey === grantorKey && m.actions.includes('calevent.attend'));
-    if (!context || !held) return;
-
-    let mandate: MandateModel | undefined;
-    try {
-      mandate = await this.mandateService.readActive(held.okey, this.appStore.tenantId());
-    } catch (ex) {
-      warn(`GrantorAttendanceService.changeAttendanceFor: ${(ex as Error).message}`);
-      await showToast(this.toastController, this.mandateI18n.mandate_check_error());
-      return;
-    }
-    if (!mandate || mandate.kind !== 'family' || mandate.grantorKey !== grantorKey
-        || mandate.granteeKey !== actor.key || !mandate.actions.includes('calevent.attend')) {
-      await showToast(this.toastController, fill(this.mandateI18n.mandate_inactive(), { name: context.name }));
-      this.mandateStore.reload();
-      return;
-    }
+    if (!context) return;
+    const mandate = await this.checkedMandate(grantorKey, actor.key, 'calevent.attend', context.name);
+    if (!mandate) return;
     const subject = newAvatarInfo(grantorKey, context.name, this.appStore.getPerson(grantorKey)?.lastName ?? '', 'person', '', '', '');
 
     // the waiting-list hint is read from the event as loaded, before the write — as for my own sign-up
@@ -171,5 +158,71 @@ export class GrantorAttendanceService {
     } catch (ex) {
       warn(`GrantorAttendanceService.changeAttendanceFor(notice): ${(ex as Error).message}`);
     }
+  }
+
+  /**
+   * Answers the invitation of a grantor in my name (spec 1.180 §5.2, Invitations): the same checks as the invitee's own
+   * answer (lock, event cancelled / locked / over), then the Vollmacht re-read with `invitation.answer`, then
+   * `InvitationService.respond` with me as `actedByKey`, then the notice to the grantor (§5.3).
+   * @returns true when the answer was written
+   */
+  public async answerInvitationFor(invitation: InvitationModel, newState: 'accepted' | 'declined'): Promise<boolean> {
+    const currentUser = this.appStore.currentUser();
+    const actor = currentUser ? getAvatarInfoForCurrentUser(currentUser) : undefined;
+    const grantorKey = invitation.inviteeKey;
+    if (!currentUser || !actor?.key || !grantorKey || grantorKey === actor.key) return false;
+    if (invitation.isLocked) {
+      await notify(this.alertController, this.i18n.invitation_locked_title(), this.i18n.invitation_locked_hint(), this.i18n.ok());
+      return false;
+    }
+    if (!await this.invitationService.isAnswerable(invitation)) return false;   // the event was cancelled, locked or is over
+    const name = this.mandateStore.activeAsGrantee().find(m => m.grantorKey === grantorKey)?.grantor?.name1
+      || invitation.inviteeFirstName || this.appStore.getPerson(grantorKey)?.firstName || '';
+    const mandate = await this.checkedMandate(grantorKey, actor.key, 'invitation.answer', name);
+    if (!mandate) return false;
+
+    if (!await this.invitationService.respond(invitation, newState, currentUser, undefined, actor.key)) return false;
+
+    const subject = newAvatarInfo(grantorKey, invitation.inviteeFirstName || name, invitation.inviteeLastName ?? '', 'person', '', '', '');
+    const text = fill(this.mandateI18n.notice_answer(), {
+      actor: actor.name1,
+      event: `${invitation.name}, ${formatDateTimeLabel(invitation.date)}`,
+    });
+    const link = invitation.caleventKey
+      ? { modelType: CalEventModelName, key: invitation.caleventKey }
+      : { modelType: InvitationModelName, key: invitation.okey };
+    try {
+      await notifyGrantor(await this.taskService(), mandate, actor, subject, text, link);
+    } catch (ex) {
+      warn(`GrantorAttendanceService.answerInvitationFor(notice): ${(ex as Error).message}`);
+    }
+    return true;
+  }
+
+  /**
+   * The family Vollmacht of `grantorKey` to me that includes `action`, re-read from the server. A Vollmacht revoked
+   * elsewhere since the list loaded is refused with a toast (and the store reloads), and so is a check that cannot
+   * reach the server. The re-read Vollmacht must be a family Vollmacht of exactly this grantor, given to me.
+   * @returns the checked Vollmacht, or undefined after the user was told why not
+   */
+  private async checkedMandate(grantorKey: string, granteeKey: string, action: MandateAction, name: string): Promise<MandateModel | undefined> {
+    const held = this.mandateStore.activeAsGrantee()
+      .find(m => m.kind === 'family' && m.grantorKey === grantorKey && m.actions.includes(action));
+    if (!held) return undefined;
+    let mandate: MandateModel | undefined;
+    try {
+      mandate = await this.mandateService.readActive(held.okey, this.appStore.tenantId());
+    } catch (ex) {
+      warn(`GrantorAttendanceService.checkedMandate: ${(ex as Error).message}`);
+      await showToast(this.toastController, this.mandateI18n.mandate_check_error());
+      return undefined;
+    }
+    if (!mandate || mandate.kind !== 'family' || mandate.grantorKey !== grantorKey
+        || mandate.granteeKey !== granteeKey || !mandate.actions.includes(action)) {
+      await showToast(this.toastController, fill(this.mandateI18n.mandate_inactive(), { name }));
+      this.mandateStore.reload();
+      return undefined;
+    }
+    return mandate;
   }
 }

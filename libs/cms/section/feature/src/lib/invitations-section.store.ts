@@ -15,6 +15,7 @@ import { CalEventService } from '@okr/calendar-calevent-data-access';
 import { CalEventViewModal } from '@okr/calendar-calevent-feature';
 import { SECTION_I18N_KEYS } from '@okr/cms-section-util';
 import { InvitationService } from '@okr/relationship-invitation-data-access';
+import { GrantorAttendanceService, MandateStore } from '@okr/relationship-mandate-feature';
 
 
 export type InvitationSectionState = {
@@ -59,9 +60,13 @@ export const InvitationSectionStore = signalStore(
     modalController: inject(ModalController),
     modelSelectService: inject(ModelSelectService),
     alertController: inject(AlertController),
-    i18n: inject(I18nService).translateAll(SECTION_I18N_KEYS)
+    i18n: inject(I18nService).translateAll(SECTION_I18N_KEYS),
+    grantorAttendance: inject(GrantorAttendanceService),
+    mandateStore: inject(MandateStore),
   })),
   withProps((store) => ({
+    /** the persons whose invitations I may answer today under a family Vollmacht (spec 1.180 §5.2) */
+    grantorKeys: store.mandateStore.grantorKeysFor('invitation.answer'),
     invitationsResource: rxResource({
       // gate on currentUser: the invitations collection requires an authenticated tenant user (tenantRead).
       // Firing before auth is restored (notably mobile Safari) yields "Missing or insufficient permissions".
@@ -78,7 +83,9 @@ export const InvitationSectionStore = signalStore(
     // FirestoreService), so card and badge see the same events. Missing/archived event -> null.
     openInvitationEventsResource: rxResource({
       params: resourceParams(() => {
-        const keys = openInvitationsOf(store.invitationsResource.value() ?? [], store.inviteeKey())
+        const invitations = store.invitationsResource.value() ?? [];
+        const keys = [store.inviteeKey(), ...store.grantorKeys()]
+          .flatMap(personKey => personKey ? openInvitationsOf(invitations, personKey) : [])
           .map(inv => inv.caleventKey)
           .filter((key): key is string => !!key);
         return { keys: [...new Set(keys)].sort() };
@@ -137,10 +144,13 @@ export const InvitationSectionStore = signalStore(
           nameMatches(invitation.state, state.selectedState()) &&
           chipMatches(invitation.tags, state.selectedTag()))
       ),
+      // mine, and those of the persons whose invitations I may answer under a Vollmacht, mixed in by date
       myInvitations: computed(() => {
         if (!state.inviteeKey()) return [];
-        return state.allInvitations().filter((invitation: InvitationModel) =>
-          invitation.inviteeKey === state.inviteeKey()) ?? [];
+        const keys = [state.inviteeKey(), ...state.grantorKeys()];
+        return state.allInvitations()
+          .filter((invitation: InvitationModel) => keys.includes(invitation.inviteeKey))
+          .sort((a, b) => (a.date ?? '').localeCompare(b.date ?? ''));
       }),
       // Scope 'open': the invitations the user can still answer. Derived from the raw resource
       // rather than allInvitations() on purpose — isOpenInvitation carries its own (inclusive of
@@ -148,11 +158,15 @@ export const InvitationSectionStore = signalStore(
       // notification badge counts with and the push gate mirrors, so card, badge and push cannot
       // drift apart. While the events load, the last resolved map is held; an invitation whose event
       // is not in it is left out.
-      openInvitations: computed(() =>
-        countableInvitationsOf(
-          state.invitationsResource.value() ?? [],
-          state.inviteeKey(),
-          state.openInvitationEvents())),
+      // The grantors' open invitations (Vollmacht) are mixed in by date; the badge in AppStore keeps counting only mine.
+      openInvitations: computed(() => {
+        if (!state.inviteeKey()) return [];
+        const invitations = state.invitationsResource.value() ?? [];
+        const events = state.openInvitationEvents();
+        return [state.inviteeKey(), ...state.grantorKeys()]
+          .flatMap(personKey => countableInvitationsOf(invitations, personKey, events))
+          .sort((a, b) => (a.date ?? '').localeCompare(b.date ?? ''));
+      }),
     }
   }),
 
@@ -201,6 +215,17 @@ export const InvitationSectionStore = signalStore(
       /** Whether the invitation can still be answered: the one rule in `InvitationService`. */
       async isAnswerable(invitation: InvitationModel): Promise<boolean> {
         return store.invitationService.isAnswerable(invitation);
+      },
+
+      /** Whether `invitation` is addressed to a person whose invitations I may answer under a Vollmacht. */
+      isGrantorInvitation(invitation: InvitationModel): boolean {
+        return invitation.inviteeKey !== store.inviteeKey() && store.grantorKeys().includes(invitation.inviteeKey);
+      },
+
+      /** Answer a grantor's invitation in my name — checks, Vollmacht re-read and notice in GrantorAttendanceService. */
+      async answerFor(invitation: InvitationModel, newState: 'accepted' | 'declined'): Promise<void> {
+        await store.grantorAttendance.answerInvitationFor(invitation, newState);
+        this.reload();
       },
 
       /** Opens the read-only view of the calevent the invitation belongs to. */

@@ -1,11 +1,11 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, effect, inject, input, linkedSignal, signal } from '@angular/core';
-import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar, ModalController } from '@ionic/angular';
+import { ActionSheetController, ActionSheetOptions, IonButton, IonButtons, IonChip, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList, IonMenuButton, IonPopover, IonTitle, IonToolbar, ModalController } from '@ionic/angular';
 import { RoleName, InvitationModel } from '@okr/shared-models';
 import { PrettyDatePipe, SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter } from '@okr/shared-ui';
 import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, error } from '@okr/shared-util-angular';
-import { getItemLabel, getYearList, hasRole, contextMenuId } from '@okr/shared-util-core';
+import { fill, getItemLabel, getYearList, hasRole, contextMenuId } from '@okr/shared-util-core';
 import { I18nService, TranslatePipe } from '@okr/shared-i18n';
 
 import { Menu, MenuItemsStore } from '@okr/cms-menu-feature';
@@ -15,6 +15,7 @@ import { CALEVENT_I18N_KEYS } from '@okr/calendar-calevent-util';
 import { showCalEventInfo } from '@okr/calendar-calevent-ui';
 
 import { createPersonAvatar, isOwnInvitation } from '@okr/relationship-invitation-util';
+import { MANDATE_I18N_KEYS } from '@okr/relationship-mandate-util';
 import { InvitationStore } from './invitation.store';
 
 type InvitationSortField = 'date' | 'name' | 'invitee' | 'inviter' | 'state';
@@ -26,10 +27,10 @@ type InvitationSortField = 'date' | 'name' | 'invitee' | 'inviter' | 'state';
     AsyncPipe, SvgIconPipe, PrettyDatePipe, TranslatePipe,
     EmptyList, ListFilter, AvatarDisplay, Menu,
     IonHeader, IonToolbar, IonButtons, IonButton, IonTitle, IonMenuButton, IonIcon,
-    IonLabel, IonContent, IonItem, IonList, IonPopover
+    IonLabel, IonContent, IonItem, IonList, IonPopover, IonChip
   ],
   providers: [InvitationStore],
-  styles: [`.clickable { cursor: pointer; user-select: none; }`],
+  styles: [`.clickable { cursor: pointer; user-select: none; }`, `.for-marker { margin: 0 0 0 4px; height: 22px; font-size: 0.8em; }`],
   template: `
   <ion-header>
     <!-- title and actions -->
@@ -87,7 +88,12 @@ type InvitationSortField = 'date' | 'name' | 'invitee' | 'inviter' | 'state';
           <ion-item (click)="showActions(invitation)" detail="false">
             <ion-label >{{invitation.date | prettyDate}}</ion-label>
             <ion-label class="ion-hide-md-down">{{invitation.name}}</ion-label>
-            <ion-label><okr-avatar-display [avatars]="[getAvatar(invitation.inviteeKey, invitation.inviteeFirstName, invitation.inviteeLastName)]" /></ion-label>
+            <ion-label>
+              <okr-avatar-display [avatars]="[getAvatar(invitation.inviteeKey, invitation.inviteeFirstName, invitation.inviteeLastName)]" />
+              @if(isForGrantor(invitation)) {
+                <ion-chip class="for-marker" color="tertiary" [outline]="true">{{ forMarker(invitation) }}</ion-chip>
+              }
+            </ion-label>
             <ion-label class="ion-hide-lg-down"><okr-avatar-display [avatars]="[getAvatar(invitation.inviterKey, invitation.inviterFirstName, invitation.inviterLastName)]" /></ion-label>
             <ion-label class="ion-hide-md-down">{{ stateLabel(invitation.state) | translate | async }}</ion-label>
           </ion-item>
@@ -106,6 +112,12 @@ export class InvitationList {
 
   /** Only the label of the info button — the explainer itself lives in the calevent domain. */
   protected readonly caleventI18n = inject(I18nService).translateAll({ info_open: CALEVENT_I18N_KEYS.info_open });
+  /** The Vollmacht labels: the «für {name}» marker and the two answers in the grantor's name (spec 1.180 §5.2). */
+  protected readonly mandateI18n = inject(I18nService).translateAll({
+    for_marker: MANDATE_I18N_KEYS.for_marker,
+    attend_for: MANDATE_I18N_KEYS.attend_for,
+    unattend_for: MANDATE_I18N_KEYS.unattend_for,
+  });
 
   // inputs
   public listId = input.required<string>(); // my, all, or calevent key
@@ -209,12 +221,23 @@ export class InvitationList {
   protected async showActions(invitation: InvitationModel): Promise<void> {
     const actionSheetOptions = createActionSheetOptions(this.store.i18n.as_title());
     const answerable = isOwnInvitation(invitation, this.currentUser()?.personKey) && await this.store.isAnswerable(invitation);
-    this.addActionSheetButtons(actionSheetOptions, invitation, answerable);
+    // a grantor's invitation: the full checks (Vollmacht re-read included) run again when the answer is chosen
+    const answerableFor = !answerable && this.isForGrantor(invitation) && await this.store.isAnswerable(invitation);
+    this.addActionSheetButtons(actionSheetOptions, invitation, answerable, answerableFor);
     await this.executeActions(actionSheetOptions, invitation);
   }
 
   protected stateLabel(state: string): string {
     return getItemLabel(this.states(), state);
+  }
+
+  /** A grantor's invitation in the 'my' list: someone else's, which I may answer under a Vollmacht. */
+  protected isForGrantor(invitation: InvitationModel): boolean {
+    return this.listId() === 'my' && !isOwnInvitation(invitation, this.currentUser()?.personKey) && this.store.isGrantorInvitation(invitation);
+  }
+
+  protected forMarker(invitation: InvitationModel): string {
+    return fill(this.mandateI18n.for_marker(), { name: invitation.inviteeFirstName });
   }
 
   protected getAvatar(key: string, name1: string, name2: string) {
@@ -226,8 +249,19 @@ export class InvitationList {
    * @param actionSheetOptions
    * @param invitation
    * @param answerable the user's own invitation, and it can still be answered
+   * @param answerableFor a grantor's invitation (Vollmacht), and it can still be answered
    */
-  private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, invitation: InvitationModel, answerable: boolean): void {
+  private addActionSheetButtons(actionSheetOptions: ActionSheetOptions, invitation: InvitationModel, answerable: boolean, answerableFor: boolean): void {
+    if (answerableFor) {
+      const name = invitation.inviteeFirstName;
+      if (invitation.state !== 'accepted') {
+        actionSheetOptions.buttons.push(createActionSheetButton('invitation.subscribeFor', fill(this.mandateI18n.attend_for(), { name }), this.imgixBaseUrl, 'checkbox-circle'));
+      }
+      if (invitation.state !== 'declined') {
+        actionSheetOptions.buttons.push(createActionSheetButton('invitation.unsubscribeFor', fill(this.mandateI18n.unattend_for(), { name }), this.imgixBaseUrl, 'cancel'));
+      }
+      actionSheetOptions.buttons.push(createActionSheetDivider());
+    }
     if (answerable) {
       if (invitation.state !== 'accepted') {
         actionSheetOptions.buttons.push(createActionSheetButton('invitation.subscribe', this.store.i18n.subscribe(), this.imgixBaseUrl, 'checkbox-circle'));
@@ -266,6 +300,12 @@ export class InvitationList {
           break;
         case 'invitation.unsubscribe':
           await this.store.changeState(invitation, 'declined');
+          break;
+        case 'invitation.subscribeFor':
+          await this.store.answerFor(invitation, 'accepted');
+          break;
+        case 'invitation.unsubscribeFor':
+          await this.store.answerFor(invitation, 'declined');
           break;
         case 'invitation.delete':
           await this.store.delete(invitation, !this.hasRole('admin'));

@@ -22,6 +22,8 @@
     "@okr/relationship-invitation-data-access": "*",
     "@okr/cms-menu-feature": "*",
     "@okr/calendar-calevent-util": "*",
-    "@okr/calendar-calevent-ui": "*"
+    "@okr/calendar-calevent-ui": "*",
+    "@okr/relationship-mandate-feature": "*",
+    "@okr/relationship-mandate-util": "*"
   }
 }

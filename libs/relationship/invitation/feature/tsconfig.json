@@ -63,6 +63,12 @@
     },
     {
       "path": "../../../cms/menu/feature/tsconfig.lib.json"
+    },
+    {
+      "path": "../../mandate/feature/tsconfig.lib.json"
+    },
+    {
+      "path": "../../mandate/util/tsconfig.lib.json"
     }
   ]
 }

@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { REFUSAL_TEXT, answerCommentDoc, answerResultText, decideAnswer, linkRefusal, responseCommentKey } from './answer';
+import { FieldValue } from 'firebase-admin/firestore';
+import { Attendee, AvatarInfo } from '@okr/shared-models';
+import { REFUSAL_TEXT, answerCommentDoc, answerResultText, decideAnswer, linkRefusal, responseCommentKey, selfAnswerAttendees, selfAnswerInvitationFields } from './answer';
 
 const inv = { tenants: ['scs'], inviteeKey: 'p', caleventKey: 'e', state: 'pending' };
 const event = { name: 'test2', startDate: '20261001', startTime: '11:00' };
@@ -71,5 +73,36 @@ describe('answerCommentDoc', () => {
       authorKey: 'p1', creationDateTime: '20261101120000', tags: '', attachmentKeys: [],
       index: 'ak:p1, d:20261101120000, pk:invitation.i1', authorName: 'Ann Lee',
     });
+  });
+});
+
+// spec 1.180 R9: an invitee's own answer by mail replaces an answer given for them under a Vollmacht,
+// so the stamp of the earlier delegated answer must not stay behind.
+describe('selfAnswerAttendees', () => {
+  const avatar = (key: string): AvatarInfo => ({ key, name1: key, name2: '', modelType: 'person', type: '', subType: '', label: '' });
+  it('removes the delegated stamp from the invitee', () => {
+    const before: Attendee[] = [
+      { person: avatar('p1'), state: 'accepted', actedByKey: 'g1' },
+      { person: avatar('p2'), state: 'accepted', actedByKey: 'g2' },
+    ];
+    const after = selfAnswerAttendees(before, avatar('p1'), 'declined');
+    const p1 = after.find(a => a.person.key === 'p1');
+    expect(p1?.state).toBe('declined');
+    expect(p1 && 'actedByKey' in p1).toBe(false);
+    expect(after.find(a => a.person.key === 'p2')?.actedByKey).toBe('g2');   // others keep theirs
+  });
+  it('adds a new attendee without a stamp', () => {
+    const after = selfAnswerAttendees([], avatar('p1'), 'accepted');
+    expect(after).toHaveLength(1);
+    expect('actedByKey' in after[0]).toBe(false);
+  });
+});
+
+describe('selfAnswerInvitationFields', () => {
+  it('writes state and respondedAt and deletes actedByKey', () => {
+    const fields = selfAnswerInvitationFields('accepted', '20261101120000');
+    expect(fields.state).toBe('accepted');
+    expect(fields.respondedAt).toBe('20261101120000');
+    expect(fields.actedByKey.isEqual(FieldValue.delete())).toBe(true);
   });
 });
