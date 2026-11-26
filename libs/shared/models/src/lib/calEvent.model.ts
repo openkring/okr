@@ -12,6 +12,11 @@ export type Attendee = {
    * Optional: every attendee written before the poll moved to this model lacks it.
    */
   comment?: string;
+  /**
+   * personKey of who answered on this person's behalf (Vollmacht, spec 1.180). Absent or equal to the
+   * subject = the person themself. Optional: legacy attendees lack it.
+   */
+  actedByKey?: string;
 }
 
 /** Who is notified about a new comment on an event, see `CalEventModel.commentNotify`. */

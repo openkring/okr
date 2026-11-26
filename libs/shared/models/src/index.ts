@@ -170,3 +170,4 @@ export * from './lib/enums/weather-condition.enum';
 
 export * from './lib/badge-counts.model';
 export * from './lib/household.model';
+export * from './lib/mandate.model';

@@ -226,6 +226,8 @@ export class AppConfig {
 
   // spec 1.72 §8.2 — days after completion until a task is archived automatically; 0 = never
   public taskArchiveDays = 30;
+  /** Vollmacht (spec 1.180): how many proxies one holder may hold for the same meeting. 0 = no proxies in this tenant; checked only when a proxy is created. */
+  public maxProxiesPerHolder = 1;
 
   // git repository information
   public gitRepo = DEFAULT_NAME; //  git repository name

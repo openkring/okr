@@ -71,6 +71,12 @@ export class InvitationModel implements OkrModel, NamedModel, SearchableModel, T
    */
   isLocked = false;
 
+  /**
+   * personKey of who answered on the invitee's behalf (Vollmacht, spec 1.180). Absent or equal to the
+   * invitee = the person themself. Optional: legacy documents lack it.
+   */
+  actedByKey?: string;
+
   constructor(tenantId: string) {
     this.tenants = [tenantId];
   }
