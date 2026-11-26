@@ -1,4 +1,4 @@
-import { isValidTenantId } from '@okr/shared-config';
+import { isValidTenantId, PORTAL_TENANT_KEY } from '@okr/shared-config';
 import { TenantConfigMeta } from './tenant-switcher.util';
 
 /**
@@ -42,6 +42,21 @@ export function touchSavedTenant(storage: Pick<Storage, 'getItem' | 'setItem'>, 
   if (!isValidTenantId(tenantId)) return;
   const rest = readSavedTenants(storage).filter((t) => t.tenantId !== tenantId);
   writeSavedTenants(storage, [{ tenantId, lastUsed: now }, ...rest]);
+}
+
+/**
+ * Makes `tenantId` the tenant of the next start (the caller then reloads) and remembers it.
+ * False for an invalid id or blocked storage; nothing is written then.
+ */
+export function chooseTenant(storage: Pick<Storage, 'getItem' | 'setItem'>, tenantId: string, now: number): boolean {
+  if (!isValidTenantId(tenantId)) return false;
+  try {
+    storage.setItem(PORTAL_TENANT_KEY, tenantId);
+  } catch {
+    return false;
+  }
+  touchSavedTenant(storage, tenantId, now);
+  return true;
 }
 
 export function removeSavedTenant(storage: Pick<Storage, 'getItem' | 'setItem'>, tenantId: string): void {

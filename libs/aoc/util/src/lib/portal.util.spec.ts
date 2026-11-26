@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   buildChooserEntries,
+  chooseTenant,
   PORTAL_TENANTS_KEY,
   readSavedTenants,
   removeSavedTenant,
@@ -90,4 +91,19 @@ describe('buildChooserEntries', () => {
 
   it('drops tenants without config', () =>
     expect(buildChooserEntries(saved, ['gone'], ['alsogone'], configs('scs')).map((e) => e.tenantId)).toEqual(['scs']));
+});
+
+describe('chooseTenant', () => {
+  it('stores the choice and remembers the tenant', () => {
+    const s = mem();
+    expect(chooseTenant(s, 'scs', 7)).toBe(true);
+    expect(s.data['okr.portal.tenantId']).toBe('scs');
+    expect(readSavedTenants(s)).toEqual([{ tenantId: 'scs', lastUsed: 7 }]);
+  });
+
+  it('refuses an invalid id', () => {
+    const s = mem();
+    expect(chooseTenant(s, '../x', 7)).toBe(false);
+    expect(s.data).toEqual({});
+  });
 });

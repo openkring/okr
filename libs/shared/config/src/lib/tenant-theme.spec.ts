@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { TENANT_THEME_TIMEOUT_MS } from './tenant-theme';
 import { loadTenantTheme, tenantThemeHref } from './tenant-theme';
 
 const links = () => Array.from(document.head.querySelectorAll('link#okr-tenant-theme')) as HTMLLinkElement[];
@@ -43,6 +44,18 @@ describe('loadTenantTheme', () => {
     links()[0].dispatchEvent(new Event('error'));
     await expect(done).resolves.toBe(false);
     expect(log).toHaveBeenCalledTimes(1);
+  });
+
+  it('loadTenantTheme resolves false after the timeout', async () => {
+    vi.useFakeTimers();
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    try {
+      const done = loadTenantTheme(document, 'scs');
+      vi.advanceTimersByTime(TENANT_THEME_TIMEOUT_MS);
+      await expect(done).resolves.toBe(false);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('resolves false for an invalid tenant without touching the document', async () => {

@@ -113,6 +113,17 @@
     "tooltip": "Zu einer anderen App wechseln",
     "current": "Aktuell"
   },
+  "portal": {
+    "title": "Apps",
+    "recent": "Zuletzt verwendet",
+    "mine": "Mit deinem Konto",
+    "listed": "Weitere Apps",
+    "empty": "Hier erscheinen deine Apps. Öffne den Link, den dir dein Verein oder deine Organisation geschickt hat.",
+    "remove": "Entfernen",
+    "unknown": "Diese App gibt es nicht (mehr). Wähle eine andere oder frag nach dem richtigen Link.",
+    "kiosk": "Dieses Konto ist für das Kiosk-Tablet. Melde dich dort an oder nimm dein eigenes Konto.",
+    "button": "Apps"
+  },
   "competition_level": {
     "all": {
       "label": "Alle Kategorien"

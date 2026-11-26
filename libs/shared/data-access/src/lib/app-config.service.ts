@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 
 import { FirestoreService } from './firestore.service';
 import { AppConfig, AppConfigCollection, FileTransferLimits } from '@okr/shared-models';
@@ -40,6 +40,16 @@ export class AppConfigService {
    */
   public read(key: string | undefined): Observable<AppConfig | undefined> {
     return this.firestoreService.readObject<AppConfig>(AppConfigCollection, key);
+  }
+
+  /**
+   * The tenants listed in the iOS portal's chooser (`listedInPortal`, spec 1.179 §6.2). `app-config`
+   * is world-readable, so this works before any login.
+   */
+  public readListedTenantIds(): Observable<string[]> {
+    return this.firestoreService
+      .searchData<AppConfig & { okey?: string }>(AppConfigCollection, [{ key: 'listedInPortal', operator: '==', value: true }], 'none')
+      .pipe(map((configs) => configs.map((c) => c.okey).filter((id): id is string => !!id)));
   }
 
   /**

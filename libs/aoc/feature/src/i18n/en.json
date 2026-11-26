@@ -113,6 +113,17 @@
     "tooltip": "Switch to another app",
     "current": "Current"
   },
+  "portal": {
+    "title": "Apps",
+    "recent": "Recently used",
+    "mine": "With your account",
+    "listed": "More apps",
+    "empty": "Your apps appear here. Open the link your club or organisation sent you.",
+    "remove": "Remove",
+    "unknown": "This app does not exist (any more). Pick another one or ask for the right link.",
+    "kiosk": "This account is for the kiosk tablet. Sign in there or use your own account.",
+    "button": "Apps"
+  },
   "competition_level": {
     "all": {
       "label": "All categories"

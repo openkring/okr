@@ -85,6 +85,19 @@ export function consumeTenantQueryParam(
   return { changed: true, cleanUrl };
 }
 
+/** The portal's chooser page (spec 1.179 §6.2). */
+export const PORTAL_CHOOSER_PATH = '/portal';
+
+/**
+ * Where a start should go before bootstrap: a runtime build without a chosen tenant opens the chooser
+ * when it starts at `/`. Deep links (`/t/<id>`, `/portal`, any other path) and fixed builds are left
+ * alone (`null`).
+ */
+export function startPath(mode: TenantMode, stored: string | null, path: string): string | null {
+  if (mode !== 'runtime' || stored !== null || path !== '/') return null;
+  return PORTAL_CHOOSER_PATH;
+}
+
 export function provideBootEnv(env: OkrEnvironment, mode: TenantMode = 'fixed'): Provider {
   return { provide: ENV, useValue: bootEnvironment(env, mode) };
 }

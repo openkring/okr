@@ -8,6 +8,8 @@ import { isValidTenantId } from './boot-tenant';
  * and the app loads the chosen one before bootstrap.
  */
 const LINK_ID = 'okr-tenant-theme';
+/** The start waits at most this long for the theme; then it continues with Ionic's default colours. */
+export const TENANT_THEME_TIMEOUT_MS = 3000;
 
 export function tenantThemeHref(tenantId: string): string {
   if (!isValidTenantId(tenantId)) throw new Error(`tenantThemeHref: invalid tenant id ${JSON.stringify(tenantId)}`);
@@ -29,11 +31,17 @@ export function loadTenantTheme(doc: Document, tenantId: string): Promise<boolea
   link.rel = 'stylesheet';
   link.href = tenantThemeHref(tenantId);
   return new Promise((resolve) => {
-    link.addEventListener('load', () => resolve(true), { once: true });
-    link.addEventListener('error', () => {
-      console.error(`loadTenantTheme: ${link.getAttribute('href')} did not load`);
-      resolve(false);
-    }, { once: true });
+    let settled = false;
+    const finish = (ok: boolean, why?: string): void => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      if (why) console.error(`loadTenantTheme: ${link.getAttribute('href')} ${why}`);
+      resolve(ok);
+    };
+    const timer = setTimeout(() => finish(false, `did not load within ${TENANT_THEME_TIMEOUT_MS} ms`), TENANT_THEME_TIMEOUT_MS);
+    link.addEventListener('load', () => finish(true), { once: true });
+    link.addEventListener('error', () => finish(false, 'did not load'), { once: true });
     doc.head.appendChild(link);
   });
 }

@@ -113,6 +113,17 @@
     "tooltip": "Passer à une autre app",
     "current": "Actuelle"
   },
+  "portal": {
+    "title": "Apps",
+    "recent": "Utilisées récemment",
+    "mine": "Avec ton compte",
+    "listed": "Autres apps",
+    "empty": "Tes apps apparaissent ici. Ouvre le lien que ton club ou ton organisation t'a envoyé.",
+    "remove": "Retirer",
+    "unknown": "Cette app n'existe pas (ou plus). Choisis-en une autre ou demande le bon lien.",
+    "kiosk": "Ce compte est réservé à la tablette kiosque. Connecte-toi là-bas ou utilise ton propre compte.",
+    "button": "Apps"
+  },
   "competition_level": {
     "all": {
       "label": "Toutes les catégories"

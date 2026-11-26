@@ -8,6 +8,7 @@ import {
   provideBootEnv,
   readStoredTenant,
   resolveBootTenant,
+  startPath,
 } from './boot-tenant';
 
 const env = () => ({ tenantId: 'kring', appId: 'kring' }) as OkrEnvironment;
@@ -134,5 +135,16 @@ describe('consumeTenantQueryParam', () => {
   it('a first choice without a stored tenant is a change', () => {
     const s = mem(null);
     expect(consumeTenantQueryParam({ href: 'https://x.test/?tenant=p13' }, s).changed).toBe(true);
+  });
+});
+
+describe('startPath', () => {
+  it('startPath sends a runtime start without a stored tenant to the chooser', () =>
+    expect(startPath('runtime', null, '/')).toBe('/portal'));
+  it('startPath leaves fixed mode alone', () => expect(startPath('fixed', null, '/')).toBeNull());
+  it('startPath leaves a runtime start with a stored tenant alone', () => expect(startPath('runtime', 'scs', '/')).toBeNull());
+  it('startPath leaves deep links alone', () => {
+    expect(startPath('runtime', null, '/t/scs')).toBeNull();
+    expect(startPath('runtime', null, '/portal')).toBeNull();
   });
 });

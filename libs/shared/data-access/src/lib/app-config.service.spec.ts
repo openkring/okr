@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { firstValueFrom, of } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { I18nService } from '@okr/shared-i18n';
@@ -46,5 +47,21 @@ describe('AppConfigService.patch', () => {
   it('reports a failed write as undefined', async () => {
     updateObject.mockResolvedValue(undefined);
     expect(await service.patch('t1', { appName: 'x' })).toBeUndefined();
+  });
+});
+
+describe('AppConfigService.readListedTenantIds', () => {
+  it('lists the ids of the tenants listed in the portal', async () => {
+    const searchData = vi.fn(() => of([{ okey: 'sc7' }, { okey: 'elab' }]));
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      providers: [
+        { provide: FirestoreService, useValue: { searchData } },
+        { provide: I18nService, useValue: { translateAll: (keys: Record<string, string>) => Object.fromEntries(Object.keys(keys).map((k) => [k, () => k])) } },
+      ],
+    });
+    const ids = await firstValueFrom(TestBed.inject(AppConfigService).readListedTenantIds());
+    expect(ids).toEqual(['sc7', 'elab']);
+    expect(searchData).toHaveBeenCalledWith(AppConfigCollection, [{ key: 'listedInPortal', operator: '==', value: true }], 'none');
   });
 });

@@ -147,6 +147,19 @@ export const TENANT_SWITCHER_I18N_KEYS = {
   switcher_current: PFX + 'switcher.current',
 };
 
+// ─── Kring portal (spec 1.179) ──────────────────────────────────────────────
+export const PORTAL_I18N_KEYS = {
+  portal_title:   PFX + 'portal.title',
+  portal_recent:  PFX + 'portal.recent',
+  portal_mine:    PFX + 'portal.mine',
+  portal_listed:  PFX + 'portal.listed',
+  portal_empty:   PFX + 'portal.empty',
+  portal_remove:  PFX + 'portal.remove',
+  portal_unknown: PFX + 'portal.unknown',
+  portal_kiosk:   PFX + 'portal.kiosk',
+  portal_button:  PFX + 'portal.button',
+};
+
 // ─── AocEmail ────────────────────────────────────────────────────────────────
 export const AOC_EMAIL_I18N_KEYS = {
   email_title:              PFX + 'email.title',
