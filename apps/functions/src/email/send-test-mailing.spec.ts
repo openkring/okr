@@ -44,10 +44,11 @@ let store: Store;
 let sent: { provider: string; mail: EmailOptions }[];
 let documents: string[];
 let sendError: unknown;
+let accountError: unknown;
 
 const deps = (): TestMailingDeps => ({
   db: h.db as TestMailingDeps['db'],
-  account: async (uid) => { h.asked.push(uid); return h.account; },
+  account: async (uid) => { h.asked.push(uid); if (accountError) throw accountError; return h.account; },
   send: async (provider, mail) => { if (sendError) throw sendError; sent.push({ provider, mail }); },
   readDocument: async (path) => { documents.push(path); return { content: Buffer.from('pdf'), contentType: 'application/pdf' }; },
 });
@@ -81,6 +82,7 @@ beforeEach(() => {
   h.asked = [];
   h.wired = [];
   sendError = undefined;
+  accountError = undefined;
   for (const method of ['log', 'info', 'warn', 'error'] as const) vi.spyOn(console, method).mockImplementation((...args) => { h.logs.push(args); });
 });
 afterEach(() => vi.restoreAllMocks());
@@ -109,6 +111,14 @@ describe('the recipient', () => {
     h.account = { emailVerified: true };
     await expect(run()).rejects.toMatchObject({ code: 'failed-precondition', message: 'no-address' });
     expect(sent).toHaveLength(1);
+  });
+
+  it('is no-address when the account is gone; another failure of Auth stays an error', async () => {
+    accountError = Object.assign(new Error('There is no user record.'), { code: 'auth/user-not-found' });
+    await expect(run()).rejects.toMatchObject({ code: 'failed-precondition', message: 'no-address' });
+    accountError = Object.assign(new Error('Auth is not reachable.'), { code: 'app/network-error' });
+    await expect(run()).rejects.not.toMatchObject({ message: 'no-address' });
+    expect(sent).toHaveLength(0);
   });
 
   it('must be real: a Benutzername account is refused', async () => {

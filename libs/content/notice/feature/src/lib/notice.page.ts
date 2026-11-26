@@ -22,10 +22,19 @@ import { NOTICE_I18N_KEYS, NoticeI18n } from '@okr/content-notice-util';
 import { NewsletterSubscriptionService } from '@okr/relationship-newsletter-data-access';
 import { isActiveSubscription, NEWSLETTER_I18N_KEYS, NewsletterI18n } from '@okr/relationship-newsletter-util';
 
-/** for every notice: nothing is tried again after a failure */
+/** for every notice, once loaded */
 const articleBlocksType = signal<Type<ArticleBlocks> | undefined>(undefined);
-/** offline, stale chunk: the notice keeps showing its `body` */
-const articleBlocksFailed = signal(false);
+/** the load under way, shared by the notices that ask meanwhile */
+let articleBlocksLoading: Promise<void> | undefined;
+
+/** Loads the block drawing once; a failure leaves the notice on its `body` (one warning) and the next notice opened tries again. */
+function loadBlocks(): Promise<void> {
+  articleBlocksLoading ??= loadArticleBlocks().then(
+    (type) => { articleBlocksType.set(type); },
+    (error: unknown) => { console.warn('NoticePage: the blocks could not be loaded', error); },
+  ).finally(() => { articleBlocksLoading = undefined; });
+  return articleBlocksLoading;
+}
 
 /**
  * One Mitteilung (spec 1.145 §10), opened from the dashboard section or from its push
@@ -67,7 +76,7 @@ const articleBlocksFailed = signal(false);
           </ion-card-header>
           <ion-card-content>
             @if (hasBlocks() && blocksType()) {
-              <div #blocksHost></div>
+              <ng-container #blocksHost />
             } @else {
               <div class="body" [innerHTML]="notice.body"></div>
             }
@@ -181,10 +190,18 @@ export class NoticePage {
   private readonly left = signal(false);
   /** the notice already marked as read in this view */
   private markedRead = '';
+  /** the notice whose blocks this view asked for: after a failure (offline, stale chunk) the next notice opened asks again */
+  private blocksAskedFor?: string;
 
   constructor() {
     effect(() => {
-      if (this.hasBlocks() && !articleBlocksType() && !articleBlocksFailed()) void this.loadBlocks();
+      const key = this.notice()?.okey;
+      if (!this.hasBlocks() || articleBlocksType()) return;
+      untracked(() => {
+        if (this.blocksAskedFor === key) return;
+        this.blocksAskedFor = key;
+        void loadBlocks();
+      });
     });
     effect((onCleanup) => {
       const host = this.blocksHost();
@@ -206,15 +223,6 @@ export class NoticePage {
         void this.noticeService.markRead(notice, personKey);
       });
     });
-  }
-
-  private async loadBlocks(): Promise<void> {
-    try {
-      articleBlocksType.set(await loadArticleBlocks());
-    } catch (error) {
-      if (!articleBlocksFailed()) console.warn('NoticePage: the blocks could not be loaded', error);
-      articleBlocksFailed.set(true);
-    }
   }
 
   private createBlocks(host: ViewContainerRef, type: Type<ArticleBlocks>): ComponentRef<ArticleBlocks> {

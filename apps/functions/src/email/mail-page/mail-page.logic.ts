@@ -1,7 +1,6 @@
 // apps/functions/src/email/mail-page/mail-page.logic.ts
 //
-// Pure rules around a Versand mail page (spec 1.172): who may render it
-// and when an unsent draft is reaped.
+// Pure rules around a Versand mail page (specs 1.172, 1.176): who may render it, and when an unsent draft is reaped.
 import type { MailPageModel } from '@okr/shared-models';
 
 import type { MailPageErrorCode } from './render-mail-page.logic';

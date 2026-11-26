@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { answerPage, BANNER_TINT, answerResultPage, chatDigestEmail, tintOf, commentEmail, DEFAULT_BRAND_COLOR, escapeHtml, eventWhen, invitationAnswerEmail, invitationEmail, mailingAnswerPage, PAGE_CONTENT_SLOT } from './mail';
+import { answerPage, BANNER_TINT, answerResultPage, chatDigestEmail, tintOf, commentEmail, escapeHtml, eventWhen, invitationAnswerEmail, invitationEmail, mailingAnswerPage, PAGE_CONTENT_SLOT } from './mail';
 
 const EVIL = '<script>alert("x")</script> & co';
 const base = { appName: 'Seeclub', brandColor: '#009D53', logoUrl: 'https://img.x/logo.png?w=96&fm=png', eventName: EVIL, when: '01.10.2026, 11:00', location: EVIL };

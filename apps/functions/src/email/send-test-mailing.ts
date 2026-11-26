@@ -51,13 +51,17 @@ export interface TestMailingCaller {
 }
 
 /**
- * The one recipient: the address of the caller's account. Refused with `no-address`: no address, the synthetic one of a
+ * The one recipient: the address of the caller's account. Refused with `no-address`: no account (any more), no address, the synthetic one of a
  * Benutzername account, and anything but one address. An elevated caller may write to anybody, so their address needs no
  * confirmation, as for every other mail to an account. A group or newsletter admin may reach the group's members only: an
  * account address they changed and never confirmed would be an arbitrary recipient, so theirs must be verified.
  */
 async function ownAddress(deps: TestMailingDeps, uid: string, elevated: boolean): Promise<string> {
-  const { email, emailVerified } = await deps.account(uid);
+  const { email, emailVerified } = await deps.account(uid).catch((err: unknown) => {
+    // an account deleted since the token was issued has no address; any other failure of Auth stays an error
+    if ((err as { code?: unknown } | null)?.code === 'auth/user-not-found') throw new HttpsError('failed-precondition', 'no-address');
+    throw err;
+  });
   if (!email || isSyntheticLoginEmail(email) || !isBareAddress(email) || (!elevated && emailVerified !== true)) {
     throw new HttpsError('failed-precondition', 'no-address');
   }

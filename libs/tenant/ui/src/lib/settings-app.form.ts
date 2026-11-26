@@ -7,7 +7,7 @@ import { Color, ErrorNote, TextareaInput, TextInput } from '@okr/shared-ui';
 import { SettingsFormBase } from './settings-form.base';
 import { SettingsPublicNote } from './settings-public-note';
 
-/** The neutral blue the mails use without a brand colour (`DEFAULT_BRAND_COLOR` in apps/functions/src/calendar/mail.ts). */
+/** The neutral blue the mails use without a brand colour (`DEFAULT_BRAND_COLOR` in apps/functions/src/_shared/brand-color.ts). */
 const NEUTRAL_COLOR = '#1f6feb';
 
 /** Settings group «App»: name, title, subtitle, description and brand colour. */

@@ -20,6 +20,15 @@
  *   - the marker within 6 lines is trusted: it cannot tell that the wrapped value is the one read;
  *   - an allowlisted file is not looked at again — keep the entries few and name the reason.
  *
+ * Second guard (spec 1.176 §10, lazy-loading skill): the barrel of @okr/cms-article-feature is imported statically by readers and
+ * also names the editor's canvas and surface. It stays out of the readers' bundles only while
+ *   - nobody calls import() on '@okr/cms-article-feature' (an import() makes every export of the barrel eager),
+ *   - nobody passes the barrel on with a value re-export (`export * from` / `export { x } from` it; `export type` is fine),
+ *   - the barrel itself holds only `export * from` and `export type { … } from` (a used `export { x } from` makes the
+ *     barrel part of the bundle with every file it names: +20 KB gzip on the dashboard, measured 2026-11-25).
+ * ESLint has the same rules (eslint.config.cjs), but lint is not part of the release gate; this text search is. It does not
+ * see the import() that the Angular compiler writes for a component used only inside @defer: that one only ESLint finds.
+ *
  * Usage: node scripts/check-article-readers.mjs   (from any directory; exit 1 on any finding — CI friendly)
  */
 import { readFileSync } from 'node:fs';
@@ -72,9 +81,39 @@ for (const path of files) {
   });
 }
 
+// ── the barrel of @okr/cms-article-feature ─────────────────────────────────────────────────────────────────────────────
+const BARREL = 'libs/cms/article/feature/src/index.ts';
+const BARREL_NAME = /(['"`])@okr\/cms-article-feature\1/;
+const DYNAMIC_IMPORT = /\bimport\s*\(\s*(['"`])@okr\/cms-article-feature\1/g;
+const PASS_ON = /^\s*export\s+(?!type\b)(\*|\{)[^;]*\bfrom\s*(['"`])@okr\/cms-article-feature\2/;
+const sources = execSync(
+  "find libs apps -name '*.ts' -not -name '*.d.ts' -not -path '*/node_modules/*' -not -path 'apps/*/android/*' -not -path 'apps/*/ios/*'",
+  { encoding: 'utf8' }).split('\n').filter(Boolean).sort();
+for (const path of sources) {
+  const text = readFileSync(path, 'utf8');
+  if (!BARREL_NAME.test(text)) continue;
+  // on the whole text, so that an import( split over lines is found too
+  for (const match of text.matchAll(DYNAMIC_IMPORT)) {
+    const line = text.slice(0, match.index).split('\n').length;
+    findings.push(`${path}:${line}  import() of @okr/cms-article-feature makes the article editor eager — use a loader function of the lib (relative import() inside it)`);
+  }
+  text.split('\n').forEach((line, i) => {
+    if (PASS_ON.test(line)) findings.push(`${path}:${i + 1}  passes @okr/cms-article-feature on — import it where it is used; only \`export type\` may pass it on`);
+  });
+}
+{
+  // comments removed, then one statement per `;`
+  const code = readFileSync(BARREL, 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
+  const statements = code.split(';').map((st) => st.replace(/\s+/g, ' ').trim()).filter(Boolean);
+  const ALLOWED = [/^export \* from '\.\/lib\/[\w./-]+'$/, /^export type \{[^}]*\} from '\.\/lib\/[\w./-]+'$/];
+  for (const st of statements) {
+    if (!ALLOWED.some((re) => re.test(st))) findings.push(`${BARREL}  «${st}» — the barrel holds only \`export * from './lib/…'\` and \`export type { … } from './lib/…'\``);
+  }
+}
+
 if (findings.length) {
   console.error(findings.join('\n'));
   console.error(`\ncheck-article-readers: ${findings.length} finding(s)`);
   process.exit(1);
 }
-console.log(`check-article-readers: ok (${files.length} files)`);
+console.log(`check-article-readers: ok (${files.length} files; barrel of @okr/cms-article-feature: ${sources.length} files)`);

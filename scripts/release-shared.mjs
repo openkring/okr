@@ -162,10 +162,12 @@ export async function runGates({ nonInteractive = false, acceptDrift = false, ac
   catch { abort('check-forms failed — release aborted (no version bump made). Fix the findings above.'); }
 
   // 1a**. article readers (spec 1.173): an article may hold blocks, so a reader of its text that does not
-  //       go through withClassicFields shows an empty article. Breaks no build and no test.
-  console.log('\n[1/6] Checking article readers (pnpm check-article-readers)…');
+  //       go through withClassicFields shows an empty article. Also the barrel of @okr/cms-article-feature
+  //       (spec 1.176): an import() of it, or anything but `export *` / `export type` in it, makes the article
+  //       editor eager. Lint has the same rule but is no part of this gate. Breaks no build and no test.
+  console.log('\n[1/6] Checking article readers and the article barrel (pnpm check-article-readers)…');
   try { run('node', ['scripts/check-article-readers.mjs']); }
-  catch { abort('check-article-readers failed — release aborted (no version bump made). Wrap the readers above in withClassicFields.'); }
+  catch { abort('check-article-readers failed — release aborted (no version bump made). Fix the findings above (withClassicFields, or the barrel rules of @okr/cms-article-feature).'); }
 
   // 1a*. ion-popover triggers: a fixed or data-derived trigger id repeats once the same list sits
   //      twice in Ionic's page stack, and the popover binds to the hidden page's button — the
