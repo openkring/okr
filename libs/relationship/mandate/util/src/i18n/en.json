@@ -1,0 +1,31 @@
+{
+  "title": "Proxies",
+  "given": "Given by me",
+  "received": "Given to me",
+  "create": "Give a proxy",
+  "record_proxy": "Record a proxy",
+  "revoke": "Revoke",
+  "give_back": "Give the proxy back",
+  "attend_for": "Register for {name}",
+  "unattend_for": "Unregister {name}",
+  "for_marker": "for {name}",
+  "represented_by": "represented by {name}",
+  "holds_proxies": "+{count} proxy",
+  "acted_for": "by {actor} for {subject}",
+  "until_revoked": "until revoked",
+  "action_attend": "Register and unregister for events",
+  "action_answer": "Answer invitations",
+  "notice_attend": "{actor} registered you for «{event}».",
+  "notice_unattend": "{actor} unregistered you from «{event}».",
+  "notice_answer": "{actor} answered your invitation to «{event}».",
+  "notice_created": "{actor} recorded a proxy for you.",
+  "no_proxies": "This club does not provide proxies for meetings.",
+  "validation": {
+    "grantee_required": "Please choose who receives the proxy.",
+    "grantee_is_grantor": "You cannot give a proxy to yourself.",
+    "duplicate_family": "This person already has a valid proxy from you.",
+    "actions_required": "Please choose at least one permission.",
+    "validTo_before_validFrom": "The end is before the start.",
+    "meeting_required": "Please choose the meeting."
+  }
+}

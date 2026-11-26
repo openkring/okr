@@ -1,0 +1,31 @@
+{
+  "title": "Procurations",
+  "given": "Données par moi",
+  "received": "Reçues par moi",
+  "create": "Donner une procuration",
+  "record_proxy": "Enregistrer une procuration",
+  "revoke": "Révoquer",
+  "give_back": "Rendre la procuration",
+  "attend_for": "Inscrire {name}",
+  "unattend_for": "Désinscrire {name}",
+  "for_marker": "pour {name}",
+  "represented_by": "représenté par {name}",
+  "holds_proxies": "+{count} procuration",
+  "acted_for": "par {actor} pour {subject}",
+  "until_revoked": "jusqu'à révocation",
+  "action_attend": "S'inscrire et se désinscrire aux événements",
+  "action_answer": "Répondre aux invitations",
+  "notice_attend": "{actor} t'a inscrit à «{event}».",
+  "notice_unattend": "{actor} t'a désinscrit de «{event}».",
+  "notice_answer": "{actor} a répondu à ton invitation à «{event}».",
+  "notice_created": "{actor} a enregistré une procuration pour toi.",
+  "no_proxies": "Ce club ne prévoit pas de procurations pour les assemblées.",
+  "validation": {
+    "grantee_required": "Choisis qui reçoit la procuration.",
+    "grantee_is_grantor": "Tu ne peux pas te donner une procuration à toi-même.",
+    "duplicate_family": "Cette personne a déjà une procuration valable de ta part.",
+    "actions_required": "Choisis au moins une autorisation.",
+    "validTo_before_validFrom": "La fin est avant le début.",
+    "meeting_required": "Choisis l'assemblée."
+  }
+}

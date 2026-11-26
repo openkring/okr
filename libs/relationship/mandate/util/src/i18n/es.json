@@ -1,0 +1,31 @@
+{
+  "title": "Poderes",
+  "given": "Otorgados por mí",
+  "received": "Otorgados a mí",
+  "create": "Otorgar un poder",
+  "record_proxy": "Registrar un poder",
+  "revoke": "Revocar",
+  "give_back": "Devolver el poder",
+  "attend_for": "Inscribir a {name}",
+  "unattend_for": "Dar de baja a {name}",
+  "for_marker": "para {name}",
+  "represented_by": "representado por {name}",
+  "holds_proxies": "+{count} poder",
+  "acted_for": "de {actor} para {subject}",
+  "until_revoked": "hasta su revocación",
+  "action_attend": "Inscribirse y darse de baja en eventos",
+  "action_answer": "Responder a invitaciones",
+  "notice_attend": "{actor} te ha inscrito en «{event}».",
+  "notice_unattend": "{actor} te ha dado de baja de «{event}».",
+  "notice_answer": "{actor} ha respondido a tu invitación a «{event}».",
+  "notice_created": "{actor} ha registrado un poder para ti.",
+  "no_proxies": "En este club no se prevén poderes para las asambleas.",
+  "validation": {
+    "grantee_required": "Elige quién recibe el poder.",
+    "grantee_is_grantor": "No puedes otorgarte un poder a ti mismo.",
+    "duplicate_family": "Esta persona ya tiene un poder válido tuyo.",
+    "actions_required": "Elige al menos un permiso.",
+    "validTo_before_validFrom": "El fin es anterior al inicio.",
+    "meeting_required": "Elige la asamblea."
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "title": "Deleghe",
+  "given": "Date da me",
+  "received": "Ricevute da me",
+  "create": "Conferire una delega",
+  "record_proxy": "Registrare una delega",
+  "revoke": "Revocare",
+  "give_back": "Restituire la delega",
+  "attend_for": "Iscrivere {name}",
+  "unattend_for": "Annullare l'iscrizione di {name}",
+  "for_marker": "per {name}",
+  "represented_by": "rappresentato da {name}",
+  "holds_proxies": "+{count} delega",
+  "acted_for": "da {actor} per {subject}",
+  "until_revoked": "fino alla revoca",
+  "action_attend": "Iscriversi e annullare l'iscrizione agli eventi",
+  "action_answer": "Rispondere agli inviti",
+  "notice_attend": "{actor} ti ha iscritto a «{event}».",
+  "notice_unattend": "{actor} ha annullato la tua iscrizione a «{event}».",
+  "notice_answer": "{actor} ha risposto al tuo invito a «{event}».",
+  "notice_created": "{actor} ha registrato una delega per te.",
+  "no_proxies": "In questo club non sono previste deleghe per le assemblee.",
+  "validation": {
+    "grantee_required": "Scegli chi riceve la delega.",
+    "grantee_is_grantor": "Non puoi conferire una delega a te stesso.",
+    "duplicate_family": "Questa persona ha già una delega valida da parte tua.",
+    "actions_required": "Scegli almeno un'autorizzazione.",
+    "validTo_before_validFrom": "La fine è prima dell'inizio.",
+    "meeting_required": "Scegli l'assemblea."
+  }
+}

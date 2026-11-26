@@ -1,0 +1,31 @@
+{
+  "title": "Vollmachten",
+  "given": "Von mir erteilt",
+  "received": "Mir erteilt",
+  "create": "Vollmacht erteilen",
+  "record_proxy": "Vollmacht erfassen",
+  "revoke": "Widerrufen",
+  "give_back": "Vollmacht zurückgeben",
+  "attend_for": "Für {name} anmelden",
+  "unattend_for": "Für {name} abmelden",
+  "for_marker": "für {name}",
+  "represented_by": "vertreten durch {name}",
+  "holds_proxies": "+{count} Vollmacht",
+  "acted_for": "von {actor} für {subject}",
+  "until_revoked": "bis auf Widerruf",
+  "action_attend": "Bei Anlässen an- und abmelden",
+  "action_answer": "Einladungen beantworten",
+  "notice_attend": "{actor} hat dich für «{event}» angemeldet.",
+  "notice_unattend": "{actor} hat dich von «{event}» abgemeldet.",
+  "notice_answer": "{actor} hat deine Einladung zu «{event}» beantwortet.",
+  "notice_created": "{actor} hat für dich eine Vollmacht erfasst.",
+  "no_proxies": "In diesem Verein sind keine Vollmachten für Versammlungen vorgesehen.",
+  "validation": {
+    "grantee_required": "Bitte wähle, wer die Vollmacht erhält.",
+    "grantee_is_grantor": "Du kannst dir nicht selbst eine Vollmacht erteilen.",
+    "duplicate_family": "Für diese Person gibt es bereits eine gültige Vollmacht.",
+    "actions_required": "Bitte wähle mindestens eine Berechtigung.",
+    "validTo_before_validFrom": "Das Ende liegt vor dem Beginn.",
+    "meeting_required": "Bitte wähle die Versammlung."
+  }
+}
