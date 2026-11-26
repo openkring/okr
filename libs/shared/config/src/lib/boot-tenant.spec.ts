@@ -132,6 +132,13 @@ describe('consumeTenantQueryParam', () => {
     expect(s.data).toEqual({});
   });
 
+  it('a link to the tenant the start already runs is no change', () => {
+    // nothing stored: the start runs the build tenant (kring); ?tenant=kring changes nothing
+    const s = mem(null);
+    expect(consumeTenantQueryParam({ href: 'https://x.test/?tenant=kring' }, s, 'kring'))
+      .toEqual({ changed: false, cleanUrl: 'https://x.test/' });
+  });
+
   it('a first choice without a stored tenant is a change', () => {
     const s = mem(null);
     expect(consumeTenantQueryParam({ href: 'https://x.test/?tenant=p13' }, s).changed).toBe(true);

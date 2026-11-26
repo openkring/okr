@@ -63,20 +63,23 @@ export function bootEnvironment(env: OkrEnvironment, mode: TenantMode = 'fixed')
 
 /**
  * Reads `?tenant=<id>` from the address (a tenant's link into the portal, spec 1.179 §6.2). A valid
- * id different from the stored one is stored and reported as a change; the caller then reloads
+ * id different from the tenant this start runs is stored and reported as a change; the caller then reloads
  * `cleanUrl` (the address without the parameter, `null` when there was none). An invalid id is
  * dropped. Only for runtime-mode builds: a fixed build never calls it.
  */
 export function consumeTenantQueryParam(
   loc: Pick<Location, 'href'>,
   storage: Pick<Storage, 'getItem' | 'setItem'>,
+  bootTenantId?: string,
 ): { changed: boolean; cleanUrl: string | null } {
   const url = new URL(loc.href);
   if (!url.searchParams.has('tenant')) return { changed: false, cleanUrl: null };
   const id = url.searchParams.get('tenant');
   url.searchParams.delete('tenant');
   const cleanUrl = url.toString();
-  if (!isValidTenantId(id) || id === readStoredTenant(storage)) return { changed: false, cleanUrl };
+  // compared with the tenant this start runs (stored, else the build's), not only with storage
+  const current = readStoredTenant(storage) ?? bootTenantId ?? null;
+  if (!isValidTenantId(id) || id === current) return { changed: false, cleanUrl };
   try {
     storage.setItem(PORTAL_TENANT_KEY, id);
   } catch {

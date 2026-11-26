@@ -7,3 +7,4 @@ export * from './lib/aoc-hub.util';
 export * from './lib/aoc-status-services';
 export * from './lib/cookie-banner-settings.validations';
 export * from './lib/portal.util';
+export * from './lib/tenant-link.util';

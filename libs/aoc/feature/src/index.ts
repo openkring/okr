@@ -14,3 +14,4 @@ export * from './lib/aoc-tenant-allocation';
 export * from './lib/aoc-hub';
 export * from './lib/aoc-hub.store';
 export * from './lib/portal-chooser.page';
+export * from './lib/tenant-link.page';
