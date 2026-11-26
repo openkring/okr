@@ -9,7 +9,7 @@ import { createActionSheetButton, createActionSheetOptions, isBrowser } from '@o
 import { ArticleSection, IMAGE_STYLE_SHAPE, ImageConfig, NewsConfig, SectionModel, articleCover, withClassicFields } from '@okr/shared-models';
 import { ThumbnailUrlPipe } from '@okr/shared-pipes';
 import { isAppMoreUrl, openMoreLink } from '@okr/cms-article-feature';
-import { getSectionIntro } from '@okr/cms-section-util';
+import { articleSubTitleLine, getSectionIntro } from '@okr/cms-section-util';
 
 import { NewsStore } from './news-section.store';
 
@@ -49,8 +49,10 @@ import { NewsStore } from './news-section.store';
                     </ion-thumbnail>
                   }
                   <ion-label>
-                    @if (article.subTitle) {
-                      <p class="subtitle">{{ article.subTitle }}</p>
+                    <!-- news: the date stands where the subtitle stands -->
+                    @let line = subTitleLine(article);
+                    @if (line) {
+                      <p class="subtitle">{{ line }}</p>
                     }
                     <p class="title">{{ article.title }}</p>
                   </ion-label>
@@ -115,6 +117,10 @@ export class NewsSectionComponent implements OnInit {
   /** the picture of the teaser: the cover of an article with blocks (spec 1.173), else its first image */
   protected articleImage(article: ArticleSection): ImageConfig | undefined {
     return articleCover(article);
+  }
+
+  protected subTitleLine(article: ArticleSection): string {
+    return articleSubTitleLine(article, true);
   }
 
   protected articleExcerpt(article: ArticleSection): string {

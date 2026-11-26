@@ -206,7 +206,12 @@
         "nothing": "Hier gibt es nichts einzustellen.",
         "unknown": "Dieser Block stammt aus einer neueren Version der App. Du kannst ihn verschieben oder löschen.",
         "writeInArticle": "Den Text schreibst du direkt im Artikel.",
-        "look": "Aussehen"
+        "look": "Aussehen",
+        "tab": {
+          "label": "Bereich der Einstellungen",
+          "blocks": "Blöcke",
+          "article": "Artikel"
+        }
       },
       "align": {
         "label": "Ausrichtung",
@@ -221,7 +226,7 @@
         "pickEmpty": "In diesem Artikel gibt es keine weiteren Bilder.",
         "pickOne": "{name} wählen",
         "unnamed": "Bild {n}",
-        "captionHidden": "Der Untertitel ist ausgeblendet. Unter «Aussehen» legst du fest, wo er erscheint.",
+        "captionHidden": "Die Caption ist ausgeblendet. Unter «Aussehen» legst du fest, wo sie erscheint.",
         "link": {
           "label": "Link",
           "placeholder": "https://…",
@@ -291,7 +296,10 @@
         "imagePlaceholder": "Noch kein Bild gewählt",
         "galleryPlaceholder": "Noch keine Bilder gewählt",
         "buttonPlaceholder": "Button ohne Beschriftung oder Link",
-        "dropHere": "Hier ablegen"
+        "dropHere": "Hier ablegen",
+        "titlePlaceholder": "Titel",
+        "subTitlePlaceholder": "Untertitel",
+        "introPlaceholder": "Einleitung"
       },
       "frame": {
         "toolbar": "Werkzeuge: {block}",
@@ -355,7 +363,7 @@
           "missing": "Wähle ein Bild. Ohne Bild kannst du die E-Mail nicht senden.",
           "fromMail": "Aus dieser E-Mail",
           "pickEmpty": "In dieser E-Mail gibt es keine weiteren Bilder.",
-          "captionHidden": "Der Untertitel ist ausgeblendet. Wähle, wo er erscheint.",
+          "captionHidden": "Die Caption ist ausgeblendet. Wähle, wo sie erscheint.",
           "width": "Breite"
         },
         "picture": {
@@ -929,14 +937,14 @@
         "helper": "Die URL, welche beim Auslösen einer Aktion benutzt wird. Normalerweise liegen die Bilder im Storage der App. Die URL ist dann eine relative URL /tenant/scs..."
       },
       "overlay": {
-        "label": "Untertitel",
+        "label": "Caption",
         "placeholder": "Text unter dem Bild",
-        "helper": "Der Untertitel zum Bild. Ist keiner eingetragen, wird die Bildquelle gezeigt, sonst der Untertitel oder Titel der Sektion. Wo und wie er erscheint, legst du unter «Bild Styles» fest."
+        "helper": "Die Caption zum Bild. Ist keine eingetragen, wird die Bildquelle gezeigt, sonst der Untertitel oder Titel der Sektion. Wo und wie sie erscheint, legst du unter «Bild Styles» fest."
       },
       "credit": {
         "label": "Bildquelle",
         "placeholder": "z. B. Foto: J. Muster / Keystone",
-        "helper": "Urhebernachweis des Bildes. Er steht als zweite, etwas kleinere Zeile unter dem Untertitel, oder allein, wenn das Bild keinen Untertitel hat.",
+        "helper": "Urhebernachweis des Bildes. Er steht als zweite, etwas kleinere Zeile unter der Caption, oder allein, wenn das Bild keine Caption hat.",
         "read": "Aus Bilddatei auslesen",
         "readEmpty": "Diese Bilddatei enthält keine Angaben zum Urheber."
       },
@@ -1016,8 +1024,8 @@
         "helper": "Lädt das Bild vor allen anderen. Schalte das nur beim ersten Bild ein, das sofort sichtbar ist – sonst wird die Seite langsamer."
       },
       "captionPosition": {
-        "label": "Position des Untertitels",
-        "helper": "Wo der Untertitel erscheint, oder ob er gar nicht gezeigt wird. Der Untertitel ist der beim Bild eingetragene Untertitel, sonst die Bildquelle, sonst der Untertitel der Sektion, sonst ihr Titel.",
+        "label": "Position der Caption",
+        "helper": "Wo die Caption erscheint, oder ob sie gar nicht gezeigt wird. Die Caption ist die beim Bild eingetragene, sonst die Bildquelle, sonst der Untertitel der Sektion, sonst ihr Titel.",
         "none": "nicht darstellen",
         "top": "oben",
         "bottom": "unten",
@@ -1026,28 +1034,28 @@
         "bottomOverlay": "unten auf dem Bild"
       },
       "captionSize": {
-        "label": "Schriftgrösse des Untertitels",
+        "label": "Schriftgrösse der Caption",
         "placeholder": "0.8rem",
         "helper": "Die Schriftgrösse, z. B. 0.8rem, 14px oder 1em."
       },
       "captionStyle": {
-        "label": "Schriftstil des Untertitels",
-        "helper": "Wie der Untertitel gesetzt wird.",
+        "label": "Schriftstil der Caption",
+        "helper": "Wie die Caption gesetzt wird.",
         "normal": "normal",
         "italic": "kursiv",
         "bold": "fett",
         "boldItalic": "fett und kursiv"
       },
       "captionAlign": {
-        "label": "Ausrichtung des Untertitels",
-        "helper": "Ob der Untertitel links, mittig oder rechts steht.",
+        "label": "Ausrichtung der Caption",
+        "helper": "Ob die Caption links, mittig oder rechts steht.",
         "left": "links",
         "center": "mittig",
         "right": "rechts"
       },
       "group": {
         "image": "Bild",
-        "caption": "Untertitel",
+        "caption": "Caption",
         "action": "Aktion"
       }
     }
@@ -2391,7 +2399,7 @@
     "helper": "Als farbiges Band zieht sich der Artikel über die ganze Breite und fällt auf.",
     "background": {
       "label": "Hintergrundfarbe",
-      "helper": "Eine Farbe wie #59A4BF. Der Artikel erscheint dann als Band in dieser Farbe. Leer lassen für keinen eigenen Hintergrund."
+      "helper": "Tippe auf das Farbfeld, um eine Farbe zu wählen. Der Artikel erscheint dann als Band in dieser Farbe. Mit «Entfernen» hat er keinen eigenen Hintergrund."
     },
     "textColor": {
       "label": "Textfarbe",

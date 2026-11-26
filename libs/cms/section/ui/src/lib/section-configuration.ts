@@ -1,9 +1,9 @@
 import { Component, computed, input, linkedSignal, model, signal } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
-import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonItem, IonLabel, IonNote, IonRow, IonSelect, IonSelectOption } from '@ionic/angular';
+import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonItem, IonLabel, IonNote, IonRow, IonSelect, IonSelectOption } from '@ionic/angular';
 
 import { ARTICLE_TEXT_COLORS, ArticleConfig, ArticleTextColor, CategoryListModel, RoleName, SECTION_INTRO_POSITIONS, SectionIntroPosition, SectionModel, UserModel } from '@okr/shared-models';
-import { ButtonCopy, ButtonCopyI18n, CategorySelect, ErrorNote, TextareaInput, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { ButtonCopy, ButtonCopyI18n, CategorySelect, Color, ErrorNote, TextareaInput, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
 import { COMMENT_LENGTH, LONG_NAME_LENGTH, NAME_LENGTH } from '@okr/shared-constants';
 import { SectionAddChip, SectionAddChips } from './section-add-chips';
@@ -18,6 +18,13 @@ export const PFX = '@cms/section/feature.';
  */
 export type SectionConfigPart = 'all' | 'content' | 'appearance';
 
+/** A colour of the theme as #rrggbb; the fallback where there is no document (SSR) or the variable is not a hex value. */
+function themeColor(name: 'primary' | 'secondary', fallback: string): string {
+  if (typeof document === 'undefined') return fallback;
+  const value = getComputedStyle(document.documentElement).getPropertyValue(`--ion-color-${name}`).trim();
+  return /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(value) ? value : fallback;
+}
+
 export type ArticleEmphasis = NonNullable<ArticleConfig['emphasis']>;
 const EMPHASES: ArticleEmphasis[] = ['none', 'banner'];
 
@@ -25,10 +32,14 @@ const EMPHASES: ArticleEmphasis[] = ['none', 'banner'];
   selector: 'okr-section-config',
   standalone: true,
   imports: [
-    IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonGrid, IonLabel, IonItem, IonSelect, IonSelectOption, IonNote,
-    TextInput, TextareaInput, CategorySelect, ButtonCopy, NgTemplateOutlet,
+    IonButton, IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonGrid, IonLabel, IonItem, IonSelect, IonSelectOption, IonNote,
+    TextInput, TextareaInput, CategorySelect, ButtonCopy, Color, NgTemplateOutlet,
     ErrorNote, SectionAddChips
   ],
+  styles: [`
+    .background { display: flex; align-items: center; }
+    .background okr-color { flex: 1; min-width: 0; }
+  `],
   template: `
     <!-- what the section is and who sees it: at the top, apart from its content (the article: in «Darstellung») -->
     @if (!journalMode() && part() !== 'content') {
@@ -221,8 +232,14 @@ const EMPHASES: ArticleEmphasis[] = ['none', 'banner'];
                    in «Darstellung» offered as a «+» chip until used -->
               @if (showBackground()) {
                 <ion-col size="12" [sizeMd]="hasBackground() ? '6' : '12'">
-                  <okr-text-input [i18n]="backgroundI18n()" [value]="background()" (valueChange)="onArticleChange({ background: $event.trim() })"
-                                  [maxLength]="backgroundLength" [readOnly]="isReadOnly()" [showHelper]="true" />
+                  <!-- the colour selector; «Entfernen» leaves the article without an own background -->
+                  <div class="background">
+                    <okr-color [hexColor]="background()" (hexColorChange)="onBackgroundPicked($event)" [label]="i18n().emphasis_background_label()" [readOnly]="isReadOnly()" />
+                    @if (hasBackground() && !isReadOnly()) {
+                      <ion-button fill="clear" size="small" (click)="removeBackground()">{{ i18n().article_add_remove() }}</ion-button>
+                    }
+                  </div>
+                  <ion-note>{{ i18n().emphasis_background_helper() }}</ion-note>
                   <okr-error-note [errors]="errorsFor('background')" />
                 </ion-col>
               }
@@ -319,14 +336,6 @@ export class SectionConfiguration {
   protected readonly introPositions = SECTION_INTRO_POSITIONS;
   protected readonly emphases = EMPHASES;
   protected readonly textColors = ARTICLE_TEXT_COLORS;
-  // the longest value the suite accepts is #rrggbb
-  protected readonly backgroundLength = 7;
-  protected backgroundI18n = computed((): TextInputI18n => ({
-    name: 'articleBackground',
-    label: this.i18n().emphasis_background_label(),
-    placeholder: '#59A4BF',
-    helper: this.i18n().emphasis_background_helper(),
-  }));
   protected readonly buttonCopyI18n = computed(() => ({ copy_conf: this.i18n().copy_conf() } as ButtonCopyI18n));
 
   protected nameI18n = computed(() => ({
@@ -413,6 +422,19 @@ export class SectionConfiguration {
 
   protected onAdd(id: string): void {
     this.opened.update(open => new Set([...open, id]));
+    // a colour to start from, so that the selector shows one; the theme's primary colour
+    if (id === 'background' && !this.hasBackground()) this.onArticleChange({ background: themeColor('primary', '#59a4bf') });
+  }
+
+  /** The picker gives #rrggbb, with a transparency #rrggbbaa: an article's background is opaque. */
+  protected onBackgroundPicked(hex: string): void {
+    const value = hex.trim();
+    this.onArticleChange({ background: /^#[0-9a-f]{8}$/i.test(value) ? value.slice(0, 7) : value });
+  }
+
+  protected removeBackground(): void {
+    this.opened.update(open => new Set([...open].filter(id => id !== 'background')));
+    this.onArticleChange({ background: '' });
   }
 
   protected hasRole(role: RoleName): boolean {

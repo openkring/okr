@@ -67,8 +67,8 @@ const CLOSE_AGAIN_MS = 300;
             </div>
           }
         </div>
-        <ng-template #nothingSelected>
-          <okr-article-panel [section]="article()" (sectionChange)="onSectionChange($event)" [errors]="ownErrors()" [errorBlocks]="errorBlocks()" [outdated]="outdated()"
+        <ng-template #nothingSelected let-part>
+          <okr-article-panel [part]="part" [section]="article()" (sectionChange)="onSectionChange($event)" [errors]="ownErrors()" [errorBlocks]="errorBlocks()" [outdated]="outdated()"
             [articleImages]="articleImages()" [uploads]="uploads" [onUpload]="onUpload" [roles]="roles()" [states]="states()" [allTags]="allTags()"
             [currentUser]="currentUser()" [storagePath]="storagePath()" [i18n]="t" (selectBlock)="surface().open($event)" />
         </ng-template>

@@ -24,6 +24,7 @@ import { ARTICLE_BLOCK_PADDING, ARTICLE_COLUMNS_STYLES, ARTICLE_LIST_PADDING } f
 import { ArticleCanvasBlock, ArticleCanvasContext, type CanvasCaret, type CanvasItem, type FrameAction } from './article-canvas-block';
 import { canvasSize, classicButtonId, dragPoint, dropChange, isClassicText, isTextual, kindOf, mayEnterList, neighbourId, parentId, type CanvasChange } from './article-canvas.util';
 import { ARTICLE_FRAME_STYLES, ArticleFrame } from './article-frame';
+import { ArticleHeaderEdit, type ArticleHeaderChange } from './article-header-edit';
 
 export type { CanvasCaret } from './article-canvas-block';
 export type { CanvasChange } from './article-canvas.util';
@@ -60,7 +61,7 @@ let canvases = 0;
 @Component({
   selector: 'okr-article-canvas',
   standalone: true,
-  imports: [ArticleCanvasBlock, ArticleFrame, CdkDrag, CdkDropList, CdkScrollable, IonIcon, IonNote, NgTemplateOutlet, OptionalCardHeader, SvgIconPipe],
+  imports: [ArticleCanvasBlock, ArticleFrame, ArticleHeaderEdit, CdkDrag, CdkDropList, CdkScrollable, IonIcon, IonNote, NgTemplateOutlet, OptionalCardHeader, SvgIconPipe],
   providers: [{ provide: ArticleCanvasContext, useExisting: forwardRef(() => ArticleCanvas) }],
   host: {
     '(keydown)': 'onKeydown($event)',
@@ -110,12 +111,12 @@ let canvases = 0;
         <div class="page" [class]="device()" [class.mail]="isMail()" [style.width.px]="size().width" [style.max-width.px]="size().maxWidth" [style.--mail-padding]="isMail() ? profile().padding + 'px' : null">
           @if (isMail()) { <div class="strip">{{ t.article_editor_mail_head() }}</div> }
           <div class="inside">
-            <okr-article-frame [section]="section()" [headerPlace]="headerPlace()">
+            <okr-article-frame [section]="section()" [headerPlace]="headerPlace()" [headerTemplate]="editHeader() && headerPlace() !== 'column' ? headerEdit : undefined">
               <div class="list" cdkDropList [id]="topListId" [class.classic-text]="classicText()" [cdkDropListData]="topPlace" [cdkDropListConnectedTo]="dropLists()"
                 [cdkDropListEnterPredicate]="mayEnter" [cdkDropListDisabled]="!dragEnabled()" [cdkDropListAutoScrollStep]="8" (cdkDropListDropped)="onDrop($event)" (cdkDropListExited)="switching = true" (cdkDropListEntered)="switching = false">
                 @for (item of items(); track item.block.id; let last = $last) {
                   @let first = item.block.id === firstDrawnId();
-                  <okr-article-canvas-block cdkDrag [item]="item" [addBelow]="!last" [titled]="first && headerPlace() === 'slideshow'" [classicText]="classicText()" [classicButton]="item.block.id === classicButtonId()"
+                  <okr-article-canvas-block cdkDrag [item]="item" [addBelow]="!last" [titled]="first && headerPlace() === 'slideshow' && !editHeader()" [classicText]="classicText()" [classicButton]="item.block.id === classicButtonId()"
                     [cdkDragData]="dragData(item, false)" [cdkDragDisabled]="!mayDrag(item)" [cdkDragConstrainPosition]="dragPoint" (cdkDragStarted)="onDragStart()">
                     @if (item.kind === 'columns') {
                       <div class="columns" [class]="columnsForm()" [style.--columns]="item.template">
@@ -126,7 +127,11 @@ let canvases = 0;
                             [cdkDropListEnterPredicate]="mayEnter" [cdkDropListDisabled]="!dragEnabled()" [cdkDropListAutoScrollStep]="8" (cdkDropListDropped)="onDrop($event)" (cdkDropListExited)="switching = true" (cdkDropListEntered)="switching = false">
                             @if (withHeader) {
                               <div class="header">
-                                <okr-optional-card-header [intro]="intro().text" [introPosition]="intro().position" [title]="title()" [subTitle]="subTitle()" />
+                                @if (editHeader()) {
+                                  <ng-container [ngTemplateOutlet]="headerEdit" />
+                                } @else {
+                                  <okr-optional-card-header [intro]="intro().text" [introPosition]="intro().position" [title]="title()" [subTitle]="subTitle()" />
+                                }
                               </div>
                             }
                             @for (inner of column.items; track inner.block.id; let firstInner = $first) {
@@ -158,6 +163,14 @@ let canvases = 0;
         @if (!isMail()) { <ng-container [ngTemplateOutlet]="addAtEnd" /> }
       </div>
     </div>
+
+    <!-- title, subtitle and intro, typed in place: in the frame, or in the column of the first block when the header stands there -->
+    <ng-template #headerEdit>
+      @let raw = rawHeader();
+      <okr-article-header-edit [title]="raw.title" [subTitle]="raw.subTitle" [intro]="raw.intro.text" [introPosition]="raw.intro.position"
+        [titlePlaceholder]="t.article_editor_canvas_titlePlaceholder()" [subTitlePlaceholder]="t.article_editor_canvas_subTitlePlaceholder()"
+        [introPlaceholder]="t.article_editor_canvas_introPlaceholder()" (focusin)="onHeaderFocus()" (headerChange)="headerChange.emit($event)" />
+    </ng-template>
 
     <!-- in a mail above the foot of its template -->
     <ng-template #addAtEnd>
@@ -200,6 +213,8 @@ export class ArticleCanvas extends ArticleCanvasContext {
   public readonly selectBlock = output<string | undefined>();
   // eslint-disable-next-line @angular-eslint/no-output-native -- no native change event bubbles out of the canvas
   public readonly change = output<CanvasChange<MailBlock>>();
+  /** title, subtitle or intro typed in the header (an article only); the host applies it at once */
+  public readonly headerChange = output<ArticleHeaderChange>();
 
   // computed
   /** as `openArticle` keeps them: also what readers skip, so that a change does not drop it; the same array when there is nothing to leave out */
@@ -216,6 +231,13 @@ export class ArticleCanvas extends ArticleCanvasContext {
   protected readonly intro = computed(() => {
     const intro = getSectionIntro(this.section());
     return { ...intro, text: this.replace(intro.text) };
+  });
+  /** an article: its header is typed in place; a mail has none */
+  protected readonly editHeader = computed(() => !this.isMail());
+  /** the header as stored, for typing: placeholders such as @APPNAME@ stay as they are */
+  protected readonly rawHeader = computed(() => {
+    const section = this.section();
+    return { title: section.title ?? '', subTitle: section.subTitle ?? '', intro: getSectionIntro(section) };
   });
   protected readonly items = computed(() => this.blocks().map((block) => this.topItem(block)));
   protected readonly headerPlace = computed(() => this.isMail() ? 'card' : articleHeaderPlace(this.blocks() as ArticleBlock[], !!articleBackground(this.section().properties)));
@@ -364,6 +386,11 @@ export class ArticleCanvas extends ArticleCanvasContext {
     if (target.closest('okr-rich-text-inline')) return;
     if (target.closest('button, ion-button')) event.preventDefault();
     this.open(id, clickedCaret(event));
+  }
+
+  /** typing in the header: no block is selected, so that the panel shows the article */
+  protected onHeaderFocus(): void {
+    if (this.selectedNow() !== undefined) this.select(undefined);
   }
 
   protected onAuxClick(event: MouseEvent): void {

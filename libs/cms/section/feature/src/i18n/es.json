@@ -206,7 +206,12 @@
         "nothing": "Aquí no hay nada que ajustar.",
         "unknown": "Este bloque procede de una versión más reciente de la app. Puedes moverlo o eliminarlo.",
         "writeInArticle": "Escribes el texto directamente en el artículo.",
-        "look": "Aspecto"
+        "look": "Aspecto",
+        "tab": {
+          "label": "Zona de ajustes",
+          "blocks": "Bloques",
+          "article": "Artículo"
+        }
       },
       "align": {
         "label": "Alineación",
@@ -291,7 +296,10 @@
         "imagePlaceholder": "Todavía no hay imagen elegida",
         "galleryPlaceholder": "Todavía no hay imágenes elegidas",
         "buttonPlaceholder": "Botón sin texto o sin enlace",
-        "dropHere": "Soltar aquí"
+        "dropHere": "Soltar aquí",
+        "titlePlaceholder": "Título",
+        "subTitlePlaceholder": "Subtítulo",
+        "introPlaceholder": "Introducción"
       },
       "frame": {
         "toolbar": "Herramientas: {block}",
@@ -2391,7 +2399,7 @@
     "helper": "Como banda de color, el artículo ocupa todo el ancho y llama la atención.",
     "background": {
       "label": "Color de fondo",
-      "helper": "Un color como #59A4BF. El artículo se muestra entonces como una banda de este color. Déjalo vacío para no tener fondo propio."
+      "helper": "Toca la muestra para elegir un color. El artículo se muestra entonces como una banda de este color. Con «Quitar» no tiene fondo propio."
     },
     "textColor": {
       "label": "Color del texto",

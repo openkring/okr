@@ -206,7 +206,12 @@
         "nothing": "There is nothing to set here.",
         "unknown": "This block comes from a newer version of the app. You can move or delete it.",
         "writeInArticle": "You write the text directly in the article.",
-        "look": "Look"
+        "look": "Look",
+        "tab": {
+          "label": "Settings area",
+          "blocks": "Blocks",
+          "article": "Article"
+        }
       },
       "align": {
         "label": "Alignment",
@@ -291,7 +296,10 @@
         "imagePlaceholder": "No image chosen yet",
         "galleryPlaceholder": "No images chosen yet",
         "buttonPlaceholder": "Button without label or link",
-        "dropHere": "Drop here"
+        "dropHere": "Drop here",
+        "titlePlaceholder": "Title",
+        "subTitlePlaceholder": "Subtitle",
+        "introPlaceholder": "Introduction"
       },
       "frame": {
         "toolbar": "Tools: {block}",
@@ -2391,7 +2399,7 @@
     "helper": "As a coloured band the article spans the full width and stands out.",
     "background": {
       "label": "Background colour",
-      "helper": "A colour such as #59A4BF. The article is then shown as a band in this colour. Leave empty for no background of its own."
+      "helper": "Tap the colour swatch to choose a colour. The article is then shown as a band in this colour. With «Remove» it has no background of its own."
     },
     "textColor": {
       "label": "Text colour",

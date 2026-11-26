@@ -206,7 +206,12 @@
         "nothing": "Il n’y a rien à régler ici.",
         "unknown": "Ce bloc provient d’une version plus récente de l’app. Tu peux le déplacer ou le supprimer.",
         "writeInArticle": "Tu écris le texte directement dans l’article.",
-        "look": "Apparence"
+        "look": "Apparence",
+        "tab": {
+          "label": "Zone des réglages",
+          "blocks": "Blocs",
+          "article": "Article"
+        }
       },
       "align": {
         "label": "Alignement",
@@ -291,7 +296,10 @@
         "imagePlaceholder": "Aucune image choisie",
         "galleryPlaceholder": "Aucune image choisie",
         "buttonPlaceholder": "Bouton sans libellé ou sans lien",
-        "dropHere": "Déposer ici"
+        "dropHere": "Déposer ici",
+        "titlePlaceholder": "Titre",
+        "subTitlePlaceholder": "Sous-titre",
+        "introPlaceholder": "Introduction"
       },
       "frame": {
         "toolbar": "Outils : {block}",
@@ -2391,7 +2399,7 @@
     "helper": "En bandeau coloré, l'article s'étend sur toute la largeur et attire l'attention.",
     "background": {
       "label": "Couleur de fond",
-      "helper": "Une couleur comme #59A4BF. L'article s'affiche alors comme un bandeau de cette couleur. Laisse vide pour aucun fond propre."
+      "helper": "Touche la pastille pour choisir une couleur. L'article s'affiche alors comme un bandeau de cette couleur. Avec « Retirer », il n'a pas de fond propre."
     },
     "textColor": {
       "label": "Couleur du texte",

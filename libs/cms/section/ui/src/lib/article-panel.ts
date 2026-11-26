@@ -12,8 +12,10 @@ import { ImagesConfiguration } from './images-configuration';
 import { SectionConfiguration } from './section-configuration';
 
 /**
- * The settings of the article itself (spec 1.175 §7.3), shown while no block is selected: title, subtitle and intro, who sees it, its
- * width and look, date, teaser picture, name, key, tags and notes. Every change sets `section` once; nothing is set on init.
+ * The settings of the article itself (spec 1.175 §7.3), shown while no block is selected. In the tab «Blöcke» (`part` 'blocks'), below
+ * the library: tags and notes. In the tab «Artikel» ('article'): who sees it, its width, name and key, its look («Hervorhebung»),
+ * teaser picture and date. 'all' shows both. Title, subtitle and intro are typed in the article itself; their errors stand at the top
+ * of both tabs. Every change sets `section` once; nothing is set on init.
  * Uploaded pictures go to `onUpload` instead, because they may arrive when a block is selected.
  */
 @Component({
@@ -42,43 +44,50 @@ import { SectionConfiguration } from './section-configuration';
     }
     <!-- an error that no field below shows (e.g. too many blocks), so that a missing save banner is never unexplained -->
     @for (error of rest(); track error.field) { <okr-error-note [errors]="error.messages" /> }
+    <!-- title, subtitle and intro are typed in the article: their errors stand here, in both tabs -->
+    <okr-error-note [errors]="errorsFor('title')" />
+    <okr-error-note [errors]="errorsFor('subTitle')" />
+    <okr-error-note [errors]="errorsFor('intro')" />
 
-    <div class="panel-head"><h2>{{ i18n().article_editor_article_title() }}</h2></div>
-    @for (note of outdatedNotes(); track note) { <ion-note class="note outdated">{{ note }}</ion-note> }
-    <okr-section-config part="content" [formData]="section()" (formDataChange)="set($event)" [currentUser]="currentUser()"
-      [roles]="roles()" [states]="states()" [showAdvanced]="true" [readOnly]="false" [i18n]="i18n()" [errors]="fieldErrors()" />
+    @if (part() !== 'blocks') {
+      <div class="panel-head"><h2>{{ i18n().article_editor_article_title() }}</h2></div>
+      @for (note of outdatedNotes(); track note) { <ion-note class="note outdated">{{ note }}</ion-note> }
 
-    <ion-card>
-      <ion-card-header><ion-card-title>{{ i18n().article_editor_article_cover_title() }}</ion-card-title></ion-card-header>
-      <ion-card-content class="ion-no-padding">
-        <okr-images-config [images]="covers()" (imagesChange)="setCover($event[0])" [multiple]="false" [embedded]="true" [uniqueNames]="true"
-          [uploads]="uploads()" [uploadTarget]="uploadTarget()" [emptyText]="i18n().article_editor_article_cover_empty()"
-          [storagePath]="storagePath()" [currentUser]="currentUser()" [readOnly]="false" [i18n]="i18n()" [errors]="coverErrors()" />
-        <div class="actions">
-          @if (choices().length > 0) {
-            <ion-button size="small" fill="outline" (click)="pick()">{{ i18n().article_editor_image_fromArticle() }}</ion-button>
-          }
-        </div>
-        @if (!uploads()) { <ion-note class="note">{{ i18n().article_editor_image_noUpload() }}</ion-note> }
-        <ion-note class="note">{{ i18n().article_editor_article_cover_helper() }}</ion-note>
-      </ion-card-content>
-    </ion-card>
+      <!-- «Einstellungen» (who sees it, width, name) and «Hervorhebung» (emphasis, background, intro position) -->
+      <okr-section-config part="appearance" [headerTitle]="i18n().article_editor_article_settings()" [formData]="section()" (formDataChange)="set($event)"
+        [currentUser]="currentUser()" [roles]="roles()" [states]="states()" [showAdvanced]="true" [readOnly]="false" [i18n]="i18n()" [errors]="fieldErrors()" />
 
-    <ion-card>
-      <ion-card-content class="ion-no-padding">
-        <okr-date-input [i18n]="dateI18n()" [storeDate]="date()" (storeDateChange)="setDate($event)" [readOnly]="false" />
-      </ion-card-content>
-    </ion-card>
+      <ion-card>
+        <ion-card-header><ion-card-title>{{ i18n().article_editor_article_cover_title() }}</ion-card-title></ion-card-header>
+        <ion-card-content class="ion-no-padding">
+          <okr-images-config [images]="covers()" (imagesChange)="setCover($event[0])" [multiple]="false" [embedded]="true" [uniqueNames]="true"
+            [uploads]="uploads()" [uploadTarget]="uploadTarget()" [emptyText]="i18n().article_editor_article_cover_empty()"
+            [storagePath]="storagePath()" [currentUser]="currentUser()" [readOnly]="false" [i18n]="i18n()" [errors]="coverErrors()" />
+          <div class="actions">
+            @if (choices().length > 0) {
+              <ion-button size="small" fill="outline" (click)="pick()">{{ i18n().article_editor_image_fromArticle() }}</ion-button>
+            }
+          </div>
+          @if (!uploads()) { <ion-note class="note">{{ i18n().article_editor_image_noUpload() }}</ion-note> }
+          <ion-note class="note">{{ i18n().article_editor_article_cover_helper() }}</ion-note>
+        </ion-card-content>
+      </ion-card>
 
-    <okr-section-config part="appearance" [headerTitle]="i18n().article_editor_article_settings()" [formData]="section()" (formDataChange)="set($event)"
-      [currentUser]="currentUser()" [roles]="roles()" [states]="states()" [showAdvanced]="true" [readOnly]="false" [i18n]="i18n()" [errors]="fieldErrors()" />
-
-    @if (hasRole('privileged')) {
-      <okr-chips chipName="tag" [storedChips]="section().tags ?? ''" (storedChipsChange)="setField('tags', $event)" [allChips]="allTags()" [readOnly]="false" />
-      <okr-error-note [errors]="errorsFor('tags')" />
+      <ion-card>
+        <ion-card-content class="ion-no-padding">
+          <okr-date-input [i18n]="dateI18n()" [storeDate]="date()" (storeDateChange)="setDate($event)" [readOnly]="false" />
+        </ion-card-content>
+      </ion-card>
     }
-    @if (hasRole('admin')) {
-      <okr-textarea-input variant="card" [i18n]="notesI18n()" [value]="section().notes ?? ''" (valueChange)="setField('notes', $event)" [errors]="errorsFor('notes')" [readOnly]="false" />
+
+    @if (part() !== 'article') {
+      @if (hasRole('privileged')) {
+        <okr-chips chipName="tag" [storedChips]="section().tags ?? ''" (storedChipsChange)="setField('tags', $event)" [allChips]="allTags()" [readOnly]="false" />
+        <okr-error-note [errors]="errorsFor('tags')" />
+      }
+      @if (hasRole('admin')) {
+        <okr-textarea-input variant="card" [i18n]="notesI18n()" [value]="section().notes ?? ''" (valueChange)="setField('notes', $event)" [errors]="errorsFor('notes')" [readOnly]="false" />
+      }
     }
   `,
 })
@@ -106,6 +115,8 @@ export class ArticlePanel {
   public readonly currentUser = input<UserModel | undefined>();
   public readonly storagePath = input.required<string>();
   public readonly i18n = input.required<ArticleEditorI18n>();
+  /** which tab of the editor's panel: 'blocks' (tags, notes), 'article' (settings, look, teaser picture, date) or both */
+  public readonly part = input<'blocks' | 'article' | 'all'>('all');
 
   // outputs
   public readonly selectBlock = output<string>();

@@ -206,7 +206,12 @@
         "nothing": "Qui non c’è nulla da impostare.",
         "unknown": "Questo blocco proviene da una versione più recente dell’app. Puoi spostarlo o eliminarlo.",
         "writeInArticle": "Scrivi il testo direttamente nell’articolo.",
-        "look": "Aspetto"
+        "look": "Aspetto",
+        "tab": {
+          "label": "Area delle impostazioni",
+          "blocks": "Blocchi",
+          "article": "Articolo"
+        }
       },
       "align": {
         "label": "Allineamento",
@@ -291,7 +296,10 @@
         "imagePlaceholder": "Nessuna immagine scelta",
         "galleryPlaceholder": "Nessuna immagine scelta",
         "buttonPlaceholder": "Pulsante senza testo o senza link",
-        "dropHere": "Rilascia qui"
+        "dropHere": "Rilascia qui",
+        "titlePlaceholder": "Titolo",
+        "subTitlePlaceholder": "Sottotitolo",
+        "introPlaceholder": "Introduzione"
       },
       "frame": {
         "toolbar": "Strumenti: {block}",
@@ -2391,7 +2399,7 @@
     "helper": "Come fascia colorata l'articolo occupa tutta la larghezza e si fa notare.",
     "background": {
       "label": "Colore di sfondo",
-      "helper": "Un colore come #59A4BF. L'articolo appare allora come una fascia di questo colore. Lascia vuoto per nessuno sfondo proprio."
+      "helper": "Tocca il campione per scegliere un colore. L'articolo appare allora come una fascia di questo colore. Con «Rimuovi» non ha uno sfondo proprio."
     },
     "textColor": {
       "label": "Colore del testo",

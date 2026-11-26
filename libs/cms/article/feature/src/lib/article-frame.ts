@@ -1,7 +1,8 @@
-import { Component, computed, inject, input } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
+import { Component, TemplateRef, computed, inject, input } from '@angular/core';
 import { IonCard, IonCardContent } from '@ionic/angular';
 
-import { ArticleHeaderPlace, articleBackground, articleHasLightText, getSectionIntro } from '@okr/cms-section-util';
+import { ARTICLE_AS_NEWS, ArticleHeaderPlace, articleBackground, articleHasLightText, articleSubTitleLine, getSectionIntro } from '@okr/cms-section-util';
 import { AppStore } from '@okr/shared-feature';
 import { ArticleSection } from '@okr/shared-models';
 import { OptionalCardHeader } from '@okr/shared-ui';
@@ -31,14 +32,17 @@ export const ARTICLE_FRAME_STYLES = `
 @Component({
   selector: 'okr-article-frame',
   standalone: true,
-  imports: [OptionalCardHeader, IonCard, IonCardContent],
+  imports: [NgTemplateOutlet, OptionalCardHeader, IonCard, IonCardContent],
   /* the card stands where the frame stands */
   styles: [`:host { display: contents; }`],
   template: `
     <ion-card [class.banner]="isBanner() && !background()" [class.colored]="!!background()"
               [style.--article-bg]="background() || null" [style.--article-fg]="background() ? (lightText() ? '#ffffff' : '#1e293b') : null">
       <!-- a slideshow carries the title and subtitle on its images, like the header of la21staefa.ch -->
-      @if (!inColumn()) {
+      @if (headerTemplate(); as header) {
+        <!-- the editor: title, subtitle and intro edited in place (okr-article-header-edit) -->
+        <ng-container [ngTemplateOutlet]="header" />
+      } @else if (!inColumn()) {
         <okr-optional-card-header [intro]="intro().text" [introPosition]="intro().position" [title]="onImages() ? '' : title()" [subTitle]="onImages() ? '' : subTitle()" />
       }
       <ion-card-content>
@@ -57,6 +61,8 @@ export class ArticleFrame {
   /** a classic article: title and subtitle stand on its slideshow, or the header in its text column */
   public titleOnImages = input(false);
   public headerInColumn = input(false);
+  /** the editor: what stands in place of the header drawn here */
+  public headerTemplate = input<TemplateRef<unknown> | undefined>();
 
   // computed
   protected onImages = computed(() => this.titleOnImages() || this.headerPlace() === 'slideshow');
@@ -66,7 +72,9 @@ export class ArticleFrame {
   protected background = computed(() => articleBackground(this.section()?.properties));
   protected lightText = computed(() => articleHasLightText(this.section()?.properties));
   protected title = computed(() => this.appStore.replacePlaceholders(this.section()?.title ?? ''));
-  protected subTitle = computed(() => this.appStore.replacePlaceholders(this.section()?.subTitle ?? ''));
+  /** on a blog page or in the news feed the date stands under the title instead of the subtitle */
+  private readonly asNews = inject(ARTICLE_AS_NEWS, { optional: true }) ?? false;
+  protected subTitle = computed(() => this.appStore.replacePlaceholders(articleSubTitleLine(this.section(), this.asNews)));
   protected intro = computed(() => {
     const intro = getSectionIntro(this.section());
     return { ...intro, text: this.appStore.replacePlaceholders(intro.text) };

@@ -12,12 +12,16 @@ import { SvgIconPipe } from '@okr/shared-pipes';
 import type { MailEventLine } from '@okr/shared-util-core';
 
 import { ArticleCanvas, type CanvasCaret } from './article-canvas';
+import type { ArticleHeaderChange } from './article-header-edit';
 import { dropChange, type CanvasChange } from './article-canvas.util';
 import {
-  changeBlocks, columnOfBlock, deviceFor, editorBlocks, historyKey, isTypedInto, selectIn, stateAfterChange, stepBack, stepForward, topOverlay, withColumnSize,
+  changeBlocks, changeSection, columnOfBlock, deviceFor, editorBlocks, historyKey, isTypedInto, selectIn, stateAfterChange, stepBack, stepForward, topOverlay, withColumnSize,
 } from './article-editor-surface.util';
 
 type History = EditorHistory<EditorState>;
+/** What the template `#nothingSelected` is given: the tab of an article's panel, or 'all' (a mail). */
+export type ArticlePanelTab = 'blocks' | 'article';
+export type ArticlePanelPart = ArticlePanelTab | 'all';
 
 /**
  * The editor of blocks without its window: toolbar row, canvas and panel, undo and redo, selection and caret (spec 1.175 §7). Two hosts: the
@@ -30,7 +34,9 @@ type History = EditorHistory<EditorState>;
  * - `errors` are those of the one suite it runs, as `getErrors()` gives them (`blocks.<id>.<field>`).
  * - `onUpload` is a stable function, not an output: an upload may end when the surface is gone, and an output of it tells nothing then.
  *   The host puts the upload into the history: `surface.change(go) || history.update(go)` with `go = (history) => uploadInto(history, upload)`.
- * - What the panel shows below the library while no block is selected stands in `<ng-template #nothingSelected>`; it is created anew each time.
+ * - What the panel shows while no block is selected stands in `<ng-template #nothingSelected let-part>`; it is created anew each time. An article's
+ *   panel has two tabs: «Blöcke» (the library, then the template with `part` 'blocks') and «Artikel» (the template with `part` 'article').
+ *   A mail's panel has none: the library, then the template with `part` 'all'.
  *   `[barEnd]` stands at the end of the toolbar row, `[belowBar]` between it and the canvas.
  * - Texts come as for an article; a mail's own are put in their place (`editorTexts`).
  *
@@ -56,6 +62,7 @@ type History = EditorHistory<EditorState>;
     .text-tools ::ng-deep .rte-toolbar { border-bottom: 0; }
     .work { flex: 1; min-height: 0; display: flex; }
     .canvas { flex: 1; min-width: 0; min-height: 0; }
+    .tabs { position: sticky; top: 0; z-index: 2; padding: 8px; background: var(--ion-background-color, #fff); border-bottom: 1px solid var(--ion-color-light-shade); }
     .panel { flex: none; width: 360px; overflow: auto; overscroll-behavior: contain; padding-bottom: 24px; border-inline-start: 1px solid var(--ion-color-light-shade); background: var(--ion-background-color, #fff); color: var(--ion-text-color, #000); }
     @media (width < 1024px) {
       .work { flex-direction: column; }
@@ -85,18 +92,32 @@ type History = EditorHistory<EditorState>;
     <ng-content select="[belowBar]" />
     <div class="work">
       <okr-article-canvas class="canvas" [profile]="profile()" [section]="section()" [selectedId]="selectedId()" [errorIds]="errorIds()" [device]="device()" [dragEnabled]="!phone()"
-        [toolbarHost]="toolbarHost()" [caret]="caret()" [eventLines]="eventLines()" [i18n]="t" (selectBlock)="select($event)" (change)="onCanvasChange($event)" />
+        [toolbarHost]="toolbarHost()" [caret]="caret()" [eventLines]="eventLines()" [i18n]="t" (selectBlock)="select($event)" (change)="onCanvasChange($event)" (headerChange)="onHeaderChange($event)" />
       <div class="panel" #panel>
         @if (selectedBlock(); as block) {
           <okr-article-block-panel [block]="block" [profile]="profile()" [column]="column()" [errors]="selectedErrors()" [outdated]="selectedOutdated()" [calendars]="calendars()"
             [articleImages]="articleImages()" [uploads]="uploads()" [onUpload]="onUpload()" [storagePath]="storagePath()" [currentUser]="currentUser()" [i18n]="t"
             (blockChange)="onBlockChange($event)" (columnSizeChange)="onColumnSize(block.id, $event)" />
+        } @else if (hasTabs()) {
+          <div class="tabs">
+            <ion-segment [value]="tab()" [attr.aria-label]="t.article_editor_panel_tab_label()" (ionChange)="chooseTab($event.detail.value)">
+              <ion-segment-button value="blocks"><ion-label>{{ t.article_editor_panel_tab_blocks() }}</ion-label></ion-segment-button>
+              <ion-segment-button value="article"><ion-label>{{ t.article_editor_panel_tab_article() }}</ion-label></ion-segment-button>
+            </ion-segment>
+          </div>
+          @if (tab() === 'blocks') {
+            <ng-container [ngTemplateOutlet]="library" />
+          }
+          @if (nothingSelected(); as template) { <ng-container [ngTemplateOutlet]="template" [ngTemplateOutletContext]="{ $implicit: tab() }" /> }
         } @else {
-          <okr-article-block-library [allowed]="profile().types" [disabled]="!canAdd()" [dragEnabled]="!phone()" [dropLists]="canvas().dropLists()" [i18n]="t" (add)="add($event)" />
-          @if (nothingSelected(); as template) { <ng-container [ngTemplateOutlet]="template" /> }
+          <ng-container [ngTemplateOutlet]="library" />
+          @if (nothingSelected(); as template) { <ng-container [ngTemplateOutlet]="template" [ngTemplateOutletContext]="{ $implicit: 'all' }" /> }
         }
       </div>
     </div>
+    <ng-template #library>
+      <okr-article-block-library [allowed]="profile().types" [disabled]="!canAdd()" [dragEnabled]="!phone()" [dropLists]="canvas().dropLists()" [i18n]="texts()" (add)="add($event)" />
+    </ng-template>
   `,
 })
 export class ArticleEditorSurface {
@@ -158,6 +179,9 @@ export class ArticleEditorSurface {
     auto: '', mobile: this.texts().article_editor_device_mobile(), tablet: this.texts().article_editor_device_tablet(), desktop: this.texts().article_editor_device_desktop(),
   }));
   private readonly chosenDevice = signal<ArticlePreviewDevice>('desktop');
+  /** an article's panel while no block is selected: its blocks (library, tags, notes) or the article itself (settings, look, teaser) */
+  protected readonly hasTabs = computed(() => this.profile().kind === 'article' && !!this.nothingSelected());
+  protected readonly tab = signal<ArticlePanelTab>('blocks');
   protected readonly phone = mediaSignal('(width < 768px)');
   protected readonly device = computed(() => deviceFor(this.chosenDevice(), this.phone(), this.profile()));
 
@@ -209,6 +233,14 @@ export class ArticleEditorSurface {
     if (change.caret && change.selectedId !== undefined) this.caret.set({ id: change.selectedId, at: change.caret });
   }
 
+  /** Title, subtitle or intro typed in the canvas; a run of typing in one field is one step. */
+  protected onHeaderChange({ field, value }: ArticleHeaderChange): void {
+    this.history.update((history) => {
+      const section = history.present.section;
+      return (section[field] ?? '') === value ? history : changeSection(history, { ...section, [field]: value }, `article:${field}`);
+    });
+  }
+
   protected add(newType: MailBlockType): void {
     const change = dropChange(this.blocks(), { newType }, { index: this.blocks().length }, newId, this.profile());
     if (!change) return;
@@ -254,6 +286,10 @@ export class ArticleEditorSurface {
   }
 
   // ------------------------------------------------------- window --------------------------------------------------------
+
+  protected chooseTab(value: unknown): void {
+    if (value === 'blocks' || value === 'article') this.tab.set(value);
+  }
 
   protected chooseDevice(value: unknown): void {
     const device = this.profile().devices.find((name) => name === value);

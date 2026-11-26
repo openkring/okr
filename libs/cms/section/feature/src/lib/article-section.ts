@@ -5,7 +5,7 @@ import { IonButton, IonCol, IonGrid, IonItem, IonRow } from '@ionic/angular';
 
 import { ArticleSection, ImageConfig, ViewPosition, articleBlocksOf, isFreeArticle, withClassicFields } from '@okr/shared-models';
 import { resolveImageStyle } from '@okr/shared-util-core';
-import { ImageLayoutId, articleBackground, articleHeaderPlace, articleImagePosition, drawnBlockImages, resolveImageLayout, resolveSlideshow, validCtas, getSectionIntro } from '@okr/cms-section-util';
+import { ImageLayoutId, articleBackground, articleHeaderPlace, articleImagePosition, drawnBlockImages, resolveImageLayout, resolveSlideshow, validCtas, getSectionIntro, ARTICLE_AS_NEWS, articleSubTitleLine } from '@okr/cms-section-util';
 import { badgeFor, DeferError, Img, OptionalCardHeader, Spinner } from '@okr/shared-ui';
 // no @defer here: with this import it would become an import() of the barrel, see its index.ts
 import {
@@ -41,7 +41,7 @@ const articleBlocksFailed = signal(false);
     @if(section()) {
       <ng-template #carouselTpl>
         @if (slideshow(); as settings) {
-          <okr-article-slideshow [images]="images()" [settings]="settings" [title]="title()" [subTitle]="subTitle()" />
+          <okr-article-slideshow [images]="images()" [settings]="settings" [title]="title()" [subTitle]="headerSubTitle()" />
         } @else {
         <okr-article-carousel [images]="images()" [imageStyle]="imageStyle()" [captionFallbacks]="captionFallbacks()" [editMode]="editMode()" [imageBadges]="imageBadges()" [emitImageClicks]="emitImageClicks()" [zoomTitle]="store.i18n.article_zoomed()" (imageSelected)="imageSelected.emit($event)" />
         }
@@ -54,7 +54,7 @@ const articleBlocksFailed = signal(false);
             <ion-row>
               <ion-col size="12" [class.header-col]="headerPlace() === 'column'">
                 <!-- with a slideshow the card has already drawn the intro -->
-                <okr-optional-card-header [intro]="headerPlace() === 'column' ? sectionIntro().text : ''" [introPosition]="sectionIntro().position" [title]="title()" [subTitle]="subTitle()" />
+                <okr-optional-card-header [intro]="headerPlace() === 'column' ? sectionIntro().text : ''" [introPosition]="sectionIntro().position" [title]="title()" [subTitle]="headerSubTitle()" />
               </ion-col>
             </ion-row>
           }
@@ -109,7 +109,7 @@ const articleBlocksFailed = signal(false);
                   }
                   <ion-col size="12" [sizeMd]="colSizeText()" [class.header-col]="headerInColumn()">
                     @if (headerInColumn()) {
-                      <okr-optional-card-header [intro]="sectionIntro().text" [introPosition]="sectionIntro().position" [title]="title()" [subTitle]="subTitle()" />
+                      <okr-optional-card-header [intro]="sectionIntro().text" [introPosition]="sectionIntro().position" [title]="title()" [subTitle]="headerSubTitle()" />
                     }
                     <ion-item lines="none" class="ion-no-padding">
                       <div [innerHTML]="content()"></div>
@@ -123,7 +123,7 @@ const articleBlocksFailed = signal(false);
                 <ion-row>
                   <ion-col size="12" [sizeMd]="colSizeText()" [class.header-col]="headerInColumn()">
                     @if (headerInColumn()) {
-                      <okr-optional-card-header [intro]="sectionIntro().text" [introPosition]="sectionIntro().position" [title]="title()" [subTitle]="subTitle()" />
+                      <okr-optional-card-header [intro]="sectionIntro().text" [introPosition]="sectionIntro().position" [title]="title()" [subTitle]="headerSubTitle()" />
                     }
                     <ion-item lines="none" class="ion-no-padding">
                       <div [innerHTML]="content()"></div>
@@ -299,6 +299,9 @@ export class ArticleSectionComponent {
   protected colSizeText = computed(() => 12 - this.colSizeImage());
   protected title = computed(() => this.store.appStore.replacePlaceholders(this.section()?.title ?? ''));
   protected subTitle = computed(() => this.store.appStore.replacePlaceholders(this.section()?.subTitle ?? ''));
+  /** on a blog page or in the news feed (ARTICLE_AS_NEWS) the date stands under the title instead of the subtitle */
+  private readonly asNews = inject(ARTICLE_AS_NEWS, { optional: true }) ?? false;
+  protected headerSubTitle = computed(() => this.store.appStore.replacePlaceholders(articleSubTitleLine(this.section(), this.asNews)));
   // the image caption falls back to the section subtitle, then the section title
   protected captionFallbacks = computed(() => [this.subTitle(), this.title()]);
 
@@ -341,7 +344,7 @@ export class ArticleSectionComponent {
       bindings: [
         inputBinding('blocks', () => this.freeBlocks() ?? []),
         inputBinding('title', this.title),
-        inputBinding('subTitle', this.subTitle),
+        inputBinding('subTitle', this.headerSubTitle),
         inputBinding('intro', this.sectionIntro),
         inputBinding('headerPlace', this.headerPlace),
         inputBinding('editMode', this.editMode),

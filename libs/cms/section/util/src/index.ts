@@ -30,6 +30,7 @@ export * from './lib/chat-section.validations';
 export * from './lib/hero-section.validations';
 export * from './lib/hero.util';
 export * from './lib/section-intro.util';
+export * from './lib/article-news.util';
 export * from './lib/iframe-section.validations';
 export * from './lib/map-section.validations';
 export * from './lib/people-section.validations';

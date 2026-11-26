@@ -13,7 +13,7 @@ import { hasRole, replaceSubstring, contextMenuId } from '@okr/shared-util-core'
 import { Menu, MenuItemsStore } from '@okr/cms-menu-feature';
 import { ArticleBlocksGate } from '@okr/cms-section-data-access';
 import { SectionStore } from '@okr/cms-section-feature';
-import { offersImageUpload } from '@okr/cms-section-util';
+import { ARTICLE_AS_NEWS, offersImageUpload } from '@okr/cms-section-util';
 
 import { PageStore } from './page.store';
 import { scrollToFragment } from './fragment-scroll';
@@ -27,6 +27,8 @@ import { BlogStream } from './blog-stream';
 @Component({
   selector: 'okr-blog-page',
   standalone: true,
+  // its articles are news: the date stands under the title instead of the subtitle
+  providers: [{ provide: ARTICLE_AS_NEWS, useValue: true }],
   imports: [
     SvgIconPipe, TranslatePipe, AsyncPipe,
     Menu,
