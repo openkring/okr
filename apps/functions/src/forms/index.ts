@@ -39,6 +39,7 @@ import { buildToken, verifyToken } from './form-token';
 import { persistWithSlot, readResponseCount } from './form-stats';
 import { readModelSelectChoices } from './model-select';
 import { buildSubmissionRecord, buildSubmissionTask } from './submission-record';
+import { wrapFillerMail } from './filler-mail-layout';
 import {
   buildFillerMail,
   escapeHtml,
@@ -523,8 +524,10 @@ async function sendFillerConfirmation(
   try {
     // the app's verified sender (mailtrap_api only accepts authorized domains)
     const from = (await getAppEmailConfig(tenantId)).from;
-    await sendEmailViaProvider('mailtrap_api', { from, to: [mail.to], subject: mail.subject, html: mail.html });
-    logger.info(`${cfName}: filler confirmation sent submissionId=${submissionId}`);
+    // the tenant's Logo-only layout, else its standard one; the bare mail when neither renders
+    const { html, text, layout } = await wrapFillerMail(tenantId, mail.html);
+    await sendEmailViaProvider('mailtrap_api', { from, to: [mail.to], subject: mail.subject, html, ...(text ? { text } : {}) });
+    logger.info(`${cfName}: filler confirmation sent submissionId=${submissionId} layout=${layout}`);
   } catch (e) {
     // a status / short code only: the provider's response body can echo the address or the text
     logger.error(`${cfName}: failed to send filler confirmation submissionId=${submissionId} code=${mailErrorCode(e)}`);
