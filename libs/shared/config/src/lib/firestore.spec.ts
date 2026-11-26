@@ -1,6 +1,6 @@
 import { InjectionToken } from '@angular/core';
 import { afterEach, describe, expect, it } from 'vitest';
-import { FIRESTORE, FIRESTORE_EMULATOR_PORT, isSafari, isWebStorageAvailable } from './firestore';
+import { chooseCacheMode, FIRESTORE, FIRESTORE_EMULATOR_PORT, isSafari, isWebStorageAvailable } from './firestore';
 
 describe('isSafari', () => {
   const originalNavigator = global.navigator;
@@ -103,4 +103,16 @@ describe('FIRESTORE InjectionToken', () => {
   it('should have correct emulator port constant', () => {
     expect(FIRESTORE_EMULATOR_PORT).toBe(8080);
   });
+});
+
+describe('chooseCacheMode', () => {
+  const base = { safari: false, firefox: false, ios: false, webStorage: true, nativePortal: false };
+  it('Chromium uses the persistent cache', () => expect(chooseCacheMode(base)).toBe('persistent'));
+  it('iOS browser keeps the memory cache', () =>
+    expect(chooseCacheMode({ ...base, ios: true, safari: true })).toBe('memory'));
+  it('native iOS runtime build uses the persistent cache', () =>
+    expect(chooseCacheMode({ ...base, ios: true, nativePortal: true })).toBe('persistent'));
+  it('blocked web storage always falls back to memory', () =>
+    expect(chooseCacheMode({ ...base, ios: true, nativePortal: true, webStorage: false })).toBe('memory'));
+  it('Firefox keeps the memory cache', () => expect(chooseCacheMode({ ...base, firefox: true })).toBe('memory'));
 });

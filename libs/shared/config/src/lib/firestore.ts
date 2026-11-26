@@ -121,6 +121,27 @@ export function isWebStorageAvailable(): boolean {
  * Eviction: navigator.storage.persist() is requested on first init — harmless in a tab,
  * materially helps an installed iOS Home Screen PWA stay durable across WebKit storage pressure.
  */
+/**
+ * Which Firestore cache a start gets. Safari, Firefox and every iOS *browser* keep the memory cache
+ * (the IndexedDB open can hang under ITP/ETP, see above). The native iOS portal is the exception
+ * (spec 1.179, Q5): its WKWebView is not a browser under ITP, and its Firebase app is named after
+ * the tenant, so a persistent cache gives each tenant its own data across the reload of a switch.
+ * Blocked web storage always means memory (SCS-7N).
+ */
+export function chooseCacheMode(flags: {
+  safari: boolean; firefox: boolean; ios: boolean; webStorage: boolean; nativePortal: boolean;
+}): 'persistent' | 'memory' {
+  if (!flags.webStorage) return 'memory';
+  if (flags.nativePortal) return 'persistent';
+  return flags.safari || flags.firefox || flags.ios ? 'memory' : 'persistent';
+}
+
+/** Capacitor's global, read without importing @capacitor/core into this dependency-free lib. */
+function isNativeShell(): boolean {
+  const cap = (globalThis as { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor;
+  return cap?.isNativePlatform?.() === true;
+}
+
 export const FIRESTORE = new InjectionToken<Firestore>('Firebase Firestore', {
   providedIn: 'root',
   factory: () => {
@@ -159,7 +180,11 @@ export const FIRESTORE = new InjectionToken<Firestore>('Firebase Firestore', {
     // Chrome/Android with site data blocked: the multi-tab manager's localStorage read throws
     // asynchronously and kills the AsyncQueue (SCS-7N) — see isWebStorageAvailable().
     const webStorageAvailable = isWebStorageAvailable();
-    if (isFirefoxBrowser || isSafariBrowser || isIosDevice || !webStorageAvailable) {
+    const nativePortal = isIosDevice && isNativeShell() && inject(ENV, { optional: true })?.tenantMode === 'runtime';
+    const cache = chooseCacheMode({
+      safari: isSafariBrowser, firefox: isFirefoxBrowser, ios: isIosDevice, webStorage: webStorageAvailable, nativePortal,
+    });
+    if (cache === 'memory') {
       firestore = initializeFirestore(app, {
         ...baseOptions,
         localCache: memoryLocalCache({ garbageCollector: memoryLruGarbageCollector() }),

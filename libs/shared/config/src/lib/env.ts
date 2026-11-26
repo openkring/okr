@@ -14,6 +14,8 @@ export interface OkrEnvironment {
    * `app-version.deployed`) is `kring`. Absent in tenant apps — use `buildId ?? appId`.
    */
   buildId?: string;
+  /** `'runtime'` when this start's tenant was chosen on the device (the iOS portal); absent in tenant apps. */
+  tenantMode?: TenantMode;
   firebase: {       
     apiKey: string;
     authDomain: string;

@@ -84,6 +84,7 @@ describe('bootEnvironment', () => {
     const result = bootEnvironment(env(), 'runtime');
     expect(result.appId).toBe('scs');
     expect(result.buildId).toBe('kring');
+    expect(result.tenantMode).toBe('runtime');
     localStorage.removeItem(PORTAL_TENANT_KEY);
   });
 
