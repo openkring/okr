@@ -30,7 +30,7 @@ export const SETTINGS_GROUPS: Record<SettingsGroupId, readonly (keyof AppConfig)
     'loginUrl', 'passwordResetUrl', 'logoUrl',
     'ownerOrgId', 'ownerUserId', 'defaultAccountingTenantId',
     'integrations', 'additionalProcessors',
-    'personLookupEnabled', 'weatherIntervalHours',
+    'personLookupEnabled', 'listedInPortal', 'weatherIntervalHours',
     'gitRepo', 'gitOrg', 'isArchived', 'showDebugInfo',
   ],
 };

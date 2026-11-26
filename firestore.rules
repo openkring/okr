@@ -345,7 +345,7 @@ service cloud.firestore {
                      'appDomain', 'emailDomain', 'emailProvider', 'mailtrapPasswordResetTemplate',
                      'loginUrl', 'passwordResetUrl', 'logoUrl', 'ownerOrgId', 'ownerUserId',
                      'defaultAccountingTenantId', 'integrations', 'additionalProcessors',
-                     'personLookupEnabled', 'weatherIntervalHours', 'gitRepo', 'gitOrg',
+                     'personLookupEnabled', 'listedInPortal', 'weatherIntervalHours', 'gitRepo', 'gitOrg',
                      'isArchived', 'showDebugInfo'])));
     }
     match /app-version/{doc} {

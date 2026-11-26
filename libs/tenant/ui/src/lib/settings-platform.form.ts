@@ -172,7 +172,7 @@ export class SettingsPlatformForm extends SettingsFormBase {
     return (typeof value === 'number' ? value : null) as number;
   });
 
-  protected readonly switches = computed(() => (['personLookupEnabled', 'showDebugInfo', 'isArchived'] as const).map((field) => ({
+  protected readonly switches = computed(() => (['personLookupEnabled', 'listedInPortal', 'showDebugInfo', 'isArchived'] as const).map((field) => ({
     field,
     checked: this.formData()[field] === true,
     i18n: { name: field, label: this.fields()[field].label, helper: this.fields()[field].helper } as CheckboxI18n,

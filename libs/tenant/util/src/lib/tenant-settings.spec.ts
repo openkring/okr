@@ -36,9 +36,9 @@ describe('SETTINGS_GROUPS', () => {
     for (const field of [...OWN_EDITOR, ...NOT_OFFERED]) expect(all).not.toContain(field);
   });
 
-  it('has the 18 platform fields', () => {
+  it('has the 19 platform fields', () => {
     expect(OPERATOR_SETTINGS).toBe(SETTINGS_GROUPS.platform);
-    expect(OPERATOR_SETTINGS).toHaveLength(18);
+    expect(OPERATOR_SETTINGS).toHaveLength(19);
   });
 
   it('equals the operator list of firestore.rules', () => {
@@ -79,6 +79,14 @@ describe('settingsOf', () => {
     expect(out.appTitle).toBe('');
     expect(out.brandColor).toBe('');
     expect(out.appSubtitle).toBe(new AppConfig('x').appSubtitle);
+  });
+
+  it('reads listedInPortal into the platform card, false on a legacy doc', () => {
+    const legacy = configWith({});
+    delete (legacy as unknown as Record<string, unknown>)['listedInPortal'];
+    expect(settingsOf(legacy, 'platform')).toMatchObject({ listedInPortal: false });
+    expect(settingsOf(configWith({ listedInPortal: true }), 'platform')).toMatchObject({ listedInPortal: true });
+    expect(settingsOf(configWith({ listedInPortal: 'yes' }), 'platform')).toMatchObject({ listedInPortal: false });
   });
 
   it('replaces a wrong type for a boolean, a number, a list and an unknown audience by the default', () => {

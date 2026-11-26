@@ -113,7 +113,7 @@ describe('platform', () => {
     appDomain: 'app.kring.ch', emailDomain: 'kring.ch', emailProvider: 'mailtrap_api', mailtrapPasswordResetTemplate: '',
     loginUrl: '/auth/login', passwordResetUrl: '', logoUrl: 'tenant/kring/logo/logo.svg', ownerOrgId: 'kring', ownerUserId: '',
     defaultAccountingTenantId: '', gitRepo: 'okr', gitOrg: 'openkring',
-    weatherIntervalHours: 4, personLookupEnabled: false, isArchived: false, showDebugInfo: false,
+    weatherIntervalHours: 4, personLookupEnabled: false, listedInPortal: false, isArchived: false, showDebugInfo: false,
   };
   it('accepts a normal set and an empty mail domain', () => {
     expect(settingsValidations.platform(ok, CTX).isValid()).toBe(true);
@@ -200,7 +200,7 @@ describe('raw values', () => {
     const r = settingsValidations.operator(op, CTX);
     expect(r.hasErrors('opEmail')).toBe(true);
     expect(r.hasErrors('opWebUrl')).toBe(true);
-    const platform = { appDomain: 'app.kring.ch ', emailDomain: '', weatherIntervalHours: 4, personLookupEnabled: false, isArchived: false, showDebugInfo: false };
+    const platform = { appDomain: 'app.kring.ch ', emailDomain: '', weatherIntervalHours: 4, personLookupEnabled: false, listedInPortal: false, isArchived: false, showDebugInfo: false };
     expect(settingsValidations.platform(platform, CTX).hasErrors('appDomain')).toBe(true);
   });
 

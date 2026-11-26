@@ -783,6 +783,10 @@
         "label": "Address search",
         "helper": "When adding a person their address can be looked up in the phone book."
       },
+      "listedInPortal": {
+        "label": "Listed in the Kring app",
+        "helper": "The app appears in the Kring app under «More apps», also for people without your invitation link."
+      },
       "weatherIntervalHours": {
         "label": "Weather: interval in hours",
         "helper": "The number of hours until the weather data is renewed. The shortest interval applies to all apps."

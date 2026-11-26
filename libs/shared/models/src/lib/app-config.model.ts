@@ -322,6 +322,11 @@ export class AppConfig {
   public nameDisplay = 0; // name display format, e.g. 0 for full name, 1 for first name only
   public newsDelivery: DeliveryChannel[] = [...DEFAULT_DELIVERY_CHANNELS];
   public personLookupEnabled = false; // enables the search.ch person address lookup in person-new (requires app-secrets/{tenantId}.searchChApiKey)
+  /**
+   * The tenant appears in the iOS portal's list «Weitere Apps» for people without its link (spec 1.179,
+   * approved 2026-11-26). Legacy docs lack it — read with `?? false`.
+   */
+  public listedInPortal = false;
   public personSortCriteria = 1; // sorting criteria for persons, e.g. 0 for name, 1 for date of birth
   public showArchivedData = false; // whether to show archived data
   public showDebugInfo = false; // whether to show debug information

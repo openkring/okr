@@ -203,6 +203,7 @@ const platformSuite = staticSuite((m: TenantSettings, context: SettingsContext) 
     enforce(typeof hours === 'number' && Number.isInteger(hours) && hours >= 1 && hours <= SETTINGS_MAX_WEATHER_HOURS).isTruthy();
   });
   booleanValidations('personLookupEnabled', m.personLookupEnabled);
+  booleanValidations('listedInPortal', m.listedInPortal);
   booleanValidations('isArchived', m.isArchived);
   booleanValidations('showDebugInfo', m.showDebugInfo);
 });

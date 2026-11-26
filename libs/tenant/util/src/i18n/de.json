@@ -783,6 +783,10 @@
         "label": "Adresssuche",
         "helper": "Beim Erfassen einer Person lässt sich ihre Adresse im Telefonbuch suchen."
       },
+      "listedInPortal": {
+        "label": "In der Kring-App auffindbar",
+        "helper": "Die App steht in der Kring-App unter «Weitere Apps», auch für Leute ohne deinen Einladungslink."
+      },
       "weatherIntervalHours": {
         "label": "Wetter: Abstand in Stunden",
         "helper": "So viele Stunden vergehen, bis die Wetterdaten erneuert werden. Der kürzeste Abstand gilt für alle Apps."

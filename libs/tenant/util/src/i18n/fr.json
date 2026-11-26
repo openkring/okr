@@ -783,6 +783,10 @@
         "label": "Recherche d'adresse",
         "helper": "Lors de la saisie d'une personne, son adresse peut être cherchée dans l'annuaire."
       },
+      "listedInPortal": {
+        "label": "Visible dans l'app Kring",
+        "helper": "L'app apparaît dans l'app Kring sous «Autres apps», même pour les personnes sans ton lien d'invitation."
+      },
       "weatherIntervalHours": {
         "label": "Météo : intervalle en heures",
         "helper": "Nombre d'heures jusqu'au renouvellement des données météo. L'intervalle le plus court vaut pour toutes les apps."
