@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { MAIL_SECTION_TYPES, SectionModel } from '@okr/shared-models';
-import { mailEditorWanted, mailPageHasContent, mailPageRefusalKey, mailSectionCategory, newMailPage, sameMailPageMeta, sectionSummary } from './mail-page.util';
+import {
+  isLetterPictureRefusal, mailEditorWanted, mailPageHasContent, mailPageRefusalBlockId, mailPageRefusalKey, mailSectionCategory, newMailPage, sameMailPageMeta,
+  sectionSummary, testMailRefusalKey,
+} from './mail-page.util';
 
 const article = (html: string): SectionModel => ({ type: 'article', content: { htmlContent: html }, properties: {} } as unknown as SectionModel);
 const button = (url: string, label = 'Los'): SectionModel =>
@@ -105,6 +108,12 @@ describe('mailPageRefusalKey', () => {
     expect(mailPageRefusalKey(refusal('foreign'))).toBe('page_refused_gone');
     expect(mailPageRefusalKey(refusal('unknown-section-type'))).toBe('page_refused_section');
   });
+  it('maps the refusals of the blocks and of the letter pictures (spec 1.176 §9.1, §9.4)', () => {
+    expect(mailPageRefusalKey(refusal('unknown-block-type'))).toBe('page_refused_block_type');
+    expect(mailPageRefusalKey(refusal('invalid-block'))).toBe('page_refused_block');
+    expect(mailPageRefusalKey(refusal('too-large'))).toBe('page_refused_too_large');
+    expect(mailPageRefusalKey(refusal('letter-picture'))).toBe('page_refused_letter_picture');
+  });
   it('accepts the code without the functions/ prefix', () => {
     expect(mailPageRefusalKey(refusal('sent', 'failed-precondition'))).toBe('page_refused_sent');
   });
@@ -147,5 +156,57 @@ describe('sameMailPageMeta', () => {
     expect(sameMailPageMeta(meta, { ...meta, subject: 'T' })).toBe(false);
     expect(sameMailPageMeta(meta, { ...meta, layout: 'plain' })).toBe(false);
     expect(sameMailPageMeta(meta, { ...meta, webVersion: true })).toBe(false);
+  });
+});
+
+describe('mailPageRefusalBlockId', () => {
+  const refusal = (message: string, details: unknown, code = 'functions/failed-precondition') => ({ code, message, details });
+
+  it('is the block a page refusal names', () => {
+    expect(mailPageRefusalBlockId(refusal('invalid-block', { blockId: 'b7' }))).toBe('b7');
+    expect(mailPageRefusalBlockId(refusal('unknown-block-type', { blockId: 'b1' }, 'failed-precondition'))).toBe('b1');
+  });
+  it('is undefined without a usable id, or for an error that is no page refusal', () => {
+    expect(mailPageRefusalBlockId(refusal('invalid-block', undefined))).toBeUndefined();
+    expect(mailPageRefusalBlockId(refusal('invalid-block', { blockId: '' }))).toBeUndefined();
+    expect(mailPageRefusalBlockId(refusal('invalid-block', { blockId: 7 }))).toBeUndefined();
+    expect(mailPageRefusalBlockId(refusal('invalid-block', 'b7'))).toBeUndefined();
+    expect(mailPageRefusalBlockId(refusal('invalid-block', { blockId: 'b7' }, 'functions/internal'))).toBeUndefined();
+    expect(mailPageRefusalBlockId(refusal('price-changed', { blockId: 'b7' }))).toBeUndefined();
+    expect(mailPageRefusalBlockId(undefined)).toBeUndefined();
+  });
+});
+
+describe('isLetterPictureRefusal', () => {
+  it('is a picture the letters cannot take: unavailable from the quote, failed-precondition from the send', () => {
+    expect(isLetterPictureRefusal({ code: 'functions/unavailable', message: 'letter-picture' })).toBe(true);
+    expect(isLetterPictureRefusal({ code: 'failed-precondition', message: 'letter-picture' })).toBe(true);
+  });
+  it('is no other refusal: Pingen unavailable stays what it was', () => {
+    expect(isLetterPictureRefusal({ code: 'functions/unavailable', message: 'no credit' })).toBe(false);
+    expect(isLetterPictureRefusal({ code: 'functions/internal', message: 'letter-picture' })).toBe(false);
+    expect(isLetterPictureRefusal(new Error('letter-picture'))).toBe(false);
+    expect(isLetterPictureRefusal(undefined)).toBe(false);
+  });
+});
+
+describe('testMailRefusalKey', () => {
+  const refusal = (message: string, code = 'functions/failed-precondition') => ({ code, message });
+
+  it('maps the refusals of the test mail', () => {
+    expect(testMailRefusalKey(refusal('no-address'))).toBe('test_no_address');
+    expect(testMailRefusalKey(refusal('impersonated'))).toBe('test_impersonated');
+    expect(testMailRefusalKey(refusal('provider', 'functions/unavailable'))).toBe('test_provider');
+  });
+  it('maps the page refusals as the send does', () => {
+    expect(testMailRefusalKey(refusal('invalid-block'))).toBe('page_refused_block');
+    expect(testMailRefusalKey(refusal('sent'))).toBe('page_refused_sent');
+  });
+  it('leaves every other error to the caller', () => {
+    expect(testMailRefusalKey(refusal('provider'))).toBeUndefined();
+    expect(testMailRefusalKey(refusal('no-address', 'functions/internal'))).toBeUndefined();
+    expect(testMailRefusalKey(refusal('no-layout'))).toBeUndefined();
+    expect(testMailRefusalKey(new Error('no-address'))).toBeUndefined();
+    expect(testMailRefusalKey(undefined)).toBeUndefined();
   });
 });

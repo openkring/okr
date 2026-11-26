@@ -5,7 +5,7 @@ import type { MailPageModel } from '@okr/shared-models';
 import type { MailingView } from './mailing.util';
 import {
   choicesWithoutSubject, composerCloseDecision, draftCandidates, earlierMails, filterStartChoices, pageTime, START_DRAFTS_MAX,
-  START_EARLIER_MAX, startChoices, startStepWanted, storeDateOf, storedTime, type StartPage,
+  START_EARLIER_MAX, startChoices, startStepWanted, storeDateOf, storedTime, draftOnTeardown, type StartPage,
 } from './mail-start.util';
 
 const page = (okey: string, fields: Partial<MailPageModel> = {}): MailPageModel =>
@@ -134,6 +134,26 @@ describe('storeDateOf', () => {
     expect(storeDateOf(new Date(2026, 10, 5, 23, 30).getTime())).toBe('20261105');
     expect(storeDateOf(0)).toBe('');
     expect(storeDateOf(Number.NaN)).toBe('');
+  });
+  it('keeps the local day shortly after midnight and on the last day of a year', () => {
+    expect(storeDateOf(new Date(2026, 10, 6, 0, 30).getTime())).toBe('20261106');
+    expect(storeDateOf(new Date(2026, 11, 31, 23, 59).getTime())).toBe('20261231');
+  });
+});
+
+describe('draftOnTeardown', () => {
+  const base = { sent: false, kept: false, discardChosen: false, hasContent: true };
+  it('deletes a draft only when it is empty or the sender chose «Verwerfen»', () => {
+    expect(draftOnTeardown({ ...base, hasContent: false })).toBe('delete');
+    expect(draftOnTeardown({ ...base, discardChosen: true })).toBe('delete');
+  });
+  it('keeps a draft with content on a forced dismiss or a teardown (the nightly reap removes it after 30 days)', () => {
+    expect(draftOnTeardown(base)).toBe('keep');
+    expect(draftOnTeardown({ ...base, kept: true })).toBe('keep');
+  });
+  it('never deletes a sent or kept page, also an empty one or after «Verwerfen»', () => {
+    expect(draftOnTeardown({ ...base, sent: true, hasContent: false, discardChosen: true })).toBe('keep');
+    expect(draftOnTeardown({ ...base, kept: true, hasContent: false })).toBe('keep');
   });
 });
 

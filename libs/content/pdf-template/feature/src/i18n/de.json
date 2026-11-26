@@ -141,7 +141,10 @@
     "preview": {
       "empty": "Noch kein Inhalt zum Anzeigen.",
       "frame": "Email-Vorschau",
-      "error": "Die Vorschau konnte nicht geladen werden."
+      "error": "Die Vorschau konnte nicht geladen werden.",
+      "width": "Breite der Vorschau",
+      "mobile": "Mobil",
+      "desktop": "Desktop"
     },
     "list": {
       "empty": "Keine Empfänger erfasst.",
@@ -264,7 +267,11 @@
       "blocks_invalid": "Die E-Mail hat zu viele Blöcke. Entferne einige, dann kannst du senden.",
       "editor_error": "Der Editor konnte nicht geladen werden. Dein Entwurf bleibt erhalten.",
       "editor_retry": "Erneut versuchen",
-      "mail_invalid": "Die E-Mail kann so nicht gesendet werden. Prüfe ihre Blöcke."
+      "mail_invalid": "Die E-Mail kann so nicht gesendet werden. Prüfe ihre Blöcke.",
+      "refused_block_type": "Die E-Mail enthält einen Block, der nicht versendet werden kann. Entferne ihn oder ersetze ihn durch einen anderen.",
+      "refused_block": "Ein Block der E-Mail ist noch nicht vollständig. Korrigiere ihn, dann kannst du senden.",
+      "refused_too_large": "Die E-Mail ist zu lang. Kürze sie oder verteile den Inhalt auf mehrere E-Mails.",
+      "refused_letter_picture": "Ein Bild der E-Mail kann nicht in den Brief übernommen werden. Verwende ein hochgeladenes Bild oder weniger Bilder, dann ist der Postversand wieder möglich."
     },
     "web_version": {
       "label": "Webversion anbieten",
@@ -290,6 +297,16 @@
       "back": "Zurück",
       "keep_failed": "Der Entwurf konnte nicht gespeichert werden. Versuche es nochmals.",
       "confirming": "Bestätige zuerst die Empfänger oder brich den Versand ab, dann kannst du das Fenster schliessen."
+    },
+    "test": {
+      "send": "Testmail senden",
+      "running": "Testmail wird gesendet",
+      "helper": "Die Testmail geht nur an dich, an die E-Mail-Adresse deines Kontos.",
+      "sent": "Die Testmail ist unterwegs zu dir.",
+      "failed": "Die Testmail konnte nicht gesendet werden. Versuche es später nochmals.",
+      "no_address": "Zu deinem Konto gibt es keine E-Mail-Adresse, an die die Testmail gehen kann. Bestätige deine Adresse oder füge deinem Konto eine E-Mail-Adresse hinzu.",
+      "impersonated": "Solange du als eine andere Person angemeldet bist, kannst du keine Testmail senden.",
+      "provider": "Der Mailversand hat die Testmail nicht angenommen. Versuche es später nochmals."
     }
   },
   "category": {

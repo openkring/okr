@@ -12,7 +12,7 @@ import { filter, firstValueFrom, tap } from 'rxjs';
 import {
   IonButton, IonContent,
   IonCard, IonCardContent, IonGrid, IonRow, IonCol, IonIcon, IonChip, IonLabel, IonNote,
-  IonSegment, IonSegmentButton, IonItem, IonAccordionGroup, IonAccordion, IonPopover,
+  IonSegment, IonSegmentButton, IonItem, IonAccordionGroup, IonAccordion, IonPopover, IonSpinner,
   AlertController, IonModalToken, ModalController, ToastController,
 } from '@ionic/angular';
 
@@ -31,7 +31,8 @@ import {
   GROUP_ADMIN_MAILING_CHANNELS, groupReachWarnings, hasPostDelivery, isSenderDomainAllowed,
   nonPdfAttachmentNames, parseEmails, sharedEmailCount, untickEmailAddress, withLinksInNewTab, toggleDelivery, versandBcc, versandDeliveries,
   EmailComposerFormModel, emailComposerValidations, VersandDeliveries, VersandEvent, VersandRow,
-  EMAIL_COMPOSER_I18N_KEYS, EMAIL_COMPOSER_MSG_KEYS, EmailComposerI18n, mailEditorWanted, MailPageMeta, mailPageRefusalKey,
+  EMAIL_COMPOSER_I18N_KEYS, EMAIL_COMPOSER_MSG_KEYS, EmailComposerI18n, isLetterPictureRefusal, mailEditorWanted, MailPageMeta, mailPageRefusalBlockId,
+  mailPageRefusalKey, PREVIEW_MOBILE_WIDTH, testMailRefusalKey, type PreviewWidth,
   choicesWithoutSubject, composerCloseDecision, draftCandidates, START_LOAD_MS, startChoices, startStepWanted,
   type MailingView, type StartChoice, type StartPage, type StartPick,
 } from '@okr/content-pdf-template-util';
@@ -130,7 +131,7 @@ interface AddressField {
     VersandDeliveryTable, VersandEventsSelect, PostversandStep,
     IonContent, IonButton,
     IonCard, IonCardContent, IonGrid, IonRow, IonCol, IonIcon, IonChip, IonLabel, IonNote,
-    IonSegment, IonSegmentButton, IonItem, IonAccordionGroup, IonAccordion, IonPopover,
+    IonSegment, IonSegmentButton, IonItem, IonAccordionGroup, IonAccordion, IonPopover, IonSpinner,
     VersandAddressList, EmailLayoutPicker,
   ],
   // the Versand's draft: its blocks and the editor's history outlive the editor, which is destroyed whenever the Editor segment closes
@@ -152,6 +153,16 @@ interface AddressField {
     .preview-frame { width: 100%; min-height: 420px; border: 0; background: #ffffff; }
     /* the same height whether the preview is empty, loading or shown: the segment does not jump */
     .preview-card { min-height: 420px; }
+    /* Versand (spec 1.176 §8.4): the width of the preview and «Testmail senden» above it */
+    .preview-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; padding: 8px 12px 0; }
+    .preview-bar ion-segment { flex: 0 1 280px; min-width: 0; }
+    .preview-bar ion-segment-button { flex: 1 1 0; min-width: 0; }
+    .preview-bar .spacer { flex: 1; }
+    .preview-bar ion-button { margin: 0; text-transform: none; }
+    .preview-bar ion-spinner { width: 16px; height: 16px; margin-inline-end: 8px; }
+    .preview-helper { padding: 4px 12px 0; font-size: 0.8rem; text-align: right; }
+    .preview-card.mobile { background: var(--ion-color-light, #f4f5f8); display: flex; justify-content: center; }
+    .preview-card.mobile .preview-frame { max-width: 100%; box-shadow: 0 0 0 1px var(--ion-color-light-shade, #d7d8da); }
     /* Versand (spec 1.176 §8.1): the editor fills the window below the segments, the canvas and the panel scroll on their own */
     ion-content.mail-fill::part(scroll) { display: flex; flex-direction: column; }
     ion-content.mail-fill form { flex: 1; min-height: 0; display: flex; flex-direction: column; }
@@ -396,7 +407,26 @@ interface AddressField {
           <!-- Preview: the mail as the server renders it, i.e. exactly what the recipient receives. -->
           @if (activeSegment() === 'preview') {
             <ion-card>
-              <ion-card-content class="ion-no-padding preview-card">
+              @if (isVersand()) {
+                <div class="preview-bar">
+                  <ion-segment [value]="previewWidth()" (ionChange)="onPreviewWidth($event.detail.value)" [attr.aria-label]="i18n.preview_width()">
+                    <ion-segment-button value="mobile"><ion-label>{{ i18n.preview_mobile() }}</ion-label></ion-segment-button>
+                    <ion-segment-button value="desktop"><ion-label>{{ i18n.preview_desktop() }}</ion-label></ion-segment-button>
+                  </ion-segment>
+                  <span class="spacer"></span>
+                  <ion-button size="small" fill="outline" [disabled]="testRunning() || !draft.loaded() || !hasContent()" (click)="sendTestMail()">
+                    @if (testRunning()) {
+                      <ion-spinner slot="start" name="crescent" aria-hidden="true" />
+                      {{ i18n.test_running() }}
+                    } @else {
+                      <ion-icon slot="start" src="{{ 'send' | svgIcon }}" aria-hidden="true" />
+                      {{ i18n.test_send() }}
+                    }
+                  </ion-button>
+                </div>
+                <ion-note class="note preview-helper">{{ i18n.test_helper() }}</ion-note>
+              }
+              <ion-card-content class="ion-no-padding preview-card" [class.mobile]="isVersand() && previewWidth() === 'mobile'">
                 @if (!hasContent()) {
                   <ion-note class="note">{{ i18n.preview_empty() }}</ion-note>
                 } @else if (previewLoading()) {
@@ -405,7 +435,8 @@ interface AddressField {
                   <ion-note color="danger" class="note">{{ previewRefusal() ?? i18n.preview_error() }}</ion-note>
                 } @else {
                   <!-- no scripts; links open in a new tab (allow-popups) outside the sandbox, so they can be tried out -->
-                  <iframe class="preview-frame" [title]="i18n.preview_frame()" sandbox="allow-popups allow-popups-to-escape-sandbox" [srcdoc]="previewHtml()"></iframe>
+                  <iframe class="preview-frame" [title]="i18n.preview_frame()" sandbox="allow-popups allow-popups-to-escape-sandbox" [srcdoc]="previewHtml()"
+                    [style.width]="previewFrameWidth()"></iframe>
                 }
               </ion-card-content>
             </ion-card>
@@ -888,6 +919,18 @@ export class EmailComposerModal {
   protected readonly previewRefusal = signal<string | undefined>(undefined);
   /** Number of the latest preview request: a response with an older number is dropped. */
   private previewRequest = 0;
+  /** The width of a Versand's preview (spec 1.176 §8.4): a phone of 390 px, or the window. */
+  protected readonly previewWidth = signal<PreviewWidth>('desktop');
+  protected readonly previewFrameWidth = computed(() =>
+    this.isVersand() && this.previewWidth() === 'mobile' ? `${PREVIEW_MOBILE_WIDTH}px` : '100%');
+  /** «Testmail senden» runs: a second press is ignored, a close waits for it. */
+  protected readonly testRunning = signal(false);
+  /** The test mail under way (flush + `sendTestMailing`); settles, never rejects. */
+  private testInFlight: Promise<void> | undefined;
+  /** The close question was answered with «Verwerfen»: the end of the composer deletes the draft (else only an empty one). */
+  private discardChosen = false;
+  /** A block the server refused: opened in the editor as soon as it is there. */
+  private pendingOpen: string | undefined;
 
   // adapters at the shared/ui boundary (these components define their own minimal i18n interfaces)
   protected readonly fromI18n = computed(() => ({
@@ -939,10 +982,13 @@ export class EmailComposerModal {
       const layout = this.layout();
       const attachmentName = this.attachmentName();
       const events = this.chosenEvents();
+      // only a Versand shows the newsletter's unsubscribe line and the web version: no other composer asks again for them
+      const groupKey = this.isVersand() ? this.groupKey() : '';
+      const webVersion = this.isVersand() ? this.webVersion() : false;
       this.pageVersion();
       untracked(() => {
         if (open && this.hasContent()) {
-          void this.loadPreview(body, layout, attachmentName, events);
+          void this.loadPreview(body, layout, attachmentName, events, { groupKey, webVersion });
         } else {
           this.previewRequest++;       // leaving the preview (or nothing to show): a late response is stale
           this.previewLoading.set(false);
@@ -957,9 +1003,11 @@ export class EmailComposerModal {
       // A sent page belongs to its mailing (the rules forbid deleting it). The draft may still be being created.
       // A send under way is awaited first (the header close stays active while sending): only a page that ended
       // unsent is discarded, so a sent mail never loses its page and a failed one leaves no draft behind.
+      // A test mail under way is awaited the same way. The draft is deleted only when it is empty or the sender chose «Verwerfen»: a
+      // forced dismiss or a teardown keeps one with content (spec 1.176 §13; the nightly reap removes it after 30 days).
       if (this.isVersand() && !this.sent) {
-        void (this.draftReady ?? Promise.resolve()).then(() => this.sendInFlight)
-          .then(() => this.sent ? undefined : this.draft.discard())
+        void (this.draftReady ?? Promise.resolve()).then(() => this.sendInFlight).then(() => this.testInFlight)
+          .then(() => this.sent ? undefined : this.draft.leave(this.discardChosen))
           .catch((err) => console.warn('EmailComposerModal: could not discard the draft page', err));
       }
     });
@@ -1127,7 +1175,10 @@ export class EmailComposerModal {
     } catch (err) {
       if (request !== this.quoteRequest) return;
       this.postQuote.set(undefined);
-      if (callableError(err).code === 'unavailable') {
+      if (isLetterPictureRefusal(err)) {
+        // a picture the letters cannot take: said in words, and Post stays possible once the picture is fixed (not «Pingen unavailable»)
+        this.postError.set(this.i18n.page_refused_letter_picture());
+      } else if (callableError(err).code === 'unavailable') {
         // the tenant's credit is not set up: only the free download is left
         this.pingenAvailable.set(false);
         this.postMode.set('download');
@@ -1137,6 +1188,8 @@ export class EmailComposerModal {
         const refusal = mailPageRefusalKey(err);
         if (!refusal) console.error('EmailComposerModal.loadQuote: quoteMailingLetters failed', err);
         this.postError.set(refusal ? this.i18n[refusal]() : this.i18n.post_error());
+        // a refused block is selected for the editor; the Post segment stays open
+        this.openRefusedBlock(err, false);
       }
     } finally {
       if (request === this.quoteRequest) this.postLoading.set(false);
@@ -1339,7 +1392,9 @@ export class EmailComposerModal {
    * Ask the server for the rendered mail. The user may switch layout or segment while a request runs, so
    * only the latest request may write its result: an older response is dropped.
    */
-  private async loadPreview(body: string, layout: EmailLayoutChoice, attachmentName: string, events: VersandEvent[]): Promise<void> {
+  private async loadPreview(
+    body: string, layout: EmailLayoutChoice, attachmentName: string, events: VersandEvent[], page: { groupKey: string; webVersion: boolean },
+  ): Promise<void> {
     const request = ++this.previewRequest;
     this.previewLoading.set(true);
     this.previewFailed.set(false);
@@ -1354,9 +1409,12 @@ export class EmailComposerModal {
         return;
       }
       if (request !== this.previewRequest) return;
+      // a Versand's preview also shows the unsubscribe line of a newsletter and «Im Browser ansehen», as inactive samples (spec 1.176 §8.4)
       const rendered = await this.docEmailService.renderPreview({
         ...(this.isVersand() ? { pageKey: this.draft.pageKey() } : { body }), layout, attachmentName,
         ...(events.length > 0 ? { answerEvents: events.map((e) => ({ name: e.name, when: e.when })) } : {}),
+        ...(this.isVersand() && page.groupKey ? { groupKey: page.groupKey } : {}),
+        ...(this.isVersand() ? { webVersion: page.webVersion } : {}),
       });
       if (request !== this.previewRequest) return;
       this.previewHtml.set(this.sanitizer.bypassSecurityTrustHtml(withLinksInNewTab(rendered.html)));
@@ -1368,6 +1426,9 @@ export class EmailComposerModal {
       this.previewRefusal.set(refusal ? this.i18n[refusal]() : undefined);
       this.previewHtml.set('');
       this.previewFailed.set(true);
+      // the refused block is selected for when the sender goes to the editor; the preview stays where it is
+      const blockId = mailPageRefusalBlockId(err);
+      if (blockId) this.draft.select(blockId);
     } finally {
       if (request === this.previewRequest) this.previewLoading.set(false);
     }
@@ -1514,6 +1575,10 @@ export class EmailComposerModal {
       ref.changeDetectorRef.detectChanges();
       // the subject takes the focus only the first time the editor opens
       this.subjectAutofocus.set(false);
+      // a block the server refused while the editor was not there
+      const pending = this.pendingOpen;
+      this.pendingOpen = undefined;
+      if (pending) (ref.instance as { open?: (id: string) => boolean }).open?.(pending);
     } catch (err) {
       console.warn('EmailComposerModal: the mail editor could not be loaded', err);
       this.hostRef?.destroy();
@@ -1541,6 +1606,72 @@ export class EmailComposerModal {
   protected openLayouts(event: Event): void {
     this.layoutsEvent.set(event);
     this.layoutsOpen.set(true);
+  }
+
+  protected onPreviewWidth(value: unknown): void {
+    if (value === 'mobile' || value === 'desktop') this.previewWidth.set(value);
+  }
+
+  /**
+   * A refusal that names a block (`details.blockId`, spec 1.176 §13): the block is selected and, with `show`, the editor segment opens with
+   * it in sight (a text with the cursor). The editor is destroyed outside its segment: the selection is then set in the draft, and the
+   * block opened once the editor is created.
+   */
+  private openRefusedBlock(err: unknown, show = true): void {
+    const blockId = mailPageRefusalBlockId(err);
+    if (!blockId || this.destroyed || !this.isVersand() || !this.draft.select(blockId)) return;
+    if (!show) return;
+    const host = this.hostRef?.instance as { open?: (id: string) => boolean } | undefined;
+    if (this.activeSegment() === 'editor' && host?.open?.(blockId)) return;
+    this.pendingOpen = blockId;
+    this.activeSegment.set('editor');
+  }
+
+  /**
+   * «Testmail senden» (spec 1.176 §8.4): the page as stored goes once to the sender's own address, read on the server. The last typed
+   * characters are stored first. One at a time: a second press while it runs is ignored. A close waits for it.
+   */
+  protected async sendTestMail(): Promise<void> {
+    if (!this.isVersand() || this.testInFlight || this.destroyed || !this.draft.loaded()) return;
+    this.testRunning.set(true);
+    const run = this.runTestMail();
+    this.testInFlight = run;
+    try {
+      await run;
+    } finally {
+      if (this.testInFlight === run) this.testInFlight = undefined;
+      this.testRunning.set(false);
+    }
+  }
+
+  private async runTestMail(): Promise<void> {
+    try {
+      if (!(await this.draft.flush())) {
+        await this.showToast(this.i18n.page_save_error(), 'danger');
+        return;
+      }
+      if (this.destroyed) return;
+      const fd = this.formData();
+      await this.docEmailService.sendTestMailing({
+        tenantId: this.appStore.tenantId(),
+        pageKey: this.draft.pageKey(),
+        ...(this.groupKey() ? { groupKey: this.groupKey() } : {}),
+        subject: fd.subject, layout: fd.layout,
+        ...(fd.from ? { from: fd.from } : {}),
+        webVersion: this.webVersion(),
+        ...(this.storagePath() ? { storagePath: this.storagePath(), filename: this.filename() } : {}),
+        extraAttachments: this.extraAttachments(),
+        ...(this.hasEvents() ? { caleventKeys: this.chosenEvents().map((e) => e.caleventKey) } : {}),
+      });
+      if (!this.destroyed) await this.showToast(this.i18n.test_sent(), 'success');
+    } catch (err) {
+      const refusal = testMailRefusalKey(err);
+      if (!refusal) console.error('EmailComposerModal.sendTestMail: sendTestMailing failed', err);
+      if (this.destroyed) return;
+      this.openRefusedBlock(err);
+      // a refusal says what to do: long enough to read it
+      await this.showToast(refusal ? this.i18n[refusal]() : this.i18n.test_failed(), 'danger', 6000);
+    }
   }
 
   /** The page is the mailing's now: neither the composer nor the draft may delete it. */
@@ -1743,7 +1874,8 @@ export class EmailComposerModal {
     if (this.closeAnswered) return true;
     if (this.askingClose) return false;
     const state = () => ({
-      isVersand: this.isVersand(), sent: this.sent, busy: this.isSending(), picking: !!this.picking, hasContent: this.draft.loaded() && this.draft.hasContent(),
+      isVersand: this.isVersand(), sent: this.sent, busy: this.isSending() || this.testRunning(), picking: !!this.picking,
+      hasContent: this.draft.loaded() && this.draft.hasContent(),
     });
     let decision = composerCloseDecision(state());
     if (decision === 'wait') {
@@ -1757,6 +1889,8 @@ export class EmailComposerModal {
         }
         await this.sendInFlight;
       }
+      // a test mail first: its page must still be there when the server reads it
+      if (this.testInFlight) await this.testInFlight;
       decision = composerCloseDecision({ ...state(), busy: false, picking: false });
     }
     if (decision === 'allow') return true;
@@ -1766,6 +1900,7 @@ export class EmailComposerModal {
       await this.showToast(this.i18n.close_keep_failed(), 'danger');
       return false;
     }
+    if (answer === 'discard') this.discardChosen = true;
     this.closeAnswered = true;
     return true;
   }
@@ -1927,8 +2062,9 @@ export class EmailComposerModal {
       // a refused mail page (no content, already sent, gone, a section without a mail form) in words, no raw code
       const refusal = mailPageRefusalKey(err);
       if (refusal) {
-        await this.showToast(this.i18n[refusal](), 'danger');
         this.isSending.set(false);
+        this.openRefusedBlock(err);
+        await this.showToast(this.i18n[refusal](), 'danger');
         return;
       }
       const message = err instanceof Error ? err.message : String(err);
@@ -1954,6 +2090,12 @@ export class EmailComposerModal {
    */
   private handlePostRefusal(err: unknown): boolean {
     const { code, message } = callableError(err);
+    if (isLetterPictureRefusal(err)) {
+      // first: an `unavailable` of a letter picture is no Pingen outage, Post stays possible once the picture is fixed
+      this.postError.set(this.i18n.page_refused_letter_picture());
+      void this.showToast(this.i18n.page_refused_letter_picture(), 'danger', 6000);
+      return true;
+    }
     if (code === 'failed-precondition' && message === 'price-changed') {
       this.postPriceChanged.set(true);
       this.requote();
@@ -2012,8 +2154,8 @@ export class EmailComposerModal {
     if (job?.state === 'failed') throw new Error(job.error ?? '');
   }
 
-  protected async showToast(message: string, color: string): Promise<void> {
-    const toast = await this.toastController.create({ message, duration: 3000, color, position: 'bottom' });
+  protected async showToast(message: string, color: string, duration = 3000): Promise<void> {
+    const toast = await this.toastController.create({ message, duration, color, position: 'bottom' });
     await toast.present();
   }
 

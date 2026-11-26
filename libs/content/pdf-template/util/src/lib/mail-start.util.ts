@@ -3,6 +3,7 @@
 // The start step of a Versand (spec 1.176 §8.5): «Neu», the sender's own drafts, or «Frühere E-Mail kopieren»; and what closing the
 // composer does with its draft. All functions are pure.
 import type { MailPageModel } from '@okr/shared-models';
+import { convertDateFormatToString, DateFormat, parseDate } from '@okr/shared-util-core';
 
 import type { MailingView } from './mailing.util';
 
@@ -37,11 +38,7 @@ export type StartPick = { kind: 'new' } | StartChoice;
 /** A time as the app stores it: ISO, or `yyyyMMddHHmmss` (StoreDateTime, local time) as on a mailing. 0 when it is neither. */
 export function storedTime(value: string | undefined): number {
   if (typeof value !== 'string' || value === '') return 0;
-  const store = /^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})$/.exec(value);
-  if (store) {
-    const [, y, mo, d, h, mi, s] = store.map(Number);
-    return new Date(y, mo - 1, d, h, mi, s).getTime();
-  }
+  if (/^\d{14}$/.test(value)) return parseDate(value, DateFormat.StoreDateTime, false)?.getTime() ?? 0;
   const time = Date.parse(value);
   return Number.isNaN(time) ? 0 : time;
 }
@@ -49,8 +46,8 @@ export function storedTime(value: string | undefined): number {
 /** The local day of a time as StoreDate (`yyyyMMdd`), for the app's date pipe; empty when unknown. */
 export function storeDateOf(time: number): string {
   if (!Number.isFinite(time) || time <= 0) return '';
-  const date = new Date(time);
-  return `${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, '0')}${String(date.getDate()).padStart(2, '0')}`;
+  // `toDateString()` is the local day as «Thu Nov 05 2026», which is DateFormat.Date
+  return convertDateFormatToString(new Date(time).toDateString(), DateFormat.Date, DateFormat.StoreDate, false);
 }
 
 /** When the page was last changed: `changedAt`, else `createdAt`. */
@@ -166,4 +163,14 @@ export function composerCloseDecision(
   if (!state.isVersand || state.sent) return 'allow';
   if (state.busy || state.picking) return 'wait';
   return state.hasContent ? 'ask' : 'allow';
+}
+
+/**
+ * What the end of a Versand composer does with its draft (§8.5, §13): it is deleted only when it is empty or the sender chose «Verwerfen».
+ * A forced dismiss or a teardown (navigation, a reload of the app) keeps a draft with content; the nightly reap removes it after 30 days.
+ * A sent or kept page always stays.
+ */
+export function draftOnTeardown(state: { sent: boolean; kept: boolean; discardChosen: boolean; hasContent: boolean }): 'delete' | 'keep' {
+  if (state.sent || state.kept) return 'keep';
+  return state.discardChosen || !state.hasContent ? 'delete' : 'keep';
 }

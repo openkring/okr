@@ -4,7 +4,7 @@ import { Component, DestroyRef, TemplateRef, computed, effect, inject, input, si
 import { IonButton, IonIcon, ModalController, ToastController } from '@ionic/angular';
 
 import {
-  ARTICLE_BLOCKS_MAX, ARTICLE_EDITOR_I18N_KEYS, MAIL_PROFILE, SECTION_I18N_KEYS, articleImageChoices, firstTextId, mailBlocksFromArticle, teaserBlocks,
+  ARTICLE_BLOCKS_MAX, ARTICLE_EDITOR_I18N_KEYS, MAIL_PROFILE, SECTION_I18N_KEYS, articleImageChoices, findBlock, firstTextId, mailBlocksFromArticle, teaserBlocks,
   type ArticleEditorI18n, type ArticleUpload, type EditorHistory, type EditorState, type MailEditorContext, type MailEditorDraft,
 } from '@okr/cms-section-util';
 import { AppStore } from '@okr/shared-feature';
@@ -113,6 +113,17 @@ export class MailEditorHost {
     const id = firstTextId(this.blocks());
     const surface = this.surface();
     if (!id || !surface || this.destroyed) return false;
+    surface.open(id);
+    return true;
+  }
+
+  /**
+   * Selects a block from outside (a block the server refused, spec 1.176 §13): it gets the focus and comes into sight, a text with the
+   * cursor. False when the editor is not there or the mail has no such block.
+   */
+  public open(id: string): boolean {
+    const surface = this.surface();
+    if (!surface || this.destroyed || !findBlock(this.blocks(), id)) return false;
     surface.open(id);
     return true;
   }

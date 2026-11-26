@@ -157,7 +157,8 @@ export class MailPageService {
    * nothing is written. Otherwise `groupKey` becomes the current composer's (removed without one) and `changedAt` is set. A page that lists
    * exactly one article with blocks is adopted as it is — also one another window converted a moment ago. A draft of 1.172 (sections)
    * has its sections replaced by the one article of their blocks in the same transaction, so that an older server cannot send the old
-   * content. The rules decide whether the caller may still write it: a refusal leaves the draft as it was.
+   * content. A page without an order (`sections` missing or empty) takes all its section docs as read, and lists the article again.
+   * The rules decide whether the caller may still write it: a refusal leaves the draft as it was.
    */
   public async continueDraft(pageKey: string, ctx: { tenantId: string; uid: string; groupKey?: string }): Promise<ContinueResult> {
     const pageRef = this.pageRef(pageKey);
@@ -175,7 +176,9 @@ export class MailPageService {
         if (!page) return { status: 'gone' };
         if (typeof page.mailingKey === 'string' && page.mailingKey !== '') return { status: 'sent' };
         if (page.senderUid !== ctx.uid || !page.tenants?.includes(ctx.tenantId)) return { status: 'gone' };
-        const order = (Array.isArray(page.sections) ? page.sections : []).filter((key): key is string => typeof key === 'string' && key !== '' && !key.includes('/'));
+        const listed = (Array.isArray(page.sections) ? page.sections : []).filter((key): key is string => typeof key === 'string' && key !== '' && !key.includes('/'));
+        // a page that lost its order (sections missing or empty) keeps every section doc, as loadBlocks reads them: nothing is deleted unread
+        const order = listed.length > 0 ? listed : strays.map((ref) => ref.id);
         const sections: SectionModel[] = [];
         for (const key of order) {
           const snap = await tx.get(doc(this.sectionsRef(pageKey), key));
@@ -185,7 +188,7 @@ export class MailPageService {
         const only = order.length === 1 && sections.length === 1 ? sections[0] : undefined;
         const stored = only?.type === 'article' ? articleBlocksOf(only) : undefined;
         if (only && stored) {
-          tx.update(pageRef, changes);
+          tx.update(pageRef, listed.length > 0 ? changes : { ...changes, sections: [only.okey] });
           return { status: 'ok', pageKey, articleKey: only.okey, blocks: structuredClone(stored) as MailBlock[], meta: storedMeta(page) };
         }
         // a draft of 1.172: its sections become the one article of a mail

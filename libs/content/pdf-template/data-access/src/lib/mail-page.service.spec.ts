@@ -260,6 +260,30 @@ describe('MailPageService', () => {
       expect(result.meta).toEqual({});
     });
 
+    it('a page without an order (sections missing or empty) keeps the content of all its section docs, as loadBlocks reads them', async () => {
+      for (const [key, order] of [['p1', undefined], ['p2', []]] as const) {
+        sectionsDraft(key);
+        if (order === undefined) delete db.state.docs[`mailPages/${key}`]['sections'];
+        else db.state.docs[`mailPages/${key}`]['sections'] = order;
+        const result = await service().continueDraft(key, CTX);
+        if (result.status !== 'ok') throw new Error(result.status);
+        // the section docs as read (by key: s1 button, s2 article, s3 events): nothing is deleted without becoming a block
+        expect(result.blocks.map((b) => b.type)).toEqual(['button', 'text', 'events']);
+        const sections = Object.keys(db.state.docs).filter((path) => path.startsWith(`mailPages/${key}/sections/`));
+        expect(sections).toEqual([`mailPages/${key}/sections/${result.articleKey}`]);
+        expect((db.state.docs[sections[0]]['properties'] as { blocks: MailBlock[] }).blocks).toEqual(result.blocks);
+        expect(db.state.docs[`mailPages/${key}`]['sections']).toEqual([result.articleKey]);
+      }
+    });
+
+    it('a 1.176 draft whose page lost its order adopts its one article and lists it again', async () => {
+      blockDraft('p1', [text('t1', '<p>Hi</p>')], { sections: [] });
+      const result = await service().continueDraft('p1', CTX);
+      expect(result).toMatchObject({ status: 'ok', articleKey: 'a1', blocks: [text('t1', '<p>Hi</p>')] });
+      expect(db.state.docs['mailPages/p1/sections/a1']).toBeDefined();
+      expect(db.state.docs['mailPages/p1']['sections']).toEqual(['a1']);
+    });
+
     it('a draft sent or deleted meanwhile is not written', async () => {
       blockDraft('p1', [text('t1', '<p>Hi</p>')], { mailingKey: 'm1' });
       expect(await service().continueDraft('p1', CTX)).toEqual({ status: 'sent' });

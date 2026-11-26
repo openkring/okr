@@ -141,7 +141,10 @@
     "preview": {
       "empty": "Non c’è ancora nulla da mostrare.",
       "frame": "Anteprima email",
-      "error": "Impossibile caricare l’anteprima."
+      "error": "Impossibile caricare l’anteprima.",
+      "width": "Larghezza dell'anteprima",
+      "mobile": "Cellulare",
+      "desktop": "Desktop"
     },
     "list": {
       "empty": "Nessun destinatario inserito.",
@@ -264,7 +267,11 @@
       "blocks_invalid": "L'e-mail ha troppi blocchi. Rimuovine alcuni, poi puoi inviare.",
       "editor_error": "Non è stato possibile caricare l'editor. La tua bozza resta salvata.",
       "editor_retry": "Riprova",
-      "mail_invalid": "L'e-mail non può essere inviata così. Controlla i suoi blocchi."
+      "mail_invalid": "L'e-mail non può essere inviata così. Controlla i suoi blocchi.",
+      "refused_block_type": "L'e-mail contiene un blocco che non può essere inviato. Rimuovilo o sostituiscilo con un altro.",
+      "refused_block": "Un blocco dell'e-mail non è ancora completo. Correggilo, poi puoi inviare.",
+      "refused_too_large": "L'e-mail è troppo lunga. Accorciala o distribuisci il contenuto su più e-mail.",
+      "refused_letter_picture": "Un'immagine dell'e-mail non può essere ripresa nella lettera. Usa un'immagine caricata o meno immagini, poi l'invio per posta è di nuovo possibile."
     },
     "web_version": {
       "label": "Offri una versione web",
@@ -290,6 +297,16 @@
       "back": "Indietro",
       "keep_failed": "Non è stato possibile salvare la bozza. Riprova.",
       "confirming": "Conferma prima i destinatari o annulla l'invio, poi puoi chiudere la finestra."
+    },
+    "test": {
+      "send": "Invia e-mail di prova",
+      "running": "Invio dell'e-mail di prova",
+      "helper": "L'e-mail di prova va solo a te, all'indirizzo e-mail del tuo account.",
+      "sent": "L'e-mail di prova è in viaggio verso di te.",
+      "failed": "Non è stato possibile inviare l'e-mail di prova. Riprova più tardi.",
+      "no_address": "Il tuo account non ha un indirizzo e-mail a cui inviare l'e-mail di prova. Conferma il tuo indirizzo o aggiungi un indirizzo e-mail al tuo account.",
+      "impersonated": "Finché sei connesso come un'altra persona, non puoi inviare un'e-mail di prova.",
+      "provider": "Il servizio di invio non ha accettato l'e-mail di prova. Riprova più tardi."
     }
   },
   "category": {

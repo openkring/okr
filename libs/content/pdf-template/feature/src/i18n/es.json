@@ -141,7 +141,10 @@
     "preview": {
       "empty": "Todavía no hay nada que mostrar.",
       "frame": "Vista previa del correo",
-      "error": "No se pudo cargar la vista previa."
+      "error": "No se pudo cargar la vista previa.",
+      "width": "Ancho de la vista previa",
+      "mobile": "Móvil",
+      "desktop": "Escritorio"
     },
     "list": {
       "empty": "No hay destinatarios.",
@@ -264,7 +267,11 @@
       "blocks_invalid": "El correo tiene demasiados bloques. Quita algunos y podrás enviar.",
       "editor_error": "No se pudo cargar el editor. Tu borrador se conserva.",
       "editor_retry": "Reintentar",
-      "mail_invalid": "El correo no se puede enviar así. Revisa sus bloques."
+      "mail_invalid": "El correo no se puede enviar así. Revisa sus bloques.",
+      "refused_block_type": "El correo contiene un bloque que no se puede enviar. Quítalo o sustitúyelo por otro.",
+      "refused_block": "Un bloque del correo aún no está completo. Corrígelo y podrás enviarlo.",
+      "refused_too_large": "El correo es demasiado largo. Acórtalo o reparte el contenido en varios correos.",
+      "refused_letter_picture": "Una imagen del correo no se puede incluir en la carta. Usa una imagen subida o menos imágenes y el envío por correo postal volverá a ser posible."
     },
     "web_version": {
       "label": "Ofrecer versión web",
@@ -290,6 +297,16 @@
       "back": "Volver",
       "keep_failed": "No se pudo guardar el borrador. Inténtalo de nuevo.",
       "confirming": "Primero confirma los destinatarios o cancela el envío, luego puedes cerrar la ventana."
+    },
+    "test": {
+      "send": "Enviar correo de prueba",
+      "running": "Enviando correo de prueba",
+      "helper": "El correo de prueba solo te llega a ti, a la dirección de correo de tu cuenta.",
+      "sent": "El correo de prueba va de camino hacia ti.",
+      "failed": "No se pudo enviar el correo de prueba. Vuelve a intentarlo más tarde.",
+      "no_address": "Tu cuenta no tiene una dirección de correo a la que pueda llegar el correo de prueba. Confirma tu dirección o añade una dirección de correo a tu cuenta.",
+      "impersonated": "Mientras hayas iniciado sesión como otra persona, no puedes enviar un correo de prueba.",
+      "provider": "El servicio de envío no aceptó el correo de prueba. Vuelve a intentarlo más tarde."
     }
   },
   "category": {

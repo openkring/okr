@@ -227,6 +227,52 @@ describe('MailPageDraft', () => {
     expect(service.discardDraft).toHaveBeenLastCalledWith('p2');
   });
 
+  it('leave keeps a draft with content and writes what was still waiting, also after the composer went', async () => {
+    const { draft, service, injector } = setup();
+    type(draft, '<p>Hi</p>');
+    (injector as unknown as { destroy(): void }).destroy();
+    await draft.leave();
+    expect(service.saveDraft).toHaveBeenCalledTimes(1);
+    expect(service.discardDraft).not.toHaveBeenCalled();
+  });
+
+  it('leave deletes an empty draft, and one the sender chose to discard', async () => {
+    const empty = setup();
+    await empty.draft.leave();
+    expect(empty.service.discardDraft).toHaveBeenCalledWith('p1');
+    const chosen = setup();
+    type(chosen.draft, '<p>Hi</p>');
+    await chosen.draft.leave(true);
+    expect(chosen.service.discardDraft).toHaveBeenCalledWith('p1');
+    expect(chosen.service.saveDraft).not.toHaveBeenCalled();
+  });
+
+  it('leave never deletes a sent or kept page', async () => {
+    const sent = setup();
+    sent.draft.markSent();
+    await sent.draft.leave(true);
+    expect(sent.service.discardDraft).not.toHaveBeenCalled();
+    const kept = setup();
+    expect(await kept.draft.keep()).toBe(true);
+    await kept.draft.leave();
+    expect(kept.service.discardDraft).not.toHaveBeenCalled();
+  });
+
+  it('select marks a block of the mail as selected without writing; an unknown id changes nothing', () => {
+    const { draft, service } = setup();
+    draft.setBlocks([text('t1', '<p>a</p>'), text('t2', '<p>b</p>')]);
+    vi.advanceTimersByTime(MAIL_PAGE_SAVE_DEBOUNCE_MS);
+    expect(service.saveDraft).toHaveBeenCalledTimes(1);
+    const past = draft.history().past.length;
+    expect(draft.select('t2')).toBe(true);
+    expect(draft.history().present.selectedId).toBe('t2');
+    expect(draft.history().past).toHaveLength(past);
+    expect(draft.select('nope')).toBe(false);
+    expect(draft.history().present.selectedId).toBe('t2');
+    vi.advanceTimersByTime(MAIL_PAGE_SAVE_DEBOUNCE_MS * 2);
+    expect(service.saveDraft).toHaveBeenCalledTimes(1);
+  });
+
   it('counts the blocks with errors', () => {
     const { draft } = setup();
     draft.setHistory(createHistory({ section: mailArticle('scs', [{ id: 'b', type: 'button', cta: { label: '', url: '', style: 'primary' } }]), copiedFrom: {} }));

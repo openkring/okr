@@ -144,7 +144,18 @@ export interface RenderPreviewRequest {
   attachmentName?: string;
   /** the events of a Versand with answer links, to show the link block in the preview */
   answerEvents?: { name: string; when: string }[];
+  /** a newsletter's Versand: the preview shows its unsubscribe line as an inactive sample (spec 1.176 §8.4) */
+  groupKey?: string;
+  /** a mail page Versand that offers a web version: the preview shows «Im Browser ansehen» as an inactive sample */
+  webVersion?: boolean;
 }
+
+/**
+ * «Testmail senden» (spec 1.176 §8.4): the Versand as `sendMailing` takes it, without recipients. The server sends it to the address of
+ * the caller's own account only, with «[Test]» before the subject; it creates no mailing.
+ */
+export type SendTestMailingRequest = Pick<SendMailingRequest, 'tenantId' | 'groupKey' | 'subject' | 'layout' | 'from' | 'webVersion' | 'caleventKeys'
+  | 'storagePath' | 'filename' | 'extraAttachments'> & { pageKey: string };
 
 /** A mail as the server renders it: the composer's message, or a template version with sample data. */
 export interface RenderedPreview {
@@ -227,8 +238,19 @@ export class DocEmailService {
       layout: req.layout,
       ...(req.attachmentName ? { attachmentName: req.attachmentName } : {}),
       ...(req.answerEvents?.length ? { answerEvents: req.answerEvents } : {}),
+      ...(req.groupKey ? { groupKey: req.groupKey } : {}),
+      ...(req.webVersion !== undefined ? { webVersion: req.webVersion } : {}),
     });
     return data;
+  }
+
+  /**
+   * Sends the Versand once to the caller (spec 1.176 §8.4). Rejects with the server's refusal: `no-address`, `impersonated`, `provider`,
+   * or one of the page (`mailPageRefusalKey`), the block at fault in `details.blockId`.
+   */
+  public async sendTestMailing(req: SendTestMailingRequest): Promise<void> {
+    const callable = httpsCallable<SendTestMailingRequest, { sent: true }>(this.functions, 'sendTestMailing');
+    await callable(req);
   }
 
   /**

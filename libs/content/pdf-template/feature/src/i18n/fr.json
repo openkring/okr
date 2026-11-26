@@ -141,7 +141,10 @@
     "preview": {
       "empty": "Rien à afficher pour le moment.",
       "frame": "Aperçu de l’email",
-      "error": "L’aperçu n’a pas pu être chargé."
+      "error": "L’aperçu n’a pas pu être chargé.",
+      "width": "Largeur de l'aperçu",
+      "mobile": "Mobile",
+      "desktop": "Ordinateur"
     },
     "list": {
       "empty": "Aucun destinataire saisi.",
@@ -264,7 +267,11 @@
       "blocks_invalid": "L'e-mail contient trop de blocs. Supprimes-en quelques-uns, puis tu peux envoyer.",
       "editor_error": "L'éditeur n'a pas pu être chargé. Ton brouillon est conservé.",
       "editor_retry": "Réessayer",
-      "mail_invalid": "L'e-mail ne peut pas être envoyé ainsi. Vérifie ses blocs."
+      "mail_invalid": "L'e-mail ne peut pas être envoyé ainsi. Vérifie ses blocs.",
+      "refused_block_type": "L'e-mail contient un bloc qui ne peut pas être envoyé. Supprime-le ou remplace-le par un autre.",
+      "refused_block": "Un bloc de l'e-mail n'est pas encore complet. Corrige-le, puis tu peux envoyer.",
+      "refused_too_large": "L'e-mail est trop long. Raccourcis-le ou répartis le contenu sur plusieurs e-mails.",
+      "refused_letter_picture": "Une image de l'e-mail ne peut pas être reprise dans la lettre. Utilise une image téléversée ou moins d'images, puis l'envoi postal est de nouveau possible."
     },
     "web_version": {
       "label": "Proposer une version web",
@@ -290,6 +297,16 @@
       "back": "Retour",
       "keep_failed": "Le brouillon n'a pas pu être enregistré. Réessaie.",
       "confirming": "Confirme d'abord les destinataires ou annule l'envoi, puis tu peux fermer la fenêtre."
+    },
+    "test": {
+      "send": "Envoyer un e-mail de test",
+      "running": "Envoi de l'e-mail de test",
+      "helper": "L'e-mail de test est envoyé uniquement à toi, à l'adresse e-mail de ton compte.",
+      "sent": "L'e-mail de test est en route vers toi.",
+      "failed": "L'e-mail de test n'a pas pu être envoyé. Réessaie plus tard.",
+      "no_address": "Ton compte n'a pas d'adresse e-mail à laquelle envoyer l'e-mail de test. Confirme ton adresse ou ajoute une adresse e-mail à ton compte.",
+      "impersonated": "Tant que tu es connecté en tant qu'une autre personne, tu ne peux pas envoyer d'e-mail de test.",
+      "provider": "Le service d'envoi n'a pas accepté l'e-mail de test. Réessaie plus tard."
     }
   },
   "category": {

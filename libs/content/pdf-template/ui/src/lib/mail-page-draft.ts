@@ -11,9 +11,9 @@ import { computed, DestroyRef, inject, Injectable, signal } from '@angular/core'
 
 import type { ArticleBlock, MailBlock } from '@okr/shared-models';
 import { MailPageService } from '@okr/content-pdf-template-data-access';
-import { sameMailPageMeta, type MailPageMeta } from '@okr/content-pdf-template-util';
+import { draftOnTeardown, sameMailPageMeta, type MailPageMeta } from '@okr/content-pdf-template-util';
 import {
-  checkMailBlocks, createHistory, mailArticle, mailBlocksHaveContent, record,
+  checkMailBlocks, createHistory, findBlock, mailArticle, mailBlocksHaveContent, record, replacePresent,
   type EditorHistory, type EditorState, type MailEditorDraft,
 } from '@okr/cms-section-util';
 
@@ -114,6 +114,17 @@ export class MailPageDraft implements MailEditorDraft {
     this.setHistory(record(history, { ...history.present, section: { ...section, properties: { ...section.properties, blocks: blocks as ArticleBlock[] } } }));
   }
 
+  /**
+   * Selects a block from outside the editor (a block the server refused, spec 1.176 §13), so that the editor shows it selected when it is
+   * created. Not a step of the history and nothing to write. False when the mail has no such block.
+   */
+  public select(id: string): boolean {
+    const history = this.historyState();
+    if (!findBlock(blocksOf(history), id)) return false;
+    if (history.present.selectedId !== id) this.historyState.set(replacePresent(history, { ...history.present, selectedId: id }));
+    return true;
+  }
+
   /** Subject, layout or web version changed in the composer: written with the blocks. */
   public setMeta(meta: MailPageMeta): void {
     if (sameMailPageMeta(meta, this.metaState())) return;
@@ -174,6 +185,21 @@ export class MailPageDraft implements MailEditorDraft {
     this.timer = undefined;
     await Promise.allSettled([...this.inFlight]);
     if (pageKey && !this.sent && !this.kept) await this.mailPageService.discardDraft(pageKey);
+  }
+
+  /**
+   * The composer went (spec 1.176 §8.5, §13): the draft is deleted only when it is empty or the sender chose «Verwerfen» (`discardChosen`).
+   * A forced dismiss or a teardown keeps a draft with content, with what was still waiting written; the nightly reap removes it after
+   * 30 days. A sent or kept page always stays.
+   */
+  public async leave(discardChosen = false): Promise<void> {
+    if (this.discarded) return;
+    const decision = draftOnTeardown({ sent: this.sent, kept: this.kept, discardChosen, hasContent: this.hasContent() });
+    if (decision === 'delete') {
+      await this.discard();
+      return;
+    }
+    await this.flush();
   }
 
   private schedule(): void {
