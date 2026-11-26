@@ -300,7 +300,12 @@ export class MatrixChatService {
         }
         // Stale (old UID-based id) or expiring (SCS-92) — discard and mint a fresh token.
         this.clearStoredCredentials();
-        // A different person's credentials end here; their cached sync is dropped by claimSyncStore().
+        // A different person's credentials: drop their cached sync too. Second check next to
+        // claimSyncStore(), which adopts a store without owner (installs from before the marker).
+        if (action === 'reset') {
+          await this.deleteSyncStore();
+          try { window.localStorage.removeItem(MATRIX_STORE_OWNER_KEY); } catch { /* best effort */ }
+        }
       }
 
       const fn = httpsCallable(getFunctions(activeFirebaseApp(), 'europe-west6'), 'getMatrixCredentials');
