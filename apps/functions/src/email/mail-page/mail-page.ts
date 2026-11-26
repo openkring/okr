@@ -3,7 +3,7 @@
 // Firestore I/O around a Versand mail page (spec 1.172): load page + sections + event lines and render, and the
 // nightly reap of unsent drafts. The rules themselves are pure, in mail-page.logic.ts.
 import { logger } from 'firebase-functions/v2';
-import { getFirestore } from 'firebase-admin/firestore';
+import { getFirestore, type Firestore } from 'firebase-admin/firestore';
 
 import { CalEventCollection, MailPageCollection, MailPageSectionCollection } from '@okr/shared-models';
 import type { CalEventModel, MailPageModel } from '@okr/shared-models';
@@ -58,30 +58,43 @@ export async function renderMailPage(tenantId: string, pageKey: string, uid: str
   return { ...content, page };
 }
 
-/** Nightly: deletes drafts that were never sent and not edited for 30 days (`changedAt`, else `createdAt`) — sections first, then the page. */
+/** Nightly: deletes drafts that were never sent and not edited for 30 days (`changedAt`, else `createdAt`). */
 export async function runMailPageDraftReap(): Promise<void> {
-  const db = getFirestore();
-  const nowIso = new Date().toISOString();
+  const deleted = await reapMailPageDrafts(getFirestore(), new Date().toISOString());
+  logger.info(`mailPageDraftReap: deleted ${deleted} draft page(s)`);
+}
+
+/**
+ * Deletes the drafts that `isReapableDraft` gives up at `nowIso`; how many. The query is only a candidate list: each page is read again in a
+ * transaction and deleted only when it still is such a draft, so a draft continued or sent meanwhile stays. The page goes first, then its
+ * sections: a page is never left without the sections it shows.
+ */
+export async function reapMailPageDrafts(db: Firestore, nowIso: string): Promise<number> {
   // single-field range on createdAt, no composite index: normally changedAt ≥ createdAt, so a page edited later is
   // older by createdAt and this is a superset; the changedAt rule and the mailingKey check stay in isReapableDraft
   const cutoffIso = new Date(Date.parse(nowIso) - MAIL_PAGE_DRAFT_DAYS * 86_400_000).toISOString();
   const old = await db.collection(MailPageCollection).where('createdAt', '<', cutoffIso).get();
   let deleted = 0;
   for (const d of old.docs) {
-    const page = d.data() as MailPageModel;
-    if (!isReapableDraft(page, nowIso)) continue;
+    if (!isReapableDraft(d.data() as MailPageModel, nowIso)) continue;
     try {
+      const reaped = await db.runTransaction(async (tx) => {
+        const live = await tx.get(d.ref);
+        if (!live.exists || !isReapableDraft(live.data() as MailPageModel, nowIso)) return false;
+        tx.delete(d.ref);
+        return true;
+      });
+      if (!reaped) continue;
+      deleted++;
       const sections = await d.ref.collection(MailPageSectionCollection).listDocuments();
       for (let i = 0; i < sections.length; i += 500) {
         const batch = db.batch();
         for (const ref of sections.slice(i, i + 500)) batch.delete(ref);
         await batch.commit();
       }
-      await d.ref.delete();
-      deleted++;
     } catch (e) {
-      logger.warn(`mailPageDraftReap: draft ${d.id} not deleted`, e);
+      logger.warn(`mailPageDraftReap: draft ${d.id} not deleted (or its sections not all)`, e);
     }
   }
-  logger.info(`mailPageDraftReap: deleted ${deleted} draft page(s)`);
+  return deleted;
 }
