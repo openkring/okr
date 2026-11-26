@@ -1,7 +1,7 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { IonButton, IonCol, IonGrid, IonIcon, IonLabel, IonNote, IonRow, IonToolbar } from '@ionic/angular';
-import { firstValueFrom, of } from 'rxjs';
+import { catchError, firstValueFrom, from, of, timeout } from 'rxjs';
 
 import { ENV } from '@okr/shared-config';
 import { AppStore } from '@okr/shared-feature';
@@ -24,10 +24,13 @@ import {
   ReportingI18n, reportTemplateRows, ReportTemplatePayload, sumLinesByAccount, withProjectAllocations,
 } from '@okr/finance-reporting-util';
 import { CostAllocationService } from '@okr/finance-budget-data-access';
-import { projectAllocationRows } from '@okr/finance-budget-util';
+import { projectAllocationRows, projectResultSources } from '@okr/finance-budget-util';
 import { CostCenterService } from '@okr/finance-cost-center-data-access';
 import { ReportTable } from '@okr/finance-reporting-ui';
 import { PROJECT_I18N_KEYS } from '@okr/project-project-util';
+
+/** A stalled Firestore never answers; the PDF then prints without the logo. */
+const LOGO_TIMEOUT_MS = 8_000;
 
 /**
  * Result of one project (spec 3.14 Phase 4): Einnahmen and Ausgaben from the booking lines that
@@ -53,7 +56,7 @@ import { PROJECT_I18N_KEYS } from '@okr/project-project-util';
     } @else {
       <ion-toolbar>
         <ion-note slot="start" class="ion-padding-start">{{ booksNote() }}</ion-note>
-        <ion-button slot="end" fill="clear" (click)="exportPdf()">
+        <ion-button slot="end" fill="clear" [disabled]="exporting()" (click)="exportPdf()">
           <ion-icon slot="start" src="{{ 'document' | svgIcon }}" />
           {{ i18n.exportPdf() }}
         </ion-button>
@@ -102,15 +105,6 @@ export class ProjectResult {
     params: resourceParams(() => ({ id: this.accountingTenantId() })),
     stream: ({ params }) => params.id ? this.accountService.list(params.id) : of([]),
   });
-  private readonly bookingsResource = rxResource({
-    params: resourceParams(() => ({ id: this.accountingTenantId() })),
-    stream: ({ params }) => params.id ? this.reportingService.getJournalEntries(params.id) : of([]),
-  });
-  private readonly linesResource = rxResource({
-    params: resourceParams(() => ({ id: this.accountingTenantId() })),
-    stream: ({ params }) => params.id ? this.reportingService.getAllLines(params.id) : of([]),
-  });
-
   // Umlagen onto projects (D26): the rules and the Kostenstelle tree of the books (readable for privileged)
   private readonly allocationService = inject(CostAllocationService);
   private readonly costCenterService = inject(CostCenterService);
@@ -123,6 +117,33 @@ export class ProjectResult {
     stream: ({ params }) => params.id ? this.costCenterService.list(params.id) : of([]),
   });
 
+  /**
+   * Whose lines are read: the project's own and the bases of the Umlagen it receives — never the whole ledger.
+   * undefined (= no read yet) until the rules and the Kostenstelle tree are there; no project = no read either
+   * (an empty key would match every line without a project).
+   */
+  private readonly sources = computed(() => !this.projectKey() || this.rulesResource.isLoading() || this.costCentersResource.isLoading()
+    ? undefined
+    : projectResultSources(this.rulesResource.value() ?? [], this.projectKey(), this.costCentersResource.value() ?? [], this.accountingTenantId()));
+  private readonly linesResource = rxResource({
+    params: resourceParams(() => {
+      const sources = this.sources();
+      return sources ? { id: this.accountingTenantId(), ...sources } : undefined;
+    }),
+    stream: ({ params }) => params.id ? this.reportingService.getLinesOf(params.id, params.projectKeys, params.costCenterKeys) : of([]),
+  });
+  /** The bookings behind those lines: one read per set of bookings, not live (as the journal, spec 1.102). */
+  private readonly bookingsResource = rxResource({
+    params: resourceParams(() => {
+      const lines = this.linesResource.value();
+      return lines ? { id: this.accountingTenantId(), keys: [...new Set(lines.map(l => l.bookingKey))].sort() } : undefined;
+    }),
+    stream: ({ params }) => from(this.reportingService.getBookings(params.id, params.keys)).pipe(catchError(error => {
+      this.alertService.error(`ProjectResult.getBookings: ${error}`);
+      return of([]);
+    })),
+  });
+
   private readonly configResource = rxResource({
     params: resourceParams(() => ({ id: this.accountingTenantId() })),
     stream: ({ params }) => params.id ? this.configService.read(params.id) : of(undefined),
@@ -131,7 +152,8 @@ export class ProjectResult {
   protected readonly booksNote = computed(() => fill(this.i18n.resultBooks(), { tenant: this.accountingTenantId() }));
 
   protected readonly isLoading = computed(() =>
-    this.accountsResource.isLoading() || this.bookingsResource.isLoading() || this.linesResource.isLoading());
+    this.accountsResource.isLoading() || this.rulesResource.isLoading() || this.costCentersResource.isLoading()
+    || this.linesResource.isLoading() || this.bookingsResource.isLoading());
 
   /** Only this project's lines — all fiscal years (a project's actuals span years). */
   private readonly projectLines = computed(() =>
@@ -154,7 +176,12 @@ export class ProjectResult {
   /** account rows opened on the page — the PDF lists their bookings too */
   protected readonly openKeys = signal<ReadonlySet<string>>(new Set());
 
+  /** an export is running — a first render takes several seconds */
+  protected readonly exporting = signal(false);
+
   protected async exportPdf(): Promise<void> {
+    if (this.exporting()) return;
+    this.exporting.set(true);
     try {
       const config = this.configResource.value();
       // The books' own owner only — never app-config ownerOrgId or the tenant id (accountingTenantId ≠ tenantId).
@@ -214,6 +241,8 @@ export class ProjectResult {
       await this.alertService.showToast(fill(this.reporting.pdf_conf(), { filename }));
     } catch (error) {
       this.alertService.error(`ProjectResult.exportPdf: ${error}`);
+    } finally {
+      this.exporting.set(false);
     }
   }
 
@@ -229,7 +258,7 @@ export class ProjectResult {
    * scaled to print height without cropping; an SVG goes out as stored (imgix cannot rasterise it).
    */
   private async orgLogoUrl(orgKey: string): Promise<string> {
-    const storagePath = await firstValueFrom(this.avatarService.getRelStorageUrl(`org.${orgKey}`)).catch(() => '');
+    const storagePath = await firstValueFrom(this.avatarService.getRelStorageUrl(`org.${orgKey}`).pipe(timeout({ first: LOGO_TIMEOUT_MS }))).catch(() => '');
     if (!storagePath) return '';
     const url = `${this.env.services.imgixBaseUrl}/${storagePath}`;
     return storagePath.toLowerCase().endsWith('.svg') ? url : `${url}?h=240&fit=max&fm=png`;

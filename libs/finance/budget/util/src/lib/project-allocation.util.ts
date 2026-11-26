@@ -1,6 +1,6 @@
 import { AccountModel, BookingLineModel, BookingModel, CostAllocationModel, CostCenterModel } from '@okr/shared-models';
 import {
-  aggregateByCostCenter, allocationBaseCells, applyProjectAllocations, CellSide, postedLinesInRange, ProjectAllocationRow, rollUpCostCenters
+  aggregateByCostCenter, allocationBaseCells, applyProjectAllocations, CellSide, costCenterSubtreeKeys, postedLinesInRange, ProjectAllocationRow, rollUpCostCenters
 } from '@okr/finance-cost-center-util';
 import { fiscalYear as fiscalYearRange } from '@okr/finance-reporting-util';
 
@@ -38,4 +38,26 @@ export function projectAllocationRows(
     return rollUp.get(costCenterKey)?.[side].actual ?? 0;
   };
   return applyProjectAllocations(relevant, projectKey, projectActual, centerActual, accountingTenantId);
+}
+
+export interface ProjectResultSources { projectKeys: string[]; costCenterKeys: string[] }
+
+/**
+ * Whose booking lines the result of `projectKey` needs: its own, plus the bases of the percentages it receives
+ * (the source project, or the source Kostenstelle with its subtree). A fixed amount and an Umlage given away
+ * need nothing more. Everything else of the ledger (scs: 22,500 lines) stays unread. Sorted, without doubles.
+ */
+export function projectResultSources(
+  rules: CostAllocationModel[], projectKey: string, costCenters: CostCenterModel[], accountingTenantId: string,
+): ProjectResultSources {
+  const projectKeys = new Set([projectKey]);
+  const costCenterKeys = new Set<string>();
+  for (const r of rules) {
+    if (r.isArchived || r.accountingTenantId !== accountingTenantId || r.mode === 'amount' || r.toProjectKey !== projectKey) continue;
+    if (r.scope === 'project' && r.fromProjectKey) projectKeys.add(r.fromProjectKey);
+    if (r.scope === 'centerToProject' && r.fromCostCenterKey) {
+      costCenterSubtreeKeys(costCenters, r.fromCostCenterKey).forEach(key => costCenterKeys.add(key));
+    }
+  }
+  return { projectKeys: [...projectKeys].sort(), costCenterKeys: [...costCenterKeys].sort() };
 }

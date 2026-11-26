@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { AccountModel, BookingLineModel, BookingModel, CostAllocationModel, CostCenterModel, MoneyModel } from '@okr/shared-models';
 
-import { projectAllocationRows } from './project-allocation.util';
+import { projectAllocationRows, projectResultSources } from './project-allocation.util';
 
 const acc = (okey: string, id: string): AccountModel => ({ ...new AccountModel('scs'), okey, id, name: id });
 const accounts = [acc('a3', '3400'), acc('a4', '4400'), acc('a8', '8000')];
@@ -30,5 +30,43 @@ describe('projectAllocationRows (D26)', () => {
     const r = projectAllocationRows([rule('cp', { scope: 'centerToProject', fiscalYear: 2026, fromCostCenterKey: 'club', toProjectKey: 'pr2', side: 'expense', mode: 'percent', percent: 10 })],
       'pr2', lines, bookings, accounts, centers, 1, 'scs');
     expect(r[0]).toMatchObject({ actual: 1000 });
+  });
+});
+
+describe('projectResultSources', () => {
+  const tree = [cc('club'), cc('bar', 'club'), cc('sport')];
+  const percent: Partial<CostAllocationModel> = { mode: 'percent', percent: 50 };
+  const sources = (rules: CostAllocationModel[]) => projectResultSources(rules, 'pr2', tree, 'scs');
+
+  it('is the project alone without rules that touch it', () => {
+    expect(sources([
+      rule('other', { ...percent, scope: 'project', fromProjectKey: 'pr1', toProjectKey: 'pr3' }),
+      rule('center', { ...percent, scope: 'center', fromCostCenterKey: 'club' }),
+    ])).toEqual({ projectKeys: ['pr2'], costCenterKeys: [] });
+  });
+  it('adds the source project of a percentage received', () => {
+    expect(sources([rule('pp', { ...percent, scope: 'project', fromProjectKey: 'pr1', toProjectKey: 'pr2' })]))
+      .toEqual({ projectKeys: ['pr1', 'pr2'], costCenterKeys: [] });
+  });
+  it('needs nothing more for a percentage given away', () => {
+    expect(sources([rule('pp', { ...percent, scope: 'project', fromProjectKey: 'pr2', toProjectKey: 'pr3' })]))
+      .toEqual({ projectKeys: ['pr2'], costCenterKeys: [] });
+  });
+  it('adds the whole subtree of a source Kostenstelle', () => {
+    expect(sources([rule('cp', { ...percent, scope: 'centerToProject', fromCostCenterKey: 'club', toProjectKey: 'pr2' })]))
+      .toEqual({ projectKeys: ['pr2'], costCenterKeys: ['bar', 'club'] });
+  });
+  it('ignores fixed amounts, archived rules and other books', () => {
+    const base: Partial<CostAllocationModel> = { ...percent, scope: 'project', fromProjectKey: 'pr1', toProjectKey: 'pr2' };
+    expect(sources([
+      rule('fix', { ...base, mode: 'amount' }), rule('old', { ...base, isArchived: true }), rule('gss', { ...base, accountingTenantId: 'gss' }),
+    ])).toEqual({ projectKeys: ['pr2'], costCenterKeys: [] });
+  });
+  it('gives the same Umlage as the whole ledger', () => {
+    const rules = [rule('pp', { ...percent, scope: 'project', fromProjectKey: 'pr1', toProjectKey: 'pr2' })];
+    const { projectKeys } = sources(rules);
+    const some = lines.filter(l => projectKeys.includes(l.projectKey));
+    expect(projectAllocationRows(rules, 'pr2', some, bookings, accounts, tree, 1, 'scs'))
+      .toEqual(projectAllocationRows(rules, 'pr2', lines, bookings, accounts, tree, 1, 'scs'));
   });
 });
