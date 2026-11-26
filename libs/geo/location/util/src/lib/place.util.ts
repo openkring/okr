@@ -55,20 +55,20 @@ function hasCoords(l: LocationModel): boolean {
 }
 
 /**
- * Saved locations that may be what the free text means: first those whose name equals the text (folded; the part before
- * a comma also counts, so 'Pfaffikon, sz' finds «Pfäffikon SZ»), then those within 5 km of `near`, nearest first.
+ * Saved locations that may be what the free text means: first those whose name contains the text (folded; the part before
+ * a comma also counts, so 'Pfaffikon, sz' finds «Pfäffikon SZ» and «Stäfa» finds «Hafen Stäfa»), then those within 5 km of `near`, nearest first.
  */
 export function matchSavedLocations(all: LocationModel[], text: string, near?: { lat: number; lng: number }, max = 3): SavedMatch[] {
   const live = all.filter(l => !l.isArchived);
   const whole = foldName(searchTextOf(text));
-  const base = foldName(text.split(',')[0]);
+  const base = foldName(searchTextOf(text.split(',')[0]));
   const withDistance = (l: LocationModel): SavedMatch =>
     near && hasCoords(l) ? { location: l, distanceKm: distanceKm(near, { lat: l.latitude, lng: l.longitude }) } : { location: l };
 
   const byName = live
     .filter(l => {
-      const n = foldName(l.name);
-      return !!base && (n === whole || n === base || n.startsWith(base + ' '));
+      const n = foldName(searchTextOf(l.name));
+      return !!base && (n.includes(whole) || n.includes(base));
     })
     .map(withDistance);
 

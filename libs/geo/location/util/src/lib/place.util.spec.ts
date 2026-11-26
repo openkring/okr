@@ -64,6 +64,15 @@ describe('matchSavedLocations', () => {
     expect(r.map(m => m.location.name)).toEqual(['Pfäffikon SZ']);
   });
 
+  it('finds a saved name containing the text, and one written with a comma', () => {
+    expect(matchSavedLocations([loc('Hafen Stäfa'), loc('Seebad Pfäffikon')], 'Stäfa').map(m => m.location.name)).toEqual(['Hafen Stäfa']);
+    expect(matchSavedLocations([loc('Pfäffikon, SZ')], 'Pfäffikon, SZ').map(m => m.location.name)).toEqual(['Pfäffikon, SZ']);
+  });
+
+  it('matches nothing by name for empty text', () => {
+    expect(matchSavedLocations([loc('Stäfa')], '  ')).toEqual([]);
+  });
+
   it('adds locations within 5 km of near, with their distance', () => {
     const freienbach = loc('Freienbach', 47.2, 8.78 + 1.1 / (111.32 * Math.cos((47.2 * Math.PI) / 180)));
     const far = loc('Weit weg', 47.2, 8.78 + 6 / (111.32 * Math.cos((47.2 * Math.PI) / 180)));
