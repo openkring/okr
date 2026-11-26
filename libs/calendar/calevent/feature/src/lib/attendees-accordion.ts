@@ -1,7 +1,7 @@
 import { NgTemplateOutlet } from '@angular/common';
 import { Component, computed, inject, input, linkedSignal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
-import { ActionSheetController, ActionSheetOptions, IonAccordion, IonAvatar, IonButton, IonIcon, IonItem, IonLabel, IonList, ModalController, ToastController } from '@ionic/angular';
+import { ActionSheetController, ActionSheetOptions, IonAccordion, IonAvatar, IonButton, IonIcon, IonItem, IonLabel, IonList, IonNote, ModalController, ToastController } from '@ionic/angular';
 
 import { Attendee, CalEventModel, InvitationCollection, InvitationModel, MembershipModel, UserModel } from '@okr/shared-models';
 import { FullNamePipe, SvgIconPipe } from '@okr/shared-pipes';
@@ -14,6 +14,9 @@ import { FirestoreService } from '@okr/shared-data-access';
 import { I18nService } from '@okr/shared-i18n';
 import { InvitationService } from '@okr/relationship-invitation-data-access';
 import { CALEVENT_I18N_KEYS, CaleventI18n, isAttendanceClosed, splitAttendees, withoutCourseFields } from '@okr/calendar-calevent-util';
+
+import { MandateStore, GrantorAttendanceService } from '@okr/relationship-mandate-feature';
+import { MANDATE_I18N_KEYS } from '@okr/relationship-mandate-util';
 
 import { AvatarPipe } from '@okr/avatar-ui';
 
@@ -29,7 +32,7 @@ import { AvatarPipe } from '@okr/avatar-ui';
     ImgDirective, NgTemplateOutlet,
     AvatarPipe, FullNamePipe, SvgIconPipe,
     EmptyList, CountPill,
-    IonAccordion, IonItem, IonLabel, IonList, IonAvatar, IonIcon, IonButton
+    IonAccordion, IonItem, IonLabel, IonList, IonAvatar, IonIcon, IonButton, IonNote
   ],
   styles: [`
     ion-avatar { width: 30px; height: 30px; background-color: var(--ion-color-light); }
@@ -61,6 +64,7 @@ import { AvatarPipe } from '@okr/avatar-ui';
       border-top: 2px solid var(--ion-color-warning);
     }
     .waiting-count { color: var(--ion-color-warning-shade); }
+    .acted-for { display: block; font-size: 0.8em; }
     .answer-icon { font-size: 26px; cursor: pointer; margin-inline-start: 12px; }
   `],
   template: `
@@ -85,6 +89,7 @@ import { AvatarPipe } from '@okr/avatar-ui';
             </ion-item>
           </ion-list>
         }
+        <ng-container *ngTemplateOutlet="grantorRows" />
       } @else {
         <ion-list lines="inset">
           <!-- confirmed, then the waiting list below the divider, then everyone who occupies no
@@ -113,9 +118,31 @@ import { AvatarPipe } from '@okr/avatar-ui';
             }
           </ion-item>
         </ion-list>
+        <ng-container *ngTemplateOutlet="grantorRows" />
       }
     </div>
   </ion-accordion>
+
+  <!-- «Für {name} anmelden / abmelden» under a Vollmacht (spec 1.180 §5.2): one row per grantor, the same icons -->
+  <ng-template #grantorRows>
+    @if(grantorOptions().length > 0) {
+      <ion-list lines="none">
+        @for(option of grantorOptions(); track option.key) {
+          <ion-item lines="none">
+            <ion-label>{{ option.name }}</ion-label>
+            @if(option.state !== 'declined') {
+              <ion-icon slot="end" class="answer-icon" color="danger" src="{{'cancel' | svgIcon }}"
+                [attr.aria-label]="unattendLabel(option.name)" [title]="unattendLabel(option.name)" (click)="answerFor(option.key, 'declined')" />
+            }
+            @if(option.state !== 'accepted') {
+              <ion-icon slot="end" class="answer-icon" color="success" src="{{'checkbox-circle' | svgIcon }}"
+                [attr.aria-label]="attendLabel(option.name)" [title]="attendLabel(option.name)" (click)="answerFor(option.key, 'accepted')" />
+            }
+          </ion-item>
+        }
+      </ion-list>
+    }
+  </ng-template>
 
   <!-- the current user's first answer; once given, their row's ActionSheet changes it -->
   <ng-template #answerIcons>
@@ -132,7 +159,10 @@ import { AvatarPipe } from '@okr/avatar-ui';
       <ion-avatar slot="start">
         <img okrImg src="{{ 'person.' + attendee.person.key | avatar:'person' }}" alt="attendee avatar" />
       </ion-avatar>
-      <ion-label>{{ attendee.person.name1 | fullName: attendee.person.name2 }}</ion-label>
+      <ion-label>
+        {{ attendee.person.name1 | fullName: attendee.person.name2 }}
+        @if(actedForNote(attendee); as note) { <ion-note class="acted-for">{{ note }}</ion-note> }
+      </ion-label>
       @if(canEdit()) {
         <ion-icon slot="end" src="{{'cancel' | svgIcon }}" (click)="remove(attendee, $event)" />
       }
@@ -147,6 +177,9 @@ export class AttendeesAccordion {
   private firestoreService = inject(FirestoreService);
   private invitationService = inject(InvitationService);
   protected readonly i18n = inject(I18nService).translateAll(CALEVENT_I18N_KEYS) as CaleventI18n;
+  private mandateStore = inject(MandateStore);
+  private grantorAttendance = inject(GrantorAttendanceService);
+  private readonly mandateI18n = inject(I18nService).translateAll(MANDATE_I18N_KEYS);
   private env = inject(ENV);
   private imgixBaseUrl = this.env.services.imgixBaseUrl;
 
@@ -196,6 +229,16 @@ export class AttendeesAccordion {
     coerceBoolean(this.canAnswer()) && !isAttendanceClosed(this.calevent()) &&
     (this.myAttendee()?.state ?? 'invited') === 'invited'
   );
+  /**
+   * The grantors I may sign up or off for here (spec 1.180 §5.2), offered where the view lets me answer
+   * (`canAnswer`; the organiser's edit modal works on a copy of the event and offers none). `options` applies to the
+   * grantor every check that runs for my own sign-up. Reading `attendees()` makes the rows follow a change.
+   */
+  protected grantorOptions = computed(() => {
+    this.attendees();
+    if (!coerceBoolean(this.canAnswer()) || isAttendanceClosed(this.calevent())) return [];
+    return this.grantorAttendance.options(this.calevent());
+  });
   protected waitingLabel = computed(() =>
     fill(this.i18n.attendance_waiting_count(), { count: this.split().waiting.length })
   );
@@ -271,6 +314,35 @@ export class AttendeesAccordion {
     const avatar = user ? getAvatarInfoForCurrentUser(user) : undefined;
     if (!avatar) return;
     await this.changeOwnState({ person: avatar, state: 'invited' }, newState);
+  }
+
+  /** Signs a grantor up or off in my name; the service re-reads the Vollmacht, checks and tells the grantor. */
+  protected async answerFor(grantorKey: string, newState: 'accepted' | 'declined'): Promise<void> {
+    const calevent = this.calevent();
+    await this.grantorAttendance.changeAttendanceFor(calevent, grantorKey, newState);
+    // an answered invitation is written to Firestore only: re-read the list so the row shows the new state
+    const fresh = calevent.okey ? await this.firestoreService.readModelOnce<CalEventModel>('calevents', calevent.okey) : undefined;
+    if (fresh?.attendees) {
+      calevent.attendees = fresh.attendees;
+      this.attendees.set(fresh.attendees);
+    }
+  }
+
+  protected attendLabel(name: string): string {
+    return fill(this.mandateI18n.attend_for(), { name });
+  }
+
+  protected unattendLabel(name: string): string {
+    return fill(this.mandateI18n.unattend_for(), { name });
+  }
+
+  /** «von Beat für Anna» when somebody else answered for this attendee under a Vollmacht; '' otherwise. */
+  protected actedForNote(attendee: Attendee): string {
+    const actedByKey = attendee.actedByKey;
+    if (!actedByKey || actedByKey === attendee.person.key) return '';
+    const actor = this.mandateStore.nameOf(actedByKey);
+    const subject = attendee.person.name1 || this.mandateStore.nameOf(attendee.person.key);
+    return actor && subject ? fill(this.mandateI18n.acted_for(), { actor, subject }) : '';
   }
 
   /******************************* helpers *************************************** */

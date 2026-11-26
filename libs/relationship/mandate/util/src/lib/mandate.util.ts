@@ -78,3 +78,15 @@ export function newProxyMandate(tenantId: string, grantor: AvatarInfo, grantee: 
   m.createdByKey = createdByKey;
   return m;
 }
+
+/**
+ * The first name of `personKey` as the Vollmachten I gave (`given`: my grantee is the other party) or received
+ * (`received`: my grantor is the other party) carry it. A fallback for a person the app has not loaded; '' when no
+ * Vollmacht names them, so a caller never shows a raw key.
+ */
+export function mandatePartyName(personKey: string, given: MandateModel[], received: MandateModel[]): string {
+  if (!personKey) return '';
+  const fromGiven = given.find((m) => m.granteeKey === personKey)?.grantee?.name1;
+  const fromReceived = received.find((m) => m.grantorKey === personKey)?.grantor?.name1;
+  return fromGiven || fromReceived || '';
+}

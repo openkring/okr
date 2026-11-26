@@ -5,6 +5,7 @@ import { AvatarInfo, MandateModel } from '@okr/shared-models';
 import {
   grantorKeysFor,
   isMandateActive,
+  mandatePartyName,
   mayReceiveProxy,
   newFamilyMandate,
   newProxyMandate,
@@ -142,5 +143,23 @@ describe('factories', () => {
   it('builds a proxy mandate for exactly the meeting', () => {
     const m = newProxyMandate('scs', avatar('g1'), avatar('h1'), 'mt1', 'p9');
     expect(m).toMatchObject({ kind: 'proxy', actions: ['meeting.represent'], meetingKey: 'mt1', createdByKey: 'p9', grantorKey: 'g1', granteeKey: 'h1' });
+  });
+});
+
+describe('mandatePartyName', () => {
+  const grantee = { key: 'h1', name1: 'Beat', name2: 'Muster' } as AvatarInfo;
+  const grantor = { key: 'g2', name1: 'Anna', name2: 'Muster' } as AvatarInfo;
+  const given = [mandate({ granteeKey: 'h1', grantee })];
+  const received = [mandate({ okey: 'm2', grantorKey: 'g2', grantor })];
+
+  it('reads the grantee of a Vollmacht I gave', () => {
+    expect(mandatePartyName('h1', given, received)).toBe('Beat');
+  });
+  it('reads the grantor of a Vollmacht I received', () => {
+    expect(mandatePartyName('g2', given, received)).toBe('Anna');
+  });
+  it('is empty for an unknown person or an empty key, never the key', () => {
+    expect(mandatePartyName('zz', given, received)).toBe('');
+    expect(mandatePartyName('', given, received)).toBe('');
   });
 });

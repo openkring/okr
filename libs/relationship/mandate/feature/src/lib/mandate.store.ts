@@ -7,7 +7,7 @@ import { firstValueFrom, of } from 'rxjs';
 import { HouseholdService } from '@okr/relationship-household-data-access';
 import { MandateService } from '@okr/relationship-mandate-data-access';
 import { PersonalRelService } from '@okr/relationship-personal-rel-data-access';
-import { grantorKeysFor, isMandateActive, MANDATE_I18N_KEYS } from '@okr/relationship-mandate-util';
+import { grantorKeysFor, isMandateActive, mandatePartyName, MANDATE_I18N_KEYS } from '@okr/relationship-mandate-util';
 import { AppStore } from '@okr/shared-feature';
 import { AvatarInfo, MandateAction, MandateModel } from '@okr/shared-models';
 import { resourceParams, showToast } from '@okr/shared-util-angular';
@@ -115,6 +115,14 @@ export const MandateStore = signalStore(
     /** the persons on whose behalf I may do `action` today */
     grantorKeysFor(action: MandateAction): Signal<string[]> {
       return computed(() => grantorKeysFor(store.received(), store.personKey(), action, getTodayStr(DateFormat.StoreDate)));
+    },
+
+    /**
+     * First name of the person behind a Vollmacht, for «von X für Y» (spec 1.180 §4.3): the loaded person, else the
+     * name on a Vollmacht I gave or received. '' when neither knows them — never the key.
+     */
+    nameOf(personKey: string): string {
+      return store.appStore.getPerson(personKey)?.firstName || mandatePartyName(personKey, store.given(), store.received());
     },
 
     reload(): void {
