@@ -63,21 +63,20 @@ describe('FormSubmitService', () => {
     });
 
     it('honours a form-specific honeypot key', async () => {
-      await service.submit({ ...args, honeypotKey: 'hp_x', values: { a: '1', hp_x: 'bot' } });
+      await service.submit({ ...args, honeypotKey: 'hp_x', values: { a: '1', hp_x: 'bot', _jsToken: 'tok' } });
       expect(calls[0].payload.values).toEqual({ a: '1' });
       expect(calls[0].payload.meta.honeypotWebsite).toBe('bot');
     });
 
     it('sends an empty honeypot rather than "undefined" when the field was not rendered', async () => {
-      await service.submit({ ...args, values: { a: '1' } });
+      await service.submit({ ...args, values: { a: '1', _jsToken: 'tok' } });
       expect(calls[0].payload.meta.honeypotWebsite).toBe('');
-      expect(calls[0].payload.meta.jsToken).toBe('');
     });
 
     it('does not mutate the caller\'s values object', async () => {
-      const values = { firstName: 'Anna', website: 'spam-bait' };
+      const values = { firstName: 'Anna', website: 'spam-bait', _jsToken: 'tok' };
       await service.submit({ ...args, values });
-      expect(values).toEqual({ firstName: 'Anna', website: 'spam-bait' });
+      expect(values).toEqual({ firstName: 'Anna', website: 'spam-bait', _jsToken: 'tok' });
     });
 
     it('calls submitForm and returns the submission id', async () => {
@@ -88,6 +87,26 @@ describe('FormSubmitService', () => {
     it('returns the thank-you text the server sends with the submission id', async () => {
       nextResult = { submissionId: 's2', confirmation: 'Danke Anna.\nWir melden uns.' };
       await expect(service.submit(args)).resolves.toEqual({ submissionId: 's2', confirmation: 'Danke Anna.\nWir melden uns.' });
+    });
+
+    it('fetches a token right before sending when the form has none (the page-load fetch failed)', async () => {
+      nextResult = { token: 'fresh' };
+      const result = service.submit({ ...args, values: { firstName: 'Anna' } });
+      await result;
+      expect(calls.map(c => c.name)).toEqual(['getFormToken', 'submitForm']);
+      expect(calls[0].payload).toEqual({ formKey: 'f1' });
+      expect(calls[1].payload.meta.jsToken).toBe('fresh');
+    });
+
+    it('does not send without a token: the server would store it as spam and the filler read «thank you»', async () => {
+      shouldThrow = true;
+      await expect(service.submit({ ...args, values: { firstName: 'Anna' } })).rejects.toThrow('form-token-unavailable');
+      expect(calls.map(c => c.name)).toEqual(['getFormToken']);
+    });
+
+    it('uses the token it already has without asking again', async () => {
+      await service.submit(args);
+      expect(calls.map(c => c.name)).toEqual(['submitForm']);
     });
 
     it('propagates a failure — the host shows the error, the submit is NOT silently swallowed', async () => {
@@ -102,7 +121,7 @@ describe('FormSubmitService', () => {
       await expect(service.fetchDefinition('f1', 'scs')).resolves.toBeUndefined();
     });
 
-    it('returns an empty token when the token callable fails — the server marks it missing', async () => {
+    it('returns an empty token when the token callable fails — submit then asks again', async () => {
       shouldThrow = true;
       await expect(service.fetchJsToken('f1')).resolves.toBe('');
     });

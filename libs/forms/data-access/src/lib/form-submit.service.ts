@@ -126,13 +126,18 @@ export class FormSubmitService {
     try {
       const fn = await this.callable<{ formKey: string }, { token: string }>('getFormToken');
       const result = await fn({ formKey });
-      return result.data.token;
+      return typeof result.data?.token === 'string' ? result.data.token : '';
     } catch {
-      return '';   // graceful degradation: the server marks the submission as missing_token
+      return '';   // the page still renders; `submit` asks again before sending
     }
   }
 
-  /** Rejects on any failure; `isFormClosedError` tells a closed or full form from the rest. */
+  /**
+   * Rejects on any failure; `isFormClosedError` tells a closed or full form from the rest.
+   * Without a JS token (its fetch failed when the form opened) it fetches one first and refuses to
+   * send when that fails too (`form-token-unavailable`): the server would store the answers as spam
+   * while the filler reads «thank you». The host shows its generic error and keeps the answers.
+   */
   public async submit(args: FormSubmitArgs): Promise<FormSubmitResult> {
     const fn = await this.callable<unknown, FormSubmitResult>('submitForm');
     const ua = navigator.userAgent;
@@ -142,9 +147,10 @@ export class FormSubmitService {
     // lifted into `meta` here and must NOT be persisted with the answers.
     const clean = { ...args.values };
     const honeypotWebsite = String(clean[args.honeypotKey] ?? '');
-    const jsToken = String(clean['_jsToken'] ?? '');
+    const jsToken = String(clean['_jsToken'] ?? '') || await this.fetchJsToken(args.formKey);
     delete clean[args.honeypotKey];
     delete clean['_jsToken'];
+    if (!jsToken) throw new Error('form-token-unavailable');
 
     const result = await fn({
       formKey: args.formKey,
