@@ -24,6 +24,7 @@
     "@okr/content-diary-util": "*",
     "@okr/location-data-access": "*",
     "@okr/location-feature": "*",
+    "@okr/location-util": "*",
     "@okr/subject-person-data-access": "*",
     "@okr/subject-person-feature": "*",
     "@okr/subject-person-util": "*",

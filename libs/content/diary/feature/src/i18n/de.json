@@ -298,5 +298,22 @@
       "removeConfirm": "Diese Strecke aus dem Tagebuch entfernen? Sie kommt nicht von selbst zurück, und in einer Vereins-App wird sie nach der üblichen Frist gelöscht.",
       "removeFailed": "Die Strecke konnte nicht entfernt werden. Bitte versuche es nochmals."
     }
+  },
+  "locationSearch": {
+    "title": "Ort erfassen",
+    "intro": "«{label}» ist noch kein gespeicherter Ort. Wähle einen Treffer – danach kannst du die Lage prüfen.",
+    "saved": "Schon gespeichert",
+    "new": "Neu aus der Ortssuche",
+    "manual": "Selbst auf der Karte setzen",
+    "empty": "Die Ortssuche hat nichts gefunden.",
+    "link": "Verknüpfen",
+    "municipality": "Gemeinde",
+    "distance": "{km} km entfernt"
+  },
+  "locationLink": {
+    "ask": "«{label}» kommt in {count} Tagen vor. Möchtest du alle verknüpfen?",
+    "one": "Nur diesen Tag",
+    "all": "Alle {count} verknüpfen",
+    "done": "{name} gespeichert und mit {count} Tagen verknüpft."
   }
 }

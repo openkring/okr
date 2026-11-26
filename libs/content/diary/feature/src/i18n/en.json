@@ -298,5 +298,22 @@
       "removeConfirm": "Remove this track from the diary? It won't come back by itself, and in a club app it will be deleted after the usual period.",
       "removeFailed": "The track could not be removed. Please try again."
     }
+  },
+  "locationSearch": {
+    "title": "Add place",
+    "intro": "\"{label}\" is not a saved place yet. Pick a result – you can check the position afterwards.",
+    "saved": "Already saved",
+    "new": "New from the place search",
+    "manual": "Set it on the map yourself",
+    "empty": "The place search found nothing.",
+    "link": "Link",
+    "municipality": "Municipality",
+    "distance": "{km} km away"
+  },
+  "locationLink": {
+    "ask": "\"{label}\" appears on {count} days. Do you want to link all of them?",
+    "one": "Only this day",
+    "all": "Link all {count}",
+    "done": "{name} saved and linked to {count} days."
   }
 }

@@ -212,6 +212,21 @@ export const DIARY_I18N_KEYS = {
   trip_notes:             PFX + 'trip.notes',
   trip_not_found:         PFX + 'trip.notFound',
 
+  // ─── a free-text place becomes a location (spec 1.178 §5, §6.3) ─────────────────
+  locationSearch_title:   PFX + 'locationSearch.title',
+  locationSearch_intro:   PFX + 'locationSearch.intro',        // single braces: {label}
+  locationSearch_saved:   PFX + 'locationSearch.saved',
+  locationSearch_new:     PFX + 'locationSearch.new',
+  locationSearch_manual:  PFX + 'locationSearch.manual',
+  locationSearch_empty:   PFX + 'locationSearch.empty',
+  locationSearch_link:    PFX + 'locationSearch.link',
+  locationSearch_municipality: PFX + 'locationSearch.municipality',
+  locationSearch_distance: PFX + 'locationSearch.distance',    // single braces: {km}
+  locationLink_ask:       PFX + 'locationLink.ask',            // single braces: {label} {count}
+  locationLink_one:       PFX + 'locationLink.one',
+  locationLink_all:       PFX + 'locationLink.all',            // single braces: {count}
+  locationLink_done:      PFX + 'locationLink.done',           // single braces: {name} {count}
+
   ok:                     '@ok',
   cancel:                 '@cancel',
   copy_conf:              '@copy.conf',

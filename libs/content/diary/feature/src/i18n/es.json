@@ -298,5 +298,22 @@
       "removeConfirm": "¿Quitar este recorrido del diario? No volverá por sí solo y, en una app de club, se eliminará tras el plazo habitual.",
       "removeFailed": "No se ha podido quitar el recorrido. Inténtalo de nuevo, por favor."
     }
+  },
+  "locationSearch": {
+    "title": "Añadir lugar",
+    "intro": "«{label}» aún no es un lugar guardado. Elige un resultado – después podrás comprobar la ubicación.",
+    "saved": "Ya guardado",
+    "new": "Nuevo desde la búsqueda de lugares",
+    "manual": "Colócalo tú en el mapa",
+    "empty": "La búsqueda de lugares no encontró nada.",
+    "link": "Vincular",
+    "municipality": "Municipio",
+    "distance": "a {km} km"
+  },
+  "locationLink": {
+    "ask": "«{label}» aparece en {count} días. ¿Quieres vincularlos todos?",
+    "one": "Solo este día",
+    "all": "Vincular los {count}",
+    "done": "{name} guardado y vinculado a {count} días."
   }
 }
