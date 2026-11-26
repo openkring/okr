@@ -2,9 +2,9 @@ import { describe, expect, it } from 'vitest';
 
 import { AvatarInfo, DiaryModel } from '@okr/shared-models';
 
-import { customLocationAvatar, customPersonAvatar } from './diary-avatar.util';
+import { customLocationAvatar, customPersonAvatar, diaryAvatarId } from './diary-avatar.util';
 import {
-  collectLocationReferences, collectPersonReferences, filterDiaryReferences, formatDiaryDate,
+  collectLocationReferences, collectPersonReferences, diariesWithLocationReference, filterDiaryReferences, formatDiaryDate,
   formatDiaryDateLong, formatDiaryDateShort, formatDiaryMonthHeader,
 } from './diary-reference.util';
 
@@ -178,4 +178,24 @@ describe('formatDiaryDateLong', () => {
 
 describe('formatDiaryMonthHeader', () => {
   it('names the month', () => expect(formatDiaryMonthHeader('202610', 'de')).toBe('Oktober 2026'));
+});
+
+describe('diariesWithLocationReference', () => {
+  it('returns only diaries holding the free-text entry, never keyed ones with the same label', () => {
+    const free = customLocationAvatar('Hafen');
+    const id = diaryAvatarId(free);
+    const d1 = diary('20260101', { locations: [free] });
+    const d2 = diary('20260102', { locations: [locationAvatar('l1', 'Ort'), customLocationAvatar('hafen')] });
+    const d3 = diary('20260103', { locations: [locationAvatar('l2', 'Hafen')] });
+    expect(diariesWithLocationReference([d1, d2, d3], id).map(d => d.okey)).toEqual([d1.okey, d2.okey]);
+  });
+  it('does not match a keyed id', () => {
+    const d = diary('20260101', { locations: [locationAvatar('l2', 'Hafen')] });
+    expect(diariesWithLocationReference([d], 'key:l2')).toEqual([]);
+  });
+  it('copes with a doc lacking locations', () => {
+    const d = diary('20260101');
+    delete (d as Partial<DiaryModel>).locations;
+    expect(diariesWithLocationReference([d], 'label:hafen')).toEqual([]);
+  });
 });

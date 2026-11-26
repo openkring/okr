@@ -160,3 +160,9 @@ export function formatDiaryMonthHeader(yyyymm: string, lang: string): string {
   const month = new Date(Date.UTC(+yyyymm.slice(0, 4), +yyyymm.slice(4, 6) - 1, 1));
   return new Intl.DateTimeFormat(lang, { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(month);
 }
+
+/** The diaries holding a FREE-TEXT location entry with this id (keyed entries never match). */
+export function diariesWithLocationReference(diaries: DiaryModel[], referenceId: string): DiaryModel[] {
+  return diaries.filter(diary =>
+    (diary.locations ?? []).some(avatar => !avatar.key && diaryAvatarId(avatar) === referenceId));
+}

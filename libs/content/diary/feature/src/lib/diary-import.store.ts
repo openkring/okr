@@ -7,7 +7,7 @@ import { firstValueFrom, of } from 'rxjs';
 import { DiaryService } from '@okr/content-diary-data-access';
 import {
   DIARY_I18N_KEYS, DiaryReference, DiaryReferenceKind, DiaryUsage,
-  collectLocationReferences, collectPersonReferences, locationAvatar, replaceDiaryAvatar, withDiaryLocations,
+  collectLocationReferences, collectPersonReferences, linkLocationInDiary, replaceDiaryAvatar, withDiaryLocations,
 } from '@okr/content-diary-util';
 import { LocationService } from '@okr/location-data-access';
 import {
@@ -100,10 +100,7 @@ export const DiaryImportStore = signalStore(
     const linkLocation = async (usage: DiaryUsage, location: LocationModel, referenceId: string): Promise<boolean> => {
       const diary = diaryOf(usage);
       if (!diary) return false;
-      const normalised = withDiaryLocations(diary);
-      await store.diaryService.update(
-        { ...normalised, locations: replaceDiaryAvatar(normalised.locations ?? [], referenceId, locationAvatar(location)) },
-        store.appStore.currentUser());
+      await store.diaryService.update(linkLocationInDiary(diary, referenceId, location), store.appStore.currentUser());
       return true;
     };
 
