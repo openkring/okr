@@ -194,6 +194,12 @@ export class AttendeesAccordion {
    * rule needs the calendars and invitations the store holds). Only then are the answer icons offered.
    */
   public readonly canAnswer = input<boolean>(false);
+  /**
+   * Offer «Für {name} anmelden / abmelden» per grantor (spec 1.180 §5.2). Set by the view modal only: the organiser's
+   * edit modal works on a copy of the event. Independent of `canAnswer`, which is about the current user —
+   * `GrantorAttendanceService.options` evaluates the grantor's own rights.
+   */
+  public readonly offerGrantorRows = input<boolean>(false);
 
   // coerced boolean inputs
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
@@ -230,14 +236,14 @@ export class AttendeesAccordion {
     (this.myAttendee()?.state ?? 'invited') === 'invited'
   );
   /**
-   * The grantors I may sign up or off for here (spec 1.180 §5.2), offered where the view lets me answer
-   * (`canAnswer`; the organiser's edit modal works on a copy of the event and offers none). `options` applies to the
-   * grantor every check that runs for my own sign-up. Reading `attendees()` makes the rows follow a change.
+   * The grantors I may sign up or off for here (spec 1.180 §5.2), where `offerGrantorRows` is set. `options` applies to
+   * the grantor every check that runs for my own sign-up. It reads the event with the accordion's own attendee list,
+   * so the rows follow a change that was written to Firestore only.
    */
   protected grantorOptions = computed(() => {
-    this.attendees();
-    if (!coerceBoolean(this.canAnswer()) || isAttendanceClosed(this.calevent())) return [];
-    return this.grantorAttendance.options(this.calevent());
+    const calevent = this.calevent();
+    if (!coerceBoolean(this.offerGrantorRows()) || isAttendanceClosed(calevent)) return [];
+    return this.grantorAttendance.options({ ...calevent, attendees: this.attendees() });
   });
   protected waitingLabel = computed(() =>
     fill(this.i18n.attendance_waiting_count(), { count: this.split().waiting.length })
@@ -319,13 +325,11 @@ export class AttendeesAccordion {
   /** Signs a grantor up or off in my name; the service re-reads the Vollmacht, checks and tells the grantor. */
   protected async answerFor(grantorKey: string, newState: 'accepted' | 'declined'): Promise<void> {
     const calevent = this.calevent();
-    await this.grantorAttendance.changeAttendanceFor(calevent, grantorKey, newState);
-    // an answered invitation is written to Firestore only: re-read the list so the row shows the new state
+    if (!await this.grantorAttendance.changeAttendanceFor(calevent, grantorKey, newState)) return;
+    // an answered invitation is written to Firestore only: re-read the list so the row shows the new state.
+    // Only the accordion's own signal changes; the event object belongs to the caller.
     const fresh = calevent.okey ? await this.firestoreService.readModelOnce<CalEventModel>('calevents', calevent.okey) : undefined;
-    if (fresh?.attendees) {
-      calevent.attendees = fresh.attendees;
-      this.attendees.set(fresh.attendees);
-    }
+    if (fresh?.attendees) this.attendees.set(fresh.attendees);
   }
 
   protected attendLabel(name: string): string {

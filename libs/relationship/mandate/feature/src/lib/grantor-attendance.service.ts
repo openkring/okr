@@ -116,20 +116,21 @@ export class GrantorAttendanceService {
    * with a toast, and so is a check that cannot reach the server. The re-read Vollmacht must be a family Vollmacht of
    * exactly this grantor, given to me, that includes `calevent.attend`. The person written onto the event is built
    * from `grantorKey`, never from the avatar stored on the Vollmacht.
+   * @returns true when the change was written (the notice is best effort), false when it was refused or failed
    */
-  public async changeAttendanceFor(calEvent: CalEventModel, grantorKey: string, newState: 'accepted' | 'declined'): Promise<void> {
+  public async changeAttendanceFor(calEvent: CalEventModel, grantorKey: string, newState: 'accepted' | 'declined'): Promise<boolean> {
     const currentUser = this.appStore.currentUser();
     const actor = currentUser ? getAvatarInfoForCurrentUser(currentUser) : undefined;
-    if (!currentUser || !actor?.key || !grantorKey) return;
+    if (!currentUser || !actor?.key || !grantorKey) return false;
     if (calEvent.isLocked) {
       await notify(this.alertController, this.i18n.locked_title(), this.i18n.locked_hint(), this.i18n.ok());
-      return;
+      return false;
     }
-    if (isAttendanceClosed(calEvent)) return;
+    if (isAttendanceClosed(calEvent)) return false;
     const context = this.contexts().find(ctx => ctx.key === grantorKey);
-    if (!context) return;
+    if (!context) return false;
     const mandate = await this.checkedMandate(grantorKey, actor.key, 'calevent.attend', context.name);
-    if (!mandate) return;
+    if (!mandate) return false;
     const subject = newAvatarInfo(grantorKey, context.name, this.appStore.getPerson(grantorKey)?.lastName ?? '', 'person', '', '', '');
 
     // the waiting-list hint is read from the event as loaded, before the write — as for my own sign-up
@@ -138,12 +139,12 @@ export class GrantorAttendanceService {
     if (invitation) {
       if (invitation.isLocked) {
         await notify(this.alertController, this.i18n.invitation_locked_title(), this.i18n.invitation_locked_hint(), this.i18n.ok());
-        return;
+        return false;
       }
-      if (!await this.invitationService.respond(invitation, newState, currentUser, undefined, actor.key)) return;
+      if (!await this.invitationService.respond(invitation, newState, currentUser, undefined, actor.key)) return false;
     } else {
       const key = await this.appStore.firestoreService.updateFields(CalEventCollection, calEvent.okey, { attendees }, this.i18n.update_error());
-      if (!key) return;
+      if (!key) return false;
       calEvent.attendees = attendees;
       await showToast(this.toastController, this.i18n.update_conf());
     }
@@ -158,6 +159,7 @@ export class GrantorAttendanceService {
     } catch (ex) {
       warn(`GrantorAttendanceService.changeAttendanceFor(notice): ${(ex as Error).message}`);
     }
+    return true;
   }
 
   /**
