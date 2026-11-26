@@ -732,6 +732,11 @@
           },
           {
             "glob": "*.json",
+            "input": "libs/relationship/mandate/util/src/i18n",
+            "output": "./assets/i18n/relationship/mandate/util"
+          },
+          {
+            "glob": "*.json",
             "input": "libs/relationship/membership/data-access/src/i18n",
             "output": "./assets/i18n/relationship/membership/data-access"
           },
