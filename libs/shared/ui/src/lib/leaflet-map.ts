@@ -93,11 +93,17 @@ export class LeafletMap {
   private destroyed = false;
   /** the coordinates last fitted — a re-emission with the same pins keeps the user's pan/zoom */
   private fittedKey = '';
+  /** the container size the last fit was computed for */
+  private fittedSize = { width: 0, height: 0 };
+  /** bumped when the container settles at a size different from the one the last fit used */
+  private readonly resized = signal(0);
+  private resizeObserver?: ResizeObserver;
 
   constructor() {
     const destroyRef = inject(DestroyRef);
     destroyRef.onDestroy(() => {
       this.destroyed = true;
+      this.resizeObserver?.disconnect();
       this.map()?.remove();
     });
 
@@ -126,6 +132,7 @@ export class LeafletMap {
       const fallback = this.fallbackLabel();
       this.draggable();
       this.emptyView();
+      this.resized();
       if (!map || !this.leaflet) return;
       this.renderMarkers(this.leaflet, map, markers, route, zoom, fallback);
     });
@@ -148,7 +155,26 @@ export class LeafletMap {
     this.map.set(map);
 
     // A modal is still animating in when this runs, so the container may not have its final size yet.
+    // Follow every size change: Leaflet must re-measure, and a fit computed for a smaller box (tiles
+    // in one strip, pins outside the view) is redone for the real one.
     setTimeout(() => this.map()?.invalidateSize(), 350);
+    if (typeof ResizeObserver !== 'undefined') {
+      this.resizeObserver = new ResizeObserver(() => this.onContainerResize(el));
+      this.resizeObserver.observe(el);
+    }
+  }
+
+  private onContainerResize(el: HTMLElement): void {
+    const map = this.map();
+    if (!map || this.destroyed) return;
+    map.invalidateSize();
+    const { clientWidth: width, clientHeight: height } = el;
+    if (width === 0 || height === 0) return;
+    const { width: fw, height: fh } = this.fittedSize;
+    if (Math.abs(width - fw) > 20 || Math.abs(height - fh) > 20) {
+      this.fittedKey = '';
+      this.resized.update(n => n + 1);
+    }
   }
 
   private renderMarkers(L: typeof import('leaflet'), map: L.Map, markers: MapMarker[], route: boolean, zoom: number, fallback: string): void {
@@ -193,6 +219,8 @@ export class LeafletMap {
     const key = `${zoom}|${markers.map(m => `${m.lat},${m.lng}`).join(';')}`;
     if (key === this.fittedKey) return;
     this.fittedKey = key;
+    const size = map.getSize();
+    this.fittedSize = { width: size.x, height: size.y };
     if (latLngs.length > 1) {
       map.fitBounds(L.latLngBounds(latLngs), { padding: FIT_PADDING, maxZoom: MAX_FIT_ZOOM });
     } else if (latLngs.length === 1) {
