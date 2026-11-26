@@ -81,10 +81,11 @@
       "raw": "Raw",
       "text": "Nur Text"
     },
+    "showPhone": "Telefonnummer anzeigen",
     "preview": "Vorschau",
     "copy": {
       "button": "Kopieren",
-      "html": "HTML kopieren",
+      "html": "Signatur kopieren",
       "raw": "RAW kopieren",
       "text": "Text kopieren",
       "success": "Signatur in die Zwischenablage kopiert.",

@@ -106,6 +106,7 @@ export const PROFILE_I18N_KEYS = {
   sig_format_html:                 PFX + 'signature.format.html',
   sig_format_raw:                  PFX + 'signature.format.raw',
   sig_format_text:                 PFX + 'signature.format.text',
+  sig_show_phone:                  PFX + 'signature.showPhone',
   sig_preview:                     PFX + 'signature.preview',
   sig_copy_button:                 PFX + 'signature.copy.button',
   sig_copy_html:                   PFX + 'signature.copy.html',

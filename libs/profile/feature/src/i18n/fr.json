@@ -81,10 +81,11 @@
       "raw": "Raw",
       "text": "Texte uniquement"
     },
+    "showPhone": "Afficher le numéro de téléphone",
     "preview": "Aperçu",
     "copy": {
       "button": "Copier",
-      "html": "Copier le HTML",
+      "html": "Copier la signature",
       "raw": "Copier le RAW",
       "text": "Copier le texte",
       "success": "Signature copiée dans le presse-papiers.",

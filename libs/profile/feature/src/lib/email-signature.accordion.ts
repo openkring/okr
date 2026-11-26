@@ -5,7 +5,7 @@ import {
   IonSegment, IonSegmentButton, IonSelect, IonSelectOption,
 } from '@ionic/angular';
 
-import { TextInput, TextInputI18n } from '@okr/shared-ui';
+import { Checkbox, CheckboxI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { EmailClient, ProfileI18n } from '@okr/profile-util';
 
 import { SignatureService } from './signature.service';
@@ -23,7 +23,7 @@ import { SignatureService } from './signature.service';
   imports: [
     IonAccordion, IonItem, IonLabel, IonGrid, IonRow, IonCol, IonNote, IonButton,
     IonSelect, IonSelectOption, IonSegment, IonSegmentButton,
-    TextInput,
+    TextInput, Checkbox,
   ],
   styles: [`
     /* Display-only preview: ignore pointer/touch so drag-scroll passes through to ion-content
@@ -77,6 +77,10 @@ import { SignatureService } from './signature.service';
                 <ion-segment-button value="text-only"><ion-label>{{ i18n().sig_format_text() }}</ion-label></ion-segment-button>
               </ion-segment>
             </ion-item>
+          </ion-col>
+          <ion-col size="12" size-md="6">
+            <okr-checkbox [i18n]="showPhoneI18n()" [checked]="signatureService.showPhone()"
+              (checkedChange)="signatureService.showPhone.set($event)" [readOnly]="false" />
           </ion-col>
         </ion-row>
 
@@ -142,6 +146,12 @@ export class EmailSignatureAccordion {
     placeholder: this.i18n().sig_function_placeholder(),
     helper: this.i18n().sig_function_helper(),
   } as TextInputI18n));
+
+  protected readonly showPhoneI18n = computed(() => ({
+    name: 'showPhone',
+    label: this.i18n().sig_show_phone(),
+    helper: '',
+  } as CheckboxI18n));
 
   // The preview HTML carries inline styles/tables that Angular's HTML sanitizer would strip;
   // it is rendered into a sandboxed iframe, so bypassing for srcdoc is safe here.

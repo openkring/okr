@@ -42,6 +42,8 @@ export class SignatureService {
   public readonly functionLabel = signal('');
   public readonly client = signal<EmailClient>('gmail');
   public readonly format = signal<CopyFormat>('html');
+  /** Whether the signature includes the person's phone number (default: shown). */
+  public readonly showPhone = signal(true);
 
   private readonly defaultOrg = computed(() => this.appStore.defaultOrg());
   private readonly currentPerson = computed(() => this.appStore.currentPerson());
@@ -124,7 +126,7 @@ export class SignatureService {
       person: {
         displayName: `${person.firstName} ${person.lastName}`.trim(),
         functionLabel: this.functionLabel().trim() || undefined,
-        phoneE164: phone,
+        phoneE164: this.showPhone() ? phone : undefined,
         email,
       },
       org: {
