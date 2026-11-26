@@ -5,7 +5,8 @@
     "types": ["node", "vitest"],
     "declaration": true,
     "ignoreDeprecations": "6.0",
-    "rootDir": "src"
+    // libs, not src: mail-blocks.vectors.spec.ts reads the shared test table in shared/util-core/src/testing (no lib export, not built)
+    "rootDir": "../../.."
   },
   "angularCompilerOptions": {
     "strictTemplates": true,
