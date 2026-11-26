@@ -144,6 +144,11 @@ const DERIVED_VALUES = [
 
 const RATE_LIMIT = { limit: 5, periodMinutes: 10 };
 
+const QUESTIONS = 'Hast du in der Zwischenzeit eine Frage? Dann schreib uns über das Kontaktformular auf www.seeclub.org/kontakt.';
+const SIGNATURE = 'Freundliche Grüsse\nSeeclub Stäfa';
+const CONFIRMATION = `Hallo {firstName}\n\nVielen Dank für deine Anmeldung beim Seeclub Stäfa. Wir haben sie erhalten und melden uns bei dir, sobald wir sie angeschaut haben.\n\n${QUESTIONS}\n\n${SIGNATURE}`;
+const CONFIRMATION_MINOR = `Hallo {firstName}\n\nVielen Dank für deine Anmeldung beim Seeclub Stäfa. Wir haben sie erhalten und melden uns bei dir und bei {parentFirstName} {parentLastName}, sobald wir sie angeschaut haben.\n\n${QUESTIONS}\n\n${SIGNATURE}`;
+
 const formDefinition = {
   tenants: [TENANT],
   isArchived: false,
@@ -166,7 +171,11 @@ const formDefinition = {
   derivedValues: DERIVED_VALUES,
   fillerHelpText: 'Je nach Alter und Rudererfahrung siehst du nur die Fragen, die für dich gelten.',
   rateLimit: RATE_LIMIT,
-  version: 4,
+  // the thank-you text on screen and in the mail to the applicant's own e-mail (spec 1.125 §10)
+  confirmationMessage: CONFIRMATION,
+  confirmationVariants: [{ when: rule('all', when('dateOfBirth', 'ageLt', 18)), message: CONFIRMATION_MINOR }],
+  sendFillerConfirmation: true,
+  version: 5,
 };
 
 /** Fails loudly when a rule points to a missing, later or equal-order field. */
