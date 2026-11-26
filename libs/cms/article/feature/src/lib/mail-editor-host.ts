@@ -136,17 +136,15 @@ export class MailEditorHost {
       ? teaserBlocks(data.article, data.url, { more: this.i18n.article_editor_mail_insert_more() }, newId)
           .map((block) => (block.type === 'text' ? { ...block, html: replace(block.html) } : block))
       : mailBlocksFromArticle(data.article, replace, newId);
-    const go = (history: History): History => {
-      const next = insertedInto(history, blocks);
-      return next === 'full' ? history : next;
-    };
-    if (insertedInto(this.draft().history(), blocks) === 'full') {
+    const next = insertedInto(this.draft().history(), blocks);
+    if (next === 'full') {
       void showToast(this.toastController, fill(this.i18n.article_editor_mail_full(), { max: ARTICLE_BLOCKS_MAX }));
       return;
     }
-    if (!this.surface()?.change(go)) this.draft().setHistory(go(this.draft().history()));
-    const first = blocks[0]?.id;
-    if (first) this.surface()?.open(first);
+    if (!this.surface()?.change(() => next)) this.draft().setHistory(next);
+    // the last new block is selected; a text also takes the cursor, any other only stays selected
+    const last = blocks[blocks.length - 1];
+    if (last?.type === 'text') this.surface()?.open(last.id);
   }
 
   protected onHistory(history: History): void {

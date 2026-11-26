@@ -269,10 +269,10 @@ describe('insertArticleBlocks', () => {
   const base = deepFreeze([text('a'), columns('c', [text('in')]), text('z')]);
   const add = deepFreeze([text('x'), text('y')]);
 
-  it('after the selected top-level block, the first inserted one is selected', () => {
+  it('after the selected top-level block, the last inserted one is selected', () => {
     const result = insertArticleBlocks(base, add, 'a');
     expect(ids(result)).toEqual(['a', 'x', 'y', 'c', 'z']);
-    expect(result !== 'full' && result.firstId).toBe('x');
+    expect(result !== 'full' && result.lastId).toBe('y');
   });
 
   it('after the columns block when the selection is inside a column', () => {

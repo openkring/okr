@@ -59,12 +59,12 @@ export function changeBlocks(history: History, blocks: MailBlock[], tag?: string
 
 /**
  * «Artikel einfügen» (spec 1.176 §8.3): one step that puts `inserted` after the selected top-level block (after the columns block for one inside
- * a column), else at the end, and selects the first of them. `'full'` when the mail would have more than 50 blocks: nothing is inserted.
+ * a column), else at the end, and selects the last of them. `'full'` when the mail would have more than 50 blocks: nothing is inserted.
  */
 export function insertedInto(history: History, inserted: MailBlock[]): History | 'full' {
   const result = insertArticleBlocks(editorBlocks(history.present), inserted, history.present.selectedId);
-  if (result === 'full' || result.firstId === undefined) return result === 'full' ? result : history;
-  return record(history, { ...history.present, section: withBlocks(history.present.section, result.blocks), selectedId: result.firstId });
+  if (result === 'full' || result.lastId === undefined) return result === 'full' ? result : history;
+  return record(history, { ...history.present, section: withBlocks(history.present.section, result.blocks), selectedId: result.lastId });
 }
 
 /** Selects a block (no step). */

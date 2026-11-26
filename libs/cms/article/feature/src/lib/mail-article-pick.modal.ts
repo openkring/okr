@@ -5,7 +5,7 @@ import { articleIsPublic, articlesMatching, newsArticleUrl, type ArticleEditorI1
 import { articleCover, type ArticleSection, type WebsiteModel } from '@okr/shared-models';
 import { PrettyDatePipe, ThumbnailUrlPipe } from '@okr/shared-pipes';
 import { Header, ImgDirective } from '@okr/shared-ui';
-import { confirm, dismissOverlay } from '@okr/shared-util-angular';
+import { dismissOverlay } from '@okr/shared-util-angular';
 
 /** What the picker answers (role `confirm`): the article and how it goes in; `url` is the page of a teaser. */
 export interface MailArticleChoice {
@@ -130,8 +130,13 @@ export class MailArticlePickModal implements OnInit {
     // a mail leaves the app: say so before an article that not everybody may read goes in (a teaser has a public page by definition)
     if (mode === 'whole' && !articleIsPublic(article)) {
       const t = this.i18n();
-      const go = await confirm(this.alertController, `${t.article_editor_mail_insert_notPublic()} ${t.article_editor_mail_insert_notPublicMore()}`,
-        t.article_editor_mail_insert_confirm(), t.article_editor_mail_insert_cancel(), true);
+      const alert = await this.alertController.create({
+        header: t.article_editor_mail_insert_notPublic(),
+        message: t.article_editor_mail_insert_notPublicMore(),
+        buttons: [{ text: t.article_editor_mail_insert_cancel(), role: 'cancel' }, { text: t.article_editor_mail_insert_confirm(), role: 'confirm' }],
+      });
+      await alert.present();
+      const go = (await alert.onWillDismiss()).role === 'confirm';
       if (!go) return;
     }
     const choice: MailArticleChoice = { article, mode, ...(url === undefined ? {} : { url }) };

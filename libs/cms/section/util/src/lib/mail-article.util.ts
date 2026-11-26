@@ -65,9 +65,9 @@ export function teaserBlocks(section: ArticleSection, url: string, labels: { mor
 /**
  * The blocks of the mail with `inserted` put in after the selected top-level block (§8.3); a block inside a column counts as its columns block;
  * without a selection, or one that is gone, at the end. `'full'`: the result would have more than ARTICLE_BLOCKS_MAX top-level blocks, nothing is
- * inserted. `firstId`: the block that gets selected, undefined when nothing was inserted. Pure; the input is not changed.
+ * inserted. `lastId`: the block that gets selected (the last inserted one), undefined when nothing was inserted. Pure; the input is not changed.
  */
-export function insertArticleBlocks(blocks: MailBlock[], inserted: MailBlock[], afterId: string | undefined): { blocks: MailBlock[]; firstId?: string } | 'full' {
+export function insertArticleBlocks(blocks: MailBlock[], inserted: MailBlock[], afterId: string | undefined): { blocks: MailBlock[]; lastId?: string } | 'full' {
   const top = Array.isArray(blocks) ? blocks : [];
   const add = Array.isArray(inserted) ? inserted : [];
   if (add.length === 0) return { blocks: top };
@@ -75,7 +75,7 @@ export function insertArticleBlocks(blocks: MailBlock[], inserted: MailBlock[], 
   const found = afterId === undefined ? undefined : findBlock(top, afterId);
   const at = !found ? top.length
     : (found.place.columnsId === undefined ? found.place.index : top.findIndex((block) => isObject(block) && block.id === found.place.columnsId)) + 1;
-  return { blocks: [...top.slice(0, at), ...add, ...top.slice(at)], firstId: add[0].id };
+  return { blocks: [...top.slice(0, at), ...add, ...top.slice(at)], lastId: add[add.length - 1].id };
 }
 
 // ------------------------------------------------------- choosing -------------------------------------------------------

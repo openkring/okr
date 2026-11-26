@@ -446,11 +446,11 @@ describe('insertedInto', () => {
   const add = [text('x'), text('y')] as MailBlock[];
   const start = (blocks: ArticleBlock[], selectedId?: string): EditorHistory<EditorState> => createHistory(state(blocks, { selectedId }));
 
-  it('one history step: after the selected block, the first new block selected, undo gives the old mail back', () => {
+  it('one history step: after the selected block, the last new block selected, undo gives the old mail back', () => {
     const history = insertedInto(start([text('a'), text('z')], 'a'), add);
     if (history === 'full') throw new Error('full');
     expect(ids(history.present)).toEqual(['a', 'x', 'y', 'z']);
-    expect(history.present.selectedId).toBe('x');
+    expect(history.present.selectedId).toBe('y');
     expect(history.past).toHaveLength(1);
     const back = undo(history);
     expect(ids(back.present)).toEqual(['a', 'z']);
