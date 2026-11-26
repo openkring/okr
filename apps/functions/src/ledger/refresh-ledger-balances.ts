@@ -6,12 +6,13 @@
 // the stored documents rebuilds everything.
 
 import { logger } from 'firebase-functions/v2';
+import { HttpsError } from 'firebase-functions/v2/https';
 import type { DocumentData, Firestore, Query, QueryDocumentSnapshot, Transaction } from 'firebase-admin/firestore';
 
 import { LEDGER_BALANCE_VERSION, LedgerBalanceCollection, ledgerBalanceKey } from '@okr/shared-models';
 import { buildLedgerYears, LedgerBooking, LedgerLine, LedgerYear } from '@okr/finance-reporting-util';
 
-import { countTotals, isReusable, storeDateTimeInZurich, lockFingerprint, mayOverwrite, PeriodLike, sameFigures, StoredYear, yearsToRecompute } from './ledger-balance.util';
+import { countTotals, isReusable, isSingleTenantBooks, storeDateTimeInZurich, lockFingerprint, mayOverwrite, PeriodLike, sameFigures, StoredYear, yearsToRecompute } from './ledger-balance.util';
 
 const BOOKINGS = 'bookings';
 const LINES = 'booking-lines';
@@ -145,6 +146,9 @@ async function readSnapshot(db: Firestore, books: RefreshBooks, stored: StoredYe
 
 /** Recomputes the balances of one set of books and writes the changed years. `full` skips the reuse of locked years. */
 export async function refreshLedgerBalances(db: Firestore, books: RefreshBooks, options: { full: boolean; now?: Date }): Promise<RefreshResult> {
+  if (!isSingleTenantBooks(books.tenants)) {
+    throw new HttpsError('failed-precondition', 'ledger balances need books of exactly one tenant', { reason: 'shared-books' });
+  }
   const now = options.now ?? new Date();
   // wall-clock time in Zurich: the app shows it as «Stand», and functions run in UTC
   const computedAt = storeDateTimeInZurich(now);

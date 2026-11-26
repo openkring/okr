@@ -67,3 +67,11 @@ export function storeDateTimeInZurich(at: Date): string {
   const part = (type: string): string => parts.find(p => p.type === type)?.value ?? '00';
   return `${part('year')}${part('month')}${part('day')}${part('hour')}${part('minute')}${part('second')}`;
 }
+
+/**
+ * Balances are only kept for books of exactly one tenant. A document of books shared by two tenants would sum both
+ * tenants' bookings and be readable by either, while their own queries only ever see their own bookings.
+ */
+export function isSingleTenantBooks(tenants: string[]): boolean {
+  return tenants.length === 1;
+}

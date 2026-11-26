@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { LEDGER_BALANCE_VERSION } from '@okr/shared-models';
 
 import {
-  countTotals, coveringPeriodKeys, isReusable, lockFingerprint, mayOverwrite, PeriodLike, sameFigures, storeDateTimeInZurich, yearsToRecompute,
+  countTotals, coveringPeriodKeys, isReusable, isSingleTenantBooks, lockFingerprint, mayOverwrite, PeriodLike, sameFigures, storeDateTimeInZurich, yearsToRecompute,
 } from './ledger-balance.util';
 import { booksOf, isSundayInZurich } from './ledger-books';
 import { isLedgerReader } from './index';
@@ -78,6 +78,12 @@ describe('ledger callable guards', () => {
     for (const role of ['treasurer', 'admin', 'privileged', 'auditor']) expect(isLedgerReader({ [role]: true })).toBe(true);
     expect(isLedgerReader({ member: true })).toBe(false);
     expect(isLedgerReader(undefined)).toBe(false);
+  });
+
+  it('keeps balances only for books of exactly one tenant', () => {
+    expect(isSingleTenantBooks(['scs'])).toBe(true);
+    expect(isSingleTenantBooks(['scs', 'kring'])).toBe(false);
+    expect(isSingleTenantBooks([])).toBe(false);
   });
 
   it('scopes the books by their config, and rebuilds bexio books in full', () => {
