@@ -169,6 +169,14 @@ export class BookingService {
     };
   }
 
+  /**
+   * All bookings dated in [from, to], one-shot — e.g. the fiscal year whose bookings an opened Erfolgsrechnung account
+   * lists (spec 1.177 §6.3). Index (tenants, accountingTenantId, isArchived, date desc). Rejects on failure.
+   */
+  public listPeriod(accountingTenantId: string, from: string, to: string): Promise<BookingModel[]> {
+    return this.firestoreService.getDataOnceStrict<BookingModel>(BookingCollection, this.periodQuery(accountingTenantId, from, to), 'date', 'desc');
+  }
+
   /** All bookings dated in [from, before) — the headers an opening balance joins its lines to. Rejects on failure. */
   public listBefore(accountingTenantId: string, from: string, before: string): Promise<BookingModel[]> {
     return this.firestoreService.getDataOnceStrict<BookingModel>(BookingCollection,

@@ -1,25 +1,27 @@
-import { computed, inject } from '@angular/core';
+import { computed, effect, inject, untracked } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { ActionSheetController } from '@ionic/angular';
-import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
+import { patchState, signalStore, withComputed, withHooks, withMethods, withProps, withState } from '@ngrx/signals';
 import { of } from 'rxjs';
 
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { AlertService, resourceParams } from '@okr/shared-util-angular';
-import { convertDateFormatToString, DateFormat, fill, getTodayStr } from '@okr/shared-util-core';
+import { BookingLineModel, BookingModel, LedgerBalanceCell } from '@okr/shared-models';
+import { convertDateFormatToString, DateFormat, fill, getTodayStr, prettyFormatDateTime } from '@okr/shared-util-core';
 
 import { DocGenerationService } from '@okr/content-pdf-template-data-access';
 import { AccountService } from '@okr/finance-account-data-access';
-import { AccountingStore } from '@okr/finance-accounting-feature';
+import { AccountingStore, LedgerBalanceStore } from '@okr/finance-accounting-feature';
+import { BookingLineService, BookingService } from '@okr/finance-booking-data-access';
 import { ownerDisplayName, parseOwnerKey, resolveOwnerKey } from '@okr/finance-accounting-util';
 import { CostCenterStore } from '@okr/finance-cost-center-feature';
 import { costCenterLabel, costCenterSubtreeKeys, sortCostCenterTree } from '@okr/finance-cost-center-util';
-import { ReportingService } from '@okr/finance-reporting-data-access';
 import {
-  AccountBookingRow, ALL_COST_CENTERS, bookingsByAccount, buildReportDocument, buildReportRows, defaultExpandedKeys, downloadCsv, downloadFromUrl, fiscalYear, fiscalYearOf, effectiveCostCenterSelection, filterLinesByCostCenter, NO_COST_CENTER, printableRows, REPORTING_I18N_KEYS,
-  ReportDocumentLabels, ReportingI18n, ReportRow, reportToCsv, ReportVariant, sumLinesByAccount, totalForClasses, yearResult,
+  AccountBookingRow, ALL_COST_CENTERS, bookingsByAccount, buildReportDocument, buildReportRows, countBookings, defaultExpandedKeys, downloadCsv, downloadFromUrl, fiscalYear, fiscalYearOf,
+  effectiveCostCenterSelection, filterLinesByCostCenter, ledgerFiscalYears, NO_COST_CENTER, printableRows, REPORTING_I18N_KEYS,
+  ReportDocumentLabels, ReportingI18n, ReportRow, reportToCsv, ReportVariant, sumCellsByAccount, totalForClasses, yearResult,
 } from '@okr/finance-reporting-util';
 import { AddressService } from '@okr/subject-address-data-access';
 
@@ -33,18 +35,32 @@ type ReportingState = {
   showZero: boolean;
   selectedCostCenterKey: string;        // Erfolgsrechnung filter: '' = all, NO_COST_CENTER = bucket, else a Kostenstelle okey
   userExpandedKeys: string[] | undefined;
+  /** the posted bookings + lines of one fiscal year, for the opened Erfolgsrechnung accounts; key `books|from|to` */
+  detailsKey: string;
+  detailBookings: BookingModel[];
+  detailLines: BookingLineModel[];
+  detailsLoading: boolean;
+  /** a full refresh was already tried this visit because the Bilanz did not balance */
+  balanceFullTried: boolean;
 };
 
 /**
- * Bilanz + Erfolgsrechnung of the accounting tenant (accounting design Phase 5). Everything is
- * aggregated client-side from the posted bookings and their lines — the same data the journal
- * already streams — so the pages react live to new postings. Amounts are minor units.
+ * Bilanz + Erfolgsrechnung of the accounting tenant (accounting design Phase 5). The totals come from the ledger
+ * balances (spec 1.177): one document per calendar year with the posted lines summed per month, account,
+ * Kostenstelle and project, recomputed by the `ledger` function when the page opens. The figures are «as of»
+ * `computedAt`, not live. Only an opened Erfolgsrechnung account reads single bookings (its fiscal year, once).
+ * Amounts are minor units.
  */
 export const ReportingStore = signalStore(
-  withState<ReportingState>({ selectedYear: 0, searchTerm: '', showZero: false, selectedCostCenterKey: ALL_COST_CENTERS, userExpandedKeys: undefined }),
+  withState<ReportingState>({
+    selectedYear: 0, searchTerm: '', showZero: false, selectedCostCenterKey: ALL_COST_CENTERS, userExpandedKeys: undefined,
+    detailsKey: '', detailBookings: [], detailLines: [], detailsLoading: false, balanceFullTried: false,
+  }),
   withProps(() => ({
     accountService: inject(AccountService),
-    reportingService: inject(ReportingService),
+    ledgerStore: inject(LedgerBalanceStore),
+    bookingService: inject(BookingService),
+    bookingLineService: inject(BookingLineService),
     accountingStore: inject(AccountingStore),
     costCenterStore: inject(CostCenterStore),
     appStore: inject(AppStore),
@@ -61,20 +77,15 @@ export const ReportingStore = signalStore(
       params: resourceParams(() => ({ id: store.accountingStore.accountingTenantId() })),
       stream: ({ params }) => params.id ? store.accountService.list(params.id) : of([]),
     }),
-    bookingsResource: rxResource({
-      params: resourceParams(() => ({ id: store.accountingStore.accountingTenantId() })),
-      stream: ({ params }) => params.id ? store.reportingService.getJournalEntries(params.id) : of([]),
-    }),
-    linesResource: rxResource({
-      params: resourceParams(() => ({ id: store.accountingStore.accountingTenantId() })),
-      stream: ({ params }) => params.id ? store.reportingService.getAllLines(params.id) : of([]),
-    }),
   })),
   withComputed(store => ({
     accounts: computed(() => store.accountsResource.value() ?? []),
-    bookings: computed(() => store.bookingsResource.value() ?? []),
-    lines: computed(() => store.linesResource.value() ?? []),
-    isLoading: computed(() => store.accountsResource.isLoading() || store.bookingsResource.isLoading() || store.linesResource.isLoading()),
+    docs: computed(() => store.ledgerStore.docs()),
+    /** StoreDateTime of the figures ('' = none yet) */
+    computedAt: computed(() => store.ledgerStore.computedAt()),
+    refreshing: computed(() => store.ledgerStore.refreshing()),
+    refreshFailed: computed(() => store.ledgerStore.refreshFailed()),
+    isLoading: computed(() => store.accountsResource.isLoading() || store.ledgerStore.isLoading()),
     fiscalYearStart: computed(() => store.accountingStore.config()?.fiscalYearStart ?? 1),
     functionalCurrency: computed(() => store.accountingStore.config()?.functionalCurrency ?? 'CHF'),
     accountingTenantId: computed(() => store.accountingStore.accountingTenantId()),
@@ -89,8 +100,7 @@ export const ReportingStore = signalStore(
     /** Distinct fiscal years with postings (desc), always including the running one. */
     years: computed<number[]>(() => {
       const start = store.fiscalYearStart();
-      const set = new Set<number>([fiscalYearOf(getTodayStr(DateFormat.StoreDate), start)]);
-      store.bookings().forEach(b => { const y = fiscalYearOf(b.date, start); if (y) set.add(y); });
+      const set = new Set<number>([fiscalYearOf(getTodayStr(DateFormat.StoreDate), start), ...ledgerFiscalYears(store.docs(), start)]);
       return [...set].sort((a, b) => b - a);
     }),
     year: computed(() => store.selectedYear() || fiscalYearOf(getTodayStr(DateFormat.StoreDate), store.fiscalYearStart())),
@@ -99,8 +109,6 @@ export const ReportingStore = signalStore(
   withComputed(store => ({
     currentFy: computed(() => fiscalYear(store.year(), store.fiscalYearStart())),
     previousFy: computed(() => fiscalYear(store.year() - 1, store.fiscalYearStart())),
-  })),
-  withComputed(store => ({
     /** Filter choices: all, every Kostenstelle (tree order, indented, archived included), the bucket. */
     costCenterOptions: computed<string[]>(() => [
       ALL_COST_CENTERS, ...sortCostCenterTree(store.costCenterStore.costCenters()).map(n => n.center.okey), NO_COST_CENTER]),
@@ -112,23 +120,43 @@ export const ReportingStore = signalStore(
     effectiveCostCenterKey: computed(() => effectiveCostCenterSelection(store.selectedCostCenterKey(), store.showCostCenterFilter(), store.costCenterOptions())),
   })),
   withComputed(store => ({
+    /** The Kostenstelle selection as a cell filter: all / bucket / subtree (as `filterLinesByCostCenter`). */
+    costCenterCellFilter: computed<((cell: LedgerBalanceCell) => boolean) | undefined>(() => {
+      const sel = store.effectiveCostCenterKey();
+      if (sel === ALL_COST_CENTERS) return undefined;
+      if (sel === NO_COST_CENTER) return (cell: LedgerBalanceCell) => !cell.c;
+      const subtree = costCenterSubtreeKeys(store.costCenterStore.costCenters(), sel);
+      return (cell: LedgerBalanceCell) => subtree.has(cell.c);
+    }),
+    hasBookings: computed(() => countBookings(store.docs(), '', '') > 0),
+    /** «Stand 26.11.2026 11:33», or the stale variant after a failed refresh; '' before the first figures */
+    standLabel: computed(() => {
+      const at = store.computedAt();
+      if (!at) return '';
+      return fill(store.refreshFailed() ? store.i18n.ledger_stale() : store.i18n.ledger_stand(), { date: prettyFormatDateTime(at) });
+    }),
     // Bilanz: cumulative up to the year end. Erfolgsrechnung: within the year.
-    balanceCurrent: computed(() => sumLinesByAccount(store.lines(), store.bookings(), '', store.currentFy().to)),
-    balancePrevious: computed(() => sumLinesByAccount(store.lines(), store.bookings(), '', store.previousFy().to)),
+    balanceCurrent: computed(() => sumCellsByAccount(store.docs(), '', store.currentFy().to)),
+    balancePrevious: computed(() => sumCellsByAccount(store.docs(), '', store.previousFy().to)),
     // The Bilanz Jahresergebnis is always the unfiltered result — the Kostenstelle filter is ER-only.
-    unfilteredIncomeCurrent: computed(() => sumLinesByAccount(store.lines(), store.bookings(), store.currentFy().from, store.currentFy().to)),
-    unfilteredIncomePrevious: computed(() => sumLinesByAccount(store.lines(), store.bookings(), store.previousFy().from, store.previousFy().to)),
-    /** The Erfolgsrechnung lines: filtered by the selected Kostenstelle subtree (all / bucket / subtree). */
-    incomeLines: computed(() => filterLinesByCostCenter(
-      store.lines(), store.effectiveCostCenterKey(), costCenterSubtreeKeys(store.costCenterStore.costCenters(), store.effectiveCostCenterKey()))),
+    unfilteredIncomeCurrent: computed(() => sumCellsByAccount(store.docs(), store.currentFy().from, store.currentFy().to)),
+    unfilteredIncomePrevious: computed(() => sumCellsByAccount(store.docs(), store.previousFy().from, store.previousFy().to)),
   })),
   withComputed(store => ({
-    incomeCurrent: computed(() => sumLinesByAccount(store.incomeLines(), store.bookings(), store.currentFy().from, store.currentFy().to)),
-    incomePrevious: computed(() => sumLinesByAccount(store.incomeLines(), store.bookings(), store.previousFy().from, store.previousFy().to)),
-    /** account okey → its posted bookings of the selected fiscal year (Kostenstelle filter applied), signed like the row */
+    incomeCurrent: computed(() => sumCellsByAccount(store.docs(), store.currentFy().from, store.currentFy().to, store.costCenterCellFilter())),
+    incomePrevious: computed(() => sumCellsByAccount(store.docs(), store.previousFy().from, store.previousFy().to, store.costCenterCellFilter())),
+    /** the bookings of the selected year are read (see `loadDetails`) */
+    detailsReady: computed(() => store.detailsKey() === `${store.accountingTenantId()}|${store.currentFy().from}|${store.currentFy().to}`),
+    /**
+     * account okey → its posted bookings of the selected fiscal year (Kostenstelle filter applied), signed like the
+     * row. Empty until `loadDetails()` has read the year (the first opened account).
+     */
     incomeDetails: computed<Map<string, AccountBookingRow[]>>(() => {
       const { from, to } = store.currentFy();
-      return bookingsByAccount(store.incomeLines(), store.bookings().filter(b => b.date >= from && b.date <= to), store.accounts());
+      if (store.detailsKey() !== `${store.accountingTenantId()}|${from}|${to}`) return new Map<string, AccountBookingRow[]>();
+      const sel = store.effectiveCostCenterKey();
+      const lines = filterLinesByCostCenter(store.detailLines(), sel, costCenterSubtreeKeys(store.costCenterStore.costCenters(), sel));
+      return bookingsByAccount(lines, store.detailBookings(), store.accounts());
     }),
     balanceResultCurrent: computed(() => yearResult(store.accounts(), store.unfilteredIncomeCurrent())),
     balanceResultPrevious: computed(() => yearResult(store.accounts(), store.unfilteredIncomePrevious())),
@@ -226,8 +254,35 @@ export const ReportingStore = signalStore(
     incomeRows: computed<ReportRow[]>(() => store.reportRows('income', true)),
   })),
   withMethods(store => ({
+    /**
+     * Reads the posted bookings of the selected fiscal year with their lines, once per books and year: what an opened
+     * Erfolgsrechnung account lists (the totals stay from the balances). A failed read leaves the details empty.
+     */
+    async loadDetails(): Promise<void> {
+      const books = store.accountingTenantId();
+      const { from, to } = store.currentFy();
+      const key = `${books}|${from}|${to}`;
+      if (!books || store.detailsKey() === key || store.detailsLoading()) return;
+      patchState(store, { detailsLoading: true });
+      try {
+        const bookings = (await store.bookingService.listPeriod(books, from, to)).filter(b => b.status === 'posted');
+        const lines = await store.bookingLineService.listForBookings(books, bookings.map(b => b.okey));
+        if (store.accountingTenantId() === books) patchState(store, { detailsKey: key, detailBookings: bookings, detailLines: lines });
+      } catch (err) {
+        console.warn('ReportingStore.loadDetails failed:', err);
+      } finally {
+        patchState(store, { detailsLoading: false });
+      }
+    },
+
+    /** Pull-to-refresh: recompute the balances; opened details are read again. */
+    async refresh(): Promise<void> {
+      patchState(store, { detailsKey: '' });
+      await store.ledgerStore.refresh();
+    },
+
     setAccountingTenant(id: string): void {
-      if (id !== store.accountingTenantId()) patchState(store, { selectedCostCenterKey: ALL_COST_CENTERS });
+      if (id !== store.accountingTenantId()) patchState(store, { selectedCostCenterKey: ALL_COST_CENTERS, detailsKey: '', balanceFullTried: false });
       store.accountingStore.setTenant(id);
     },
     setSelectedYear(year: number): void {
@@ -289,8 +344,14 @@ export const ReportingStore = signalStore(
      * @param openKeys Erfolgsrechnung accounts opened on the page — the PDF lists their bookings too
      */
     async exportPdf(kind: ReportKind, openKeys: ReadonlySet<string> = new Set()): Promise<void> {
-      const variant = await this.askVariant();
+      let variant = await this.askVariant();
       if (!variant) return;
+      // Q4: a definitive statement needs every line since the first day — a full recompute, or no definitive PDF
+      if (variant === 'final' && !(await store.ledgerStore.refresh(true))) {
+        if (!(await store.alertService.confirm(store.i18n.pdf_final_refused(), true))) return;
+        variant = 'provisional';
+      }
+      if (kind === 'income' && openKeys.size > 0) await this.loadDetails();
       try {
         const fy = store.currentFy();
         const view = (date: string): string => convertDateFormatToString(date, DateFormat.StoreDate, DateFormat.ViewDate, false);
@@ -337,6 +398,27 @@ export const ReportingStore = signalStore(
       } catch (error) {
         store.alertService.error(`ReportingStore.exportPdf: ${error}`);
       }
+    },
+  })),
+  withHooks(store => ({
+    onInit(): void {
+      store.ledgerStore.use();
+      // §7: the Bilanz must balance. If it does not, the stored figures may predate a change in a locked year:
+      // recompute everything once per visit; a difference that stays is shown as it is.
+      effect(() => {
+        const accounts = store.accounts();
+        if (store.isLoading() || store.refreshing() || accounts.length === 0 || store.docs().length === 0) return;
+        const cur = store.balanceCurrent();
+        const diff = totalForClasses(accounts, ['assets'], cur) - totalForClasses(accounts, ['liabilities'], cur) - store.balanceResultCurrent();
+        untracked(() => {
+          if (diff === 0 || store.balanceFullTried()) return;
+          patchState(store, { balanceFullTried: true });
+          void store.ledgerStore.refresh(true);
+        });
+      });
+    },
+    onDestroy(): void {
+      store.ledgerStore.release();
     },
   })),
 );

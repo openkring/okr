@@ -139,6 +139,38 @@ export function sumCellsByAccount(
   return out;
 }
 
+/**
+ * The cells in [from, to] (whole months) as line-shaped rows — one per cell, `bookingKey` '' — for code that aggregates
+ * lines by account, Kostenstelle or project (`aggregateByCostCenter`, `filterLinesByCostCenter`). Debit and credit
+ * stay apart, so the sums are those of the lines themselves.
+ */
+export function linesFromCells(docs: Pick<LedgerBalanceModel, 'year' | 'cells'>[], from: string, to: string, currency = 'CHF'): BookingLineModel[] {
+  const { lo, hi } = monthRange(from, to);
+  const out: BookingLineModel[] = [];
+  for (const doc of docs) {
+    for (const cell of doc.cells ?? []) {
+      if (!inRange(doc.year, cell.m, lo, hi)) continue;
+      out.push({
+        bookingKey: '', accountKey: cell.a, costCenterKey: cell.c, projectKey: cell.p,
+        debitAmount: cell.d ? { amount: cell.d, currency } : undefined,
+        creditAmount: cell.k ? { amount: cell.k, currency } : undefined,
+      } as BookingLineModel);
+    }
+  }
+  return out;
+}
+
+/** Fiscal years (start month `startMonth`) that have at least one booking in the documents, newest first. */
+export function ledgerFiscalYears(docs: Pick<LedgerBalanceModel, 'year' | 'bookingCounts'>[], startMonth: number): number[] {
+  const start = startMonth >= 1 && startMonth <= 12 ? startMonth : 1;
+  const years = new Set<number>();
+  for (const doc of docs) {
+    if (!doc.year) continue;
+    (doc.bookingCounts ?? []).forEach((n, i) => { if (n > 0) years.add(i + 1 >= start ? doc.year : doc.year - 1); });
+  }
+  return [...years].sort((a, b) => b - a);
+}
+
 /** Balances of `accountKeys` before `before` (the first day of a month): the opening of a period. */
 export function openingOf(docs: Pick<LedgerBalanceModel, 'year' | 'cells'>[], accountKeys: Iterable<string>, before: string): Map<string, DebitCredit> {
   if (!STORE_DATE.test(before) || !before.endsWith('01')) throw new Error(`ledger balances: before must start a month: ${before}`);

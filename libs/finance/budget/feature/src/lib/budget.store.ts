@@ -6,18 +6,17 @@ import { filter, firstValueFrom, of, timeout } from 'rxjs';
 
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
-import { AccountModel, BudgetLineModel, BudgetVersionModel, CostAllocationModel, MoneyModel } from '@okr/shared-models';
+import { AccountModel, BookingLineModel, BudgetLineModel, BudgetVersionModel, CostAllocationModel, MoneyModel } from '@okr/shared-models';
 import { AlertService, error, resourceParams } from '@okr/shared-util-angular';
 import { DateFormat, fill, getTodayStr, hasRole } from '@okr/shared-util-core';
 
 import { AccountService } from '@okr/finance-account-data-access';
-import { AccountingStore } from '@okr/finance-accounting-feature';
+import { AccountingStore, LedgerBalanceStore } from '@okr/finance-accounting-feature';
 import { BudgetService, CostAllocationService } from '@okr/finance-budget-data-access';
 import { ProjectService } from '@okr/project-project-data-access';
 import { BUDGET_I18N_KEYS, BudgetApprovalFormModel, BudgetI18n, isVersionEditable, planApproval } from '@okr/finance-budget-util';
 import { CostCenterStore } from '@okr/finance-cost-center-feature';
-import { ReportingService } from '@okr/finance-reporting-data-access';
-import { fiscalYear, fiscalYearOf } from '@okr/finance-reporting-util';
+import { fiscalYear, fiscalYearOf, linesFromCells } from '@okr/finance-reporting-util';
 
 export type { BudgetI18n };
 
@@ -74,7 +73,7 @@ export const BudgetStore = signalStore(
     costAllocationService: inject(CostAllocationService),
     projectService: inject(ProjectService),
     accountService: inject(AccountService),
-    reportingService: inject(ReportingService),
+    ledgerStore: inject(LedgerBalanceStore),
     appStore: inject(AppStore),
     accountingStore: inject(AccountingStore),
     costCenterStore: inject(CostCenterStore),
@@ -118,14 +117,6 @@ export const BudgetStore = signalStore(
       params: resourceParams(() => actualsActive() ? { id: store.accountingStore.accountingTenantId() } : undefined),
       stream: ({ params }) => params.id ? store.accountService.listArchived(params.id) : of([]),
     }),
-    bookingsResource: rxResource({
-      params: resourceParams(() => actualsActive() ? { id: store.accountingStore.accountingTenantId() } : undefined),
-      stream: ({ params }) => params.id ? store.reportingService.getJournalEntries(params.id) : of([]),
-    }),
-    bookingLinesResource: rxResource({
-      params: resourceParams(() => actualsActive() ? { id: store.accountingStore.accountingTenantId() } : undefined),
-      stream: ({ params }) => params.id ? store.reportingService.getAllLines(params.id) : of([]),
-    }),
     };
   }),
 
@@ -141,12 +132,10 @@ export const BudgetStore = signalStore(
     allocationRules: computed(() => (state.allocationsResource.value() ?? []).filter(r => !r.isArchived)
       .sort((a, b) => (b.fiscalYear - a.fiscalYear) || (a.title ?? '').localeCompare(b.title ?? ''))),
     reportAccounts: computed(() => [...(state.accountsResource.value() ?? []), ...(state.archivedAccountsResource.value() ?? [])]),
-    bookings: computed(() => state.bookingsResource.value() ?? []),
-    bookingLines: computed(() => state.bookingLinesResource.value() ?? []),
     /** true while a page waits for actuals: the config is not known yet (nothing streams before), or a stream is loading */
     actualsLoading: computed(() =>
       (state.actualsUsers() > 0 && !state.accountingStore.configLoaded())
-      || state.accountsResource.isLoading() || state.archivedAccountsResource.isLoading() || state.bookingsResource.isLoading() || state.bookingLinesResource.isLoading()),
+      || state.accountsResource.isLoading() || state.archivedAccountsResource.isLoading() || (state.actualsUsers() > 0 && state.ledgerStore.isLoading())),
     fiscalYearStart: computed(() => state.accountingStore.config()?.fiscalYearStart ?? 1),
     functionalCurrency: computed(() => state.accountingStore.config()?.functionalCurrency ?? 'CHF'),
     accountingTenantId: computed(() => state.accountingStore.accountingTenantId()),
@@ -258,10 +247,20 @@ export const BudgetStore = signalStore(
       },
 
       /**
+       * The posted actuals of [from, to] (a fiscal year) as line-shaped rows, from the ledger balances (spec 1.177):
+       * one row per month × account × Kostenstelle × project. Empty for external books (nothing to compare, D9).
+       */
+      postedLines(from: string, to: string): BookingLineModel[] {
+        if (!store.accountingStore.configLoaded() || store.accountingStore.isExternallyManaged()) return [];
+        return linesFromCells(store.ledgerStore.docs(), from, to, store.accountingStore.config()?.functionalCurrency ?? 'CHF');
+      },
+
+      /**
        * The grid and the comparison call this once when they are created: accounts, posted bookings and their
        * lines start streaming (after the config is loaded, native books only). Pair it with `releaseActuals()`.
        */
       loadActuals(): void {
+        store.ledgerStore.use();
         patchState(store, { actualsUsers: store.actualsUsers() + 1 });
       },
 
@@ -310,6 +309,7 @@ export const BudgetStore = signalStore(
 
       /** The page that called `loadActuals()` is gone; the last one out stops the journal stream. */
       releaseActuals(): void {
+        if (store.actualsUsers() > 0) store.ledgerStore.release();
         patchState(store, { actualsUsers: Math.max(0, store.actualsUsers() - 1) });
       },
 

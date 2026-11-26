@@ -42,7 +42,8 @@
     "period": "Periode",
     "periodValue": "{from} bis {to}",
     "amounts": "Alle Beträge in {currency}",
-    "watermark": "PROVISORISCH"
+    "watermark": "PROVISORISCH",
+    "finalRefused": "Die definitive Fassung braucht den aktuellen Stand aller Buchungen, und der lässt sich gerade nicht laden. Möchtest du stattdessen die provisorische Fassung erstellen?"
   },
   "loading": "Wird geladen …",
   "empty": "Keine Buchungen in diesem Geschäftsjahr.",
@@ -99,5 +100,9 @@
     "export": "Offene Posten exportieren",
     "export_conf": "{count} offene Posten exportiert",
     "external": "Die Abstimmung gibt es nur für Buchhaltungen, die du hier führst."
+  },
+  "ledger": {
+    "stand": "Stand {date}",
+    "stale": "Stand {date} – gerade lässt sich nicht aktualisieren. Versuch es nochmals, wenn du wieder online bist."
   }
 }

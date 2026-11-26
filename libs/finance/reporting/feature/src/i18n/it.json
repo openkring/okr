@@ -42,7 +42,8 @@
     "period": "Periodo",
     "periodValue": "dal {from} al {to}",
     "amounts": "Tutti gli importi in {currency}",
-    "watermark": "PROVVISORIO"
+    "watermark": "PROVVISORIO",
+    "finalRefused": "La versione definitiva ha bisogno dello stato attuale di tutte le registrazioni, che al momento non si può caricare. Vuoi creare invece la versione provvisoria?"
   },
   "loading": "Caricamento …",
   "empty": "Nessuna registrazione in questo esercizio.",
@@ -99,5 +100,9 @@
     "export": "Esporta partite aperte",
     "export_conf": "{count} partite aperte esportate",
     "external": "La riconciliazione è disponibile solo per le contabilità che tieni qui."
+  },
+  "ledger": {
+    "stand": "Stato al {date}",
+    "stale": "Stato al {date} – al momento non si può aggiornare. Riprova quando sei di nuovo online."
   }
 }

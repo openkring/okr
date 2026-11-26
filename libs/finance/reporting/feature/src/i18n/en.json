@@ -42,7 +42,8 @@
     "period": "Period",
     "periodValue": "{from} to {to}",
     "amounts": "All amounts in {currency}",
-    "watermark": "PROVISIONAL"
+    "watermark": "PROVISIONAL",
+    "finalRefused": "The final version needs the current state of all bookings, which cannot be loaded right now. Would you like to create the provisional version instead?"
   },
   "loading": "Loading …",
   "empty": "No postings in this fiscal year.",
@@ -99,5 +100,9 @@
     "export": "Export open items",
     "export_conf": "{count} open items exported",
     "external": "The reconciliation is only available for books you keep here."
+  },
+  "ledger": {
+    "stand": "As of {date}",
+    "stale": "As of {date} – cannot be updated right now. Try again when you are back online."
   }
 }

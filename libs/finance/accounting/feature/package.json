@@ -32,6 +32,7 @@
     "@okr/comment-util": "*",
     "@okr/tenant-feature": "*",
     "@okr/shared-data-access": "*",
-    "@okr/finance-reporting-util": "*"
+    "@okr/finance-reporting-util": "*",
+    "@okr/finance-reporting-data-access": "*"
   }
 }

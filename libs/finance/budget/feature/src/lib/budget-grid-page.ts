@@ -13,7 +13,7 @@ import { BudgetStatus } from '@okr/shared-models';
 import { AccountingBooks, AccountingSegments, ReadOnlyBanner } from '@okr/finance-accounting-feature';
 import { formatMinorAmount } from '@okr/finance-booking-util';
 import { buildBudgetGrid, BudgetGridRow, BudgetGridSection, isNetOver, isOver, isVersionEditable, netOf } from '@okr/finance-budget-util';
-import { aggregateByCostCenter, CellSide, CostCenterRollUp, costCenterLabel, postedLinesInRange } from '@okr/finance-cost-center-util';
+import { aggregateByCostCenter, CellSide, CostCenterRollUp, costCenterLabel } from '@okr/finance-cost-center-util';
 import { fiscalYear } from '@okr/finance-reporting-util';
 
 import { BudgetStore } from './budget.store';
@@ -182,7 +182,7 @@ export class BudgetGridPage {
     const costCenters = this.store.costCenterStore.costCenters();
     if (!v) return buildBudgetGrid([], [], costCenters, [], false);
     const range = fiscalYear(v.fiscalYear, this.store.fiscalYearStart());
-    const lines = postedLinesInRange(this.store.bookingLines(), this.store.bookings(), range.from, range.to);
+    const lines = this.store.postedLines(range.from, range.to);
     const versionLines = this.store.linesOf(v.okey);
     const cells = aggregateByCostCenter(lines, this.store.reportAccounts(), versionLines);
     return buildBudgetGrid(cells, versionLines, costCenters, this.store.reportAccounts(), this.canChange());

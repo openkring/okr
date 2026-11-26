@@ -1,5 +1,5 @@
 import { Component, input, model, output } from '@angular/core';
-import { IonCol, IonGrid, IonIcon, IonItem, IonList, IonRow } from '@ionic/angular';
+import { IonCol, IonGrid, IonIcon, IonItem, IonList, IonRow, IonSpinner } from '@ionic/angular';
 
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { convertDateFormatToString, DateFormat } from '@okr/shared-util-core';
@@ -13,12 +13,14 @@ import { AccountBookingRow, ReportRow } from '@okr/finance-reporting-util';
  * total and result rows are emphasised. Column widths mirror the page's header toolbar
  * (account number 2/12 · name 6/12 · current 2/12 · previous 2/12; the number hides on phones).
  * An account row with `details` (project result, Erfolgsrechnung) gets a chevron and expands in place to its
- * bookings; in an interactive table a booking row then opens the journal of that account.
+ * bookings; in an interactive table a booking row then opens the journal of that account. With `detailsPending`
+ * (the Erfolgsrechnung reads the bookings only when an account is first opened), every account row with an amount
+ * opens in place and shows a spinner until its bookings arrive.
  */
 @Component({
   selector: 'okr-report-table',
   standalone: true,
-  imports: [IonList, IonItem, IonGrid, IonRow, IonCol, IonIcon, SvgIconPipe],
+  imports: [IonList, IonItem, IonGrid, IonRow, IonCol, IonIcon, IonSpinner, SvgIconPipe],
   styles: [`
     ion-item.group { font-weight: 600; }
     ion-item.total, ion-item.result { font-weight: 700; border-top: 1px solid var(--ion-color-medium); }
@@ -35,7 +37,8 @@ import { AccountBookingRow, ReportRow } from '@okr/finance-reporting-util';
     <ion-list lines="inset">
       @for (row of rows(); track row.okey) {
         @let bookings = detailsOf(row);
-        <ion-item [button]="(interactive() && (row.hasChildren || row.kind === 'account')) || bookings.length > 0" [detail]="false" (click)="onRowClick(row)"
+        @let openable = bookings.length > 0 || pendingOpenable(row);
+        <ion-item [button]="(interactive() && (row.hasChildren || row.kind === 'account')) || openable" [detail]="false" (click)="onRowClick(row)"
           [class]="row.kind" [style.padding-inline-start.px]="row.depth * 16">
           <ion-grid>
             <ion-row>
@@ -43,7 +46,7 @@ import { AccountBookingRow, ReportRow } from '@okr/finance-reporting-util';
               <ion-col [attr.size]="showPrevious() ? 6 : 9" [attr.size-md]="showPrevious() ? 6 : 8">
                 @if (row.hasChildren) {
                   <ion-icon class="chevron" src="{{ (row.isExpanded ? 'chevron-down' : 'chevron-forward') | svgIcon }}" />
-                } @else if (bookings.length > 0) {
+                } @else if (openable) {
                   <ion-icon class="chevron" src="{{ (isOpen(row.okey) ? 'chevron-down' : 'chevron-forward') | svgIcon }}" />
                 } @else if (row.kind === 'account') {
                   <span class="spacer"></span>
@@ -57,6 +60,9 @@ import { AccountBookingRow, ReportRow } from '@okr/finance-reporting-util';
             </ion-row>
           </ion-grid>
         </ion-item>
+        @if (pendingOpenable(row) && isOpen(row.okey)) {
+          <ion-item class="booking" [detail]="false" [style.padding-inline-start.px]="(row.depth + 1) * 16"><ion-spinner name="dots" /></ion-item>
+        }
         @if (bookings.length > 0 && isOpen(row.okey)) {
           @for (booking of bookings; track booking.bookingKey) {
             <ion-item class="booking" [button]="interactive()" [detail]="false" (click)="onBookingClick(row)" [style.padding-inline-start.px]="(row.depth + 1) * 16">
@@ -84,6 +90,8 @@ export class ReportTable {
   public readonly interactive = input(true);
   /** account okey → the bookings behind that row; such a row toggles open in place instead of emitting. */
   public readonly details = input<Map<string, AccountBookingRow[]>>(new Map());
+  /** the bookings behind the rows are still being read: account rows with an amount open in place meanwhile */
+  public readonly detailsPending = input(false);
   public readonly groupToggled = output<string>();
   /** A leaf account row was tapped: the page opens the journal filtered by this account and the selected year. */
   public readonly accountSelected = output<string>();
@@ -99,8 +107,12 @@ export class ReportTable {
     return this.openKeys().has(okey);
   }
 
+  protected pendingOpenable(row: ReportRow): boolean {
+    return this.detailsPending() && row.kind === 'account' && (row.current !== 0 || row.previous !== 0);
+  }
+
   protected onRowClick(row: ReportRow): void {
-    if (this.detailsOf(row).length > 0) {
+    if (this.detailsOf(row).length > 0 || this.pendingOpenable(row)) {
       this.openKeys.update(keys => {
         const next = new Set(keys);
         if (!next.delete(row.okey)) next.add(row.okey);

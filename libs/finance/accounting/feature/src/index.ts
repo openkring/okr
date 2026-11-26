@@ -10,3 +10,4 @@ export * from './lib/accounting-segments';
 export * from './lib/accounting-books';
 export * from './lib/accounting-route';
 export * from './lib/accounting-overview.page';
+export * from './lib/ledger-balance.store';

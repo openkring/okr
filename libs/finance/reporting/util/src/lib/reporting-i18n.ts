@@ -36,6 +36,10 @@ export const REPORTING_I18N_KEYS = {
   pdf_period_value:   PFX + 'pdf.periodValue',
   pdf_amounts:        PFX + 'pdf.amounts',
   pdf_watermark:      PFX + 'pdf.watermark',
+  pdf_final_refused:  PFX + 'pdf.finalRefused',
+  // «Stand» of the ledger balances (spec 1.177); {date} filled with fill()
+  ledger_stand:       PFX + 'ledger.stand',
+  ledger_stale:       PFX + 'ledger.stale',
   // Offene Posten (spec 1.86); carried_forward/scope/export_conf carry single-brace placeholders filled with fill()
   open_items_title:                 PFX + 'openItems.title',
   open_items_cutoff:                PFX + 'openItems.cutoff',

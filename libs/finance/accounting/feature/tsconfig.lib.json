@@ -27,6 +27,7 @@
     { "path": "../util/tsconfig.lib.json" },
     { "path": "../../booking/data-access/tsconfig.lib.json" },
     { "path": "../../cost-center/data-access/tsconfig.lib.json" },
+    { "path": "../../reporting/data-access/tsconfig.lib.json" },
     { "path": "../../reporting/util/tsconfig.lib.json" },
     { "path": "../../vat-code/data-access/tsconfig.lib.json" },
     { "path": "../../../relationship/responsibility/data-access/tsconfig.lib.json" },

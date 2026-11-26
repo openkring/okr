@@ -42,7 +42,8 @@
     "period": "Periodo",
     "periodValue": "del {from} al {to}",
     "amounts": "Todos los importes en {currency}",
-    "watermark": "PROVISIONAL"
+    "watermark": "PROVISIONAL",
+    "finalRefused": "La versión definitiva necesita el estado actual de todos los asientos, que ahora no se puede cargar. ¿Quieres crear la versión provisional en su lugar?"
   },
   "loading": "Cargando …",
   "empty": "No hay asientos en este ejercicio.",
@@ -99,5 +100,9 @@
     "export": "Exportar partidas abiertas",
     "export_conf": "{count} partidas abiertas exportadas",
     "external": "La conciliación solo existe para las contabilidades que llevas aquí."
+  },
+  "ledger": {
+    "stand": "Estado a {date}",
+    "stale": "Estado a {date} – ahora no se puede actualizar. Vuelve a intentarlo cuando tengas conexión."
   }
 }

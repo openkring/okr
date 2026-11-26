@@ -3,7 +3,7 @@ import { contextMenuId } from '@okr/shared-util-core';
 import { ActivatedRoute } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
-  IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonLabel, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar,
+  IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonLabel, IonMenuButton, IonNote, IonPopover, IonRefresher, IonRefresherContent, IonRow, IonTitle, IonToolbar,
 } from '@ionic/angular';
 
 import { SvgIconPipe } from '@okr/shared-pipes';
@@ -27,9 +27,10 @@ import { AccountingBooks, AccountingSegments } from '@okr/finance-accounting-fea
     AccountingSegments, AccountingBooks,
     SvgIconPipe, Menu, Spinner, EmptyList, ListFilter, ReportTable,
     IonHeader, IonToolbar, IonButtons, IonButton, IonMenuButton, IonTitle, IonIcon, IonPopover,
-    IonContent, IonGrid, IonRow, IonCol, IonLabel,
+    IonContent, IonGrid, IonRow, IonCol, IonLabel, IonNote, IonRefresher, IonRefresherContent,
   ],
   providers: [ReportingStore],
+  styles: [`.stand { display: block; padding: 4px 16px; font-size: 0.8em; }`],
   template: `
     <ion-header>
       <ion-toolbar color="secondary">
@@ -67,9 +68,13 @@ import { AccountingBooks, AccountingSegments } from '@okr/finance-accounting-fea
       </ion-toolbar>
     </ion-header>
     <ion-content>
+      <ion-refresher slot="fixed" (ionRefresh)="onRefresh($event)"><ion-refresher-content /></ion-refresher>
+      @if (store.standLabel()) {
+        <ion-note class="stand">{{ store.standLabel() }}</ion-note>
+      }
       @if (store.isLoading()) {
         <okr-spinner />
-      } @else if (store.bookings().length === 0) {
+      } @else if (!store.hasBookings()) {
         <okr-empty-list [message]="store.i18n.empty()" />
       } @else {
         <okr-report-table [rows]="store.balanceRows()" (groupToggled)="store.toggleExpand($event)"
@@ -100,6 +105,12 @@ export class BalanceSheetPage {
       const id = params['accountingTenantId'] as string;
       if (id) this.store.setAccountingTenant(id);
     });
+  }
+
+  /** Pull-to-refresh: the balances are recomputed on the server (spec 1.177). */
+  protected async onRefresh(event: Event): Promise<void> {
+    await this.store.refresh();
+    await (event.target as HTMLIonRefresherElement | null)?.complete();
   }
 
   /** Context-menu actions: DB `call` items whose `url` is the method name. */

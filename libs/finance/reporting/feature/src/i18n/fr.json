@@ -42,7 +42,8 @@
     "period": "Période",
     "periodValue": "{from} au {to}",
     "amounts": "Tous les montants en {currency}",
-    "watermark": "PROVISOIRE"
+    "watermark": "PROVISOIRE",
+    "finalRefused": "La version définitive a besoin de l’état actuel de toutes les écritures, qui ne peut pas être chargé pour le moment. Veux-tu créer la version provisoire à la place ?"
   },
   "loading": "Chargement …",
   "empty": "Aucune écriture dans cet exercice.",
@@ -99,5 +100,9 @@
     "export": "Exporter les postes ouverts",
     "export_conf": "{count} postes ouverts exportés",
     "external": "Le rapprochement n'existe que pour les comptabilités que tu tiens ici."
+  },
+  "ledger": {
+    "stand": "État au {date}",
+    "stale": "État au {date} – impossible d’actualiser pour le moment. Réessaie quand tu seras de nouveau en ligne."
   }
 }

@@ -1,6 +1,6 @@
 import { BookingLineModel, BookingModel, LedgerBalanceModel } from '@okr/shared-models';
 
-import { buildLedgerYears, countBookings, ledgerComputedAt, ledgerMonthOf, openingOf, sumCellsByAccount } from './ledger-balance.util';
+import { buildLedgerYears, countBookings, ledgerComputedAt, ledgerFiscalYears, linesFromCells, ledgerMonthOf, openingOf, sumCellsByAccount } from './ledger-balance.util';
 import { DebitCredit, fiscalYear, sumLinesByAccount } from './report.util';
 
 const STATUSES = ['posted', 'posted', 'posted', 'draft', 'cancelled', 'forReview'] as const;
@@ -106,6 +106,28 @@ describe('ledger balances', () => {
     const a = buildLedgerYears(bookings, lines).get(2025);
     const b = buildLedgerYears([...bookings].reverse(), [...lines].reverse()).get(2025);
     expect(b).toEqual(a);
+  });
+
+  it('gives the cells as lines with the same sums', () => {
+    const fy = fiscalYear(2025, 7);
+    const asLines = linesFromCells(docs, fy.from, fy.to);
+    const posted = new Set(bookings.filter(b => b.status === 'posted' && b.date >= fy.from && b.date <= fy.to).map(b => b.okey));
+    const sum = (ls: BookingLineModel[]): Record<string, number> => {
+      const out: Record<string, number> = {};
+      for (const l of ls) {
+        if (!l.accountKey) continue;
+        const k = `${l.accountKey}|${l.costCenterKey ?? ''}`;
+        out[k] = (out[k] ?? 0) + (l.debitAmount?.amount ?? 0) - (l.creditAmount?.amount ?? 0);
+      }
+      return Object.fromEntries(Object.entries(out).filter(([, v]) => v !== 0).sort());
+    };
+    expect(sum(asLines)).toEqual(sum(lines.filter(l => posted.has(l.bookingKey))));
+  });
+
+  it('lists the fiscal years with bookings', () => {
+    const years = ledgerFiscalYears([{ year: 2025, bookingCounts: [1, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0] }, { year: 0, bookingCounts: [] }], 7);
+    expect(years).toEqual([2025, 2024]);
+    expect(ledgerFiscalYears([{ year: 2025, bookingCounts: [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0] }], 1)).toEqual([2025]);
   });
 
   it('shows the newest computedAt', () => {

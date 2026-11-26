@@ -3,7 +3,7 @@ import { contextMenuId } from '@okr/shared-util-core';
 import { ActivatedRoute } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
-  IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonLabel, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar,
+  IonButton, IonButtons, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonLabel, IonMenuButton, IonNote, IonPopover, IonRefresher, IonRefresherContent, IonRow, IonTitle, IonToolbar,
 } from '@ionic/angular';
 
 import { SvgIconPipe } from '@okr/shared-pipes';
@@ -28,9 +28,10 @@ import { AccountingBooks, AccountingSegments } from '@okr/finance-accounting-fea
     AccountingSegments, AccountingBooks,
     SvgIconPipe, Menu, Spinner, EmptyList, ListFilter, StringSelect, ReportTable,
     IonHeader, IonToolbar, IonButtons, IonButton, IonMenuButton, IonTitle, IonIcon, IonPopover,
-    IonContent, IonGrid, IonRow, IonCol, IonLabel,
+    IonContent, IonGrid, IonRow, IonCol, IonLabel, IonNote, IonRefresher, IonRefresherContent,
   ],
   providers: [ReportingStore],
+  styles: [`.stand { display: block; padding: 4px 16px; font-size: 0.8em; }`],
   template: `
     <ion-header>
       <ion-toolbar color="secondary">
@@ -72,12 +73,16 @@ import { AccountingBooks, AccountingSegments } from '@okr/finance-accounting-fea
       </ion-toolbar>
     </ion-header>
     <ion-content>
+      <ion-refresher slot="fixed" (ionRefresh)="onRefresh($event)"><ion-refresher-content /></ion-refresher>
+      @if (store.standLabel()) {
+        <ion-note class="stand">{{ store.standLabel() }}</ion-note>
+      }
       @if (store.isLoading()) {
         <okr-spinner />
-      } @else if (store.bookings().length === 0) {
+      } @else if (!store.hasBookings()) {
         <okr-empty-list [message]="store.i18n.empty()" />
       } @else {
-        <okr-report-table [rows]="store.incomeRows()" [details]="store.incomeDetails()" [(openKeys)]="openKeys"
+        <okr-report-table [rows]="store.incomeRows()" [details]="store.incomeDetails()" [detailsPending]="!store.detailsReady()" [(openKeys)]="openKeys"
           (groupToggled)="store.toggleExpand($event)" (accountSelected)="store.showAccount($event)" />
       }
     </ion-content>
@@ -97,6 +102,10 @@ export class IncomeStatementPage {
   protected readonly popupId = contextMenuId('c_income');
   /** account rows opened to their bookings — the PDF prints them too */
   protected readonly openKeys = signal<ReadonlySet<string>>(new Set());
+  // an opened account lists its bookings: read the fiscal year once (the totals stay from the balances)
+  private readonly loadDetails = effect(() => {
+    if (this.openKeys().size > 0 && !this.store.detailsReady()) void this.store.loadDetails();
+  });
 
   // `?year=<yyyy>` (query param): the period list opens the report for that fiscal year.
   // An invalid/absent value is ignored by the store, which then keeps the current fiscal year.
@@ -108,6 +117,12 @@ export class IncomeStatementPage {
       const id = params['accountingTenantId'] as string;
       if (id) this.store.setAccountingTenant(id);
     });
+  }
+
+  /** Pull-to-refresh: the balances are recomputed on the server (spec 1.177). */
+  protected async onRefresh(event: Event): Promise<void> {
+    await this.store.refresh();
+    await (event.target as HTMLIonRefresherElement | null)?.complete();
   }
 
   /** Context-menu actions: DB `call` items whose `url` is the method name. */

@@ -9,7 +9,7 @@ import { EmptyList, Spinner, StringSelect, StringSelectI18n } from '@okr/shared-
 import { AccountingBooks, AccountingSegments, ReadOnlyBanner } from '@okr/finance-accounting-feature';
 import { formatMinorAmount } from '@okr/finance-booking-util';
 import { AccountComparisonRow, buildAccountComparison, defaultCompareVersion, isNetOver, isOver, totalsByAccount } from '@okr/finance-budget-util';
-import { aggregateByCostCenter, allocationBaseCells, applyAllocations, costCenterLabel, costCenterSubtreeKeys, postedLinesInRange, rollUpCostCenters, sortCostCenterTree } from '@okr/finance-cost-center-util';
+import { aggregateByCostCenter, allocationBaseCells, applyAllocations, costCenterLabel, costCenterSubtreeKeys, rollUpCostCenters, sortCostCenterTree } from '@okr/finance-cost-center-util';
 import { ALL_COST_CENTERS, defaultExpandedKeys, effectiveCostCenterSelection, filterLinesByCostCenter, fiscalYear, NO_COST_CENTER } from '@okr/finance-reporting-util';
 
 import { BudgetStore } from './budget.store';
@@ -170,13 +170,13 @@ export class BudgetComparePage {
     const sel = this.effectiveCostCenterKey();
     const subtree = costCenterSubtreeKeys(this.store.costCenterStore.costCenters(), sel);
     const range = fiscalYear(y, this.store.fiscalYearStart());
-    const lines = filterLinesByCostCenter(postedLinesInRange(this.store.bookingLines(), this.store.bookings(), range.from, range.to), sel, subtree);
+    const lines = filterLinesByCostCenter(this.store.postedLines(range.from, range.to), sel, subtree);
     const b = this.versionB();
     const cells = aggregateByCostCenter(lines, this.store.reportAccounts(),
       filterLinesByCostCenter(this.store.linesOf(a.okey), sel, subtree),
       b ? filterLinesByCostCenter(this.store.linesOf(b.okey), sel, subtree) : []);
     // Umlagen (D24): the source totals come from ALL lines and the whole version A, before the filter
-    const allCells = aggregateByCostCenter(postedLinesInRange(this.store.bookingLines(), this.store.bookings(), range.from, range.to),
+    const allCells = aggregateByCostCenter(this.store.postedLines(range.from, range.to),
       this.store.reportAccounts(), this.store.linesOf(a.okey));
     const rollUp = rollUpCostCenters(allocationBaseCells(allCells, this.store.reportAccounts()), this.store.costCenterStore.costCenters());
     const selection = sel === ALL_COST_CENTERS ? 'all' : sel === NO_COST_CENTER ? new Set<string>() : subtree;
