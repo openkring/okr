@@ -116,4 +116,23 @@ describe('app generator', () => {
     expect(theme).toContain('PLATZHALTER');
     expect(theme).toContain('brand-styleguide');
   });
+
+  // Spec 1.99 A5: `display_override: ["fullscreen", …]` made Android run every installed app in
+  // fullscreen — system bars hidden, and the push question never asked, because the app took the
+  // install for a browser tab. An app shows as an app window, with a title bar in its own colour.
+  it('scaffolds a manifest that opens as an app window coloured like the header', async () => {
+    await appGenerator(tree, { tenantId: 'acme', appName: 'Acme' });
+
+    const manifest = JSON.parse(tree.read('apps/acme-app/src/assets/manifest.json', 'utf-8') ?? '{}');
+    expect(manifest.display).toBe('standalone');
+    expect(manifest.display_override).toBeUndefined();
+
+    // theme_color = the header toolbar colour (color="secondary"), in the manifest and the meta tag.
+    const theme = tree.read('apps/acme-app/src/theme/variables.scss', 'utf-8') ?? '';
+    const secondary = /--ion-color-secondary:\s*(#[0-9a-f]{6})/i.exec(theme)?.[1]?.toLowerCase();
+    expect(secondary).toBeDefined();
+    expect(manifest.theme_color.toLowerCase()).toBe(secondary);
+    const html = tree.read('apps/acme-app/src/index.html', 'utf-8') ?? '';
+    expect(html.toLowerCase()).toContain(`<meta name="theme-color" content="${secondary}" />`);
+  });
 });

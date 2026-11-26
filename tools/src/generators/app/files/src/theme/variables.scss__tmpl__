@@ -39,6 +39,8 @@
 
     4. Die Helfer mitziehen: --bk-fab-background, --bk-banner-background,
        --fa-primary-color, --fa-secondary-color, und den Dark-Mode-Block unten.
+       Dazu theme_color in src/assets/manifest.json und <meta name="theme-color">
+       in src/index.html: beide = secondary, die Farbe der Kopfzeile (spec 1.99 A3).
 
     5. success / warning / danger NICHT anfassen — die sind semantisch.
 

@@ -12,7 +12,7 @@ import { AppStore } from '@okr/shared-feature';
 import { MatrixChatService } from '@okr/chat-data-access';
 import { ChatStatusService, FcmService, FirestoreService, writeBadgeLedgerFromPage, writeServerBadgeLedger } from '@okr/shared-data-access';
 import { BADGE_COUNTS_DOC_ID, BadgeCollection, ChatBlockedError, UserCollection } from '@okr/shared-models';
-import { allPartsReady, BadgeParts, BadgePartsReady, chatBlockedAlertMessage, correctionAllowed, countedDeliveredNotifications, LEDGER_CORRECTION_WINDOW_MS, ledgerPartsToWrite, nextCorrectionAt, ServerBadgeLedger, isKioskOnly, isRegistrationStale, PUSH_PROMPT_SNOOZE_MS, PushPermissionState, readyBadgeParts, shouldAskForPush, shouldShowPushSettingsHint, shouldSnoozePushPrompt } from '@okr/shared-util-core';
+import { allPartsReady, BadgeParts, BadgePartsReady, chatBlockedAlertMessage, correctionAllowed, countedDeliveredNotifications, getDisplayMode, isInstalledDisplayMode, LEDGER_CORRECTION_WINDOW_MS, ledgerPartsToWrite, nextCorrectionAt, ServerBadgeLedger, isKioskOnly, isRegistrationStale, PUSH_PROMPT_SNOOZE_MS, PushPermissionState, readyBadgeParts, shouldAskForPush, shouldShowPushSettingsHint, shouldSnoozePushPrompt } from '@okr/shared-util-core';
 import { I18nService } from '@okr/shared-i18n';
 import { CHAT_BLOCKED_ALERT_I18N_KEYS, ChatBlockedAlertI18n, PUSH_BLOCKED_HINT_I18N_KEYS, PUSH_PROMPT_I18N_KEYS } from '@okr/chat-util';
 import { isAndroid, isIOS } from '@okr/shared-util-angular';
@@ -127,8 +127,11 @@ export class MatrixInitializationService {
     const snoozeKey = 'okr.pushPrompt.snoozedUntil';
     let snoozedUntil: number | undefined;
     try { snoozedUntil = Number(localStorage.getItem(snoozeKey)) || undefined; } catch { /* storage blocked: ask again */ }
-    const isStandalone = typeof window !== 'undefined' &&
-      (window.matchMedia?.('(display-mode: standalone)').matches || (navigator as { standalone?: boolean }).standalone === true);
+    // Any installed mode counts, not only `standalone` (spec 1.99 A5).
+    const isStandalone = typeof window !== 'undefined' && isInstalledDisplayMode(getDisplayMode(
+      window.matchMedia ? q => window.matchMedia(q).matches : undefined,
+      (navigator as { standalone?: boolean }).standalone,
+    ));
     const state = await this.fcmService.getPermissionState();
     if (!shouldAskForPush({ state, isNative: Capacitor.isNativePlatform(), isStandalone, snoozedUntil, now: Date.now() })) return;
 

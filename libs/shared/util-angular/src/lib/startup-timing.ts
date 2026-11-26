@@ -5,6 +5,7 @@
 // active span it never recorded anything either. The numbers it used to carry (total, first
 // script) now travel on the breadcrumb, which does report.
 import { addBreadcrumb, captureMessage } from '@sentry/angular';
+import { DisplayMode, getDisplayMode } from '@okr/shared-util-core';
 
 /**
  * Startup instrumentation, reported to the console and as a Sentry breadcrumb.
@@ -79,8 +80,8 @@ export function reportStartupTiming(reason: string): void {
  * same context (was the service worker in charge? was the cache evicted? what network?), and
  * duplicating it is how the two would drift apart.
  *
- * - displayMode separates an installed/standalone PWA from a normal browser tab.
- *   navigator.standalone is the iOS-only signal; the media query covers desktop/Android.
+ * - displayMode separates an installed PWA (standalone, fullscreen, minimal-ui) from a normal
+ *   browser tab (getDisplayMode, spec 1.99 A5).
  * - net is Chromium-only (undefined on Safari, which is itself a signal).
  * - swControlled === false means the ngsw service worker was NOT in charge (first visit, or it
  *   failed/was evicted), so every asset came off the network — the prime suspect for a large
@@ -91,10 +92,10 @@ export function reportStartupTiming(reason: string): void {
 function probeEnvironment() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const nav = navigator as any;
-  const displayMode: string =
-    (typeof matchMedia !== 'undefined' && matchMedia('(display-mode: standalone)').matches) || nav.standalone === true
-      ? 'standalone'
-      : 'browser';
+  const displayMode: DisplayMode = getDisplayMode(
+    typeof matchMedia !== 'undefined' ? q => matchMedia(q).matches : undefined,
+    nav.standalone,
+  );
   const conn = nav.connection ?? {};
   const net = {
     effectiveType: conn.effectiveType as string | undefined,
