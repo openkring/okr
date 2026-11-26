@@ -78,6 +78,11 @@ export interface ProviderAdapter<P, R, M> {
   windowLimit?: WindowLimit;
   /** Optional monthly cap on upstream calls; on breach → serve stale, then fail soft. */
   monthlyCap?: number;
+  /**
+   * Optional: reduce the client payload to the params the adapter really uses, before the cache
+   * key is hashed — an ignored extra field would otherwise split a shared cache.
+   */
+  normalizeParams?(data: unknown): P;
   /** Attribution the UI must render. */
   attribution: Attribution;
   /** Fetch the raw payload. Throws on transport error; gateway maps it. */

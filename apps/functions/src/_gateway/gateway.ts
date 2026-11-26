@@ -164,7 +164,8 @@ export function makeGatewayHandler<P, R, M>(adapter: ProviderAdapter<P, R, M>) {
       uid,
       isAdmin: token?.['admin'] === true || token?.['contentAdmin'] === true,
     };
-    return runGateway(adapter, stripTenantId(request.data), ctx);
+    const data = stripTenantId(request.data);
+    return runGateway(adapter, adapter.normalizeParams ? adapter.normalizeParams(data) : data, ctx);
   };
 }
 

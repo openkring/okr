@@ -10,7 +10,8 @@ import { distanceKm } from '@okr/shared-util-core';
 import type { ProviderAdapter, GatewayContext } from '../provider';
 import { gatewayFetch } from '../http';
 
-export interface PlaceSearchParams { text: string; near?: { lat: number; lng: number } }
+/** Only the text: SearchServer has no position bias, and any extra field would fragment the shared cache. */
+export interface PlaceSearchParams { text: string }
 export type PlaceKind = 'municipality' | 'locality' | 'water' | 'mountain' | 'zip' | 'address' | 'other';
 export interface PlaceHit {
   name: string;
@@ -45,6 +46,17 @@ function withCanton(name: string, canton: string): string {
   return canton && !name.endsWith(` ${canton}`) ? `${name} ${canton}` : name;
 }
 
+/** A gg25 lake area: the name ends in a compound «…see» (Zürichsee, Bodensee), not the word «See». */
+export function isLakeArea(name: string): boolean {
+  return /\Ssee$/i.test(name.trim());
+}
+
+/** Keeps only `text` of the client payload: extra fields are ignored upstream but would split the cache key. */
+export function placeSearchParams(data: unknown): PlaceSearchParams {
+  const text = data && typeof data === 'object' ? (data as Record<string, unknown>)['text'] : undefined;
+  return { text: typeof text === 'string' ? text : '' };
+}
+
 function mapRow(origin: string, label: string, lat: number, lng: number): PlaceHit | null {
   const base = { typeLabel: '', canton: '', municipality: '', zip: '', lat, lng };
   if (origin === 'zipcode') {
@@ -58,7 +70,12 @@ function mapRow(origin: string, label: string, lat: number, lng: number): PlaceH
   }
   if (origin === 'gg25') {
     const m = /^(.*?)\s*\(([A-Z]{2})\)$/.exec(stripTags(label));
-    return m ? { ...base, name: `${m[1]} ${m[2]}`, kind: 'municipality', canton: m[2] } : { ...base, name: stripTags(label), kind: 'municipality' };
+    const name = m ? m[1] : stripTags(label);
+    // gg25 also lists lake areas without a municipality («Zürichsee (ZH)»): a lake, not a political
+    // municipality (Q3). Only a compound «…see» — «Uetikon am See» stays a municipality.
+    const kind: PlaceKind = isLakeArea(name) ? 'water' : 'municipality';
+    const typeLabel = kind === 'water' ? 'See' : '';
+    return m ? { ...base, name: `${name} ${m[2]}`, kind, typeLabel, canton: m[2] } : { ...base, name, kind, typeLabel };
   }
   if (origin === 'gazetteer') {
     const m = /^(?:<i>(.*?)<\/i>\s*)?<b>(.*?)<\/b>(?:\s*\(([^)]*)\))?(?:\s*-\s*(.*))?$/.exec(label.trim());
@@ -97,11 +114,11 @@ export const placesAdapter: ProviderAdapter<PlaceSearchParams, SearchServerBody,
   scope: 'shared',
   ttlSeconds: 30 * 24 * 3600,
   requiresAuth: true,
+  normalizeParams: placeSearchParams,
   attribution: { provider: 'swisstopo', url: 'https://www.swisstopo.admin.ch/', licence: 'Open Government Data (OGD)' },
   async fetch(params, _ctx: GatewayContext) {
     const text = params.text?.trim();
     if (!text || text.length > MAX_TEXT) throw new HttpsError('invalid-argument', `text must be 1-${MAX_TEXT} characters`);
-    // `near` is not sent: SearchServer has no bias parameter.
     const url = `${SEARCH_URL}?type=locations&sr=4326&limit=10&origins=${originsFor(text)}&searchText=${encodeURIComponent(text)}`;
     const res = await gatewayFetch<SearchServerBody>(url, { method: 'GET' });
     return res.data;

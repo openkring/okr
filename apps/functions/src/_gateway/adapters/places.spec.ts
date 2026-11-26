@@ -1,6 +1,6 @@
 // apps/functions/src/_gateway/adapters/places.spec.ts
 import { describe, it, expect } from 'vitest';
-import { mapPlaces, originsFor, placesAdapter, type SearchServerBody } from './places';
+import { isLakeArea, mapPlaces, originsFor, placeSearchParams, placesAdapter, type SearchServerBody } from './places';
 import pfaeffikonJson from './fixtures/places-pfaeffikon.json';
 import zuerichseeJson from './fixtures/places-zuerichsee.json';
 
@@ -23,10 +23,20 @@ describe('mapPlaces', () => {
       .toMatchObject({ name: 'Pfäffikon ZH', kind: 'municipality', canton: 'ZH', municipality: '', typeLabel: '' });
   });
   it('maps See and Fliessgewaesser to water, several cantons to canton ""', () => {
-    const lake = mapPlaces(zuerichsee, { text: 'Zürichsee' }).find((h) => h.typeLabel === 'See');
+    const lake = mapPlaces(zuerichsee, { text: 'Zürichsee' }).find((h) => h.name === 'Zürichsee');
     expect(lake).toMatchObject({ kind: 'water', canton: '', municipality: '' });
     const creek = mapPlaces(zuerichsee, { text: 'Zürichsee' }).find((h) => h.typeLabel === 'Fliessgewaesser');
     expect(creek).toMatchObject({ kind: 'water', canton: '' });
+  });
+  it('maps a gg25 lake area (recorded «Zürichsee (ZH)») to water, not municipality', () => {
+    const lake = mapPlaces(zuerichsee, { text: 'Zürichsee' }).find((h) => h.name === 'Zürichsee ZH');
+    expect(lake).toMatchObject({ kind: 'water', typeLabel: 'See', canton: 'ZH', municipality: '' });
+  });
+  it('keeps a gg25 municipality named «… am See» a municipality', () => {
+    const [h] = mapPlaces(body(row('gg25', '<b>Uetikon am See (ZH)</b>')), { text: 'Uetikon' });
+    expect(h).toMatchObject({ name: 'Uetikon am See ZH', kind: 'municipality', typeLabel: '' });
+    expect(isLakeArea('Bodensee')).toBe(true);
+    expect(isLakeArea('Uetikon am See')).toBe(false);
   });
   it('maps Gipfel/Hauptgipfel/Huegel/Haupthuegel to mountain', () => {
     for (const t of ['Gipfel', 'Hauptgipfel', 'Huegel', 'Haupthuegel']) {
@@ -85,6 +95,12 @@ describe('originsFor', () => {
 describe('placesAdapter', () => {
   it('is a shared, authenticated, secret-free adapter with a 30 day ttl', () => {
     expect(placesAdapter).toMatchObject({ id: 'places-swisstopo', scope: 'shared', requiresAuth: true, secrets: [], ttlSeconds: 30 * 24 * 3600 });
+  });
+  it('passes only the text on to the cache key and the request', () => {
+    expect(placesAdapter.normalizeParams).toBe(placeSearchParams);
+    expect(placeSearchParams({ text: 'Stäfa', near: { lat: 47, lng: 8 }, tenantId: 'x' })).toEqual({ text: 'Stäfa' });
+    expect(placeSearchParams({ text: 42 })).toEqual({ text: '' });
+    expect(placeSearchParams(null)).toEqual({ text: '' });
   });
   it('rejects empty and over-long text before any request', async () => {
     const ctx = {} as never;
