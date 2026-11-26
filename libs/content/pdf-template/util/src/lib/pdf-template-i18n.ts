@@ -210,6 +210,7 @@ export const EMAIL_COMPOSER_I18N_KEYS = {
   info_p6:              PFX + 'composer.info.p6',
   info_p7:              PFX + 'composer.info.p7',
   info_p8:              PFX + 'composer.info.p8',
+  info_p9:              PFX + 'composer.info.p9',
   // Post (P3): the letters after sending
   letters_pending:      PFX + 'composer.letters.pending',
   letters_download:     PFX + 'composer.letters.download',
