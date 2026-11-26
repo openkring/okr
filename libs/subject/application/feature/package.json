@@ -20,6 +20,9 @@
     "@okr/relationship-membership-feature": "*",
     "@okr/application-data-access": "*",
     "@okr/application-ui": "*",
-    "@okr/application-util": "*"
+    "@okr/application-util": "*",
+    "@okr/calendar-course-util": "*",
+    "@okr/subject-address-util": "*",
+    "@okr/cms-menu-feature": "*"
   }
 }

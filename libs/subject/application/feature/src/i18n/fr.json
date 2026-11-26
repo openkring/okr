@@ -10,7 +10,13 @@
       "course": "Cours",
       "duplicates": "Doublons"
     },
-    "duplicate": "Doublon ?"
+    "duplicate": "Doublon ?",
+    "type_label": "Type",
+    "col": {
+      "submitted": "Date",
+      "type": "Type"
+    },
+    "csv_file": "inscriptions"
   },
   "add": {
     "group": {
@@ -155,6 +161,58 @@
       "course_state": "statut du cours",
       "notes": "notes",
       "tags": "mots-clés"
+    }
+  },
+  "create": {
+    "title": "Nouvelle inscription",
+    "save": {
+      "label": "Enregistrer"
+    }
+  },
+  "edit": {
+    "label": "Modifier l'inscription"
+  },
+  "email": {
+    "label": "Envoyer un e-mail",
+    "missing": "Cette inscription n'a pas d'adresse e-mail."
+  },
+  "call": {
+    "label": "Appeler",
+    "missing": "Cette inscription n'a pas de numéro de téléphone."
+  },
+  "course_assign": {
+    "label": "Attribuer un cours",
+    "pick": "À quel cours veux-tu attribuer {name} ?",
+    "none": "Il n'y a aucun cours en cours pour le moment.",
+    "confirm": "{name} reçoit par e-mail une invitation au cours «{course}» et peut y répondre oui ou non.",
+    "done": "L'invitation a été envoyée.",
+    "skipped": "L'invitation n'a pas été envoyée : {reason}",
+    "ended": "Ce cours est déjà terminé.",
+    "error": "L'invitation n'a pas pu être envoyée."
+  },
+  "applicationAs": {
+    "all": {
+      "label": "Tous"
+    },
+    "youth": {
+      "label": "Junior"
+    },
+    "adult": {
+      "label": "Adulte"
+    },
+    "transfer": {
+      "label": "Transfert"
+    }
+  },
+  "applicationState": {
+    "all": {
+      "label": "Tous"
+    },
+    "open": {
+      "label": "Ouvertes"
+    },
+    "closed": {
+      "label": "Terminées"
     }
   }
 }

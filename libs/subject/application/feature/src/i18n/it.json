@@ -10,7 +10,13 @@
       "course": "Corsi",
       "duplicates": "Duplicati"
     },
-    "duplicate": "Duplicato?"
+    "duplicate": "Duplicato?",
+    "type_label": "Tipo",
+    "col": {
+      "submitted": "Data",
+      "type": "Tipo"
+    },
+    "csv_file": "iscrizioni"
   },
   "add": {
     "group": {
@@ -155,6 +161,58 @@
       "course_state": "stato del corso",
       "notes": "note",
       "tags": "parole chiave"
+    }
+  },
+  "create": {
+    "title": "Nuova iscrizione",
+    "save": {
+      "label": "Salva"
+    }
+  },
+  "edit": {
+    "label": "Modifica l'iscrizione"
+  },
+  "email": {
+    "label": "Invia e-mail",
+    "missing": "Questa iscrizione non ha un indirizzo e-mail."
+  },
+  "call": {
+    "label": "Chiama",
+    "missing": "Questa iscrizione non ha un numero di telefono."
+  },
+  "course_assign": {
+    "label": "Assegna corso",
+    "pick": "A quale corso vuoi assegnare {name}?",
+    "none": "Al momento non c’è nessun corso in corso.",
+    "confirm": "{name} riceve per e-mail un invito al corso «{course}» e lì può accettare o rifiutare.",
+    "done": "L'invito è stato inviato.",
+    "skipped": "L'invito non è stato inviato: {reason}",
+    "ended": "Questo corso è già finito.",
+    "error": "Non è stato possibile inviare l'invito."
+  },
+  "applicationAs": {
+    "all": {
+      "label": "Tutti"
+    },
+    "youth": {
+      "label": "Junior"
+    },
+    "adult": {
+      "label": "Adulto"
+    },
+    "transfer": {
+      "label": "Trasferimento"
+    }
+  },
+  "applicationState": {
+    "all": {
+      "label": "Tutte"
+    },
+    "open": {
+      "label": "Aperte"
+    },
+    "closed": {
+      "label": "Chiuse"
     }
   }
 }

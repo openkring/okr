@@ -1,6 +1,6 @@
 import { DEFAULT_COUNTRY } from '@okr/shared-constants';
-import { ApplicationCourseState, ApplicationModel, ApplicationState, BaseType, PersonModel, TypedProperty } from '@okr/shared-models';
-import { addIndexElement, getAge } from '@okr/shared-util-core';
+import { ApplicationCourseState, ApplicationKind, ApplicationModel, ApplicationState, BaseType, CategoryItemModel, CategoryListModel, PersonModel, TypedProperty } from '@okr/shared-models';
+import { addIndexElement, convertDateFormatToString, DateFormat, getAge } from '@okr/shared-util-core';
 
 export function newApplication(tenantId: string): ApplicationModel {
   const app = new ApplicationModel(tenantId);
@@ -158,6 +158,73 @@ export function compareApplicationsByName(a: ApplicationModel, b: ApplicationMod
   const byFirst = (a.firstName ?? '').localeCompare(b.firstName ?? '', 'de', COLLATOR_OPTIONS);
   if (byFirst !== 0) return byFirst;
   return (b.submittedAt ?? '').localeCompare(a.submittedAt ?? '');
+}
+
+/** submittedAt desc (newest first), then lastName, firstName — the overview list's order. */
+export function compareApplicationsBySubmitted(a: ApplicationModel, b: ApplicationModel): number {
+  const bySubmitted = (b.submittedAt ?? '').localeCompare(a.submittedAt ?? '');
+  if (bySubmitted !== 0) return bySubmitted;
+  return compareApplicationsByName(a, b);
+}
+
+export const APPLICATION_KINDS: ApplicationKind[] = ['youth', 'adult', 'transfer'];
+
+/**
+ * The «Typ» filter of the applications list (`applicationAs`), built in code: the kinds are a
+ * compile-time union, a category document could drift from it. Labels resolve to
+ * `@subject/application/feature.applicationAs.<kind>.label` (and `.all.label` for «Alle»).
+ */
+export function applicationKindCategory(tenantId: string): CategoryListModel {
+  const category = new CategoryListModel(tenantId);
+  category.name = 'applicationAs';
+  category.i18n = '@subject/application/feature';
+  category.translateItems = true;
+  category.items = APPLICATION_KINDS.map(k => new CategoryItemModel(k, 'person'));
+  return category;
+}
+
+/** The state filter of the applications list: open (applied, reviewing) or closed; «Alle» is added by the select. */
+export function applicationStateCategory(tenantId: string): CategoryListModel {
+  const category = new CategoryListModel(tenantId);
+  category.name = 'applicationState';
+  category.i18n = '@subject/application/feature';
+  category.translateItems = true;
+  category.items = ['open', 'closed'].map(k => new CategoryItemModel(k, 'radio-button-on'));
+  return category;
+}
+
+/** Whether `app` matches the «Typ» filter; '' and 'all' match every application. */
+export function matchesKindFilter(app: Pick<ApplicationModel, 'applicationAs'>, filter: string): boolean {
+  return !filter || filter === 'all' || app.applicationAs === filter;
+}
+
+export type ApplicationExportLabels = {
+  submitted: string; firstName: string; lastName: string; type: string; dateOfBirth: string;
+  email: string; phone: string; streetName: string; streetNumber: string; zipCode: string; city: string;
+  state: string; course: string;
+};
+
+/**
+ * The listed applications as CSV rows (header first). `kindLabel`, `stateLabel` and `courseName`
+ * translate the stored values; dates are shown as dd.mm.yyyy.
+ */
+export function buildApplicationExportRows(
+  apps: ApplicationModel[],
+  labels: ApplicationExportLabels,
+  kindLabel: (kind: ApplicationKind) => string,
+  stateLabel: (app: ApplicationModel) => string,
+  courseName: (app: ApplicationModel) => string,
+): string[][] {
+  const header = [labels.submitted, labels.firstName, labels.lastName, labels.type, labels.dateOfBirth,
+    labels.email, labels.phone, labels.streetName, labels.streetNumber, labels.zipCode, labels.city,
+    labels.state, labels.course];
+  return [header, ...apps.map(a => [
+    convertDateFormatToString((a.submittedAt ?? '').substring(0, 10), DateFormat.IsoDate, DateFormat.ViewDate, false),
+    a.firstName ?? '', a.lastName ?? '', kindLabel(a.applicationAs),
+    convertDateFormatToString(a.dateOfBirth ?? '', DateFormat.StoreDate, DateFormat.ViewDate, false),
+    a.email ?? '', a.phone ?? '', a.streetName ?? '', a.streetNumber ?? '', a.zipCode ?? '', a.city ?? '',
+    stateLabel(a), courseName(a),
+  ])];
 }
 
 function normName(s: string | undefined | null): string {

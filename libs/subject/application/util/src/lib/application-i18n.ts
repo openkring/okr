@@ -12,6 +12,28 @@ export const APPLICATION_I18N_KEYS = {
   list_filter_course:       PFX + 'list.filter.course',
   list_filter_duplicates:   PFX + 'list.filter.duplicates',
   list_duplicate:           PFX + 'list.duplicate',
+  list_type_label:          PFX + 'list.type_label',
+  list_col_submitted:       PFX + 'list.col.submitted',
+  list_col_type:            PFX + 'list.col.type',
+  list_csv_file:            PFX + 'list.csv_file',
+
+  create_title:             PFX + 'create.title',
+  create_save_label:        PFX + 'create.save.label',
+
+  edit_label:               PFX + 'edit.label',
+  email_label:              PFX + 'email.label',
+  email_missing:            PFX + 'email.missing',
+  call_label:               PFX + 'call.label',
+  call_missing:             PFX + 'call.missing',
+
+  course_assign_label:      PFX + 'course_assign.label',
+  course_assign_pick:       PFX + 'course_assign.pick',
+  course_assign_none:       PFX + 'course_assign.none',
+  course_assign_confirm:    PFX + 'course_assign.confirm',
+  course_assign_done:       PFX + 'course_assign.done',
+  course_assign_skipped:    PFX + 'course_assign.skipped',
+  course_assign_ended:      PFX + 'course_assign.ended',
+  course_assign_error:      PFX + 'course_assign.error',
 
   course_state_registered:  PFX + 'course_state.registered',
   course_state_invited:     PFX + 'course_state.invited',

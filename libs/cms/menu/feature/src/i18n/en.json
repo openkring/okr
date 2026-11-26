@@ -812,7 +812,10 @@
     "tracker": "Tracks",
     "damage-list": "Damage list",
     "damage-exportraw": "Export damage list",
-    "mailing-all": "Mailings"
+    "mailing-all": "Mailings",
+    "application-all": "Applications",
+    "application-add": "New application",
+    "application-export": "Export"
   },
   "ownership": {
     "fork_confirm": "«{name}» belongs to the feature catalogue ({blocks}).\n\nSaving creates a tenant-private copy «{forkKey}» and detaches this tenant from the shared original. Future catalogue corrections (url, action, role) will no longer reach this entry.\n\nSave anyway?",

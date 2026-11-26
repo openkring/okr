@@ -10,7 +10,13 @@
       "course": "Courses",
       "duplicates": "Duplicates"
     },
-    "duplicate": "Duplicate?"
+    "duplicate": "Duplicate?",
+    "type_label": "Type",
+    "col": {
+      "submitted": "Date",
+      "type": "Type"
+    },
+    "csv_file": "applications"
   },
   "add": {
     "group": {
@@ -155,6 +161,58 @@
       "course_state": "course status",
       "notes": "notes",
       "tags": "tags"
+    }
+  },
+  "create": {
+    "title": "New application",
+    "save": {
+      "label": "Save"
+    }
+  },
+  "edit": {
+    "label": "Edit application"
+  },
+  "email": {
+    "label": "Send email",
+    "missing": "This application has no email address."
+  },
+  "call": {
+    "label": "Call",
+    "missing": "This application has no phone number."
+  },
+  "course_assign": {
+    "label": "Assign course",
+    "pick": "Which course do you want to assign {name} to?",
+    "none": "There is no current course right now.",
+    "confirm": "{name} gets an invitation to the course «{course}» by email and can accept or decline it there.",
+    "done": "The invitation has been sent.",
+    "skipped": "The invitation was not sent: {reason}",
+    "ended": "This course is already over.",
+    "error": "The invitation could not be sent."
+  },
+  "applicationAs": {
+    "all": {
+      "label": "All"
+    },
+    "youth": {
+      "label": "Junior"
+    },
+    "adult": {
+      "label": "Adult"
+    },
+    "transfer": {
+      "label": "Transfer"
+    }
+  },
+  "applicationState": {
+    "all": {
+      "label": "All"
+    },
+    "open": {
+      "label": "Open"
+    },
+    "closed": {
+      "label": "Closed"
     }
   }
 }

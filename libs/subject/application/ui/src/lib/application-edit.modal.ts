@@ -12,14 +12,15 @@ import { ApplicationForm } from './application.form';
 /**
  * Edits an application; dismisses with the edited ApplicationModel and role 'confirm' (the store saves it).
  * Accepting / denying is a workflow action and lives in the application list's ActionSheet.
- * A closed application (state 'closed.*') is shown read-only.
+ * A closed application (state 'closed.*') is shown read-only. With `isNew`, the same form records an application
+ * that did not come in through a form (the store creates it).
  */
 @Component({
   selector: 'okr-application-edit-modal',
   standalone: true,
   imports: [Header, ChangeConfirmation, ApplicationForm, IonContent],
   template: `
-    <okr-header [i18n]="{ title: i18n().update_title() }" [isModal]="true" />
+    <okr-header [i18n]="{ title: isNew() ? i18n().create_title() : i18n().update_title() }" [isModal]="true" />
     @if (showConfirmation()) {
       <okr-change-confirmation [i18n]="changeConfirmationI18n()" (cancelClicked)="cancel()" (saveClicked)="save()" />
     }
@@ -47,6 +48,8 @@ export class ApplicationEditModal {
   public readonly i18n        = input.required<ApplicationI18n>();
   /** name of the course of a course registration (the store resolves it from the course key) */
   public readonly courseName  = input('');
+  /** a new application recorded by the back office (no form submission): other title, the store creates it */
+  public readonly isNew       = input(false);
 
   protected formDirty = signal(false);
   protected formValid = signal(false);
@@ -57,7 +60,7 @@ export class ApplicationEditModal {
   protected showConfirmation = computed(() => this.formValid() && this.formDirty() && !this.isTerminal());
   protected readonly changeConfirmationI18n = computed(() => ({
     cancel: this.i18n().cancel(),
-    save: this.i18n().update_save_label(),
+    save: this.isNew() ? this.i18n().create_save_label() : this.i18n().update_save_label(),
   } as ChangeConfirmationI18n));
 
   public async save(): Promise<void> {

@@ -7,18 +7,22 @@ import { patchState, signalStore, withComputed, withMethods, withProps, withStat
 
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
-import { ApplicationModel, ApplicationState } from '@okr/shared-models';
-import { convertDateFormatToString, DateFormat, fill, getAge, getAvatarInfoForCurrentUser } from '@okr/shared-util-core';
-import { AlertService, createActionSheetButton, createActionSheetOptions } from '@okr/shared-util-angular';
+import { ApplicationKind, ApplicationModel, ApplicationState, CourseModel } from '@okr/shared-models';
+import { convertDateFormatToString, DateFormat, fill, getAge, getAvatarInfoForCurrentUser, getTodayStr } from '@okr/shared-util-core';
+import { AlertService, createActionSheetButton, createActionSheetOptions, exportCsv } from '@okr/shared-util-angular';
+import { browseUrl } from '@okr/subject-address-util';
 
 import { CourseService } from '@okr/calendar-course-data-access';
+import { COURSE_I18N_KEYS, courseHasEnded, InviteSkipReason } from '@okr/calendar-course-util';
 import { MembershipStore } from '@okr/relationship-membership-feature';
 
 import { ApplicationService } from '@okr/application-data-access';
 import {
-  APPLICATION_I18N_KEYS, ApplicationForFilter, ApplicationI18n, applicationCourseKey, compareApplicationsByName,
-  findDuplicateGroups, findPersonCandidates, isMembershipApplication, isSameBirthDate, matchesApplicationForFilter,
-  matchesStateFilter, MERGE_FIELD_I18N, mergeApplications, pickMergeKeep, proposeMembershipCategory, stateColor
+  APPLICATION_I18N_KEYS, ApplicationForFilter, ApplicationI18n, applicationCourseKey, applicationKindCategory, applicationStateCategory,
+  buildApplicationExportRows, compareApplicationsByName, compareApplicationsBySubmitted, findDuplicateGroups,
+  findPersonCandidates, isMembershipApplication, isSameBirthDate, matchesApplicationForFilter, matchesKindFilter,
+  matchesStateFilter, MERGE_FIELD_I18N, mergeApplications, newApplication, pickMergeKeep, proposeMembershipCategory,
+  stateColor
 } from '@okr/application-util';
 import { ApplicationEditModal } from '@okr/application-ui';
 
@@ -30,6 +34,30 @@ function courseNameOf(app: ApplicationModel, names: Record<string, string>): str
 
 /** The list's «Art» filter: the kind of application, or only the likely duplicates (spec 1.152 §9). */
 export type ApplicationListFilter = ApplicationForFilter | 'duplicates';
+
+/** the skip reasons of `inviteApplicantsToCourse`, worded by the course feature (one text for both lists) */
+const INVITE_REASON_I18N_KEYS = {
+  'no-email':        COURSE_I18N_KEYS.invite_reason_noEmail,
+  'not-found':       COURSE_I18N_KEYS.invite_reason_notFound,
+  closed:            COURSE_I18N_KEYS.invite_reason_closed,
+  'on-other-course': COURSE_I18N_KEYS.invite_reason_onOtherCourse,
+  'mail-failed':     COURSE_I18N_KEYS.invite_reason_mailFailed,
+  'write-failed':    COURSE_I18N_KEYS.invite_reason_writeFailed,
+} satisfies Record<InviteSkipReason, string>;
+
+function kindLabelOf(kind: ApplicationKind, i18n: ApplicationI18n): string {
+  switch (kind) {
+    case 'youth':    return i18n.kind_youth();
+    case 'transfer': return i18n.kind_transfer();
+    default:         return i18n.kind_adult();
+  }
+}
+
+function stateLabelOf(app: ApplicationModel, i18n: ApplicationI18n): string {
+  const key = ('state_' + (app.state ?? '').replace('.', '_')) as keyof ApplicationI18n;
+  const sig = i18n[key];
+  return sig ? sig() : app.state;
+}
 
 function courseStateLabel(app: ApplicationModel, i18n: ApplicationI18n): string {
   switch (app.courseState ?? '') {
@@ -50,7 +78,7 @@ function pickerLabel(app: ApplicationModel): string {
 export const ApplicationStore = signalStore(
   withState({
     searchTerm:  '',
-    stateFilter: 'open' as string,
+    stateFilter: 'all' as string,
     kindFilter:  'all' as string,
     forFilter:   'all' as ApplicationListFilter,
   }),
@@ -71,6 +99,7 @@ export const ApplicationStore = signalStore(
 
   withProps((store) => ({
     i18n: store.i18nService.translateAll(APPLICATION_I18N_KEYS),
+    inviteReasonI18n: store.i18nService.translateAll(INVITE_REASON_I18N_KEYS),
     applicationsResource: rxResource({
       params: () => ({ tenantId: store.appStore.tenantId() }),
       stream: () => store.applicationService.list(),
@@ -98,15 +127,25 @@ export const ApplicationStore = signalStore(
       return all
         .filter(a => !a.isArchived)
         .filter(a => matchesStateFilter(a.state, sf))
-        .filter(a => kf === 'all' || a.applicationAs === kf)
+        .filter(a => matchesKindFilter(a, kf))
         .filter(a => ff === 'duplicates' ? dups.has(a.okey) : matchesApplicationForFilter(a, ff))
         .filter(a => !term || (a.index ?? '').toLowerCase().includes(term))
-        .sort(compareApplicationsByName);
+        .sort(compareApplicationsBySubmitted);
     }),
     /** course key (`CourseModel.okey`) → course name, for the course registrations */
     courseNames: computed<Record<string, string>>(() => Object.fromEntries(
       (store.coursesResource.value() ?? []).map(c => [c.okey, c.name])
     )),
+    /** the «Typ» filter (applicationAs), built in code */
+    kindCategory: computed(() => applicationKindCategory(store.appStore.tenantId())),
+    stateCategory: computed(() => applicationStateCategory(store.appStore.tenantId())),
+    /** courses an application can still be invited to: not archived, not yet over (the server checks again) */
+    assignableCourses: computed<CourseModel[]>(() => {
+      const today = getTodayStr();
+      return (store.coursesResource.value() ?? [])
+        .filter(c => !c.isArchived && !courseHasEnded(c, today))
+        .sort((a, b) => (a.startDate ?? '').localeCompare(b.startDate ?? ''));
+    }),
     currentUser: computed(() => store.appStore.currentUser()),
     tenantId:    computed(() => store.appStore.tenantId()),
     imgixBaseUrl: computed(() => store.appStore.services.imgixBaseUrl()),
@@ -132,6 +171,12 @@ export const ApplicationStore = signalStore(
     courseLine(app: ApplicationModel): string {
       return [courseNameOf(app, store.courseNames()), courseStateLabel(app, store.i18n)].filter(Boolean).join(' · ');
     },
+    kindLabel(kind: ApplicationKind): string {
+      return kindLabelOf(kind, store.i18n);
+    },
+    stateLabel(app: ApplicationModel): string {
+      return stateLabelOf(app, store.i18n);
+    },
     isDuplicate(app: ApplicationModel): boolean {
       return store.duplicates().has(app.okey);
     },
@@ -156,6 +201,92 @@ export const ApplicationStore = signalStore(
       const { data, role } = await modal.onWillDismiss<ApplicationModel>();
       if (role === 'confirm' && data) {
         await store.applicationService.update(data, cu);
+      }
+      store.applicationsResource.reload();
+    },
+
+    /**
+     * «Neue Anmeldung»: the memberAdmin records an application that did not come in through a form
+     * (phone, paper, in person). Same path as a form submission: task, confirmation mail to the applicant.
+     */
+    async addApplication(): Promise<void> {
+      const cu = store.currentUser();
+      const modal = await store.modalController.create({
+        component: ApplicationEditModal,
+        componentProps: { application: newApplication(store.tenantId()), currentUser: cu, i18n: store.i18n, isNew: true }
+      });
+      await modal.present();
+      const { data, role } = await modal.onWillDismiss<ApplicationModel>();
+      if (role !== 'confirm' || !data) return;
+      await store.applicationService.create(data, cu);
+      store.applicationsResource.reload();
+    },
+
+    /** «Exportieren»: the listed (filtered) applications as CSV. */
+    async exportApplications(): Promise<void> {
+      const i = store.i18n;
+      const rows = buildApplicationExportRows(
+        store.filteredApplications(),
+        {
+          submitted: i.list_col_submitted(), firstName: i.firstname(), lastName: i.lastname(), type: i.list_col_type(),
+          dateOfBirth: i.date_of_birth(), email: i.email(), phone: i.phone(), streetName: i.street_name(),
+          streetNumber: i.street_number(), zipCode: i.zip_code(), city: i.city(), state: i.state(), course: i.merge_field_course(),
+        },
+        kind => kindLabelOf(kind, i),
+        app => stateLabelOf(app, i),
+        app => courseNameOf(app, store.courseNames()),
+      );
+      await exportCsv(rows, i.list_csv_file());
+    },
+
+    async sendEmail(app: ApplicationModel): Promise<void> {
+      const email = (app.email ?? '').trim();
+      if (!email) { void store.alertService.showToast(store.i18n.email_missing()); return; }
+      await browseUrl(`mailto:${email}`, '');
+    },
+
+    async call(app: ApplicationModel): Promise<void> {
+      const phone = (app.phone ?? '').trim();
+      if (!phone) { void store.alertService.showToast(store.i18n.call_missing()); return; }
+      await browseUrl(`tel:${phone}`, '');
+    },
+
+    /**
+     * «Kurs zuteilen» (spec 1.152 §8): pick a running course, confirm, then `inviteApplicantsToCourse` for this
+     * one application — the applicant gets the invitation mail with the personal answer link, `courseState`
+     * becomes `invited`. The server decides (D7, closed, no e-mail, course ended); a refusal is shown with its reason.
+     */
+    async assignCourse(app: ApplicationModel): Promise<void> {
+      const courses = store.assignableCourses();
+      const name = `${app.firstName} ${app.lastName}`.trim();
+      if (courses.length === 0) { void store.alertService.showToast(store.i18n.course_assign_none()); return; }
+
+      const imgix = store.imgixBaseUrl();
+      const opts  = createActionSheetOptions(fill(store.i18n.course_assign_pick(), { name }));
+      for (const course of courses) {
+        opts.buttons.push(createActionSheetButton('course.' + course.okey, course.name, imgix));
+      }
+      opts.buttons.push(createActionSheetButton('cancel', store.i18n.cancel(), imgix, 'cancel-circle'));
+      const sheet = await store.actionSheetController.create(opts);
+      await sheet.present();
+      const { data } = await sheet.onDidDismiss();
+      const course = typeof data?.action === 'string' && data.action.startsWith('course.')
+        ? courses.find(c => c.okey === data.action.substring('course.'.length))
+        : undefined;
+      if (!course) return;
+
+      const confirmed = await store.alertService.confirm(fill(store.i18n.course_assign_confirm(), { name, course: course.name }), true);
+      if (confirmed !== true) return;
+      try {
+        const result = await store.courseService.inviteApplicants(course.okey, [app.okey]);
+        const skipped = result.skipped?.[0];
+        void store.alertService.showToast(skipped
+          ? fill(store.i18n.course_assign_skipped(), { reason: store.inviteReasonI18n[skipped.reason]?.() ?? skipped.reason })
+          : store.i18n.course_assign_done());
+      } catch (err) {
+        console.warn('ApplicationStore.assignCourse: inviteApplicantsToCourse failed', err);
+        const ended = (err as { details?: { reason?: string } } | undefined)?.details?.reason === 'course-ended';
+        void store.alertService.showToast(ended ? store.i18n.course_assign_ended() : store.i18n.course_assign_error());
       }
       store.applicationsResource.reload();
     },

@@ -10,7 +10,13 @@
       "course": "Kurse",
       "duplicates": "Duplikate"
     },
-    "duplicate": "Duplikat?"
+    "duplicate": "Duplikat?",
+    "type_label": "Typ",
+    "col": {
+      "submitted": "Datum",
+      "type": "Typ"
+    },
+    "csv_file": "anmeldungen"
   },
   "add": {
     "group": {
@@ -155,6 +161,58 @@
       "course_state": "Kursstatus",
       "notes": "Notizen",
       "tags": "Stichworte"
+    }
+  },
+  "create": {
+    "title": "Neue Anmeldung",
+    "save": {
+      "label": "Speichern"
+    }
+  },
+  "edit": {
+    "label": "Anmeldung ändern"
+  },
+  "email": {
+    "label": "E-Mail senden",
+    "missing": "Diese Anmeldung hat keine E-Mail-Adresse."
+  },
+  "call": {
+    "label": "Anrufen",
+    "missing": "Diese Anmeldung hat keine Telefonnummer."
+  },
+  "course_assign": {
+    "label": "Kurs zuteilen",
+    "pick": "Welchem Kurs willst du {name} zuteilen?",
+    "none": "Es gibt gerade keinen laufenden Kurs.",
+    "confirm": "{name} bekommt eine Einladung zum Kurs «{course}» per E-Mail und kann darin zu- oder absagen.",
+    "done": "Die Einladung ist verschickt.",
+    "skipped": "Die Einladung wurde nicht verschickt: {reason}",
+    "ended": "Dieser Kurs ist schon vorbei.",
+    "error": "Die Einladung konnte nicht verschickt werden."
+  },
+  "applicationAs": {
+    "all": {
+      "label": "Alle"
+    },
+    "youth": {
+      "label": "Junior"
+    },
+    "adult": {
+      "label": "Erwachsen"
+    },
+    "transfer": {
+      "label": "Übertritt"
+    }
+  },
+  "applicationState": {
+    "all": {
+      "label": "Alle"
+    },
+    "open": {
+      "label": "Offen"
+    },
+    "closed": {
+      "label": "Abgeschlossen"
     }
   }
 }

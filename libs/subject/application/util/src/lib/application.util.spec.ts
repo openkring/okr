@@ -7,6 +7,11 @@ vi.mock('@okr/shared-util-core', async (importOriginal) => {
 });
 
 import {
+  applicationKindCategory,
+  applicationStateCategory,
+  buildApplicationExportRows,
+  compareApplicationsBySubmitted,
+  matchesKindFilter,
   newApplication,
   getApplicationIndex,
   needsGuardian,
@@ -514,5 +519,62 @@ describe('MERGE_FIELD_I18N', () => {
     const { takenFromDrop } = mergeApplications(keep, drop);
     expect(takenFromDrop.filter(f => !MERGE_FIELD_I18N[f])).toEqual([]);
     expect(takenFromDrop).toContain('courseState');
+  });
+});
+
+describe('compareApplicationsBySubmitted', () => {
+  const app = (lastName: string, firstName: string, submittedAt: string) =>
+    Object.assign(newApplication('scs'), { lastName, firstName, submittedAt });
+  it('sorts newest first, then by name', () => {
+    const a = app('Muster', 'Anna', '2026-11-01T10:00:00.000Z');
+    const b = app('Abegg', 'Beat', '2026-11-20T10:00:00.000Z');
+    const c = app('Zürcher', 'Carla', '2026-11-20T10:00:00.000Z');
+    const d = app('Ohne', 'Datum', '');
+    expect([a, d, c, b].sort(compareApplicationsBySubmitted).map(x => x.lastName)).toEqual(['Abegg', 'Zürcher', 'Muster', 'Ohne']);
+  });
+});
+
+describe('matchesKindFilter', () => {
+  it("'' and 'all' match everything", () => {
+    expect(matchesKindFilter({ applicationAs: 'youth' }, '')).toBe(true);
+    expect(matchesKindFilter({ applicationAs: 'transfer' }, 'all')).toBe(true);
+  });
+  it('a kind matches only itself', () => {
+    expect(matchesKindFilter({ applicationAs: 'youth' }, 'youth')).toBe(true);
+    expect(matchesKindFilter({ applicationAs: 'adult' }, 'youth')).toBe(false);
+  });
+});
+
+describe('application filter categories', () => {
+  it('lists the three kinds with translated items', () => {
+    const cat = applicationKindCategory('scs');
+    expect(cat.items.map(i => i.name)).toEqual(['youth', 'adult', 'transfer']);
+    expect(cat.translateItems).toBe(true);
+    expect(cat.i18n).toBe('@subject/application/feature');
+    expect(cat.tenants).toEqual(['scs']);
+  });
+  it('lists open and closed', () => {
+    expect(applicationStateCategory('scs').items.map(i => i.name)).toEqual(['open', 'closed']);
+  });
+});
+
+describe('buildApplicationExportRows', () => {
+  const labels = { submitted: 'Datum', firstName: 'Vorname', lastName: 'Name', type: 'Typ', dateOfBirth: 'Geburtsdatum',
+    email: 'E-Mail', phone: 'Telefon', streetName: 'Strasse', streetNumber: 'Nr', zipCode: 'PLZ', city: 'Ort', state: 'Status', course: 'Kurs' };
+  it('writes the header, then one row per application with view dates and labels', () => {
+    const app = Object.assign(newApplication('scs'), {
+      submittedAt: '2026-11-26T09:30:00.000Z', firstName: 'Anna', lastName: 'Muster', applicationAs: 'youth' as const,
+      dateOfBirth: '20120315', email: 'anna@example.com', phone: '+41 79 000 00 00', city: 'Stäfa', zipCode: '8712',
+    });
+    const rows = buildApplicationExportRows([app], labels, k => `kind:${k}`, () => 'Offen', () => 'Juniorenkurs');
+    expect(rows[0]).toEqual(Object.values(labels));
+    expect(rows[1]).toEqual(['26.11.2026', 'Anna', 'Muster', 'kind:youth', '15.03.2012', 'anna@example.com', '+41 79 000 00 00',
+      '', '', '8712', 'Stäfa', 'Offen', 'Juniorenkurs']);
+  });
+  it('leaves missing dates empty', () => {
+    const app = Object.assign(newApplication('scs'), { submittedAt: '', dateOfBirth: '' });
+    const rows = buildApplicationExportRows([app], labels, () => '', () => '', () => '');
+    expect(rows[1][0]).toBe('');
+    expect(rows[1][4]).toBe('');
   });
 });

@@ -1025,9 +1025,8 @@ const subject: FeatureBlock = {
   // `libs/subject/swisscities/ui` reads static bundled JSON assets
   // (`src/assets/cities/*.json`) instead of Firestore, confirmed by reading its sources.
   collections: ['persons', 'orgs', 'addresses', 'groups', 'applications', 'address-directory'],
-  // `application` has no live `menuItems` doc anywhere in the ~350-doc collection — the
-  // `/applications` screen (isPrivilegedGuard) is reachable today only by typing the URL,
-  // same "un-menu'd admin screen" shape as `i18n` in the core bundle.
+  // `application-all` (2026-11-26) is a NEW row, seeded by `applyFeatureSelection`: before it the
+  // `/applications` screen was reachable only by typing the URL.
   //
   // NOTE on `addresses`' roleNeeded vs. its route guard — STILL OPEN, deliberately NOT closed
   // by the 2026-08-05 rulings. The live doc's `roleNeeded` is `privileged`, but the route it
@@ -1073,6 +1072,9 @@ const subject: FeatureBlock = {
       // on the route and the `mailings` read rule. In this block because the comm center that sends is here.
       { key: 'mailing-all', name: 'mailing-all', url: '/mailings/all', action: 'navigate', roleNeeded: 'memberAdmin', icon: 'send', label: '@item.mailing-all' },
       { key: 'group-all', name: 'group-all', url: '/group/all/c-groups', action: 'navigate', roleNeeded: 'memberAdmin', icon: 'persons', label: '@item.group-all' },
+      // Anmeldungen overview (2026-11-26). Seeded, never mirrored; `memberAdmin` matches `isMemberAdminGuard` on the
+      // route and the `applications` read/update rule (memberAdmin admitted alongside privileged since the same day).
+      { key: 'application-all', name: 'application-all', url: '/applications/c-application', action: 'navigate', roleNeeded: 'memberAdmin', icon: 'login', label: '@item.application-all' },
     ]),
     // Live root-level sibling of `subjects-menu` in `main_scs`, NOT nested under it —
     // mirrored verbatim (tree-shape rule).
@@ -1115,6 +1117,12 @@ const subject: FeatureBlock = {
       { key: 'org-export-addresses', name: 'org-export-addresses', url: 'exportAddresses', action: 'call', roleNeeded: 'contentAdmin', icon: 'download', label: '@item.org-export-addresses' },
       { key: 'org-copy-emails', name: 'org-copy-emails', url: 'copyEmailAddresses', action: 'call', roleNeeded: 'memberAdmin', icon: 'copy', label: '@item.org-copy-emails' },
       { key: 'comm-center', name: 'comm-center', url: 'commCenter', action: 'call', roleNeeded: 'memberAdmin', icon: 'send', label: '@item.comm-center' },
+    ] },
+    // context menu of the Anmeldungen list (`/applications/c-application`): record an application that came in
+    // outside a form, export the listed ones as CSV. The `url` is the list's method name (onPopoverDismiss).
+    { key: 'c-application', name: 'c-application', url: '', action: 'context', roleNeeded: 'memberAdmin', icon: 'help-circle', label: '', children: [
+      { key: 'application-add', name: 'application-add', url: 'add', action: 'call', roleNeeded: 'memberAdmin', icon: 'add-circle', label: '@item.application-add' },
+      { key: 'application-export', name: 'application-export', url: 'export', action: 'call', roleNeeded: 'memberAdmin', icon: 'download', label: '@item.application-export' },
     ] },
     { key: 'c-groups', name: 'c-groups', url: '', action: 'context', roleNeeded: 'privileged', icon: 'help-circle', label: '', children: [
       { key: 'group-add', name: 'group-add', url: 'add', action: 'call', roleNeeded: 'privileged', icon: 'add-circle', label: '@item.group-add' },

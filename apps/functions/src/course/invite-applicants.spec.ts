@@ -5,6 +5,7 @@ import {
   decideInvite,
   inviteOneApplication,
   inviteRecipients,
+  isApplicationAdminRoles,
   mayManageCourseServer,
   safeErrorFields,
   parseInviteRequest,
@@ -258,5 +259,18 @@ describe('courseInvitationMail', () => {
     expect(mail.html).toContain('>Antworten<');
     expect(mail.html).toContain('href="https://example.test/courseAnswer?c=c1&amp;a=a1&amp;s=sig"');
     expect(mail.html).toMatch(/kein Login/);
+  });
+});
+
+describe('isApplicationAdminRoles', () => {
+  it('admits privileged, admin and memberAdmin', () => {
+    expect(isApplicationAdminRoles({ privileged: true })).toBe(true);
+    expect(isApplicationAdminRoles({ admin: true })).toBe(true);
+    expect(isApplicationAdminRoles({ memberAdmin: true })).toBe(true);
+  });
+  it('refuses other roles, missing roles and non-true values', () => {
+    expect(isApplicationAdminRoles({ treasurer: true, eventAdmin: true })).toBe(false);
+    expect(isApplicationAdminRoles(undefined)).toBe(false);
+    expect(isApplicationAdminRoles({ memberAdmin: 'true' })).toBe(false);
   });
 });

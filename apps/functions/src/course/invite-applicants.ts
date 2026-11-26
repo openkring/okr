@@ -92,6 +92,14 @@ export function isPrivilegedRoles(roles: Doc | undefined): boolean {
 }
 
 /**
+ * Who sees and invites every applicant of the tenant: privileged, or memberAdmin — the `applications`
+ * read/update rule admits both (since 2026-11-26, «Kurs zuteilen» in the Anmeldungen list).
+ */
+export function isApplicationAdminRoles(roles: Doc | undefined): boolean {
+  return isPrivilegedRoles(roles) || roles?.['memberAdmin'] === true;
+}
+
+/**
  * The server twin of `mayManageCourse` (libs/calendar/course/util course-access.util.ts) and of `isCourseManager`
  * in firestore.rules: privileged, a responsible person of the course, or an admin of its group.
  * @param groupAdminKeys `groups/{course.groupKey}.adminKeys` (only when the group is in the caller's tenant)
@@ -269,7 +277,7 @@ async function readCaller(db: Firestore, uid: string, cfName: string): Promise<C
     throw new HttpsError('failed-precondition', 'User is not linked to a tenant.');
   }
   const roles = (user['roles'] as Doc | undefined) ?? {};
-  return { tenantId, personKey: str(user['personKey']), roles, isPrivileged: isPrivilegedRoles(roles) };
+  return { tenantId, personKey: str(user['personKey']), roles, isPrivileged: isApplicationAdminRoles(roles) };
 }
 
 /** The admins of a group in the caller's tenant ([] for another tenant's or a missing group). */
@@ -287,7 +295,9 @@ async function readManagedCourse(db: Firestore, courseKey: string, caller: Calle
   }
   const course: KeyedDoc = { ...data, okey: courseKey };
   const admins = caller.isPrivileged ? [] : await groupAdminKeys(db, str(course['groupKey']), caller.tenantId);
-  if (!mayManageCourseServer(course, caller.personKey, caller.roles, admins)) {
+  // memberAdmin reads every application (rules) and so may also list, count and invite applicants of any course
+  // («Kurs zuteilen»); managing the course itself stays with mayManageCourseServer
+  if (!isApplicationAdminRoles(caller.roles) && !mayManageCourseServer(course, caller.personKey, caller.roles, admins)) {
     logger.warn(`${cfName}: caller may not manage the course`);
     throw new HttpsError('permission-denied', 'Only who manages the course may do this.');
   }

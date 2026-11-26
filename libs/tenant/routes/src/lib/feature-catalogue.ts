@@ -642,10 +642,15 @@ const subject: BlockRoutes = {
         loadComponent: () => import('@okr/subject-address-feature').then(m => m.AddressesList),
       }],
     },
+    // memberAdmin or privileged (isMemberAdminGuard; the `applications` rules admit both since 2026-11-26).
+    // The bare path stays for old bookmarks; the menu row `application-all` carries the context menu name.
     {
       path: 'applications',
-      canActivate: [isPrivilegedGuard],
-      loadComponent: () => import('@okr/application-feature').then(m => m.ApplicationList),
+      canActivate: [isMemberAdminGuard],
+      children: [
+        { path: '', loadComponent: () => import('@okr/application-feature').then(m => m.ApplicationList) },
+        { path: ':contextMenuName', loadComponent: () => import('@okr/application-feature').then(m => m.ApplicationList) },
+      ],
     },
   ],
 };
