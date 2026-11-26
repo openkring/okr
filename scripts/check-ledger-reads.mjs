@@ -6,7 +6,7 @@
  * bookings from a period or by key (BookingService.listPage / listPeriod / listByKeys, BookingLineService.listForBookings).
  *
  * Scans libs/** and apps/functions/src/** (.ts, no specs). For each such call it looks at the call line and the 12 lines
- * above it (where the query is built) for a query key `key: 'date'` / `'bookingKey'` / `'__name__'` / `'accountKey'` (an orderBy does not count). A hit
+ * above it (where the query is built) for a query key `key: 'date'` / `'bookingKey'` / `'__name__'` / `'accountKey'` / `'projectKey'` / `'costCenterKey'` (an orderBy does not count). A hit
  * without one fails unless the file is in ALLOWLIST.
  *
  * Limits (it is a text search, not a type check): a query built further away or passed in as a parameter is not seen
@@ -28,7 +28,7 @@ const ALLOWLIST = [
 ];
 
 const CALL = /searchData(<[^>]*>)?\(\s*(BookingCollection|BookingLineCollection|'bookings'|'booking-lines')/;
-const NARROWING = /key:\s*'(date|bookingKey|__name__|accountKey)'/;
+const NARROWING = /key:\s*'(date|bookingKey|__name__|accountKey|projectKey|costCenterKey)'/;
 const LOOK_BACK = 12;
 
 const files = execFileSync('git', ['ls-files', 'libs', 'apps/functions/src'], { encoding: 'utf8' })
