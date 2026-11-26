@@ -64,6 +64,16 @@ describe('buildSentryOptions', () => {
     expect(matches('FirebaseError: No document to update')).toBe(false);
   });
 
+  it('suppresses the floating Firebase Messaging support-check rejection (SCS-M0)', () => {
+    const patterns = (buildSentryOptions(cfg, []).ignoreErrors ?? []) as RegExp[];
+    const matches = (msg: string) => patterns.some((p) => p instanceof RegExp && p.test(msg));
+    expect(matches("FirebaseError: Messaging: This browser doesn't support the API's required to use the Firebase SDK. (messaging/unsupported-browser).")).toBe(true);
+    expect(matches('FirebaseError: Messaging: (messaging/indexed-db-unsupported).')).toBe(true);
+    // Must NOT swallow actionable messaging failures (bad VAPID key, SW registration).
+    expect(matches('FirebaseError: Messaging: (messaging/token-subscribe-failed).')).toBe(false);
+    expect(matches('FirebaseError: Messaging: (messaging/failed-service-worker-registration).')).toBe(false);
+  });
+
   it('suppresses Firebase Auth IndexedDB polls that lose the connection on page teardown (SCS-AN)', () => {
     const patterns = (buildSentryOptions(cfg, []).ignoreErrors ?? []) as RegExp[];
     const matches = (msg: string) => patterns.some((p) => p instanceof RegExp && p.test(msg));

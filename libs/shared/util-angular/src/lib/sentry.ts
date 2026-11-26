@@ -334,6 +334,15 @@ export function buildSentryOptions(
       // message-equals-name shape, which only that fallback produces: a real abort (fetch,
       // our resumable upload) carries a descriptive message and still reports.
       /^(Error: )?AbortError: AbortError$/,
+      // Firebase-internal floating promise, not our code (SCS-M0): getMessaging() re-runs its
+      // own isSupported() check without awaiting it and throws from the detached .then() when
+      // that second run returns false. FcmService already awaits isSupported() before calling
+      // getMessaging(), so this only fires when the check flips between the two runs — its
+      // IndexedDB probe (open + delete a throwaway DB) fails transiently, e.g. Safari on resume
+      // from sleep with a dead Firestore channel. Push then simply stays off on that page load;
+      // the next load re-checks. Every first-party messaging call (getToken in FcmService) is
+      // awaited inside try/catch, so no failure the user waits on is hidden by this entry.
+      /messaging\/(unsupported-browser|indexed-db-unsupported)/i,
     ],
 
     // Crashes inside third-party scripts we load but don't own. reCAPTCHA (pulled in by
