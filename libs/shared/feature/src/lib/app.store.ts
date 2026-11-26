@@ -10,7 +10,7 @@ import { App } from '@capacitor/app';
 import { AUTH, clearStalledRestoreNote, ENV, FIRESTORE, noteStalledExpiredRestore, usesLocalStorageOnlySession, wasStalledSessionDropped } from '@okr/shared-config';
 import { AppConfigService, AppStoreMin, FirestoreService } from '@okr/shared-data-access';
 import { AddressDirectoryCollection, AddressDirectoryModel, AppConfig, getAddressDirectoryKey, AvailableLanguages, CalEventCollection, CalEventModel, CategoryCollection, CategoryItemModel, CategoryListModel, DefaultLanguage, DefaultLanguageCode, GroupCollection, GroupModel, InvitationCollection, InvitationModel, OrgCollection, OrgModel, PersonCollection, PersonModel, PrivacySettings, privacyUsageToAccessor, ResourceCollection, ResourceModel, ResourceModelName, stricterAccessor, TagCollection, TagModel, TaskCollection, TaskModel, UserCollection, UserModel } from '@okr/shared-models';
-import { appLinkOrigins, countableInvitationsOf, die, getSystemQuery, hasRole, hiddenFieldsOf, isBadgeSourceLoaded, indexBy, openInvitationsOf, pickForTenant, publicAppOrigin, replacePlaceholders, resolveAppOrigin, sortPersons, takeLaunchUrl, withOfflineSnapshot } from '@okr/shared-util-core';
+import { appLinkOrigins, countableInvitationsOf, die, getSystemQuery, hasRole, hiddenFieldsOf, isBadgeSourceLoaded, indexBy, openInvitationsOf, pickForTenant, publicAppOrigin, replacePlaceholders, resolveAppOrigin, noteOpenedUrl, sortPersons, takeLaunchUrl, withOfflineSnapshot } from '@okr/shared-util-core';
 import { AppNavigationService, armStartupStallCheck, HelperVisibility, installScrollDiagnostics, isBrowser, markStartup, dropExpiredSessionIdb, probeStoredSession, probeStoredSessionIdb, reportStartupTiming, StoredSessionState, VersionCheckService, resourceParams } from '@okr/shared-util-angular';
 
 import { authPhase, isDegradedBoot, openBootGate, type BootState } from './boot-readiness.util';
@@ -989,7 +989,8 @@ export const AppStore = signalStore(
       // singletons, so this foregrounds the existing instance instead of starting a
       // second one — the Firebase session stays alive and no re-login is needed.
       App.addListener('appUrlOpen', ({ url }) => {
-        void store.appNavigationService.navigateToDeepLink(url);
+        // recorded: iOS getLaunchUrl() returns this url after the next reload (spec 1.179)
+        void store.appNavigationService.navigateToDeepLink(noteOpenedUrl(url, sessionStorageOrUndefined()));
       });
 
       // Cold start: the launch URL is consumed before any listener could be attached,

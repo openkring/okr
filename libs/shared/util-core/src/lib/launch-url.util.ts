@@ -20,3 +20,17 @@ export function takeLaunchUrl(
   }
   return url;
 }
+
+/**
+ * A URL delivered to the running app (`appUrlOpen`). It is always followed — a second tap on the same
+ * link must work — but recorded, because on iOS `getLaunchUrl()` returns the last URL that opened the
+ * app, this one included, and the next reload must not follow it again.
+ */
+export function noteOpenedUrl(url: string, storage: Pick<Storage, 'setItem'> | undefined): string {
+  try {
+    storage?.setItem(LAUNCH_URL_HANDLED_KEY, url);
+  } catch {
+    // blocked storage: nothing to record
+  }
+  return url;
+}
