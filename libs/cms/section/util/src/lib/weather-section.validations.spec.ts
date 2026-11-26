@@ -7,7 +7,7 @@ import { MAP_MAX_LOCATIONS, MAP_MIN_LOCATIONS, weatherSectionValidations } from 
 /**
  * Every message here is a BLANK vest key. `error-note.ts` resolves a blank key as
  * `validation.<key>` from the app's MAIN bundle — so each of these must exist under
- * `validation` in each app's `src/assets/i18n/{de,en,fr,es,it}.json`, all seven apps, all five
+ * `validation` in the shared main bundle `libs/shared/i18n/src/root/{de,en,fr,es,it}.json` (spec 1.179), all five
  * languages. A key that is missing there renders as a red field with NO text: the suite is
  * working, the message is simply not found, and nothing fails.
  *
