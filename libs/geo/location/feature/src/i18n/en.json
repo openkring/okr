@@ -153,5 +153,8 @@
       "label": "Business",
       "description": "The location is a shop or a business."
     }
+  },
+  "map": {
+    "hint": "Drag the pin to adjust the position"
   }
 }

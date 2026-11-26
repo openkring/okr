@@ -46,6 +46,9 @@ function tileSourceOf(tiles: LeafletTiles): TileSource {
 
 const FIT_PADDING: [number, number] = [40, 40];
 const MAX_FIT_ZOOM = 16;
+function round6(n: number): number {
+  return Math.round(n * 1e6) / 1e6;
+}
 const PIN_STYLE_ID = 'okr-map-view-pin-styles';
 
 
@@ -75,9 +78,13 @@ export class LeafletMap {
   public zoom = input(15); // zoom when a single marker is shown
   public fallbackLabel = input(''); // pin label of a marker without a title
   public pinIconUrl = input(''); // icon above an image pin's thumbnail (e.g. the 'location' svgIcon url)
+  public draggable = input(false); // pins can be dragged (single pin: `pinMove`) and a map click reports `mapClick`
+  public emptyView = input<(GeoCoordinates & { zoom: number }) | undefined>(undefined); // view while there is no pin
 
   // outputs
   public markerClick = output<MapMarker>();
+  public pinMove = output<GeoCoordinates>(); // a single pin was dropped (6 decimals)
+  public mapClick = output<GeoCoordinates>(); // the map was clicked while `draggable`
 
   private leaflet?: typeof import('leaflet');
   private readonly map = signal<L.Map | undefined>(undefined);
@@ -117,6 +124,8 @@ export class LeafletMap {
       const route = this.route();
       const zoom = this.zoom();
       const fallback = this.fallbackLabel();
+      this.draggable();
+      this.emptyView();
       if (!map || !this.leaflet) return;
       this.renderMarkers(this.leaflet, map, markers, route, zoom, fallback);
     });
@@ -133,6 +142,9 @@ export class LeafletMap {
     injectPinStyles();
     const map = this.leaflet.map(el);
     this.markerLayer = this.leaflet.layerGroup().addTo(map);
+    map.on('click', (e: L.LeafletMouseEvent) => {
+      if (this.draggable()) this.mapClick.emit({ lat: round6(e.latlng.lat), lng: round6(e.latlng.lng) });
+    });
     this.map.set(map);
 
     // A modal is still animating in when this runs, so the container may not have its final size yet.
@@ -153,8 +165,18 @@ export class LeafletMap {
         iconSize: withImage ? [140, 88] : [140, 52],
         iconAnchor: [70, 24], // pin tip (centre-x, ~bottom of the 24px marker) sits on the coordinate
       });
-      const leafletMarker = L.marker([marker.lat, marker.lng], { icon });
+      const draggable = this.draggable();
+      const leafletMarker = L.marker([marker.lat, marker.lng], draggable ? { icon, draggable: true } : { icon });
       leafletMarker.on('click', () => this.markerClick.emit(marker));
+      if (draggable && markers.length === 1) {
+        leafletMarker.on('dragend', () => {
+          const at = leafletMarker.getLatLng();
+          const moved = { lat: round6(at.lat), lng: round6(at.lng) };
+          // the re-render that follows must not re-centre the map the user is looking at
+          this.fittedKey = `${zoom}|${moved.lat},${moved.lng}`;
+          this.pinMove.emit(moved);
+        });
+      }
       leafletMarker.addTo(this.markerLayer);
       // a thumbnail that fails to load (camera down) is removed instead of showing a broken-image glyph
       const thumb = leafletMarker.getElement()?.querySelector<HTMLImageElement>('.okr-pin-thumb');
@@ -175,6 +197,9 @@ export class LeafletMap {
       map.fitBounds(L.latLngBounds(latLngs), { padding: FIT_PADDING, maxZoom: MAX_FIT_ZOOM });
     } else if (latLngs.length === 1) {
       map.setView(latLngs[0], zoom);
+    } else {
+      const view = this.emptyView();
+      if (view) map.setView([view.lat, view.lng], view.zoom);
     }
   }
 }

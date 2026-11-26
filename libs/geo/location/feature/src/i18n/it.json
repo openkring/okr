@@ -153,5 +153,8 @@
       "label": "Attività",
       "description": "Il luogo è un negozio o un'azienda."
     }
+  },
+  "map": {
+    "hint": "Trascina lo spillo per regolare la posizione"
   }
 }

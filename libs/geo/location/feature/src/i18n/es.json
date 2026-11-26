@@ -153,5 +153,8 @@
       "label": "Comercio",
       "description": "El lugar es un comercio o una empresa."
     }
+  },
+  "map": {
+    "hint": "Arrastra el alfiler para ajustar la posición"
   }
 }

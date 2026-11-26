@@ -153,5 +153,8 @@
       "label": "Commerce",
       "description": "Le lieu est un commerce ou une entreprise."
     }
+  },
+  "map": {
+    "hint": "Déplace l'épingle pour ajuster la position"
   }
 }

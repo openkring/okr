@@ -153,5 +153,8 @@
       "label": "Geschäft",
       "description": "Ort ist ein Geschäft oder ein Betrieb."
     }
+  },
+  "map": {
+    "hint": "Nadel ziehen, um die Lage anzupassen"
   }
 }

@@ -49,10 +49,12 @@ export class LocationEditModal {
   public location = input.required<LocationModel>();
   public currentUser = input<UserModel | undefined>();
   public readOnly = input(true);
+  /** a pre-filled, not yet saved location: the change-confirmation shows at once */
+  public isNew = input(false);
   protected isReadOnly = computed(() => coerceBoolean(this.readOnly()));
 
   // signals
-  protected formDirty = signal(false);
+  protected formDirty = linkedSignal(() => coerceBoolean(this.isNew()));
   protected formValid = signal(false);
   public formData = linkedSignal(() => safeStructuredClone(this.location()));
   protected showForm = signal(true);

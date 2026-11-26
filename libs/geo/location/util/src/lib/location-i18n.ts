@@ -91,6 +91,8 @@ export const LOCATION_I18N_KEYS = {
   properties_bfsNr:       PFX + 'properties.bfsNr',
   properties_bfsStatus:   PFX + 'properties.bfsStatus',
 
+  map_hint:             PFX + 'map.hint',
+
   name:                 '@name.label',
   type:                 '@type',
   as_title:             '@actionsheet.title',

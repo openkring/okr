@@ -4,7 +4,7 @@ import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular
 
 import { CaseInsensitiveWordMask, LatitudeMask, LongitudeMask, What3WordMask } from '@okr/shared-config';
 import { BaseProperty, CategoryListModel, LocationModel, RoleName, UserModel } from '@okr/shared-models';
-import { CategorySelect, Chips, ErrorNote, TextareaInput, TextareaInputI18n, NumberInput, NumberInputI18n, PropertyKeyOption, PropertyList, PropertyListI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { CategorySelect, Chips, ErrorNote, LeafletMap, GeoCoordinates, MapMarker, TextareaInput, TextareaInputI18n, NumberInput, NumberInputI18n, PropertyKeyOption, PropertyList, PropertyListI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { coerceBoolean, hasRole, LOCATION_PROPERTY_BFS_NR, LOCATION_PROPERTY_BFS_STATUS } from '@okr/shared-util-core';
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 
@@ -51,19 +51,37 @@ export interface LocationFormI18n {
   properties_add:         Signal<string>;
   properties_bfsNr:       Signal<string>;
   properties_bfsStatus:   Signal<string>;
+  map_hint:               Signal<string>;
 }
 
 @Component({
   selector: 'okr-location-form',
   standalone: true,
   imports: [
-    CategorySelect, TextInput, NumberInput, Chips, TextareaInput, ErrorNote, PropertyList,
+    CategorySelect, LeafletMap, TextInput, NumberInput, Chips, TextareaInput, ErrorNote, PropertyList,
     IonGrid, IonRow, IonCol, IonCard, IonCardContent
   ],
-  styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
+  styles: [`.map-box { height: 240px; } .map-hint { margin: 8px 16px 0; font-size: 0.875rem; color: var(--ion-color-medium); } @media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
     @if (showForm()) {
       <form novalidate>
+
+        <ion-card>
+          <ion-card-content class="ion-no-padding">
+            @if (!isReadOnly()) {
+              <p class="map-hint">{{ i18n().map_hint() }}</p>
+            }
+            <div class="map-box">
+              <okr-leaflet-map
+                [markers]="markers()"
+                [zoom]="15"
+                [draggable]="!isReadOnly()"
+                [emptyView]="swissView"
+                (pinMove)="onPinMove($event)"
+                (mapClick)="onPinMove($event)" />
+            </div>
+          </ion-card-content>
+        </ion-card>
 
         <ion-card>
           <ion-card-content class="ion-no-padding">
@@ -206,6 +224,15 @@ export class LocationForm {
   protected readonly properties = computed(() => this.formData()?.properties ?? []);
   protected okey = computed(() => this.formData().okey ?? '');
 
+  // one pin, unless both coordinates are 0 (a location that was never placed)
+  protected readonly markers = computed((): MapMarker[] => {
+    const lat = Number(this.formData()?.latitude ?? 0);
+    const lng = Number(this.formData()?.longitude ?? 0);
+    if (!Number.isFinite(lat) || !Number.isFinite(lng) || (lat === 0 && lng === 0)) return [];
+    return [{ lat, lng }];
+  });
+  protected readonly swissView = { lat: 46.8, lng: 8.23, zoom: 7 };
+
   // passing constants to template
   protected what3wordMask = What3WordMask;
   protected longitudeMask = LongitudeMask;
@@ -313,6 +340,12 @@ export class LocationForm {
       }
     }
     this.formData.update((vm) => ({ ...vm, [fieldName]: fieldValue }));
+  }
+
+  protected onPinMove(at: GeoCoordinates): void {
+    if (this.isReadOnly()) return;
+    this.onFieldChange('latitude', at.lat);
+    this.onFieldChange('longitude', at.lng);
   }
 
   protected hasRole(role: RoleName): boolean {
