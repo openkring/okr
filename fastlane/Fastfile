@@ -127,6 +127,11 @@ platform :android do
   end
 end
 
+# The web build an iOS app ships. kring-app on iOS is the Kring portal (spec 1.179): its `portal`
+# configuration chooses the tenant on the device; every other app ships its production build.
+IOS_WEB_CONFIGURATION = { 'kring-app' => 'portal' }.freeze
+def ios_web_configuration(app) = IOS_WEB_CONFIGURATION.fetch(app, 'production')
+
 platform :ios do
   desc 'Build, gate, sign and upload a new build to TestFlight'
   lane :beta do |options|
@@ -144,10 +149,13 @@ platform :ios do
     UI.message("#{app} (#{bundle_id}) → #{version} (#{build_number})")
     load_sentry_env!(app)
     reuse_web = reuse_web?(options)
+    web_config = ios_web_configuration(app)
+    # dist holds the web release's production build; the portal needs its own (spec 1.179)
+    UI.user_error!("#{app} ships the #{web_config} build on iOS — run without web:reuse") if reuse_web && web_config != 'production'
 
     begin
       # web:reuse: see `android internal` — the dist gate below still guards the reused build.
-      sh_root("pnpm nx build #{app} --configuration production --skip-nx-cache") unless reuse_web
+      sh_root("pnpm nx build #{app} --configuration #{web_config} --skip-nx-cache") unless reuse_web
       gate_production!(Dir[File.join(ROOT, "dist/apps/#{app}/browser/main-*.js")].max_by { |f| File.mtime(f) }, 'dist')
       upload_and_strip_source_maps!(app)
       # Homebrew's fastlane wrapper exports its own GEM_HOME/GEM_PATH; CocoaPods (run by cap sync)
