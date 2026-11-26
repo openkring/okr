@@ -308,12 +308,16 @@
     "empty": "La recherche de lieux n’a rien trouvé.",
     "link": "Associer",
     "municipality": "Commune",
-    "distance": "à {km} km"
+    "distance": "à {km} km",
+    "searchLabel": "Rechercher un lieu"
   },
   "locationLink": {
     "ask": "« {label} » apparaît dans {count} jours. Veux-tu tous les associer ?",
     "one": "Seulement ce jour",
     "all": "Associer les {count}",
-    "done": "{name} enregistré et associé à {count} jours."
+    "done": "{name} enregistré et associé à {count} jours.",
+    "doneOne": "{name} enregistré et associé à ce jour.",
+    "linked": "{name} associé à {count} jours.",
+    "linkedOne": "{name} associé à ce jour."
   }
 }

@@ -1,12 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
-import { AvatarInfo, DiaryModel } from '@okr/shared-models';
+import { AvatarInfo, DiaryModel, LocationModel } from '@okr/shared-models';
 
 import { customLocationAvatar, customPersonAvatar, diaryAvatarId } from './diary-avatar.util';
 import {
   collectLocationReferences, collectPersonReferences, diariesWithLocationReference, filterDiaryReferences, formatDiaryDate,
-  formatDiaryDateLong, formatDiaryDateShort, formatDiaryMonthHeader, inChunks, locationLinkTargets,
+  formatDiaryDateLong, formatDiaryDateShort, formatDiaryMonthHeader, inChunks, linkLocationInDiary, locationLinkTargets,
 } from './diary-reference.util';
+import { getDiaryIndex } from './diary-index.util';
 
 const TENANT = 'scs';
 
@@ -235,5 +236,54 @@ describe('inChunks', () => {
   });
   it('keeps 401 items in three batches of 200', () => {
     expect(inChunks(Array.from({ length: 401 }, (_, i) => i), 200).map(c => c.length)).toEqual([200, 200, 1]);
+  });
+});
+
+describe('linkLocationInDiary', () => {
+  const place = (okey: string, name: string): LocationModel => {
+    const l = new LocationModel('scs');
+    l.okey = okey;
+    l.name = name;
+    return l;
+  };
+  const diaryWith = (locations?: DiaryModel['locations']): DiaryModel => {
+    const d = new DiaryModel('scs');
+    d.okey = 'd1';
+    if (locations === undefined) delete (d as Partial<DiaryModel>).locations;
+    else d.locations = locations;
+    return d;
+  };
+
+  it('replaces the entry in place, keeping the main location first', () => {
+    const a = customLocationAvatar('Hafen');
+    const b = customLocationAvatar('Bern');
+    const c = customLocationAvatar('Thun');
+    const result = linkLocationInDiary(diaryWith([a, b, c]), diaryAvatarId(b), place('l9', 'Bern Stadt'));
+    expect(result.locations?.map(x => x.key)).toEqual(['', 'l9', '']);
+    expect(result.locations?.[0]).toBe(a);
+  });
+  it('keeps the locations when the id is absent', () => {
+    const d = diaryWith([customLocationAvatar('Hafen')]);
+    expect(linkLocationInDiary(d, 'label:nope', place('l9', 'X')).locations).toEqual(d.locations);
+  });
+  it('rebuilds the search index: the location name in, the replaced free text out', () => {
+    const d = diaryWith([customLocationAvatar('Hafen'), customLocationAvatar('Pfaeffikon SZ')]);
+    d.index = getDiaryIndex(d);
+    const result = linkLocationInDiary(d, diaryAvatarId(d.locations[1]), place('l9', 'Seedamm'));
+    expect(result.index).toContain('Seedamm');
+    expect(result.index).not.toContain('Pfaeffikon');
+    expect(result.index).toContain('Hafen');
+  });
+  it('keeps free text in the index that still occurs elsewhere (the title)', () => {
+    const d = diaryWith([customLocationAvatar('Pfaeffikon SZ')]);
+    d.title = 'Pfaeffikon';
+    const result = linkLocationInDiary(d, diaryAvatarId(d.locations[0]), place('l9', 'Seedamm'));
+    expect(result.index).toContain('Seedamm');
+    expect(result.index).toContain('Pfaeffikon');
+  });
+  it('normalises a doc without locations first', () => {
+    const result = linkLocationInDiary(diaryWith(undefined), 'label:nope', place('l9', 'X'));
+    expect(result.locations).toEqual([]);
+    expect(result.people).toEqual([]);
   });
 });

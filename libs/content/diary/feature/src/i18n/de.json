@@ -308,12 +308,16 @@
     "empty": "Die Ortssuche hat nichts gefunden.",
     "link": "Verknüpfen",
     "municipality": "Gemeinde",
-    "distance": "{km} km entfernt"
+    "distance": "{km} km entfernt",
+    "searchLabel": "Ort suchen"
   },
   "locationLink": {
     "ask": "«{label}» kommt in {count} Tagen vor. Möchtest du alle verknüpfen?",
     "one": "Nur diesen Tag",
     "all": "Alle {count} verknüpfen",
-    "done": "{name} gespeichert und mit {count} Tagen verknüpft."
+    "done": "{name} gespeichert und mit {count} Tagen verknüpft.",
+    "doneOne": "{name} gespeichert und mit diesem Tag verknüpft.",
+    "linked": "{name} mit {count} Tagen verknüpft.",
+    "linkedOne": "{name} mit diesem Tag verknüpft."
   }
 }

@@ -1,3 +1,4 @@
+import { DOCUMENT } from '@angular/common';
 import { Component, OnDestroy, OnInit, computed, inject, input, signal } from '@angular/core';
 import {
   IonButton, IonContent, IonIcon, IonItem, IonLabel, IonList, IonListHeader, IonNote, IonSearchbar,
@@ -28,8 +29,8 @@ const SWITZERLAND = { lat: 46.8, lng: 8.23, zoom: 7 };
  * Turns a free-text diary place («Pfäffikon, SZ») into a location: link a saved one, take a hit of the
  * swisstopo place search, or set the pin by hand (spec 1.178 §5).
  *
- * A selection dialog, not an edit form (it is on check-forms' MODAL_ALLOWLIST): it only picks and
- * dismisses — the diary store saves and links. It must not inject that store (store↔modal cycle).
+ * A selection dialog, not an edit form: it only picks and dismisses — the diary store saves and
+ * links. It must not inject that store (store↔modal cycle).
  */
 @Component({
   selector: 'okr-diary-location-search-modal',
@@ -55,7 +56,7 @@ const SWITZERLAND = { lat: 46.8, lng: 8.23, zoom: 7 };
     <okr-header [i18n]="{ title: i18n().locationSearch_title() }" [isModal]="true" />
     <ion-content>
       <p class="intro">{{ intro() }}</p>
-      <ion-searchbar [value]="term()" [debounce]="0" (ionInput)="onInput($event)" />
+      <ion-searchbar [value]="term()" [debounce]="0" [attr.aria-label]="i18n().locationSearch_searchLabel()" (ionInput)="onInput($event)" />
 
       <okr-leaflet-map
         [markers]="markers()"
@@ -68,7 +69,7 @@ const SWITZERLAND = { lat: 46.8, lng: 8.23, zoom: 7 };
             <ion-label>{{ i18n().locationSearch_saved() }}</ion-label>
           </ion-list-header>
           @for(match of saved(); track match.location.okey) {
-            <ion-item>
+            <ion-item [id]="savedRowId(match.location)" [class.selected]="highlighted() === match.location.okey">
               <ion-icon slot="start" src="{{ 'location' | svgIcon }}" />
               <ion-label>
                 <h3>{{ match.location.name }}</h3>
@@ -123,6 +124,7 @@ const SWITZERLAND = { lat: 46.8, lng: 8.23, zoom: 7 };
 export class DiaryLocationSearchModal implements OnInit, OnDestroy {
   private readonly modalController = inject(ModalController);
   private readonly placeSearch = inject(PlaceSearchService);
+  private readonly document = inject(DOCUMENT);
 
   // inputs
   public label = input.required<string>();                   // the badge text, e.g. «Pfäffikon, SZ»
@@ -134,18 +136,23 @@ export class DiaryLocationSearchModal implements OnInit, OnDestroy {
   protected readonly hits = signal<PlaceHit[]>([]);
   protected readonly loading = signal(false);
   protected readonly selected = signal<number | undefined>(undefined);
+  protected readonly highlighted = signal<string | undefined>(undefined); // okey of a saved place whose pin was tapped
 
   protected readonly skeletonRows = [1, 2, 3];
   protected readonly emptyView = SWITZERLAND;
 
   protected readonly intro = computed(() => fill(this.i18n().locationSearch_intro(), { label: this.label() }));
 
-  /** Name matches on open; once a hit is selected, also the saved places near it, nearest first. */
+  /**
+   * Name matches of the badge text and of what the user typed (spec §5.1); once a hit is selected,
+   * also the saved places near it, nearest first.
+   */
   protected readonly saved = computed<SavedMatch[]>(() => {
+    const label = this.label();
+    const term = this.term().trim();
+    const texts = term && term !== label.trim() ? [label, term] : [label];
     const hit = this.selectedHit();
-    return hit
-      ? matchSavedLocations(this.locations(), this.label(), { lat: hit.lat, lng: hit.lng })
-      : matchSavedLocations(this.locations(), this.label());
+    return matchSavedLocations(this.locations(), texts, hit ? { lat: hit.lat, lng: hit.lng } : undefined);
   });
 
   protected readonly markers = computed<MapMarker[]>(() => [
@@ -194,7 +201,10 @@ export class DiaryLocationSearchModal implements OnInit, OnDestroy {
     return fill(this.i18n().locationSearch_distance(), { km });
   }
 
-  /** A pin tap selects a hit (and re-ranks the saved places by distance) or links a saved place. */
+  /**
+   * A pin tap selects a hit (and re-ranks the saved places by distance), or highlights a saved
+   * place's row and scrolls to it — linking stays on the row's button, so a stray tap commits nothing.
+   */
   protected onMarkerClick(marker: MapMarker): void {
     const id = marker.id ?? '';
     if (id.startsWith('hit-')) {
@@ -203,8 +213,14 @@ export class DiaryLocationSearchModal implements OnInit, OnDestroy {
     } else if (id.startsWith('saved-')) {
       const key = id.slice('saved-'.length);
       const match = this.saved().find(m => m.location.okey === key);
-      if (match) void this.linkSaved(match.location);
+      if (!match) return;
+      this.highlighted.set(key);
+      this.document.getElementById(this.savedRowId(match.location))?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
+  }
+
+  protected savedRowId(location: LocationModel): string {
+    return `diary-location-saved-${location.okey}`;
   }
 
   protected linkSaved(location: LocationModel): Promise<boolean> {

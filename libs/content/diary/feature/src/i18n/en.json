@@ -308,12 +308,16 @@
     "empty": "The place search found nothing.",
     "link": "Link",
     "municipality": "Municipality",
-    "distance": "{km} km away"
+    "distance": "{km} km away",
+    "searchLabel": "Search for a place"
   },
   "locationLink": {
     "ask": "\"{label}\" appears on {count} days. Do you want to link all of them?",
     "one": "Only this day",
     "all": "Link all {count}",
-    "done": "{name} saved and linked to {count} days."
+    "done": "{name} saved and linked to {count} days.",
+    "doneOne": "{name} saved and linked to this day.",
+    "linked": "{name} linked to {count} days.",
+    "linkedOne": "{name} linked to this day."
   }
 }

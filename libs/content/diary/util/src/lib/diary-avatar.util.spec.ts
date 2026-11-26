@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { DiaryModel, LocationModel } from '@okr/shared-models';
+import { DiaryModel } from '@okr/shared-models';
 
 import {
   addDiaryAvatar, customLocationAvatar, customPersonAvatar, diaryAvatarId, diaryAvatarName,
-  linkLocationInDiary, mainLocation, replaceDiaryAvatar, withDiaryLocations,
+  mainLocation, replaceDiaryAvatar, withDiaryLocations,
 } from './diary-avatar.util';
 
 describe('diary-avatar.util', () => {
@@ -57,39 +57,5 @@ describe('diary-avatar.util', () => {
     const result = replaceDiaryAvatar([x, a, b], diaryAvatarId(x), linked);
     expect(result).toEqual([linked, a]);
     expect(result[0]).toBe(linked);
-  });
-});
-
-describe('linkLocationInDiary', () => {
-  const place = (okey: string, name: string): LocationModel => {
-    const l = new LocationModel('scs');
-    l.okey = okey;
-    l.name = name;
-    return l;
-  };
-  const diaryWith = (locations?: DiaryModel['locations']): DiaryModel => {
-    const d = new DiaryModel('scs');
-    d.okey = 'd1';
-    if (locations === undefined) delete (d as Partial<DiaryModel>).locations;
-    else d.locations = locations;
-    return d;
-  };
-
-  it('replaces the entry in place, keeping the main location first', () => {
-    const a = customLocationAvatar('Hafen');
-    const b = customLocationAvatar('Bern');
-    const c = customLocationAvatar('Thun');
-    const result = linkLocationInDiary(diaryWith([a, b, c]), diaryAvatarId(b), place('l9', 'Bern Stadt'));
-    expect(result.locations?.map(x => x.key)).toEqual(['', 'l9', '']);
-    expect(result.locations?.[0]).toBe(a);
-  });
-  it('comes back equal when the id is absent', () => {
-    const d = diaryWith([customLocationAvatar('Hafen')]);
-    expect(linkLocationInDiary(d, 'label:nope', place('l9', 'X'))).toEqual(d);
-  });
-  it('normalises a doc without locations first', () => {
-    const result = linkLocationInDiary(diaryWith(undefined), 'label:nope', place('l9', 'X'));
-    expect(result.locations).toEqual([]);
-    expect(result.people).toEqual([]);
   });
 });

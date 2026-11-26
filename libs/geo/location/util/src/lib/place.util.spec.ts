@@ -92,4 +92,20 @@ describe('matchSavedLocations', () => {
     const r = matchSavedLocations(all, 'Pfäffikon SZ', near, 3);
     expect(r.map(m => m.location.name)).toEqual(['Pfäffikon SZ', 'Nah 1', 'Nah 2']);
   });
+
+  it('matches on any of several texts, each location once, in list order', () => {
+    const all = [loc('Seedamm Center'), loc('Pfäffikon SZ'), loc('Stäfa')];
+    const r = matchSavedLocations(all, ['Pfäffikon, SZ', 'Seedamm', 'pfaeffikon'], undefined, 5);
+    expect(r.map(m => m.location.name)).toEqual(['Seedamm Center', 'Pfäffikon SZ']);
+  });
+
+  it('ignores an empty text among several', () => {
+    expect(matchSavedLocations([loc('Stäfa')], ['Stäfa', '  ']).map(m => m.location.name)).toEqual(['Stäfa']);
+  });
+
+  it('keeps name matches of a typed text before distance matches', () => {
+    const all = [loc('Nah 1', 47.201, 8.78), loc('Seedamm Center')];
+    const r = matchSavedLocations(all, ['Pfäffikon SZ', 'Seedamm'], near);
+    expect(r.map(m => m.location.name)).toEqual(['Seedamm Center', 'Nah 1']);
+  });
 });

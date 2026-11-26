@@ -222,10 +222,14 @@ export const DIARY_I18N_KEYS = {
   locationSearch_link:    PFX + 'locationSearch.link',
   locationSearch_municipality: PFX + 'locationSearch.municipality',
   locationSearch_distance: PFX + 'locationSearch.distance',    // single braces: {km}
+  locationSearch_searchLabel: PFX + 'locationSearch.searchLabel',
   locationLink_ask:       PFX + 'locationLink.ask',            // single braces: {label} {count}
   locationLink_one:       PFX + 'locationLink.one',
   locationLink_all:       PFX + 'locationLink.all',            // single braces: {count}
-  locationLink_done:      PFX + 'locationLink.done',           // single braces: {name} {count}
+  locationLink_done:      PFX + 'locationLink.done',           // single braces: {name} {count} — new location, several days
+  locationLink_doneOne:   PFX + 'locationLink.doneOne',        // single braces: {name} — new location, this day
+  locationLink_linked:    PFX + 'locationLink.linked',         // single braces: {name} {count} — saved location, several days
+  locationLink_linkedOne: PFX + 'locationLink.linkedOne',      // single braces: {name} — saved location, this day
 
   ok:                     '@ok',
   cancel:                 '@cancel',

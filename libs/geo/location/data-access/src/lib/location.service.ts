@@ -32,11 +32,13 @@ export class LocationService {
   /**
    * Create a new location in the database.
    * @param location the LocationModel to store in the database
+   * @param quiet drops the confirmation toast for a caller that sums up the outcome itself; errors still toast
    * @returns the document id of the newly created location
    */
-  public async create(location: LocationModel, currentUser?: UserModel): Promise<string | undefined> {
+  public async create(location: LocationModel, currentUser?: UserModel, quiet = false): Promise<string | undefined> {
     location.index = getLocationIndex(location);
-    return await this.firestoreService.createModel<LocationModel>(LocationCollection, location, this.i18n.create_conf(), this.i18n.create_error(), currentUser);
+    return await this.firestoreService.createModel<LocationModel>(
+      LocationCollection, location, quiet ? undefined : this.i18n.create_conf(), this.i18n.create_error(), currentUser);
   }
 
   /**

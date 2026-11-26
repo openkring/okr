@@ -308,12 +308,16 @@
     "empty": "La ricerca luoghi non ha trovato nulla.",
     "link": "Collega",
     "municipality": "Comune",
-    "distance": "a {km} km"
+    "distance": "a {km} km",
+    "searchLabel": "Cerca un luogo"
   },
   "locationLink": {
     "ask": "«{label}» compare in {count} giorni. Vuoi collegarli tutti?",
     "one": "Solo questo giorno",
     "all": "Collega tutti i {count}",
-    "done": "{name} salvato e collegato a {count} giorni."
+    "done": "{name} salvato e collegato a {count} giorni.",
+    "doneOne": "{name} salvato e collegato a questo giorno.",
+    "linked": "{name} collegato a {count} giorni.",
+    "linkedOne": "{name} collegato a questo giorno."
   }
 }

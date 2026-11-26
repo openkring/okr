@@ -72,9 +72,3 @@ export function withDiaryLocations<T extends DiaryModel>(raw: T): T {
 export function locationAvatar(l: LocationModel): AvatarInfo {
   return { key: l.okey, name1: l.name, name2: '', label: l.name, modelType: 'location', type: l.type ?? '', subType: '' };
 }
-
-/** The diary with the entry `referenceId` replaced in place by `location`; unchanged when absent. */
-export function linkLocationInDiary(diary: DiaryModel, referenceId: string, location: LocationModel): DiaryModel {
-  const normalised = withDiaryLocations(diary);
-  return { ...normalised, locations: replaceDiaryAvatar(normalised.locations ?? [], referenceId, locationAvatar(location)) };
-}

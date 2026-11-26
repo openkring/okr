@@ -57,18 +57,20 @@ function hasCoords(l: LocationModel): boolean {
 /**
  * Saved locations that may be what the free text means: first those whose name contains the text (folded; the part before
  * a comma also counts, so 'Pfaffikon, sz' finds «Pfäffikon SZ» and «Stäfa» finds «Hafen Stäfa»), then those within 5 km of `near`, nearest first.
+ * Several texts (the diary's badge and what the user typed) match when any of them does; each location appears once.
  */
-export function matchSavedLocations(all: LocationModel[], text: string, near?: { lat: number; lng: number }, max = 3): SavedMatch[] {
+export function matchSavedLocations(all: LocationModel[], text: string | string[], near?: { lat: number; lng: number }, max = 3): SavedMatch[] {
   const live = all.filter(l => !l.isArchived);
-  const whole = foldName(searchTextOf(text));
-  const base = foldName(searchTextOf(text.split(',')[0]));
+  const patterns = (Array.isArray(text) ? text : [text])
+    .map(t => ({ whole: foldName(searchTextOf(t)), base: foldName(searchTextOf(t.split(',')[0])) }))
+    .filter(p => !!p.base);
   const withDistance = (l: LocationModel): SavedMatch =>
     near && hasCoords(l) ? { location: l, distanceKm: distanceKm(near, { lat: l.latitude, lng: l.longitude }) } : { location: l };
 
   const byName = live
     .filter(l => {
       const n = foldName(searchTextOf(l.name));
-      return !!base && (n.includes(whole) || n.includes(base));
+      return patterns.some(p => n.includes(p.whole) || n.includes(p.base));
     })
     .map(withDistance);
 

@@ -1,6 +1,6 @@
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { AlertController, ModalController, NavController } from '@ionic/angular';
+import { AlertController, LoadingController, ModalController, NavController } from '@ionic/angular';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { catchError, firstValueFrom, map, of, switchMap, take, timeout } from 'rxjs';
 
@@ -96,6 +96,7 @@ export const DiaryStore = signalStore(
     modelSelectService: inject(ModelSelectService),
     modalController: inject(ModalController),
     alertController: inject(AlertController),
+    loadingController: inject(LoadingController),
     alertService: inject(AlertService),
     i18nService: inject(I18nService),
     trackService: inject(TrackService),
@@ -522,10 +523,22 @@ export const DiaryStore = signalStore(
       await modal.onDidDismiss();
     };
 
+    /**
+     * `work` behind a spinner: the screen would otherwise look dead while the network answers (a
+     * cold callable, a full server read). The overlay also blocks a second tap; always dismissed.
+     */
+    const whileLoading = async <T>(work: () => Promise<T>): Promise<T> => {
+      const loading = await store.loadingController.create({});
+      await loading.present();
+      try {
+        return await work();
+      } finally {
+        await loading.dismiss().catch(() => undefined);
+      }
+    };
+
     /** Step 1 (spec 1.178 §5): a saved location, a place-search hit or a hand-set pin; undefined on cancel. */
-    const searchLocation = async (label: string): Promise<DiaryLocationSearchResult | undefined> => {
-      // one server snapshot: the cache-first stream could miss a saved place and invite a duplicate
-      const locations = await store.locationService.listOnce().catch(() => [] as LocationModel[]);
+    const searchLocation = async (label: string, locations: LocationModel[]): Promise<DiaryLocationSearchResult | undefined> => {
       const { DiaryLocationSearchModal } = await import('./diary-location-search.modal');
       const modal = await store.modalController.create({
         component: DiaryLocationSearchModal,
@@ -539,15 +552,19 @@ export const DiaryStore = signalStore(
 
     /**
      * Step 2 (spec 1.178 §6.1–6.2): the location the choice stands for — a saved one as is, a new
-     * one pre-filled, checked in the editor and created. Undefined when cancelled or not saved.
+     * one pre-filled, checked in the editor and created (quietly: the summary toast names it).
+     * `created` tells the two apart for that toast. Undefined when cancelled or not saved.
      */
-    const resolveLocation = async (choice: DiaryLocationSearchResult, label: string): Promise<LocationModel | undefined> => {
-      if (choice.kind === 'existing') return choice.location;
+    const resolveLocation = async (
+      choice: DiaryLocationSearchResult, label: string,
+    ): Promise<{ location: LocationModel; created: boolean } | undefined> => {
+      if (choice.kind === 'existing') return { location: choice.location, created: false };
       const tenantId = store.tenantId();
       let seed: LocationModel;
       if (choice.kind === 'new') {
-        seed = placeHitToLocation(choice.hit, tenantId);
-        seed.seaLevel = (await store.placeSearchService.seaLevelOf(choice.hit.lat, choice.hit.lng)) ?? 0;
+        const hit = choice.hit;
+        seed = placeHitToLocation(hit, tenantId);
+        seed.seaLevel = (await whileLoading(() => store.placeSearchService.seaLevelOf(hit.lat, hit.lng))) ?? 0;
       } else {
         seed = new LocationModel(tenantId);
         seed.name = label;
@@ -557,8 +574,8 @@ export const DiaryStore = signalStore(
       const currentUser = store.currentUser();
       const saved = await openLocationEditor(store.modalController, seed, currentUser, true);
       if (!saved) return undefined;
-      const okey = await store.locationService.create(saved, currentUser);
-      return okey ? { ...saved, okey } : undefined;
+      const okey = await store.locationService.create(saved, currentUser, true);
+      return okey ? { location: { ...saved, okey }, created: true } : undefined;
     };
 
     /** «Nur diesen Tag» / «Alle n verknüpfen» — true for all. Not dismissable: the location exists by now. */
@@ -576,6 +593,15 @@ export const DiaryStore = signalStore(
       return role === 'all';
     };
 
+    /** The summary toast: «gespeichert» only when the location was created here; «diesem Tag» for one day. */
+    const linkSummary = (name: string, count: number, created: boolean): string => {
+      const i18n = store.i18n;
+      const text = created
+        ? (count === 1 ? i18n.locationLink_doneOne() : i18n.locationLink_done())
+        : (count === 1 ? i18n.locationLink_linkedOne() : i18n.locationLink_linked());
+      return fill(text, { name, count });
+    };
+
     /**
      * A tapped free-text place becomes a location (spec 1.178 §4): pick or create it, then link it
      * to this day or to every day of the author with the same text. The writes go out in batches,
@@ -589,20 +615,32 @@ export const DiaryStore = signalStore(
     const createLocation = async (diary: DiaryModel, avatar: AvatarInfo): Promise<DiaryModel | undefined> => {
       const label = diaryLocationLabel(avatar);
       const referenceId = diaryAvatarId(avatar);
-      const current = (await store.diaryService.readFresh(diary.okey).catch(() => undefined)) ?? diary;
-      if (!diariesWithLocationReference([current], referenceId).length) return current;
-      const choice = await searchLocation(label);
+      // one server snapshot of the saved places: the cache-first stream could miss one and invite a duplicate
+      const opened = await whileLoading(async () => {
+        const current = (await store.diaryService.readFresh(diary.okey).catch(() => undefined)) ?? diary;
+        if (!diariesWithLocationReference([current], referenceId).length) return { current, locations: undefined };
+        const locations = await store.locationService.listOnce().catch(() => [] as LocationModel[]);
+        return { current, locations };
+      });
+      const current = opened.current;
+      if (!opened.locations) return current;
+      const choice = await searchLocation(label, opened.locations);
       if (!choice) return undefined;
-      const location = await resolveLocation(choice, label);
-      if (!location) return undefined;
 
+      // one server snapshot of ALL the author's days (spec §6.3) — not the cache-first subset; it
+      // is read while the editor is open (no read on a cancelled search), and when it cannot be
+      // read only the tapped day is linked
       const authorKey = store.authorKey();
       const tenantId = store.tenantId();
-      // one server snapshot of ALL the author's days (spec §6.3) — not the cache-first subset;
-      // when it cannot be read, only the tapped day is linked
-      const own = authorKey && tenantId
-        ? await store.diaryService.listOnce(authorKey, tenantId).catch(() => [] as DiaryModel[])
-        : [];
+      const ownRead: Promise<DiaryModel[]> = authorKey && tenantId
+        ? store.diaryService.listOnce(authorKey, tenantId).catch(() => [] as DiaryModel[])
+        : Promise.resolve([]);
+
+      const resolved = await resolveLocation(choice, label);
+      if (!resolved) return undefined;
+      const { location, created } = resolved;
+
+      const own = await whileLoading(() => ownRead);
       const all = locationLinkTargets(own, current, referenceId);
       const targets = all.length > 1 && await confirmLinkAll(label, all.length) ? all : [all[0]];
 
@@ -619,11 +657,10 @@ export const DiaryStore = signalStore(
           if (target.okey === current.okey) shown = updated;
         }));
       }
-      const done = fill(store.i18n.locationLink_done(), { name: location.name, count: linked });
       const failures = failed.length
         ? ` ${store.i18n.update_error()} ${failed.sort().map(date => formatDiaryDate(date)).join(', ')}`
         : '';
-      void store.alertService.showToast(done + failures);
+      void store.alertService.showToast(linkSummary(location.name, linked, created) + failures);
       reloadList();
       return shown;
     };

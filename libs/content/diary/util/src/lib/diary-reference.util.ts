@@ -1,6 +1,7 @@
-import { DiaryModel } from '@okr/shared-models';
+import { DiaryModel, LocationModel } from '@okr/shared-models';
 
-import { diaryAvatarId, diaryAvatarName, withDiaryLocations } from './diary-avatar.util';
+import { diaryAvatarId, diaryAvatarName, locationAvatar, replaceDiaryAvatar, withDiaryLocations } from './diary-avatar.util';
+import { getDiaryIndex } from './diary-index.util';
 
 /** Which of the two reference kinds a diary carries: its place, or the people in it. */
 export type DiaryReferenceKind = 'location' | 'person';
@@ -184,4 +185,14 @@ export function inChunks<T>(items: readonly T[], size: number): T[][] {
   const chunks: T[][] = [];
   for (let i = 0; i < items.length; i += step) chunks.push(items.slice(i, i + step));
   return chunks;
+}
+
+/**
+ * The diary with the entry `referenceId` replaced in place by `location`, and its search index
+ * rebuilt (the list searches `diary.index`, which names the places); locations unchanged when absent.
+ */
+export function linkLocationInDiary(diary: DiaryModel, referenceId: string, location: LocationModel): DiaryModel {
+  const normalised = withDiaryLocations(diary);
+  const linked = { ...normalised, locations: replaceDiaryAvatar(normalised.locations ?? [], referenceId, locationAvatar(location)) };
+  return { ...linked, index: getDiaryIndex(linked) };
 }
