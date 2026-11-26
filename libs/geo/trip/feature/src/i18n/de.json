@@ -91,6 +91,9 @@
     "location": {
       "title": "Zielort wählen",
       "add": "Ziel wählen"
+    },
+    "cox": {
+      "add": "Steuerperson wählen"
     }
   },
   "show": {
@@ -335,5 +338,6 @@
     "solo": {
       "hint": "Nimm dein iPhone mit der App mit. Du findest die Strecke danach im Menü «Strecke aufzeichnen»."
     }
-  }
+  },
+  "cox": "Steuerperson"
 }

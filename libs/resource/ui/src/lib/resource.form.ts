@@ -4,7 +4,7 @@ import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, 
 
 import { BaseProperty, CategoryListModel, ResourceModel, RoleName, UserModel } from '@okr/shared-models';
 import { Checkbox, CheckboxI18n, CategorySelect, Chips, Color, ErrorNote, TextareaInput, TextareaInputI18n, NumberInput, NumberInputI18n, PropertyList, TextInput, TextInputI18n } from '@okr/shared-ui';
-import { coerceBoolean, getYear, hasRole, isFieldShown, NO_HIDDEN_FIELDS } from '@okr/shared-util-core';
+import { canHaveCox, coerceBoolean, getYear, hasRole, isFieldShown, NO_HIDDEN_FIELDS } from '@okr/shared-util-core';
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { DEFAULT_CAR_TYPE, DEFAULT_GENDER, DEFAULT_NAME, DEFAULT_NOTES, DEFAULT_PET_TYPE, DEFAULT_PRICE, DEFAULT_RBOAT_TYPE, DEFAULT_RBOAT_USAGE, DEFAULT_TAGS, COMMENT_LENGTH, DESCRIPTION_LENGTH, SHORT_NAME_LENGTH } from '@okr/shared-constants';
 
@@ -47,6 +47,12 @@ import { getUsageForYear, ResourceI18n, resourceValidations, getKeyNr, getLocker
                       <okr-cat-select [category]="subTypes()!" [selectedItemName]="subType()" (selectedItemNameChange)="onFieldChange('subType', $event)" [withAll]="false" [readOnly]="isReadOnly()" />
                       <okr-error-note [errors]="subTypeErrors()" />
                     </ion-col>
+                    @if(showCox()) {
+                      <ion-col size="12">
+                        <!-- 8x only: the Logbuch then asks for a cox (TripModel.cox) when this boat goes out -->
+                        <okr-checkbox [i18n]="hasCoxI18n()" [checked]="hasCox()" (checkedChange)="onFieldChange('hasCox', $event)" [showHelper]="true" [readOnly]="isReadOnly()" />
+                      </ion-col>
+                    }
                     <ion-col size="12">
                       <!-- shows THIS season's allocation, not the raw multi-year string — see onUsageChange -->
                       <okr-cat-select [category]="usages()!" [selectedItemName]="usage()" (selectedItemNameChange)="onUsageChange($event)" [withAll]="false" [readOnly]="isReadOnly()" />
@@ -470,6 +476,10 @@ export class ResourceForm {
   protected readonly tags = computed(() => this.formData()?.tags ?? DEFAULT_TAGS);
   protected readonly description = computed(() => this.formData()?.description ?? DEFAULT_NOTES);
   protected readonly tripAlert = computed(() => this.formData()?.tripAlert ?? '');
+  /** legacy docs have no hasCox */
+  protected readonly hasCox = computed(() => this.formData()?.hasCox ?? false);
+  /** the checkmark only exists for an 8x; a stale value on another type is ignored (boatHasCox) */
+  protected readonly showCox = computed(() => canHaveCox(this.resourceType(), this.subType()));
   protected okey = computed(() => this.formData().okey ?? DEFAULT_NAME);
 
   protected okeyI18n = computed(() => ({
@@ -531,6 +541,11 @@ export class ResourceForm {
     helper: this.i18n().tripAlert_helper()
   } as TextInputI18n));
   protected colorLabel = computed(() => this.i18n().color_label());
+  protected hasCoxI18n = computed(() => ({
+    name: 'hasCox',
+    label: this.i18n().hasCox_label(),
+    helper: this.i18n().hasCox_helper()
+  } as CheckboxI18n));
   protected lockedI18n = computed(() => ({
     name: 'locked',
     label: this.i18n().locked_label(),

@@ -77,6 +77,21 @@ function crewSectionRow(s: CrewTrackSection): TrackSectionRow {
             </ion-item>
           }
 
+          @if(trip().cox; as cox) {
+            <!-- the cox of an 8x with a cox seat (TripModel.cox) -->
+            <ion-item lines="none">
+              <ion-icon slot="start" src="{{'person' | svgIcon}}" />
+              <ion-label>
+                <p class="view-label">{{ i18n.cox() }}</p>
+                <div class="participant-row">
+                  <div class="participant" (click)="openPerson(cox)">
+                    <okr-avatar-display [avatars]="[cox]" [showName]="true" />
+                  </div>
+                </div>
+              </ion-label>
+            </ion-item>
+          }
+
           @if(trip().participants.length) {
             <ion-item lines="none">
               <ion-icon slot="start" src="{{'people' | svgIcon}}" />

@@ -91,6 +91,9 @@
     "location": {
       "title": "Scegli destinazione",
       "add": "Scegli destinazione"
+    },
+    "cox": {
+      "add": "Scegli il timoniere"
     }
   },
   "show": {
@@ -335,5 +338,6 @@
     "solo": {
       "hint": "Porta con te il tuo iPhone con l’app. Poi troverai il percorso nel menu «Registra un percorso»."
     }
-  }
+  },
+  "cox": "Timoniere"
 }

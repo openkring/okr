@@ -78,6 +78,7 @@ export class TripModel implements OkrModel, NamedModel, SearchableModel, TaggedM
   public customLocationLabel = '';
   public distance = 0; // calculated or manual with other locaiton
   public participants: AvatarInfo[] = []; // person.okey: the persons participating in the trip
+  public cox?: AvatarInfo; // person.okey: the cox of an 8x whose resource has hasCox (a '…p' boat keeps its cox in participants); not initialised — legacy trips lack it
   public state = 'draft';
   public track?: TripTrack; // recorded track metadata (type 'tracker'); not initialised — legacy trips lack it
   public trackRequest?: { personKey: string }; // crew-track request: personKey = the carrier, after linking the recorder (spec 1.123 L1); not initialised

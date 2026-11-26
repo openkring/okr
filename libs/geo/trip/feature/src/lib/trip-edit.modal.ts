@@ -2,7 +2,7 @@ import { Component, computed, inject, input, linkedSignal, signal } from '@angul
 import { IonContent, ModalController } from '@ionic/angular';
 
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
-import { DateFormat, debugFormModel, fill, getCurrentTime, getTodayStr, hasRole, safeStructuredClone } from '@okr/shared-util-core';
+import { boatHasCox, DateFormat, debugFormModel, fill, getCurrentTime, getTodayStr, hasRole, safeStructuredClone } from '@okr/shared-util-core';
 import { AlertService, dismissOverlay } from '@okr/shared-util-angular';
 import { AvatarInfo, ResourceModel, TripModel, UserModel } from '@okr/shared-models';
 
@@ -39,6 +39,7 @@ import { TripService } from '@okr/trip-data-access';
           (personSelectClicked)="addPerson()"
           (boatSelectClicked)="addBoat()"
           (trainingSelectClicked)="addCrewFromTraining()"
+          (coxSelectClicked)="addCox()"
           (locationSelectClicked)="addLocation()"
           (dirty)="formDirty.set($event)"
           (valid)="formValid.set($event)"
@@ -143,6 +144,11 @@ export class TripEditModal {
         break;
     }
 
+    // update() merges: a cox removed in the form must be deleted explicitly
+    if ((this.mode() === 'edit' || this.mode() === 'end') && this.trip().cox && !trip.cox && trip.okey) {
+      await this.tripService.removeCox(trip.okey);
+    }
+
     if (this.mode() === 'add' || this.mode() === 'copy' || this.mode() === 'edit') {
       const reasons = this.store.checkSuspiciousActivity(trip);
       if (reasons.length > 0) {
@@ -171,8 +177,29 @@ export class TripEditModal {
       await this.alertService.showToast(fill(this.store.i18n.warning_participant_duplicate(), { name: `${person.name1} ${person.name2}`.trim() }));
       return;
     }
+    // the cox does not row: picking them as a rower too would count them twice
+    if (this.isCox(person)) {
+      await this.alertService.showToast(fill(this.store.i18n.warning_participant_duplicate(), { name: `${person.name1} ${person.name2}`.trim() }));
+      return;
+    }
     participants.push(person);
     this.onFieldChange('participants', participants);
+  }
+
+  /** The cox of an 8x with a cox seat: an extra person beside the rowers, never one of them. */
+  protected async addCox(): Promise<void> {
+    const person = await this.store.selectPersonAvatar();
+    if (!person) return;
+    if (hasParticipant(this.formData()?.participants ?? [], person)) {
+      await this.alertService.showToast(fill(this.store.i18n.warning_participant_duplicate(), { name: `${person.name1} ${person.name2}`.trim() }));
+      return;
+    }
+    this.onFieldChange('cox', person);
+  }
+
+  private isCox(person: AvatarInfo): boolean {
+    const cox = this.formData()?.cox;
+    return !!cox && hasParticipant([cox], person);
   }
 
   /**
@@ -185,7 +212,8 @@ export class TripEditModal {
     if (!trip) return;
     const crew = await this.store.selectTrainingCrew(trip.startDate, this.maxParticipants());
     if (!crew) return;
-    this.onFieldChange('participants', uniqueParticipants(crew));
+    // a training attendee already chosen as cox stays on the cox seat
+    this.onFieldChange('participants', uniqueParticipants(crew).filter((p) => !this.isCox(p)));
   }
 
   protected async addBoat(): Promise<void> {
@@ -199,6 +227,15 @@ export class TripEditModal {
       return;
     }
     this.onFieldChange('resource', boat);
+    // a boat without a cox seat drops a cox chosen for the previous boat
+    if (this.formData()?.cox && !boatHasCox(this.boats().find(b => b.okey === boat.key))) {
+      this.formData.update((vm) => {
+        if (!vm) return vm;
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { cox: _removed, ...rest } = vm;
+        return rest as TripModel;
+      });
+    }
   }
 
   /**

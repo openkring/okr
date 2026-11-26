@@ -1,5 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
+import { deleteField } from 'firebase/firestore';
 import { getApp } from 'firebase/app';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 
@@ -77,6 +78,15 @@ export class TripService {
     return this.firestoreService.updateModel<TripModel>(
       TripCollection, withoutTrackLink(trip) as TripModel, false, this.i18n.update_conf(), this.i18n.update_error(), currentUser
     );
+  }
+
+  /**
+   * Removes a stored cox: update() merges, so a cox dropped from the model would otherwise stay in
+   * the document. Called by the edit modal only when the stored trip had one.
+   */
+  public async removeCox(tripKey: string): Promise<string | undefined> {
+    // updateObject (not updateModel): the deleteField() sentinel must reach updateDoc un-cloned
+    return this.firestoreService.updateObject(TripCollection, tripKey, { cox: deleteField() });
   }
 
   public async softDelete(trip: TripModel, reason: string, photoUrl: string | undefined, currentUser?: UserModel): Promise<void> {

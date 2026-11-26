@@ -41,6 +41,8 @@ export const RESOURCE_I18N_KEYS = {
   locked_title:             PFX + 'locked.title',
   locked_label:             PFX + 'locked.label',
   locked_helper:            PFX + 'locked.helper',
+  hasCox_label:             PFX + 'hasCox.label',
+  hasCox_helper:            PFX + 'hasCox.helper',
 
   keyNr_label:              PFX + 'keyNr.label',
   keyNr_placeholder:        PFX + 'keyNr.placeholder',

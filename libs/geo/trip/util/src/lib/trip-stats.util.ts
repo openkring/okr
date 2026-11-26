@@ -55,6 +55,8 @@ export function aggregateTripStats(trips: TripModel[], entityType: 'boats' | 'me
       add(trip.resource?.key, km);
     } else {
       for (const p of trip.participants ?? []) add(p.key, km);
+      // the cox of an 8x is on the water as long as the rowers (like the cox of an 8+, who sits in participants)
+      add(trip.cox?.key, km);
     }
   }
   return entries;

@@ -29,6 +29,7 @@ export class ResourceModel implements OkrModel, NamedModel, SearchableModel, Tag
   public height = 0;
   public data?: BaseProperty[] = []; // URL parameters that should be passed to the url
   public tripAlert = ''; // rboat: notice shown as a warning banner in the trip edit modal when this boat is selected (legacy docs: undefined)
+  public hasCox = false; // rboat 8x ('b8x') only: the boat is steered by a cox, so the Logbuch asks for one (trip.cox); legacy docs: undefined
 
   constructor(tenantId: string) {
     this.tenants = [tenantId];

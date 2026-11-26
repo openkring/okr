@@ -43,6 +43,11 @@ describe('aggregateTripStats', () => {
     expect(result).toEqual({ P1: { km: 12, count: 1 }, P2: { km: 12, count: 1 } });
   });
 
+  it('credits the full distance to the cox of an 8x as well', () => {
+    const result = aggregateTripStats([trip({ participants: crew, cox: { key: 'C1' } as TripModel['cox'], distance: 8 })], 'members');
+    expect(result).toEqual({ P1: { km: 8, count: 1 }, P2: { km: 8, count: 1 }, C1: { km: 8, count: 1 } });
+  });
+
   it('skips open, plainly deleted and tracker trips', () => {
     const result = aggregateTripStats([
       trip({ resource: boat, state: 'open' }),

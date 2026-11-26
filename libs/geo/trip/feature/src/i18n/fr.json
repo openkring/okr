@@ -91,6 +91,9 @@
     "location": {
       "title": "Choisir une destination",
       "add": "Choisir une destination"
+    },
+    "cox": {
+      "add": "Choisir le barreur"
     }
   },
   "show": {
@@ -335,5 +338,6 @@
     "solo": {
       "hint": "Prends ton iPhone avec l’app. Tu trouveras ensuite le parcours dans le menu « Enregistrer un parcours »."
     }
-  }
+  },
+  "cox": "Barreur"
 }

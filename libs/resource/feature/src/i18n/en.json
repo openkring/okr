@@ -991,5 +991,9 @@
     "title": "Boat is locked",
     "label": "Lock boat",
     "helper": "A locked boat cannot be chosen in the logbook. The logbook notice is shown as the reason."
+  },
+  "hasCox": {
+    "label": "With cox seat",
+    "helper": "The logbook also asks for a cox whenever this boat is used."
   }
 }

@@ -991,5 +991,9 @@
     "title": "El barco está bloqueado",
     "label": "Bloquear el barco",
     "helper": "Un barco bloqueado no se puede elegir en el cuaderno de bitácora. El aviso del cuaderno se muestra como motivo."
+  },
+  "hasCox": {
+    "label": "Con timonel",
+    "helper": "En el cuaderno de bitácora también indicas un timonel cuando usas este barco."
   }
 }

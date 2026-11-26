@@ -44,6 +44,8 @@ export function copyTrip(trip: TripModel, tenantId: string): TripModel {
   const copy = newTrip(tenantId, trip.type);
   copy.resource = trip.resource ? { ...trip.resource } : undefined;
   copy.participants = uniqueParticipants(trip.participants ?? []).map((p) => ({ ...p }));
+  // the cox goes with the boat: TripStore.copyTrip drops both when the boat is not free
+  if (trip.cox) copy.cox = { ...trip.cox };
   copy.locations = (trip.locations ?? []).map((l) => ({ ...l }));
   copy.customLocationLabel = trip.customLocationLabel;
   copy.distance = trip.distance;
@@ -94,7 +96,8 @@ export function getTripIndex(trip: TripModel): string {
   let index = '';
   index = addIndexElement(index, 'r', trip.resource?.name2 ?? '');
   index = addIndexElement(index, 'd', trip.startDate);
-  const participants = (trip.participants ?? [])
+  // the cox is searchable like any crew member (an 8x with a cox seat keeps it apart from participants)
+  const participants = [...(trip.participants ?? []), ...(trip.cox ? [trip.cox] : [])]
     // a keyless participant is a guest: index the keyword in both languages so 'guest'
     // and 'Gast' find the trip, plus the name if one was entered
     .map((p) => [p.key ? '' : 'guest Gast', `${p.name1} ${p.name2}`.trim()].filter(Boolean).join(' '))

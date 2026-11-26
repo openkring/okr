@@ -91,6 +91,9 @@
     "location": {
       "title": "Elegir destino",
       "add": "Elegir destino"
+    },
+    "cox": {
+      "add": "Elegir timonel"
     }
   },
   "show": {
@@ -335,5 +338,6 @@
     "solo": {
       "hint": "Llévate tu iPhone con la app. Después encontrarás el recorrido en el menú «Grabar un recorrido»."
     }
-  }
+  },
+  "cox": "Timonel"
 }

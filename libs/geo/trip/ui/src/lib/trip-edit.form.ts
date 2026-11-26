@@ -4,7 +4,7 @@ import { IonButton, IonCard, IonCardContent, IonCol, IonGrid, IonIcon, IonItem, 
 
 import { AvatarInfo, CategoryItemModel, CategoryListModel, LocationModel, ResourceModel, RoleName, TripModel, UserModel } from '@okr/shared-models';
 import { Checkbox, CheckboxI18n, DateInput, DateInputI18n, ErrorNote, TextareaInput, TextareaInputI18n, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n, TimeInput, TimeInputI18n } from '@okr/shared-ui';
-import { debugFormModel, getDurationLabel, hasRole } from '@okr/shared-util-core';
+import { boatHasCox, debugFormModel, getDurationLabel, hasRole } from '@okr/shared-util-core';
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { DEFAULT_NOTES } from '@okr/shared-constants';
 import { SvgIconPipe } from '@okr/shared-pipes';
@@ -110,6 +110,30 @@ import { formatTripTime, isTrainingCrewBoat, MAX_TRIP_DISTANCE_KM, TripI18n, tri
               </ion-col>
             </ion-row>
 
+            <!-- cox: only for an 8x with a cox seat (ResourceModel.hasCox); a stored cox stays visible so it can be removed -->
+            @if(showCox()) {
+              <ion-row>
+                <ion-col size="6">
+                  <ion-item lines="none">
+                    <ion-label>{{ i18n().cox() }}</ion-label>
+                  </ion-item>
+                </ion-col>
+                <ion-col size="6">
+                  <ion-item lines="none">
+                    @if(formData().cox; as cox) {
+                      <ion-label>{{ cox.name1 }} {{ cox.name2 }}</ion-label>
+                      <ion-icon slot="end" src="{{'cancel-circle' | svgIcon }}" (click)="clearCox()" />
+                    } @else {
+                      <ion-button (click)="coxSelectClicked.emit()">
+                        <ion-icon slot="start" src="{{'person' | svgIcon }}" />
+                        {{ i18n().select_cox_add() }}
+                      </ion-button>
+                    }
+                  </ion-item>
+                </ion-col>
+              </ion-row>
+            }
+
             <!-- location -->
             <ion-row>
               <ion-col size="6">
@@ -213,6 +237,7 @@ export class TripEditForm {
   public boatSelectClicked = output<void>();
   public locationSelectClicked = output<void>();
   public trainingSelectClicked = output<void>();
+  public coxSelectClicked = output<void>();
 
   // signal form — wraps formData with Vest validation
   protected readonly tripForm = form(this.formData, (path) =>
@@ -280,6 +305,12 @@ export class TripEditForm {
     if (!boatKey) return '';
     return (this.boats().find(b => b.okey === boatKey)?.tripAlert ?? '').trim();
   });
+  /** the cox row: the selected boat is an 8x with a cox seat, or the trip already carries a cox */
+  protected showCox = computed(() => {
+    if (this.formData().cox) return true;
+    const boatKey = this.formData().resource?.key;
+    return !!boatKey && boatHasCox(this.boats().find(b => b.okey === boatKey));
+  });
   protected duration = computed(() =>
     getDurationLabel(this.formData().startDate, this.formData().startTime, this.formData().endTime)
   );
@@ -343,6 +374,18 @@ export class TripEditForm {
 
   protected clearBoat(): void {
     this.onFieldChange('resource', undefined);
+    this.clearCox(); // the cox sits in that boat
+  }
+
+  /** removes the key instead of writing undefined; the modal deletes a stored cox on save */
+  protected clearCox(): void {
+    if (!this.formData().cox) return;
+    this.dirty.emit(true);
+    this.formData.update((vm) => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { cox: _removed, ...rest } = vm;
+      return rest as TripModel;
+    });
   }
 
   protected clearLocation(): void {

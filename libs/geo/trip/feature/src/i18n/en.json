@@ -91,6 +91,9 @@
     "location": {
       "title": "Select destination",
       "add": "Choose destination"
+    },
+    "cox": {
+      "add": "Select cox"
     }
   },
   "show": {
@@ -335,5 +338,6 @@
     "solo": {
       "hint": "Take your iPhone with the app along. You will then find the track in the menu “Record a route”."
     }
-  }
+  },
+  "cox": "Cox"
 }

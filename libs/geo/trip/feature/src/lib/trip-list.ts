@@ -115,6 +115,10 @@ import { AvatarDisplay } from '@okr/avatar-ui';
                   {{ trip.resource?.name2 }}
                 </ion-label>
                 <okr-avatar-display [avatars]="trip.participants" [showName]="false" />
+                @if(trip.cox; as cox) {
+                  <!-- the cox of an 8x, shown after the rowers -->
+                  <okr-avatar-display [avatars]="[cox]" [showName]="false" />
+                }
                 <ion-label slot="end">
                   {{ trip.distance }} km
                 </ion-label>

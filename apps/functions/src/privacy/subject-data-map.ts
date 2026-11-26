@@ -1,10 +1,11 @@
 import { FieldPath, Filter, getFirestore } from 'firebase-admin/firestore';
 import type { DocumentSnapshot, QueryDocumentSnapshot } from 'firebase-admin/firestore';
 import { ADDRESS_REGISTER_TENANT } from '@okr/shared-constants';
-import { ContractModel, CourseFinanceSubcollection, CourseModel, HouseholdCollection, LegacyMemberFeeCollection, MemberFeeCollection, PROSPECT_PARENT_PREFIX } from '@okr/shared-models';
+import { ContractModel, CourseFinanceSubcollection, CourseModel, HouseholdCollection, LegacyMemberFeeCollection, MemberFeeCollection, PROSPECT_PARENT_PREFIX, TripModel } from '@okr/shared-models';
 import type { AvatarInfo } from '@okr/shared-models';
 import { getContractIndex } from '@okr/business-contract-util';
 import { getCourseIndex } from '@okr/calendar-course-util';
+import { getTripIndex } from '@okr/trip-util';
 import { householdRecipientKey } from '@okr/shared-util-core';
 import { householdAfterErasure } from '../household/household.logic';
 import type { Blocker, SubjectCtx, SubjectDataEntry } from './types';
@@ -1260,11 +1261,15 @@ export const SUBJECT_DATA_MAP: readonly SubjectDataEntry[] = [
     onTenantExit: 'anonymize',
     find: (c: SubjectCtx) => db().collection('trips').where('tenants', 'array-contains', c.tenantId),
     tenantScope: 'inQuery',
-    matches: (doc, c) => avatarArrayHolds(doc, 'participants', c.personKey),
+    matches: (doc, c) => avatarArrayHolds(doc, 'participants', c.personKey)
+      || (!!c.personKey && doc.get('cox.key') === c.personKey),   // the cox of an 8x (TripModel.cox)
     onExport: 'index',
     indexFields: { title: 'name', date: 'startDate', route: '/trip' },
     onErasure: 'anonymize',       // the logbook entry (boat, distance, date) stays
-    anonymizeFields: ['participants'],
+    anonymizeFields: ['participants', ...avatarPaths('cox')],
+    // `index` ('… p:<crew names>') copies the names of the crew and the cox: rebuilt with the
+    // builder the client uses on save, so the erased name does not survive in it.
+    recomputeDerived: (d) => ({ index: getTripIndex({ ...new TripModel(''), ...d } as TripModel) }),
     retention: CLUB_RECORD,
   },
   {

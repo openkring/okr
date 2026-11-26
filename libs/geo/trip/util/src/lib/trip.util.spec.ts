@@ -76,6 +76,12 @@ describe('copyTrip', () => {
     expect(copy.type).toBe(source().type);
   });
 
+  it('carries the cox over and leaves a trip without one without the field', () => {
+    const cox = { key: 'c1', name1: 'Carla', name2: 'Cox', label: '', modelType: 'person', type: '', subType: '' };
+    expect(copyTrip({ ...source(), cox } as TripModel, TENANT).cox?.key).toBe('c1');
+    expect('cox' in copyTrip(source(), TENANT)).toBe(false);
+  });
+
   it('does not carry the track request or link over', () => {
     const copy = copyTrip(
       { ...source(), trackRequest: { personKey: 'p1' }, trackKey: 'track-1' } as TripModel,
@@ -155,6 +161,14 @@ describe('getTripIndex', () => {
     expect(idx).toContain('20240601');
     expect(idx).toContain('Anna Müller');
     expect(idx).toContain('Max Muster');
+  });
+
+  it('indexes the cox like a crew member', () => {
+    const trip = makeTrip({
+      participants: [{ key: 'p1', name1: 'Anna', name2: 'Müller', modelType: 'person', type: '', subType: '', label: '' }],
+      cox: { key: 'c1', name1: 'Carla', name2: 'Cox', modelType: 'person', type: '', subType: '', label: '' },
+    });
+    expect(getTripIndex(trip)).toContain('Carla Cox');
   });
 
   it('indexes keyless participants as guest, with the name when present', () => {

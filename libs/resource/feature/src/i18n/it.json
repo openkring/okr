@@ -991,5 +991,9 @@
     "title": "La barca è bloccata",
     "label": "Bloccare la barca",
     "helper": "Una barca bloccata non può essere scelta nel giornale di bordo. L'avviso del giornale viene mostrato come motivo."
+  },
+  "hasCox": {
+    "label": "Con timoniere",
+    "helper": "Nel giornale di bordo inserisci anche un timoniere quando usi questa barca."
   }
 }

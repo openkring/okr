@@ -991,5 +991,9 @@
     "title": "Boot ist gesperrt",
     "label": "Boot sperren",
     "helper": "Ein gesperrtes Boot kann im Logbuch nicht ausgewählt werden. Der Hinweis im Logbuch erscheint als Grund."
+  },
+  "hasCox": {
+    "label": "Mit Steuerplatz",
+    "helper": "Im Logbuch wird für dieses Boot zusätzlich eine Steuerperson erfasst."
   }
 }

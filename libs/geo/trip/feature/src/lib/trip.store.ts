@@ -231,6 +231,8 @@ export const TripStore = signalStore(
             await this.showBoatReserved(reservation);
           }
         }
+        // the cox belongs to the boat's seat: a dropped boat takes its cox with it
+        if (!copy.resource) delete copy.cox;
       }
       await this.openTripModal(copy, 'copy');
     },
