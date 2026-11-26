@@ -288,7 +288,8 @@
       "keep": "Guardar borrador",
       "discard": "Descartar",
       "back": "Volver",
-      "keep_failed": "No se pudo guardar el borrador. Inténtalo de nuevo."
+      "keep_failed": "No se pudo guardar el borrador. Inténtalo de nuevo.",
+      "confirming": "Primero confirma los destinatarios o cancela el envío, luego puedes cerrar la ventana."
     }
   },
   "category": {

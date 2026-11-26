@@ -46,6 +46,13 @@ export function storedTime(value: string | undefined): number {
   return Number.isNaN(time) ? 0 : time;
 }
 
+/** The local day of a time as StoreDate (`yyyyMMdd`), for the app's date pipe; empty when unknown. */
+export function storeDateOf(time: number): string {
+  if (!Number.isFinite(time) || time <= 0) return '';
+  const date = new Date(time);
+  return `${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, '0')}${String(date.getDate()).padStart(2, '0')}`;
+}
+
 /** When the page was last changed: `changedAt`, else `createdAt`. */
 export function pageTime(page: Pick<MailPageModel, 'changedAt' | 'createdAt'>): number {
   return storedTime(page.changedAt) || storedTime(page.createdAt);
@@ -149,11 +156,14 @@ export function startStepWanted(state: { isVersand: boolean; bodyDefault: string
 /**
  * What a close of a Versand composer does with its draft (§8.5):
  * - `allow`: nothing to ask (no Versand, sent, or no content: the draft is deleted silently on close);
- * - `wait`: a send or a test mail runs; ask again once it ended;
+ * - `wait`: a send or a test mail runs, or a chosen draft or copy is replacing the new one (its content is not loaded yet, and the
+ *   page must not be deleted by a close that saw no content); ask again once it ended;
  * - `ask`: «Entwurf behalten» / «Verwerfen» / «Zurück».
  */
-export function composerCloseDecision(state: { isVersand: boolean; sent: boolean; busy: boolean; hasContent: boolean }): 'allow' | 'wait' | 'ask' {
+export function composerCloseDecision(
+  state: { isVersand: boolean; sent: boolean; busy: boolean; hasContent: boolean; picking?: boolean },
+): 'allow' | 'wait' | 'ask' {
   if (!state.isVersand || state.sent) return 'allow';
-  if (state.busy) return 'wait';
+  if (state.busy || state.picking) return 'wait';
   return state.hasContent ? 'ask' : 'allow';
 }

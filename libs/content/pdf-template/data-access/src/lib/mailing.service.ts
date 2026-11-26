@@ -1,6 +1,6 @@
 // libs/content/pdf-template/data-access/src/lib/mailing.service.ts
 import { inject, Injectable } from '@angular/core';
-import { collection } from 'firebase/firestore';
+import { collection, getDocs, limit, orderBy, query, where, type Query } from 'firebase/firestore';
 import { collectionData } from 'rxfire/firestore';
 import { catchError, map, Observable, of } from 'rxjs';
 
@@ -11,6 +11,8 @@ import { MailingView, sortMailingsNewestFirst } from '@okr/content-pdf-template-
 
 /** One doc per Versand (spec 1.145 §10), written only by `sendMailing` / `onMailing`. */
 export const MailingCollection = 'mailings';
+/** «Frühere E-Mail kopieren» reads at most this many of the tenant's newest Versände. */
+export const RECENT_MAILINGS_MAX = 100;
 
 /**
  * Read access to the sent Versände, for the overview. Nothing here writes: the rules refuse every
@@ -30,6 +32,23 @@ export class MailingService {
     return this.firestoreService.searchData<MailingView>(
       MailingCollection, [{ key: 'tenants', operator: 'array-contains', value: tenantId }], 'none'
     ).pipe(map((mailings) => sortMailingsNewestFirst(mailings)));
+  }
+
+  /**
+   * The tenant's newest Versände, once (not live), at most `max`: what «Frühere E-Mail kopieren» offers to a member admin or privileged
+   * user (spec 1.176 §8.5). Ordered by `createdAt` on the server; until the composite index (tenants, createdAt desc) is deployed the
+   * query fails with `failed-precondition`, and the unordered query is sorted and cut here.
+   */
+  public async recent(tenantId: string, max = RECENT_MAILINGS_MAX): Promise<MailingView[]> {
+    const mailings = collection(this.firestore, MailingCollection);
+    const read = async (q: Query) => (await getDocs(q)).docs.map((d) => ({ ...d.data(), okey: d.id }) as MailingView);
+    try {
+      return await read(query(mailings, where('tenants', 'array-contains', tenantId), orderBy('createdAt', 'desc'), limit(max)));
+    } catch (err) {
+      if ((err as { code?: unknown } | undefined)?.code !== 'failed-precondition') throw err;
+      console.warn('MailingService.recent: the index is missing, reading unordered', err);
+      return sortMailingsNewestFirst(await read(query(mailings, where('tenants', 'array-contains', tenantId)))).slice(0, max);
+    }
   }
 
   public read(key: string | undefined): Observable<MailingView | undefined> {

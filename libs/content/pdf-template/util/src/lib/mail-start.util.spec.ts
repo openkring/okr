@@ -5,7 +5,7 @@ import type { MailPageModel } from '@okr/shared-models';
 import type { MailingView } from './mailing.util';
 import {
   choicesWithoutSubject, composerCloseDecision, draftCandidates, earlierMails, filterStartChoices, pageTime, START_DRAFTS_MAX,
-  START_EARLIER_MAX, startChoices, startStepWanted, storedTime, type StartPage,
+  START_EARLIER_MAX, startChoices, startStepWanted, storeDateOf, storedTime, type StartPage,
 } from './mail-start.util';
 
 const page = (okey: string, fields: Partial<MailPageModel> = {}): MailPageModel =>
@@ -129,8 +129,16 @@ describe('startStepWanted', () => {
   });
 });
 
+describe('storeDateOf', () => {
+  it('gives the local day as StoreDate, empty when unknown', () => {
+    expect(storeDateOf(new Date(2026, 10, 5, 23, 30).getTime())).toBe('20261105');
+    expect(storeDateOf(0)).toBe('');
+    expect(storeDateOf(Number.NaN)).toBe('');
+  });
+});
+
 describe('composerCloseDecision', () => {
-  const base = { isVersand: true, sent: false, busy: false, hasContent: true };
+  const base = { isVersand: true, sent: false, busy: false, hasContent: true, picking: false };
   it('asks with content, waits while sending, else lets it close', () => {
     expect(composerCloseDecision(base)).toBe('ask');
     expect(composerCloseDecision({ ...base, hasContent: false })).toBe('allow');
@@ -138,5 +146,12 @@ describe('composerCloseDecision', () => {
     expect(composerCloseDecision({ ...base, busy: true, hasContent: false })).toBe('wait');
     expect(composerCloseDecision({ ...base, sent: true, busy: true })).toBe('allow');
     expect(composerCloseDecision({ ...base, isVersand: false })).toBe('allow');
+  });
+
+  it('waits while a chosen draft or copy replaces the new one, also when nothing shows yet', () => {
+    // the new empty draft is being discarded: no content is loaded, but the chosen one is on its way
+    expect(composerCloseDecision({ ...base, hasContent: false, picking: true })).toBe('wait');
+    expect(composerCloseDecision({ ...base, picking: true })).toBe('wait');
+    expect(composerCloseDecision({ ...base, sent: true, picking: true })).toBe('allow');
   });
 });

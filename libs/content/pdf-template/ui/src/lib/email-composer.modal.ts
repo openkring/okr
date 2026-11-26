@@ -833,6 +833,10 @@ export class EmailComposerModal {
   private closeAnswered = false;
   /** The close question (or the one of «Zurücksetzen») is open: a second close waits for its answer instead of asking twice. */
   private askingClose = false;
+  /** A chosen draft or copy is replacing the new empty draft; a close waits for it (it must not see «no content» meanwhile). */
+  private picking: Promise<void> | undefined;
+  /** The sender is confirming the recipients of a send: a close is refused with a note. */
+  private confirmingRecipients = false;
 
   /**
    * Where the cursor starts (spec 1.176 §8.1): a mail needs a subject first, so an empty subject takes the focus when the editor
@@ -1627,14 +1631,20 @@ export class EmailComposerModal {
     const [pages, mailings] = await Promise.all([
       this.mailPageService.ownPages(uid, tenantId),
       mayReadMailings
-        ? firstValueFrom(this.mailingService.list(tenantId)).catch((): MailingView[] => [])
+        ? this.mailingService.recent(tenantId).catch((err): MailingView[] => {
+          console.warn('EmailComposerModal: the mailings could not be read', err);
+          return [];
+        })
         : Promise.resolve([] as MailingView[]),
     ]);
     // the composer's own new draft is never a choice
     await this.draftReady;
+    if (this.destroyed) return { drafts: [], earlier: [] };
     const exceptKey = this.draft.pageKey();
     const known = new Map<string, StartPage>(pages.map((page) => [page.okey, { page }]));
+    // closed meanwhile: no further read
     const read = async (pageKey: string, order?: string[]): Promise<MailBlock[] | undefined> => {
+      if (this.destroyed) return undefined;
       try {
         return await this.mailPageService.loadBlocks(pageKey, order);
       } catch (err) {
@@ -1646,6 +1656,7 @@ export class EmailComposerModal {
       const blocks = await read(page.okey, page.sections ?? []);
       if (blocks) known.set(page.okey, { page, hasContent: mailBlocksHaveContent(blocks), firstWords: mailBlocksFirstWords(blocks) });
     }));
+    if (this.destroyed) return { drafts: [], earlier: [] };
     const choices = startChoices([...known.values()], mailings, mayReadMailings, tenantId, exceptKey);
     // an earlier mail without a subject is named by its first words
     const words = new Map<string, string>();
@@ -1676,11 +1687,9 @@ export class EmailComposerModal {
         } else {
           const started = await this.mailPageService.startFrom(choice.pageKey, ctx, { subject: choice.subject, layout: 'standard', webVersion: this.webVersion() });
           // the composer closed meanwhile: the copy was never seen, it goes again
-          if (this.destroyed) {
-            await this.mailPageService.discardDraft(started.pageKey);
-            return;
+          if (!(await this.useDraft(started.pageKey, started.articleKey, started.blocks, started.meta))) {
+            await this.mailPageService.discardDraft(started.pageKey).catch((err) => console.warn('EmailComposerModal: could not delete the unused copy', err));
           }
-          await this.useDraft(started.pageKey, started.articleKey, started.blocks, started.meta);
         }
       } catch (err) {
         console.warn('EmailComposerModal: the chosen mail could not be opened', err);
@@ -1690,16 +1699,29 @@ export class EmailComposerModal {
       }
     });
     this.draftReady = run;
-    await run;
+    this.picking = run;
+    try {
+      await run;
+    } finally {
+      if (this.picking === run) this.picking = undefined;
+    }
   }
 
   /**
    * Works on `pageKey` from now on: the new empty draft is thrown away, subject, template and web version of the page go into the form
-   * (the meta effect then finds them equal and writes nothing), and the send bar shows: the mail has content.
+   * (the meta effect then finds them equal and writes nothing), and the send bar shows: the mail has content. False when the composer
+   * went meanwhile: the page is not started, so that the close of the composer cannot delete it (a copy is deleted by the caller, a
+   * continued draft stays the sender's).
    */
-  private async useDraft(pageKey: string, articleKey: string, blocks: MailBlock[], meta: Partial<MailPageMeta>): Promise<void> {
-    if (this.destroyed || this.sent) return;
-    await this.draft.discard();
+  private async useDraft(pageKey: string, articleKey: string, blocks: MailBlock[], meta: Partial<MailPageMeta>): Promise<boolean> {
+    if (this.destroyed || this.sent) return false;
+    try {
+      await this.draft.discard();
+    } catch (err) {
+      // the empty draft stays behind (the nightly job reaps it); the chosen mail opens all the same
+      console.warn('EmailComposerModal: could not discard the new draft', err);
+    }
+    if (this.destroyed) return false;
     const subject = meta.subject ?? '';
     this.formData.update((vm) => ({ ...vm, subject, layout: meta.layout ?? 'standard' }));
     this.webVersionChoice.set(meta.webVersion);
@@ -1710,6 +1732,7 @@ export class EmailComposerModal {
     });
     this.subjectAutofocus.set(subject.trim() === '');
     this.isDirty.set(true);
+    return true;
   }
 
   /**
@@ -1719,13 +1742,22 @@ export class EmailComposerModal {
   private async mayClose(): Promise<boolean> {
     if (this.closeAnswered) return true;
     if (this.askingClose) return false;
-    const state = () => ({ isVersand: this.isVersand(), sent: this.sent, busy: this.isSending(), hasContent: this.draft.loaded() && this.draft.hasContent() });
+    const state = () => ({
+      isVersand: this.isVersand(), sent: this.sent, busy: this.isSending(), picking: !!this.picking, hasContent: this.draft.loaded() && this.draft.hasContent(),
+    });
     let decision = composerCloseDecision(state());
     if (decision === 'wait') {
-      // the recipients are still being confirmed: nothing runs yet that could be awaited
-      if (!this.sendInFlight) return false;
-      await this.sendInFlight;
-      decision = composerCloseDecision({ ...state(), busy: false });
+      // a chosen draft or copy first: until it is there the composer shows no content, and the page must not go silently
+      if (this.picking) await this.picking;
+      if (this.isSending()) {
+        // the recipients are still being confirmed: nothing runs yet that could be awaited
+        if (this.confirmingRecipients || !this.sendInFlight) {
+          void this.showToast(this.i18n.close_confirming(), 'warning');
+          return false;
+        }
+        await this.sendInFlight;
+      }
+      decision = composerCloseDecision({ ...state(), busy: false, picking: false });
     }
     if (decision === 'allow') return true;
     const answer = await this.askClose();
@@ -1803,7 +1835,9 @@ export class EmailComposerModal {
   protected async send(): Promise<void> {
     if (!this.canSend() || this.isSending()) return;
     this.isSending.set(true);
-    if (!(await this.confirmRecipients())) {
+    this.confirmingRecipients = true;
+    const confirmed = await this.confirmRecipients().finally(() => { this.confirmingRecipients = false; });
+    if (!confirmed) {
       this.isSending.set(false);
       return;
     }

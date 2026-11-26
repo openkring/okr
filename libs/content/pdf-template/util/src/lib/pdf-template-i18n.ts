@@ -310,6 +310,7 @@ export const EMAIL_COMPOSER_I18N_KEYS = {
   close_discard:      PFX + 'composer.close.discard',
   close_back:         PFX + 'composer.close.back',
   close_keep_failed:  PFX + 'composer.close.keep_failed',
+  close_confirming:   PFX + 'composer.close.confirming',
 } satisfies Record<string, string>;
 
 export type EmailComposerI18n = { [K in keyof typeof EMAIL_COMPOSER_I18N_KEYS]: Signal<string> };

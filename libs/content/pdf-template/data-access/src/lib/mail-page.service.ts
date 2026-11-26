@@ -11,7 +11,9 @@
 // Reads (spec 1.176 §8.5): the sender's own pages by the query `senderUid == uid` (the rules allow exactly that one), and a page with
 // its sections by key: the own ones, and sent ones of the tenant for a member admin or privileged user. Copying never writes the source.
 import { inject, Injectable } from '@angular/core';
-import { arrayRemove, arrayUnion, collection, deleteField, doc, DocumentReference, getDoc, getDocs, query, updateDoc, where, writeBatch } from 'firebase/firestore';
+import {
+  arrayRemove, arrayUnion, collection, deleteField, doc, DocumentReference, getDoc, getDocs, limit, orderBy, query, runTransaction, updateDoc, where, writeBatch,
+} from 'firebase/firestore';
 import { docData, collectionData } from 'rxfire/firestore';
 import { combineLatest, map, Observable } from 'rxjs';
 
@@ -22,6 +24,9 @@ import {
 import { removeKeyFromOkrModel, removeUndefinedFields } from '@okr/shared-util-core';
 import { newMailPage, type MailPageMeta } from '@okr/content-pdf-template-util';
 import { mailArticle, mailBlocksFromBody, mailBlocksFromSections } from '@okr/cms-section-util';
+
+/** At most this many own pages are read for the start step, the newest first (drafts and sent ones). */
+export const OWN_PAGES_MAX = 100;
 
 /** A draft the composer works on: the page, its one article and what the page keeps besides the blocks. */
 export interface StartedDraft {
@@ -109,16 +114,27 @@ export class MailPageService {
   }
 
   /**
-   * The caller's own pages of the tenant, drafts and sent ones (§8.5). The query is `senderUid == uid`, the one the rules allow; the
-   * tenant is filtered here, so that the query needs no composite index. A sender has a few dozen pages at most: the nightly job reaps
-   * unsent drafts after 30 days.
+   * The caller's newest own pages of the tenant, drafts and sent ones (§8.5), at most `OWN_PAGES_MAX`. The query is `senderUid == uid`
+   * (the one the rules allow) ordered by `createdAt`; the tenant is filtered here. Unsent drafts are reaped after 30 days, but sent pages
+   * stay with their mailings and grow with every Versand, hence the limit. Until the composite index (senderUid, createdAt desc) is
+   * deployed the query fails with `failed-precondition`: then the unordered query is used and cut here.
    */
   public async ownPages(uid: string, tenantId: string): Promise<MailPageModel[]> {
     if (!uid) return [];
-    const snap = await getDocs(query(collection(this.firestore, MailPageCollection), where('senderUid', '==', uid)));
-    return snap.docs
+    const pages = collection(this.firestore, MailPageCollection);
+    let docs;
+    try {
+      docs = (await getDocs(query(pages, where('senderUid', '==', uid), orderBy('createdAt', 'desc'), limit(OWN_PAGES_MAX)))).docs;
+    } catch (err) {
+      if (errorCode(err) !== 'failed-precondition') throw err;
+      console.warn('MailPageService.ownPages: the index is missing, reading unordered', err);
+      docs = (await getDocs(query(pages, where('senderUid', '==', uid)))).docs;
+    }
+    return docs
       .map((d) => ({ ...d.data(), okey: d.id }) as MailPageModel)
-      .filter((page) => Array.isArray(page.tenants) && page.tenants.includes(tenantId));
+      .filter((page) => Array.isArray(page.tenants) && page.tenants.includes(tenantId))
+      .sort((a, b) => String(b.createdAt ?? '').localeCompare(String(a.createdAt ?? '')))
+      .slice(0, OWN_PAGES_MAX);
   }
 
   private async readSections(pageKey: string): Promise<{ sections: SectionModel[]; refs: DocumentReference[] }> {
@@ -137,53 +153,56 @@ export class MailPageService {
   }
 
   /**
-   * Continues an own draft (§8.5). The page is read again: sent or deleted meanwhile, nothing is written. Otherwise one batch: `groupKey`
-   * becomes the current composer's (removed without one) and `changedAt` is set; a draft of 1.172 (sections) has its sections replaced
-   * by the one article of their blocks in the same batch, so that an older server cannot send the old content. The rules decide whether
-   * the caller may still write it: a refusal leaves the draft as it was.
+   * Continues an own draft (§8.5), in one transaction that reads the page and its listed sections again: sent or deleted meanwhile,
+   * nothing is written. Otherwise `groupKey` becomes the current composer's (removed without one) and `changedAt` is set. A page that lists
+   * exactly one article with blocks is adopted as it is — also one another window converted a moment ago. A draft of 1.172 (sections)
+   * has its sections replaced by the one article of their blocks in the same transaction, so that an older server cannot send the old
+   * content. The rules decide whether the caller may still write it: a refusal leaves the draft as it was.
    */
   public async continueDraft(pageKey: string, ctx: { tenantId: string; uid: string; groupKey?: string }): Promise<ContinueResult> {
-    let page: Partial<MailPageModel> | undefined;
-    let read: { sections: SectionModel[]; refs: DocumentReference[] };
+    const pageRef = this.pageRef(pageKey);
+    // every section doc, also one the page does not list: a conversion removes them all (a transaction cannot query)
+    let strays: DocumentReference[];
     try {
-      page = (await getDoc(this.pageRef(pageKey))).data() as Partial<MailPageModel> | undefined;
-      if (!page) return { status: 'gone' };
-      if (typeof page.mailingKey === 'string' && page.mailingKey !== '') return { status: 'sent' };
-      if (page.senderUid !== ctx.uid || !page.tenants?.includes(ctx.tenantId)) return { status: 'gone' };
-      read = await this.readSections(pageKey);
+      strays = (await this.readSections(pageKey)).refs;
     } catch (err) {
       console.warn('MailPageService.continueDraft: reading the draft failed', err);
       return { status: errorCode(err) === 'permission-denied' ? 'gone' : 'failed' };
     }
-
-    const ordered = inPageOrder(read.sections, page.sections);
-    const only = ordered.length === 1 && read.sections.length === 1 ? ordered[0] : undefined;
-    const stored = only?.type === 'article' ? articleBlocksOf(only) : undefined;
-    const batch = writeBatch(this.firestore);
-    const changes: Record<string, unknown> = { groupKey: ctx.groupKey ? ctx.groupKey : deleteField(), changedAt: new Date().toISOString() };
-    let articleKey: string;
-    let blocks: MailBlock[];
-    if (only && stored) {
-      articleKey = only.okey;
-      blocks = structuredClone(stored) as MailBlock[];
-    } else {
-      // a draft of 1.172: its sections become the one article of a mail, in the same batch
-      blocks = mailBlocksFromSections(ordered, () => crypto.randomUUID());
-      const articleRef = doc(this.sectionsRef(pageKey));
-      articleKey = articleRef.id;
-      read.refs.forEach((ref) => batch.delete(ref));
-      batch.set(articleRef, this.stored({ ...mailArticle(ctx.tenantId, blocks), okey: articleKey }));
-      changes['sections'] = [articleKey];
-    }
-    batch.update(this.pageRef(pageKey), changes);
     try {
-      await batch.commit();
+      return await runTransaction(this.firestore, async (tx): Promise<ContinueResult> => {
+        const page = (await tx.get(pageRef)).data() as Partial<MailPageModel> | undefined;
+        if (!page) return { status: 'gone' };
+        if (typeof page.mailingKey === 'string' && page.mailingKey !== '') return { status: 'sent' };
+        if (page.senderUid !== ctx.uid || !page.tenants?.includes(ctx.tenantId)) return { status: 'gone' };
+        const order = (Array.isArray(page.sections) ? page.sections : []).filter((key): key is string => typeof key === 'string' && key !== '' && !key.includes('/'));
+        const sections: SectionModel[] = [];
+        for (const key of order) {
+          const snap = await tx.get(doc(this.sectionsRef(pageKey), key));
+          if (snap.exists()) sections.push({ ...snap.data(), okey: key } as SectionModel);
+        }
+        const changes: Record<string, unknown> = { groupKey: ctx.groupKey ? ctx.groupKey : deleteField(), changedAt: new Date().toISOString() };
+        const only = order.length === 1 && sections.length === 1 ? sections[0] : undefined;
+        const stored = only?.type === 'article' ? articleBlocksOf(only) : undefined;
+        if (only && stored) {
+          tx.update(pageRef, changes);
+          return { status: 'ok', pageKey, articleKey: only.okey, blocks: structuredClone(stored) as MailBlock[], meta: storedMeta(page) };
+        }
+        // a draft of 1.172: its sections become the one article of a mail
+        const blocks = mailBlocksFromSections(sections, () => crypto.randomUUID());
+        const articleRef = doc(this.sectionsRef(pageKey));
+        const doomed = new Map<string, DocumentReference>(strays.map((ref) => [ref.id, ref]));
+        for (const key of order) doomed.set(key, doc(this.sectionsRef(pageKey), key));
+        doomed.forEach((ref) => tx.delete(ref));
+        tx.set(articleRef, this.stored({ ...mailArticle(ctx.tenantId, blocks), okey: articleRef.id }));
+        tx.update(pageRef, { ...changes, sections: [articleRef.id] });
+        return { status: 'ok', pageKey, articleKey: articleRef.id, blocks, meta: storedMeta(page) };
+      });
     } catch (err) {
       console.warn('MailPageService.continueDraft: writing the draft failed', err);
       const code = errorCode(err);
       return { status: code === 'permission-denied' ? 'refused' : code === 'not-found' ? 'gone' : 'failed' };
     }
-    return { status: 'ok', pageKey, articleKey, blocks, meta: storedMeta(page) };
   }
 
   /**

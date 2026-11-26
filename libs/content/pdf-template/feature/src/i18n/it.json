@@ -288,7 +288,8 @@
       "keep": "Tieni la bozza",
       "discard": "Scarta",
       "back": "Indietro",
-      "keep_failed": "Non è stato possibile salvare la bozza. Riprova."
+      "keep_failed": "Non è stato possibile salvare la bozza. Riprova.",
+      "confirming": "Conferma prima i destinatari o annulla l'invio, poi puoi chiudere la finestra."
     }
   },
   "category": {

@@ -288,7 +288,8 @@
       "keep": "Keep draft",
       "discard": "Discard",
       "back": "Back",
-      "keep_failed": "The draft could not be saved. Please try again."
+      "keep_failed": "The draft could not be saved. Please try again.",
+      "confirming": "First confirm the recipients or cancel the mailing, then you can close the window."
     }
   },
   "category": {

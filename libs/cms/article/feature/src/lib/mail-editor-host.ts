@@ -1,5 +1,5 @@
 import { NgTemplateOutlet } from '@angular/common';
-import { Component, DestroyRef, OnInit, TemplateRef, computed, effect, inject, input, signal, untracked, viewChild } from '@angular/core';
+import { Component, DestroyRef, TemplateRef, computed, effect, inject, input, signal, untracked, viewChild } from '@angular/core';
 
 import { IonButton, IonIcon, ModalController, ToastController } from '@ionic/angular';
 
@@ -44,7 +44,7 @@ type History = EditorHistory<EditorState>;
       <div class="head"><ng-container [ngTemplateOutlet]="head" /></div>
     }
     <okr-article-editor-surface [profile]="profile" [history]="draft().history()" (historyChange)="onHistory($event)" [errors]="draft().errors()"
-      [articleImages]="articleImages()" [onUpload]="onUpload" [storagePath]="storagePath()" [currentUser]="currentUser()"
+      [articleImages]="articleImages()" [onUpload]="onUpload()" [storagePath]="storagePath()" [currentUser]="currentUser()"
       [eventLines]="eventLines()" [calendars]="calendars()" [active]="active()" [i18n]="i18n">
       <ion-button barEnd fill="clear" size="small" [title]="i18n.article_editor_mail_insert_button()" (click)="insertArticle()">
         <ion-icon slot="start" src="{{ 'add' | svgIcon }}" aria-hidden="true" />
@@ -56,7 +56,7 @@ type History = EditorHistory<EditorState>;
     </okr-article-editor-surface>
   `,
 })
-export class MailEditorHost implements OnInit {
+export class MailEditorHost {
   // inputs, set by name by the composer
   public readonly draft = input.required<MailEditorDraft>();
   public readonly context = input.required<MailEditorContext>();
@@ -87,8 +87,6 @@ export class MailEditorHost implements OnInit {
     .filter((block) => block?.type === 'events' && typeof block.calendarKey === 'string' && block.calendarKey !== '')
     .map((block) => (block as Extract<MailBlock, { type: 'events' }>).calendarKey))], { equal: (a, b) => a.join('\n') === b.join('\n') });
   private destroyed = false;
-  /** The draft page this host was made for; set before its first change detection. */
-  private pageKey: string | undefined;
 
   constructor() {
     inject(DestroyRef).onDestroy(() => { this.destroyed = true; });
@@ -110,10 +108,6 @@ export class MailEditorHost implements OnInit {
     });
   }
 
-  public ngOnInit(): void {
-    this.pageKey = this.draft().pageKey();
-  }
-
   /** The cursor into the first text (from the subject, or when the composer opens with a subject). False without a text. */
   public focusFirstText(): boolean {
     const id = firstTextId(this.blocks());
@@ -128,7 +122,7 @@ export class MailEditorHost implements OnInit {
    * goes in as one step. A mail of more than 50 blocks is refused with the library's note. Errors of the new blocks show as any other.
    */
   protected async insertArticle(): Promise<void> {
-    const pageKey = this.pageKey;
+    const pageKey = this.draft().pageKey();
     const { MailArticlePickModal } = await import('./mail-article-pick.modal');
     const modal = await this.modalController.create({
       component: MailArticlePickModal, componentProps: { i18n: this.i18n, context: this.context() }, cssClass: ['modal-wide', 'modal-fixed-height'],
@@ -160,14 +154,19 @@ export class MailEditorHost implements OnInit {
   }
 
   /**
-   * Stable: an upload may end when the host is gone, the picture then goes straight into the draft. One that ends after the composer
-   * moved on to another page («Zurücksetzen», a continued or copied draft) is dropped: it belongs to a page that is no longer edited.
+   * What an upload calls when it ends; the panels take it when they offer an upload, so each upload holds the one of the page it was
+   * started for (a new function only when the page changes). It may end when the host is gone: the picture then goes straight into the
+   * draft. One that ends after the composer moved on to another page («Zurücksetzen», a continued or copied draft) is dropped: it
+   * belongs to a page that is no longer edited.
    */
-  protected readonly onUpload = (upload: ArticleUpload): void => {
-    if (this.draft().pageKey() !== this.pageKey) return;
-    const go = (history: History): History => uploadInto(history, upload);
-    if (this.destroyed || !this.surface()?.change(go)) this.draft().setHistory(go(this.draft().history()));
-  };
+  protected readonly onUpload = computed(() => {
+    const pageKey = this.draft().pageKey();
+    return (upload: ArticleUpload): void => {
+      if (untracked(() => this.draft().pageKey()) !== pageKey) return;
+      const go = (history: History): History => uploadInto(history, upload);
+      if (this.destroyed || !this.surface()?.change(go)) this.draft().setHistory(go(this.draft().history()));
+    };
+  });
 }
 
 function newId(): string { return crypto.randomUUID(); }

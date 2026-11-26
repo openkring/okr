@@ -2,10 +2,10 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
 import { IonContent, IonIcon, IonItem, IonLabel, IonList, IonListHeader, IonNote, IonSearchbar, ModalController } from '@ionic/angular';
 
-import { SvgIconPipe } from '@okr/shared-pipes';
+import { PrettyDatePipe, SvgIconPipe } from '@okr/shared-pipes';
 import { Header } from '@okr/shared-ui';
 import { dismissOverlay } from '@okr/shared-util-angular';
-import { filterStartChoices, type EmailComposerI18n, type StartChoice, type StartPick } from '@okr/content-pdf-template-util';
+import { filterStartChoices, storeDateOf, type EmailComposerI18n, type StartChoice, type StartPick } from '@okr/content-pdf-template-util';
 
 /**
  * The start step of a Versand (spec 1.176 §8.5), a picker: «Neu», the sender's own drafts, or «Frühere E-Mail kopieren» with a search.
@@ -15,7 +15,7 @@ import { filterStartChoices, type EmailComposerI18n, type StartChoice, type Star
 @Component({
   selector: 'okr-mail-start-modal',
   standalone: true,
-  imports: [Header, SvgIconPipe, IonContent, IonList, IonListHeader, IonItem, IonLabel, IonIcon, IonNote, IonSearchbar],
+  imports: [Header, SvgIconPipe, PrettyDatePipe, IonContent, IonList, IonListHeader, IonItem, IonLabel, IonIcon, IonNote, IonSearchbar],
   styles: [`
     ion-list-header { font-weight: 600; }
     ion-searchbar { padding: 4px 8px 0; }
@@ -43,7 +43,7 @@ import { filterStartChoices, type EmailComposerI18n, type StartChoice, type Star
               <ion-icon slot="start" src="{{ 'edit' | svgIcon }}" aria-hidden="true" />
               <ion-label>
                 <h3>{{ title(choice) }}</h3>
-                <p>{{ date(choice.time) }}@if (choice.subject && choice.firstWords) { · <span class="words">{{ choice.firstWords }}</span> }</p>
+                <p>{{ storeDate(choice.time) | prettyDate }}@if (choice.subject && choice.firstWords) { · <span class="words">{{ choice.firstWords }}</span> }</p>
               </ion-label>
             </ion-item>
           }
@@ -60,7 +60,7 @@ import { filterStartChoices, type EmailComposerI18n, type StartChoice, type Star
               <ion-icon slot="start" src="{{ 'copy' | svgIcon }}" aria-hidden="true" />
               <ion-label>
                 <h3>{{ title(choice) }}</h3>
-                <p>{{ date(choice.time) }}@if (choice.subject && choice.firstWords) { · <span class="words">{{ choice.firstWords }}</span> }</p>
+                <p>{{ storeDate(choice.time) | prettyDate }}@if (choice.subject && choice.firstWords) { · <span class="words">{{ choice.firstWords }}</span> }</p>
               </ion-label>
             </ion-item>
           } @empty {
@@ -87,9 +87,9 @@ export class MailStartModal {
     return choice.subject || choice.firstWords || this.i18n().start_no_subject();
   }
 
-  /** «25.11.2026», as the Versand overview shows dates; empty when unknown. */
-  protected date(time: number): string {
-    return time > 0 ? new Date(time).toLocaleDateString('de-CH') : '';
+  /** The day as StoreDate for the app's date pipe (as everywhere in the app); empty when unknown. */
+  protected storeDate(time: number): string {
+    return storeDateOf(time);
   }
 
   protected async pick(choice: StartPick): Promise<void> {

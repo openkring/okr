@@ -288,7 +288,8 @@
       "keep": "Entwurf behalten",
       "discard": "Verwerfen",
       "back": "Zurück",
-      "keep_failed": "Der Entwurf konnte nicht gespeichert werden. Versuche es nochmals."
+      "keep_failed": "Der Entwurf konnte nicht gespeichert werden. Versuche es nochmals.",
+      "confirming": "Bestätige zuerst die Empfänger oder brich den Versand ab, dann kannst du das Fenster schliessen."
     }
   },
   "category": {

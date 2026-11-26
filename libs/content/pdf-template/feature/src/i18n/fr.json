@@ -288,7 +288,8 @@
       "keep": "Garder le brouillon",
       "discard": "Supprimer",
       "back": "Retour",
-      "keep_failed": "Le brouillon n'a pas pu être enregistré. Réessaie."
+      "keep_failed": "Le brouillon n'a pas pu être enregistré. Réessaie.",
+      "confirming": "Confirme d'abord les destinataires ou annule l'envoi, puis tu peux fermer la fenêtre."
     }
   },
   "category": {

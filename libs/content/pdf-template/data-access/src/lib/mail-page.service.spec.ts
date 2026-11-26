@@ -13,6 +13,11 @@ const db = vi.hoisted(() => {
     reads: [] as string[],
     refuse: undefined as string | undefined,
     refuseRead: undefined as string | undefined,
+    /** An ordered query fails as without its composite index (`failed-precondition`). */
+    noIndex: false,
+    /** Runs once after the next collection read (another window acting meanwhile). */
+    afterGetDocs: undefined as (() => void) | undefined,
+    queries: [] as { path: string; constraints: unknown[] }[],
     next: 0,
   };
   const fault = (code: string) => Object.assign(new Error(code), { code });
@@ -22,6 +27,35 @@ const db = vi.hoisted(() => {
     exists: () => !!state.docs[path], data: () => (state.docs[path] ? structuredClone(state.docs[path]) : undefined),
   });
   const DELETE = { __delete: true };
+  type Op = { op: 'set' | 'update' | 'delete'; path: string; data?: Record<string, unknown> };
+  const writer = (ops: Op[]) => ({
+    set: (ref: Ref, data: Record<string, unknown>) => { ops.push({ op: 'set', path: ref.path, data }); },
+    update: (ref: Ref, data: Record<string, unknown>) => { ops.push({ op: 'update', path: ref.path, data }); },
+    delete: (ref: Ref) => { ops.push({ op: 'delete', path: ref.path }); },
+  });
+  const apply = async (ops: Op[]): Promise<void> => {
+    if (state.refuse) throw fault(state.refuse);
+    const before = structuredClone(state.docs);
+    try {
+      for (const { op, path, data } of ops) {
+        if (op === 'delete') delete state.docs[path];
+        else if (op === 'set') state.docs[path] = structuredClone(data as Record<string, unknown>);
+        else {
+          if (!state.docs[path]) throw fault('not-found');
+          const next = { ...state.docs[path] };
+          for (const [key, value] of Object.entries(data ?? {})) {
+            if (value === DELETE) delete next[key];
+            else next[key] = structuredClone(value);
+          }
+          state.docs[path] = next;
+        }
+      }
+    } catch (err) {
+      state.docs = before;
+      throw err;
+    }
+    state.commits.push(ops);
+  };
   return {
     state,
     DELETE,
@@ -30,64 +64,78 @@ const db = vi.hoisted(() => {
       const path = segments.length ? join(base, segments) : `${join(base, [])}/auto${++state.next}`;
       return { path, id: path.split('/').pop() as string, kind: 'doc' };
     },
-    where: (field: string, op: string, value: unknown) => ({ field, op, value }),
-    query: (col: Ref, ...wheres: { field: string; value: unknown }[]) => ({ ...col, wheres }),
+    where: (field: string, op: string, value: unknown) => ({ kind: 'where', field, op, value }),
+    orderBy: (field: string, dir = 'asc') => ({ kind: 'orderBy', field, dir }),
+    limit: (n: number) => ({ kind: 'limit', n }),
+    query: (col: Ref, ...constraints: Record<string, unknown>[]) => ({ ...col, constraints }),
     deleteField: () => DELETE,
     getDoc: async (ref: Ref) => {
       state.reads.push(ref.path);
       if (state.refuseRead) throw fault(state.refuseRead);
       return snapshot(ref.path);
     },
-    getDocs: async (q: Ref & { wheres?: { field: string; value: unknown }[] }) => {
+    getDocs: async (q: Ref & { constraints?: Record<string, unknown>[] }) => {
       state.reads.push(q.path);
+      const constraints = q.constraints ?? [];
+      state.queries.push({ path: q.path, constraints });
       if (state.refuseRead) throw fault(state.refuseRead);
+      const order = constraints.find((c) => c['kind'] === 'orderBy');
+      if (order && state.noIndex) throw fault('failed-precondition');
       const depth = q.path.split('/').length + 1;
-      const docs = Object.keys(state.docs)
+      const matches = (path: string, c: Record<string, unknown>) => {
+        const value = state.docs[path][c['field'] as string];
+        return c['op'] === 'array-contains' ? Array.isArray(value) && value.includes(c['value']) : value === c['value'];
+      };
+      let paths = Object.keys(state.docs)
         .filter((path) => path.startsWith(`${q.path}/`) && path.split('/').length === depth)
-        .filter((path) => (q.wheres ?? []).every((w) => state.docs[path][w.field] === w.value))
-        .sort()
-        .map(snapshot);
+        .filter((path) => constraints.filter((c) => c['kind'] === 'where').every((c) => matches(path, c)))
+        .sort();
+      if (order) {
+        const field = order['field'] as string;
+        paths.sort((a, b) => String(state.docs[a][field] ?? '').localeCompare(String(state.docs[b][field] ?? '')) * (order['dir'] === 'desc' ? -1 : 1));
+      }
+      const max = constraints.find((c) => c['kind'] === 'limit');
+      if (max) paths = paths.slice(0, max['n'] as number);
+      const docs = paths.map(snapshot);
+      const after = state.afterGetDocs;
+      state.afterGetDocs = undefined;
+      after?.();
       return { docs, size: docs.length, forEach: (fn: (d: unknown) => void) => docs.forEach(fn) };
     },
     writeBatch: () => {
-      const ops: { op: 'set' | 'update' | 'delete'; path: string; data?: Record<string, unknown> }[] = [];
-      return {
-        set: (ref: Ref, data: Record<string, unknown>) => ops.push({ op: 'set', path: ref.path, data }),
-        update: (ref: Ref, data: Record<string, unknown>) => ops.push({ op: 'update', path: ref.path, data }),
-        delete: (ref: Ref) => ops.push({ op: 'delete', path: ref.path }),
-        commit: async () => {
-          if (state.refuse) throw fault(state.refuse);
-          for (const { op, path, data } of ops) {
-            if (op === 'delete') delete state.docs[path];
-            else if (op === 'set') state.docs[path] = structuredClone(data as Record<string, unknown>);
-            else {
-              if (!state.docs[path]) throw fault('not-found');
-              const next = { ...state.docs[path] };
-              for (const [key, value] of Object.entries(data ?? {})) {
-                if (value === DELETE) delete next[key];
-                else next[key] = structuredClone(value);
-              }
-              state.docs[path] = next;
-            }
-          }
-          state.commits.push(ops);
+      const ops: Op[] = [];
+      return { ...writer(ops), commit: async () => apply(ops) };
+    },
+    runTransaction: async (_db: unknown, body: (tx: unknown) => Promise<unknown>) => {
+      const ops: Op[] = [];
+      const answer = await body({
+        ...writer(ops),
+        get: async (ref: Ref) => {
+          state.reads.push(ref.path);
+          if (state.refuseRead) throw fault(state.refuseRead);
+          return snapshot(ref.path);
         },
-      };
+      });
+      if (ops.length) await apply(ops);
+      return answer;
     },
   };
 });
 
 vi.mock('firebase/firestore', () => ({
   arrayRemove: vi.fn(), arrayUnion: vi.fn(), updateDoc: vi.fn(),
-  collection: db.collection, doc: db.doc, where: db.where, query: db.query, deleteField: db.deleteField,
-  getDoc: db.getDoc, getDocs: db.getDocs, writeBatch: db.writeBatch,
+  collection: db.collection, doc: db.doc, where: db.where, orderBy: db.orderBy, limit: db.limit, query: db.query, deleteField: db.deleteField,
+  getDoc: db.getDoc, getDocs: db.getDocs, writeBatch: db.writeBatch, runTransaction: db.runTransaction,
 }));
 vi.mock('rxfire/firestore', () => ({ docData: vi.fn(), collectionData: vi.fn() }));
 
 import { FIRESTORE } from '@okr/shared-config';
 import type { MailBlock, MailPageModel } from '@okr/shared-models';
 
-import { MailPageService } from './mail-page.service';
+import { FirestoreService } from '@okr/shared-data-access';
+
+import { MailPageService, OWN_PAGES_MAX } from './mail-page.service';
+import { MailingService, RECENT_MAILINGS_MAX } from './mailing.service';
 
 const META = { subject: 'Neu', layout: 'standard' as const, webVersion: false };
 const CTX = { tenantId: 'scs', uid: 'u1' };
@@ -122,6 +170,9 @@ describe('MailPageService', () => {
     db.state.reads = [];
     db.state.refuse = undefined;
     db.state.refuseRead = undefined;
+    db.state.noIndex = false;
+    db.state.afterGetDocs = undefined;
+    db.state.queries = [];
     db.state.next = 0;
     vi.spyOn(console, 'warn').mockImplementation(() => undefined);
   });
@@ -135,6 +186,23 @@ describe('MailPageService', () => {
       const pages = await service().ownPages('u1', 'scs');
       expect(pages.map((p) => p.okey).sort()).toEqual(['d1', 's1']);
       expect(await service().ownPages('', 'scs')).toEqual([]);
+    });
+
+    it('reads the newest pages first, at most OWN_PAGES_MAX', async () => {
+      for (let i = 0; i < OWN_PAGES_MAX + 5; i++) put(`mailPages/p${i}`, { tenants: ['scs'], senderUid: 'u1', createdAt: `2026-01-01T00:00:${String(i).padStart(3, '0')}Z` });
+      const pages = await service().ownPages('u1', 'scs');
+      expect(pages).toHaveLength(OWN_PAGES_MAX);
+      expect(pages[0].okey).toBe(`p${OWN_PAGES_MAX + 4}`);
+      expect(db.state.queries[0].constraints).toEqual([
+        { kind: 'where', field: 'senderUid', op: '==', value: 'u1' }, { kind: 'orderBy', field: 'createdAt', dir: 'desc' }, { kind: 'limit', n: OWN_PAGES_MAX },
+      ]);
+    });
+
+    it('without the index yet: the same pages unordered, sorted and cut here', async () => {
+      db.state.noIndex = true;
+      put('mailPages/old', { tenants: ['scs'], senderUid: 'u1', createdAt: '2026-01-01T00:00:00Z' });
+      put('mailPages/new', { tenants: ['scs'], senderUid: 'u1', createdAt: '2026-02-01T00:00:00Z' });
+      expect((await service().ownPages('u1', 'scs')).map((p) => p.okey)).toEqual(['new', 'old']);
     });
   });
 
@@ -203,6 +271,33 @@ describe('MailPageService', () => {
       expect(db.state.commits).toEqual([]);
     });
 
+    it('two windows on one 1.172 draft: the second adopts the article the first one made', async () => {
+      sectionsDraft('p1');
+      const first = await service().continueDraft('p1', CTX);
+      if (first.status !== 'ok') throw new Error(first.status);
+      // the second window read the old sections just before the first converted them
+      sectionsDraft('p2');
+      const svc = service();
+      db.state.afterGetDocs = () => {
+        for (const path of Object.keys(db.state.docs).filter((x) => x.startsWith('mailPages/p2/sections/'))) delete db.state.docs[path];
+        put('mailPages/p2/sections/made', { type: 'article', tenants: ['scs'], properties: { blocks: [text('m1', '<p>vom ersten Fenster</p>')] } });
+        db.state.docs['mailPages/p2']['sections'] = ['made'];
+      };
+      const second = await svc.continueDraft('p2', { ...CTX, groupKey: 'g2' });
+      expect(second).toMatchObject({ status: 'ok', articleKey: 'made', blocks: [text('m1', '<p>vom ersten Fenster</p>')] });
+      expect(Object.keys(db.state.docs).filter((x) => x.startsWith('mailPages/p2/sections/'))).toEqual(['mailPages/p2/sections/made']);
+      expect(db.state.docs['mailPages/p2']['groupKey']).toBe('g2');
+    });
+
+    it('a 1.172 draft sent while it is converted is not written', async () => {
+      sectionsDraft('p1');
+      let before: unknown;
+      db.state.afterGetDocs = () => { db.state.docs['mailPages/p1']['mailingKey'] = 'm1'; before = structuredClone(db.state.docs); };
+      expect(await service().continueDraft('p1', CTX)).toEqual({ status: 'sent' });
+      expect(db.state.docs).toEqual(before);
+      expect(db.state.commits).toEqual([]);
+    });
+
     it('a refused write (role or group lost) leaves the draft as it was', async () => {
       sectionsDraft('p1');
       const before = structuredClone(db.state.docs);
@@ -250,6 +345,30 @@ describe('MailPageService', () => {
       const started = await service().startFrom(undefined, CTX, META);
       expect(started.blocks).toEqual([{ id: started.blocks[0].id, type: 'text', html: '' }]);
       expect(started.meta).toEqual(META);
+    });
+  });
+
+  describe('MailingService.recent', () => {
+    const mailings = () => Injector.create({ providers: [
+      { provide: FIRESTORE, useValue: {} }, { provide: FirestoreService, useValue: {} }, { provide: MailingService },
+    ] }).get(MailingService);
+
+    it('reads the tenant’s newest mailings, at most RECENT_MAILINGS_MAX', async () => {
+      put('mailings/a', { tenants: ['scs'], createdAt: '20261101120000', subject: 'A', pageKey: 'pa' });
+      put('mailings/b', { tenants: ['scs'], createdAt: '20261102120000', subject: 'B' });
+      put('mailings/c', { tenants: ['p13'], createdAt: '20261103120000' });
+      expect((await mailings().recent('scs')).map((m) => [m.okey, m.pageKey])).toEqual([['b', undefined], ['a', 'pa']]);
+      expect(db.state.queries[0].constraints).toEqual([
+        { kind: 'where', field: 'tenants', op: 'array-contains', value: 'scs' }, { kind: 'orderBy', field: 'createdAt', dir: 'desc' }, { kind: 'limit', n: RECENT_MAILINGS_MAX },
+      ]);
+    });
+
+    it('without the index yet: unordered, sorted and cut here', async () => {
+      db.state.noIndex = true;
+      for (let i = 0; i < RECENT_MAILINGS_MAX + 3; i++) put(`mailings/m${i}`, { tenants: ['scs'], createdAt: `2026${String(100000000 + i).slice(1)}` });
+      const recent = await mailings().recent('scs');
+      expect(recent).toHaveLength(RECENT_MAILINGS_MAX);
+      expect(recent[0].okey).toBe(`m${RECENT_MAILINGS_MAX + 2}`);
     });
   });
 });
