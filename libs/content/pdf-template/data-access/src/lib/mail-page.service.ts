@@ -12,10 +12,8 @@
 // its sections by key: the own ones, and sent ones of the tenant for a member admin or privileged user. Copying never writes the source.
 import { inject, Injectable } from '@angular/core';
 import {
-  arrayRemove, arrayUnion, collection, deleteField, doc, DocumentReference, getDoc, getDocs, limit, orderBy, query, runTransaction, updateDoc, where, writeBatch,
+  collection, deleteField, doc, DocumentReference, getDoc, getDocs, limit, orderBy, query, runTransaction, where, writeBatch,
 } from 'firebase/firestore';
-import { docData, collectionData } from 'rxfire/firestore';
-import { combineLatest, map, Observable } from 'rxjs';
 
 import { FIRESTORE } from '@okr/shared-config';
 import {
@@ -232,52 +230,6 @@ export class MailPageService {
     if (blocks.length === 0) blocks = mailBlocksFromBody('', newId);
     const { pageKey, articleKey } = await this.createDraft(ctx.tenantId, ctx.uid, ctx.groupKey, mailArticle(ctx.tenantId, blocks), meta);
     return { pageKey, articleKey, blocks, meta };
-  }
-
-  /** The page's sections in the order of `page.sections`; keys without a section doc are left out, live. */
-  public sections$(pageKey: string): Observable<SectionModel[]> {
-    return combineLatest([
-      docData(this.pageRef(pageKey)) as Observable<Partial<MailPageModel> | undefined>,
-      collectionData(this.sectionsRef(pageKey), { idField: 'okey' }) as Observable<SectionModel[]>,
-    ]).pipe(
-      map(([page, sections]) => {
-        const byKey = new Map(sections.map(s => [s.okey, s]));
-        return (page?.sections ?? []).map(key => byKey.get(key)).filter((s): s is SectionModel => !!s);
-      }),
-    );
-  }
-
-  /**
-   * Saves a section. One with an `okey` is overwritten; one without gets a new doc id, which is appended to
-   * `page.sections` in the same batch. Returns the section's key.
-   */
-  public async saveSection(pageKey: string, section: SectionModel): Promise<string> {
-    const isNew = !section.okey;
-    const ref = isNew ? doc(this.sectionsRef(pageKey)) : doc(this.sectionsRef(pageKey), section.okey);
-    const batch = writeBatch(this.firestore);
-    batch.set(ref, this.stored(section));
-    if (isNew) batch.update(this.pageRef(pageKey), { sections: arrayUnion(ref.id) });
-    await batch.commit();
-    return ref.id;
-  }
-
-  /** Removes the section and its key from the page's order, in one batch. */
-  public async deleteSection(pageKey: string, sectionKey: string): Promise<void> {
-    const batch = writeBatch(this.firestore);
-    batch.delete(doc(this.sectionsRef(pageKey), sectionKey));
-    batch.update(this.pageRef(pageKey), { sections: arrayRemove(sectionKey) });
-    await batch.commit();
-  }
-
-  /** Moves a section one place up (-1) or down (1); at either end nothing happens. */
-  public async move(pageKey: string, sectionKey: string, dir: -1 | 1): Promise<void> {
-    const snap = await getDoc(this.pageRef(pageKey));
-    const order = [...((snap.data()?.['sections'] as string[] | undefined) ?? [])];
-    const from = order.indexOf(sectionKey);
-    const to = from + dir;
-    if (from < 0 || to < 0 || to >= order.length) return;
-    [order[from], order[to]] = [order[to], order[from]];
-    await updateDoc(this.pageRef(pageKey), { sections: order });
   }
 
   /** Throws the draft away: its sections first, then the page, in one batch. */

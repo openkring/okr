@@ -1,10 +1,8 @@
 // libs/content/pdf-template/util/src/lib/mail-page.util.ts
 //
-// Pure helpers for the mail page of a Versand (spec 1.172): the draft page, the "does it show anything" check
-// the composer needs before sending, a one-line summary per section, and the picker of addable section types.
-import { CategoryItemModel, CategoryListModel, EmailLayoutChoice, MAIL_SECTION_TYPES, MailPageModel, SectionModel } from '@okr/shared-models';
-
-const SUMMARY_LENGTH = 60;
+// Pure helpers for the mail page of a Versand (specs 1.172, 1.176): the draft page, its meta, whether the composer loads the mail
+// editor, and the readable refusals of the server's mail page rendering and of the test mail.
+import { EmailLayoutChoice, MailPageModel } from '@okr/shared-models';
 
 /** What the draft page keeps of the composer besides its blocks (spec 1.176 §8.5): written with them, read by «Frühere E-Mail kopieren». */
 export interface MailPageMeta {
@@ -37,72 +35,6 @@ export function newMailPage(tenantId: string, uid: string, groupKey?: string): M
   delete page.mailingKey;
   if (groupKey) page.groupKey = groupKey;
   return page;
-}
-
-function str(v: unknown): string {
-  return typeof v === 'string' ? v.trim() : '';
-}
-
-function rec(v: unknown): Record<string, unknown> {
-  return v && typeof v === 'object' ? v as Record<string, unknown> : {};
-}
-
-function visibleText(html: string): string {
-  return html.replace(/<[^>]*>/g, '').replace(/&nbsp;|&#160;|&#xa0;/gi, ' ').trim();
-}
-
-/** A button target a mail client can open: https, mailto, tel or an app path (the server's `mailButtonUrl` rule). */
-function isSafeMailUrl(raw: unknown): boolean {
-  const u = str(raw);
-  // eslint-disable-next-line no-control-regex -- rejecting control characters is the point
-  if (/[\\\u0000-\u001f\u007f]/.test(u)) return false;
-  return /^(https:\/\/|mailto:|tel:|\/(?!\/))/.test(u);
-}
-
-/**
- * Whether an article image path becomes an image in the mail, as the server's `mailImageUrl` resolves it: an
- * https URL is kept, any other non-empty path is a Storage path served through imgix, and an `http://` URL is
- * dropped (`toImgixUrl` keeps it as is, and the mail takes https only).
- */
-function isMailImagePath(raw: unknown): boolean {
-  const path = str(raw);
-  return path.length > 0 && !path.startsWith('http://');
-}
-
-function sectionHasContent(s: SectionModel): boolean {
-  const props = rec(s.properties);
-  switch (s.type) {
-    case 'article': {
-      const html = s.content?.htmlContent ?? '';
-      const images = props['images'];
-      const first = Array.isArray(images) ? rec(images[0]) : undefined;
-      // the server shows the first image when its path resolves, else its alt text (altText, else label)
-      const hasImage = !!first && (isMailImagePath(first['url']) || !!(str(first['altText']) || str(first['label'])));
-      const cta = rec(props['cta']);
-      const hasButton = !!str(cta['label']) && isSafeMailUrl(cta['url']);
-      return /<img\b/i.test(html) || visibleText(html).length > 0 || hasImage || hasButton
-        || !!str(s.title) || !!str(s.subTitle) || !!str(s.intro);
-    }
-    case 'button':
-      return isSafeMailUrl(rec(props['action'])['url']) && !!(str(rec(props['style'])['label']) || str(rec(props['action'])['altText']));
-    default:
-      // an events section is not counted (see mailPageHasContent); any other type has no email template
-      return false;
-  }
-}
-
-/**
- * Whether the page shows anything, by the rule of the server's `no-content` (`renderMailPageContent`): an article
- * with visible text, a title, an intro, an image (a path the server resolves, or an alt text) or a button, or a
- * button section; a button counts with a label and a URL a mail can open (https, mailto, tel or an app path). Archived sections do not count.
- *
- * An events section never makes a page sendable here: the server counts it only when its calendar has upcoming
- * events, which the client does not load. So a page needs an article or a button; events alone are refused
- * before the send. Where the two still differ (an events section next to an empty article, a calendar that is
- * empty after all), the server's `no-content` is the backstop and the composer shows it as a readable message.
- */
-export function mailPageHasContent(sections: SectionModel[]): boolean {
-  return sections.some(s => !s.isArchived && sectionHasContent(s));
 }
 
 /** The i18n key (EMAIL_COMPOSER_I18N_KEYS) of a refusal of the server's mail page rendering. */
@@ -187,29 +119,3 @@ export function testMailRefusalKey(err: unknown): TestMailRefusalKey | undefined
 /** The width of the preview (spec 1.176 §8.4): a phone is 390 px wide, the desktop takes the window. */
 export const PREVIEW_MOBILE_WIDTH = 390;
 export type PreviewWidth = 'mobile' | 'desktop';
-
-/** One line for the section list: an article's first 60 visible characters (else its intro or button label), a button's label, an events calendar. */
-export function sectionSummary(section: SectionModel): string {
-  const props = rec(section.properties);
-  switch (section.type) {
-    case 'article': {
-      const text = (visibleText(section.content?.htmlContent ?? '') || str(section.intro) || str(rec(props['cta'])['label'])).replace(/\s+/g, ' ');
-      return text.length > SUMMARY_LENGTH ? text.slice(0, SUMMARY_LENGTH) : text;
-    }
-    case 'button':
-      return str(rec(props['style'])['label']) || str(rec(props['action'])['altText']);
-    case 'events':
-      return str(section.name);
-    default:
-      return '';
-  }
-}
-
-/** The picker input for «Sektion hinzufügen»: the section types a mail page can hold, as the journal builds it. */
-export function mailSectionCategory(tenantId: string): CategoryListModel {
-  const category = new CategoryListModel(tenantId);
-  category.name = 'section_type';
-  category.i18n = '@cms/section/feature.section_type';
-  category.items = MAIL_SECTION_TYPES.map(t => new CategoryItemModel(t, t));
-  return category;
-}

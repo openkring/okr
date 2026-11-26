@@ -9,4 +9,3 @@ export * from './lib/postversand-step';
 export * from './lib/mailing-log.modal';
 export * from './lib/email-layout-picker';
 export * from './lib/mail-page-draft';
-export * from './lib/mail-page-editor';

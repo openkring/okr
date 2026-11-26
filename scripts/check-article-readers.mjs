@@ -43,8 +43,6 @@ const ALLOWLIST = [
   ['libs/cms/section/feature/src/lib/testimonial-section.ts', 'other section type (testimonial)'],
   ['libs/chat/feature/src/lib/chat-maintenance.store.ts', 'creates new sections, reads none'],
   ['libs/subject/group/feature/src/lib/group.store.ts', 'creates new sections, reads none'],
-  ['libs/content/pdf-template/', 'mail page: unconverted on purpose until project 3 (mail rendering of blocks)'],
-  ['apps/functions/src/email/mail-page/', 'mail page: unconverted on purpose until project 3 (mail rendering of blocks)'],
   ['libs/travel/journal/', 'journal articles have no blocks'],
   ['apps/functions/src/journal/', 'journal articles have no blocks'],
 ];

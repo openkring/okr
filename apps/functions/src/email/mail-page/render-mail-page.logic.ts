@@ -4,7 +4,7 @@
 // the caller reads the page and its sections, loads the event lines and passes Handlebars and the sanitizer.
 // The result goes into the layout's `{{{content}}}` slot exactly like a typed `body`. Articles with blocks: mail-content.ts.
 import type { MailSectionType } from '@okr/shared-models';
-import { MAIL_SECTION_TYPES } from '@okr/shared-models';
+import { MAIL_SECTION_TYPES, withClassicFields } from '@okr/shared-models';
 import { mailEventLimit, type MailEventLine } from '@okr/shared-util-core';
 import { IMGIX_BASE, safeSiteUrl, toImgixUrl, type SectionDoc } from '@okr/cms-website-render';
 
@@ -87,7 +87,10 @@ function articleCta(s: MailSection, appOrigin: string): { label: string; url: st
   return label && url ? { label, url, secondary: cta['style'] === 'secondary' } : undefined;
 }
 
-async function renderArticle(s: MailSection, ctx: MailRenderContext, tpl: HandlebarsTemplate): Promise<RenderedPart> {
+async function renderArticle(section: MailSection, ctx: MailRenderContext, tpl: HandlebarsTemplate): Promise<RenderedPart> {
+  // only articles without blocks reach here (an article with blocks goes through renderMailBlocks, mail-content.ts), so
+  // withClassicFields returns the very same section: the old fields are its content, rendered byte for byte as before
+  const s = withClassicFields(section);
   const html = await ctx.sanitize(s.content?.htmlContent ?? '');
   const shownHtml = hasVisibleContent(html) ? html : '';
   const images = rec(s.properties)['images'];
