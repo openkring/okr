@@ -737,8 +737,9 @@ export function mapSection(
         const info = (props['avatar'] as { info?: unknown } | undefined)?.info;
         const showEmail = props['type'] === 'responsibility'
           && Array.isArray(info) && (info.includes('email') || info.includes('emailLink'));
-        // the template shows the address as a mailto: link when the info asks for one, else as text
-        const emailLink = showEmail && Array.isArray(info) && info.includes('emailLink');
+        // as in the app (persons-widget): the whole card is a mailto: link whenever there is an address;
+        // the address is written out only with info 'email' ('emailLink' alone links without showing it)
+        const hideEmail = showEmail && Array.isArray(info) && !info.includes('email');
         const avatarCfg = (props['avatar'] ?? {}) as PeoplePhotoConfig;
         let photoIndex = 0;
         const persons = resolved.map((p): PublicPerson => {
@@ -760,7 +761,7 @@ export function mapSection(
         return {
           type: 'people', name, title, subTitle, persons,
           ...(withPhotos ? { withPhotos: true, photoWidth: photoSize.width, photoHeight: photoSize.height } : {}),
-          ...(emailLink ? { emailLink: true } : {}),
+          ...(hideEmail ? { hideEmail: true } : {}),
           ...narrow,
         };
       }

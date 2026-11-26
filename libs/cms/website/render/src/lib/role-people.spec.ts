@@ -187,15 +187,15 @@ describe('mapSection people from roles', () => {
     expect(persons(section(ids))[0]).not.toHaveProperty('email');
   });
 
-  it('flags the section for a mailto: link only when the info asks for emailLink', () => {
+  it('hides the written-out address only when the info asks for emailLink without email', () => {
     const ids = { type: 'responsibility', responsibilityIds: ['praesident'] };
-    const out = (info?: string[]) => mapSection('s1', section({ ...ids, avatar: { info } }), new Map(), sanitize, 'de', map) as { emailLink?: boolean };
-    expect(out(['emailLink']).emailLink).toBe(true);
-    expect(out(['email', 'emailLink']).emailLink).toBe(true);
-    expect(out(['email'])).not.toHaveProperty('emailLink');
-    expect(out(['function'])).not.toHaveProperty('emailLink');
-    const group = mapSection('s1', section({ type: 'group', groupId: 'x', avatar: { info: ['emailLink'] } }), new Map(), sanitize) as { emailLink?: boolean };
-    expect(group).not.toHaveProperty('emailLink');
+    const out = (info?: string[]) => mapSection('s1', section({ ...ids, avatar: { info } }), new Map(), sanitize, 'de', map) as { hideEmail?: boolean };
+    expect(out(['emailLink']).hideEmail).toBe(true);
+    expect(out(['email', 'emailLink'])).not.toHaveProperty('hideEmail');
+    expect(out(['email'])).not.toHaveProperty('hideEmail');
+    expect(out(['function'])).not.toHaveProperty('hideEmail');
+    const group = mapSection('s1', section({ type: 'group', groupId: 'x', avatar: { info: ['emailLink'] } }), new Map(), sanitize) as { hideEmail?: boolean };
+    expect(group).not.toHaveProperty('hideEmail');
   });
 
   it('drops a role address that is not a plain email address', () => {
