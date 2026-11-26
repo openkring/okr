@@ -371,6 +371,21 @@
           "placeholder": "https://… , mailto:… o /pagina",
           "helper": "Una página web (https), una dirección de correo (mailto:), un número de teléfono (tel:) o una página de la aplicación (/…)"
         },
+        "insert": {
+          "button": "Insertar artículo",
+          "search": "Buscar artículos",
+          "empty": "No hay artículos que puedas insertar.",
+          "noMatch": "Ningún artículo coincide con tu búsqueda.",
+          "whole": "Insertar completo",
+          "teaser": "Como vista previa con enlace",
+          "more": "Seguir leyendo",
+          "notPublic": "Este artículo no es público.",
+          "notPublicMore": "Un correo electrónico sale de la app. Inserta el artículo solo si todos los destinatarios pueden leerlo.",
+          "confirm": "Insertar",
+          "cancel": "Cancelar",
+          "failed": "No se pudieron leer los artículos. Comprueba tu conexión e inténtalo de nuevo.",
+          "untitled": "Sin título"
+        },
         "events": {
           "helper": "Al enviar se añaden los próximos eventos de este calendario.",
           "calendar": "Calendario",

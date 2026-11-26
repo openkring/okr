@@ -1,5 +1,5 @@
 import {
-  ARTICLE_PROFILE, blocksInOrder, findBlock, isArticleChanged, record, redo, replaceBlock, replacePresent, resizeColumn, setColumnSizes, undo, withUpload, withValidSelection,
+  ARTICLE_PROFILE, blocksInOrder, findBlock, insertArticleBlocks, isArticleChanged, record, redo, replaceBlock, replacePresent, resizeColumn, setColumnSizes, undo, withUpload, withValidSelection,
   type ArticlePreviewDevice, type ArticleUpload, type EditorHistory, type EditorProfile, type EditorState,
 } from '@okr/cms-section-util';
 import { isSameValue, type ArticleBlock, type ArticleSection, type ColumnsBlock, type MailBlock } from '@okr/shared-models';
@@ -55,6 +55,16 @@ export function restore(history: History, state: EditorState): History {
 /** A step with other blocks. The same array is no step. */
 export function changeBlocks(history: History, blocks: MailBlock[], tag?: string): History {
   return blocks === editorBlocks(history.present) ? history : changeSection(history, withBlocks(history.present.section, blocks), tag);
+}
+
+/**
+ * «Artikel einfügen» (spec 1.176 §8.3): one step that puts `inserted` after the selected top-level block (after the columns block for one inside
+ * a column), else at the end, and selects the first of them. `'full'` when the mail would have more than 50 blocks: nothing is inserted.
+ */
+export function insertedInto(history: History, inserted: MailBlock[]): History | 'full' {
+  const result = insertArticleBlocks(editorBlocks(history.present), inserted, history.present.selectedId);
+  if (result === 'full' || result.firstId === undefined) return result === 'full' ? result : history;
+  return record(history, { ...history.present, section: withBlocks(history.present.section, result.blocks), selectedId: result.firstId });
 }
 
 /** Selects a block (no step). */

@@ -4,7 +4,7 @@ import {
   ARTICLE_SECTION_SHAPE, ImageActionType, ImageType, ViewPosition, type ArticleSection, type MailBlock, type SectionModel, type UserModel, type WebsiteModel,
 } from '@okr/shared-models';
 
-import { articlesToInsert, articleSlug, mailArticle, mailBlocksFromArticle, newsArticleUrl, teaserBlocks } from './mail-article.util';
+import { articleIsPublic, articlesMatching, articlesToInsert, articleSlug, insertArticleBlocks, mailArticle, mailBlocksFromArticle, newsArticleUrl, teaserBlocks } from './mail-article.util';
 
 const counter = () => { let n = 0; return () => `n${++n}`; };
 function deepFreeze<T>(value: T): T {
@@ -260,4 +260,73 @@ describe('newsArticleUrl', () => {
     'there is none on the site %j', (s) => expect(newsArticleUrl(s as unknown as WebsiteModel, article())).toBeUndefined());
 
   it('never throws without an article', () => expect(newsArticleUrl(site, undefined as unknown as ArticleSection)).toBeUndefined());
+});
+
+describe('insertArticleBlocks', () => {
+  const text = (id: string): MailBlock => ({ id, type: 'text', html: id }) as MailBlock;
+  const columns = (id: string, inner: MailBlock[]): MailBlock => ({ id, type: 'columns', columns: [{ size: 12, blocks: inner }] }) as unknown as MailBlock;
+  const ids = (result: ReturnType<typeof insertArticleBlocks>) => (result === 'full' ? result : result.blocks.map((b) => b.id));
+  const base = deepFreeze([text('a'), columns('c', [text('in')]), text('z')]);
+  const add = deepFreeze([text('x'), text('y')]);
+
+  it('after the selected top-level block, the first inserted one is selected', () => {
+    const result = insertArticleBlocks(base, add, 'a');
+    expect(ids(result)).toEqual(['a', 'x', 'y', 'c', 'z']);
+    expect(result !== 'full' && result.firstId).toBe('x');
+  });
+
+  it('after the columns block when the selection is inside a column', () => {
+    expect(ids(insertArticleBlocks(base, add, 'in'))).toEqual(['a', 'c', 'x', 'y', 'z']);
+    expect(ids(insertArticleBlocks(base, add, 'c'))).toEqual(['a', 'c', 'x', 'y', 'z']);
+  });
+
+  it('at the end without a selection or with one that is gone', () => {
+    expect(ids(insertArticleBlocks(base, add, undefined))).toEqual(['a', 'c', 'z', 'x', 'y']);
+    expect(ids(insertArticleBlocks(base, add, 'gone'))).toEqual(['a', 'c', 'z', 'x', 'y']);
+    expect(ids(insertArticleBlocks([], add, undefined))).toEqual(['x', 'y']);
+  });
+
+  it('refuses more than 50 top-level blocks and changes nothing, exactly 50 is fine', () => {
+    const many = (n: number) => Array.from({ length: n }, (_, i) => text(`b${i}`));
+    expect(insertArticleBlocks(many(49), add, undefined)).toBe('full');
+    expect(insertArticleBlocks(many(50), [text('x')], 'b3')).toBe('full');
+    expect(ids(insertArticleBlocks(many(48), add, 'b0')) as string[]).toHaveLength(50);
+  });
+
+  it('inner blocks do not count, nothing to insert is no change', () => {
+    const wide = [columns('c', Array.from({ length: 60 }, (_, i) => text(`i${i}`)))];
+    expect(ids(insertArticleBlocks(wide, add, undefined))).toEqual(['c', 'x', 'y']);
+    expect(insertArticleBlocks(base, [], 'a')).toEqual({ blocks: base });
+  });
+
+  it.each([undefined, null, 'x'])('never throws on %j', (value) => {
+    expect(ids(insertArticleBlocks(value as unknown as MailBlock[], add, 'a'))).toEqual(['x', 'y']);
+    expect(insertArticleBlocks(base, value as unknown as MailBlock[], 'a')).toEqual({ blocks: base });
+  });
+});
+
+describe('articleIsPublic', () => {
+  it('published with role public or none', () => {
+    expect([undefined, 'public', 'none', 'registered', 'admin', null].map((roleNeeded) => articleIsPublic(article({}, { roleNeeded })))).toEqual([false, true, true, false, false, false]);
+    expect(articleIsPublic(article({}, { state: 'draft' }))).toBe(false);
+    expect(articleIsPublic(null as unknown as ArticleSection)).toBe(false);
+  });
+});
+
+describe('articlesMatching', () => {
+  const list = [article({}, { okey: '1', title: 'Rudern am See', subTitle: 'Anfängerkurs' }), article({}, { okey: '2', title: 'Generalversammlung', subTitle: '' }), article({}, { okey: '3' })];
+  const keys = (query: string) => articlesMatching(list, query).map((a) => a.okey);
+
+  it('every word in title or subtitle, any case', () => {
+    expect(keys('rudern')).toEqual(['1']);
+    expect(keys('  SEE  anfänger ')).toEqual(['1']);
+    expect(keys('rudern versammlung')).toEqual([]);
+    expect(keys('x')).toEqual([]);
+  });
+
+  it('all for an empty query, nothing thrown for odd input', () => {
+    expect(articlesMatching(list, '')).toBe(list);
+    expect(articlesMatching(list, undefined as unknown as string)).toBe(list);
+    expect(articlesMatching([null as unknown as ArticleSection], 'a')).toEqual([]);
+  });
 });

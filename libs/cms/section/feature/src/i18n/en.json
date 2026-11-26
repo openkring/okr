@@ -371,6 +371,21 @@
           "placeholder": "https://… , mailto:… or /page",
           "helper": "A website (https), an email address (mailto:), a phone number (tel:) or a page of the app (/…)"
         },
+        "insert": {
+          "button": "Insert article",
+          "search": "Search articles",
+          "empty": "There are no articles you can insert.",
+          "noMatch": "No article matches your search.",
+          "whole": "Insert in full",
+          "teaser": "As a preview with a link",
+          "more": "Read more",
+          "notPublic": "This article is not public.",
+          "notPublicMore": "An email leaves the app. Only insert the article if all recipients may read it.",
+          "confirm": "Insert",
+          "cancel": "Cancel",
+          "failed": "The articles could not be read. Check your connection and try again.",
+          "untitled": "Untitled"
+        },
         "events": {
           "helper": "The next events of this calendar are added when the email is sent.",
           "calendar": "Calendar",

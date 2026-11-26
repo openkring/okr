@@ -371,6 +371,21 @@
           "placeholder": "https://… , mailto:… oder /seite",
           "helper": "Eine Webseite (https), eine E-Mail-Adresse (mailto:), eine Telefonnummer (tel:) oder eine Seite der App (/…)"
         },
+        "insert": {
+          "button": "Artikel einfügen",
+          "search": "Artikel suchen",
+          "empty": "Es gibt keine Artikel, die du einfügen kannst.",
+          "noMatch": "Kein Artikel passt zu deiner Suche.",
+          "whole": "Ganz einfügen",
+          "teaser": "Als Vorschau mit Link",
+          "more": "Weiterlesen",
+          "notPublic": "Dieser Artikel ist nicht öffentlich.",
+          "notPublicMore": "Eine E-Mail verlässt die App. Füge den Artikel nur ein, wenn alle Empfangenden ihn lesen dürfen.",
+          "confirm": "Einfügen",
+          "cancel": "Abbrechen",
+          "failed": "Die Artikel konnten nicht gelesen werden. Prüfe deine Verbindung und versuche es noch einmal.",
+          "untitled": "Ohne Titel"
+        },
         "events": {
           "helper": "Beim Senden werden die nächsten Anlässe dieses Kalenders eingesetzt.",
           "calendar": "Kalender",

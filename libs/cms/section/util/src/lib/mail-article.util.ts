@@ -5,7 +5,8 @@ import {
 import { belongsToTenant, hasRole, shortenText } from '@okr/shared-util-core';
 
 import { hasImageUrl, isObject, type Loose } from './article-block.util';
-import type { NewId } from './article-editor.util';
+import { findBlock, type NewId } from './article-editor.util';
+import { ARTICLE_BLOCKS_MAX } from './article-blocks.validations';
 import { escapeHtml, germanHtml, headerHtml, linkedImage, mailBlockOf, objectOf, showsSomething, str, textBlock } from './mail-block-parts';
 
 /**
@@ -59,6 +60,22 @@ export function teaserBlocks(section: ArticleSection, url: string, labels: { mor
   if (text) blocks.push(textBlock(newId(), text));
   blocks.push({ id: newId(), type: 'button', cta: { label: labels.more, url, style: 'primary' } });
   return blocks;
+}
+
+/**
+ * The blocks of the mail with `inserted` put in after the selected top-level block (§8.3); a block inside a column counts as its columns block;
+ * without a selection, or one that is gone, at the end. `'full'`: the result would have more than ARTICLE_BLOCKS_MAX top-level blocks, nothing is
+ * inserted. `firstId`: the block that gets selected, undefined when nothing was inserted. Pure; the input is not changed.
+ */
+export function insertArticleBlocks(blocks: MailBlock[], inserted: MailBlock[], afterId: string | undefined): { blocks: MailBlock[]; firstId?: string } | 'full' {
+  const top = Array.isArray(blocks) ? blocks : [];
+  const add = Array.isArray(inserted) ? inserted : [];
+  if (add.length === 0) return { blocks: top };
+  if (top.length + add.length > ARTICLE_BLOCKS_MAX) return 'full';
+  const found = afterId === undefined ? undefined : findBlock(top, afterId);
+  const at = !found ? top.length
+    : (found.place.columnsId === undefined ? found.place.index : top.findIndex((block) => isObject(block) && block.id === found.place.columnsId)) + 1;
+  return { blocks: [...top.slice(0, at), ...add, ...top.slice(at)], firstId: add[0].id };
 }
 
 // ------------------------------------------------------- choosing -------------------------------------------------------
@@ -117,4 +134,19 @@ export function newsArticleUrl(site: Pick<WebsiteModel, 'okey' | 'domain'> | und
   } catch {
     return undefined;    // no valid unicode
   }
+}
+
+/** Whether everybody can read the article without login (published, role none or public): a mail that leaves the app shows it to others than the app's members. */
+export function articleIsPublic(section: ArticleSection): boolean {
+  return isObject(section) && section['state'] === 'published' && isPublicRole(section['roleNeeded']);
+}
+
+/** The articles whose title or subtitle contains every word of `query` (any case); all of them for an empty query. The order is kept. */
+export function articlesMatching(articles: ArticleSection[], query: string): ArticleSection[] {
+  const words = str(query).toLowerCase().split(/\s+/).filter(Boolean);
+  if (words.length === 0) return articles;
+  return articles.filter((article) => {
+    const text = `${str(objectOf(article)['title'])} ${str(objectOf(article)['subTitle'])}`.toLowerCase();
+    return words.every((word) => text.includes(word));
+  });
 }

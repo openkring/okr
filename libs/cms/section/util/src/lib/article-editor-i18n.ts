@@ -162,6 +162,19 @@ export const ARTICLE_EDITOR_I18N_KEYS = {
   article_editor_mail_events_choose:           PFX + 'article.editor.mail.events.choose',
   article_editor_mail_events_later:            PFX + 'article.editor.mail.events.later',
   article_editor_mail_events_none:             PFX + 'article.editor.mail.events.none',
+  article_editor_mail_insert_button:                PFX + 'article.editor.mail.insert.button',
+  article_editor_mail_insert_search:                PFX + 'article.editor.mail.insert.search',
+  article_editor_mail_insert_empty:                 PFX + 'article.editor.mail.insert.empty',
+  article_editor_mail_insert_noMatch:               PFX + 'article.editor.mail.insert.noMatch',
+  article_editor_mail_insert_whole:                 PFX + 'article.editor.mail.insert.whole',
+  article_editor_mail_insert_teaser:                PFX + 'article.editor.mail.insert.teaser',
+  article_editor_mail_insert_more:                  PFX + 'article.editor.mail.insert.more',
+  article_editor_mail_insert_notPublic:             PFX + 'article.editor.mail.insert.notPublic',
+  article_editor_mail_insert_notPublicMore:         PFX + 'article.editor.mail.insert.notPublicMore',
+  article_editor_mail_insert_confirm:               PFX + 'article.editor.mail.insert.confirm',
+  article_editor_mail_insert_cancel:                PFX + 'article.editor.mail.insert.cancel',
+  article_editor_mail_insert_failed:                PFX + 'article.editor.mail.insert.failed',
+  article_editor_mail_insert_untitled:              PFX + 'article.editor.mail.insert.untitled',
 } satisfies Record<string, string>;
 
 /** What panel, canvas and modal are given: the texts of the editor and those of the section forms whose parts they reuse. */

@@ -4,7 +4,7 @@ import { MAIL_PROFILE, createHistory, findBlock, mailArticle, record, undo, type
 import type { ArticleBlock, ArticleSection, ColumnsBlock, ImageConfig, MailBlock } from '@okr/shared-models';
 
 import {
-  affectedBlocks, editorBlocks as blocksIn, changeBlocks, changeSection, columnOfBlock, deviceFor, historyKey, isTypedInto, restore, selectIn, stateAfterChange, stepBack, stepForward, uploadInto, withColumnSize, withUploadDetails,
+  affectedBlocks, editorBlocks as blocksIn, changeBlocks, changeSection, columnOfBlock, deviceFor, historyKey, insertedInto, isTypedInto, restore, selectIn, stateAfterChange, stepBack, stepForward, uploadInto, withColumnSize, withUploadDetails,
 } from './article-editor-surface.util';
 
 const text = (id: string, html = `<p>${id}</p>`): ArticleBlock => ({ id, type: 'text', html });
@@ -439,5 +439,39 @@ describe('deviceFor a mail', () => {
     expect(deviceFor('mobile', false, MAIL_PROFILE)).toBe('mobile');
     expect(deviceFor('desktop', false, MAIL_PROFILE)).toBe('desktop');
     expect(deviceFor('mobile', true, MAIL_PROFILE)).toBe('auto');
+  });
+});
+
+describe('insertedInto', () => {
+  const add = [text('x'), text('y')] as MailBlock[];
+  const start = (blocks: ArticleBlock[], selectedId?: string): EditorHistory<EditorState> => createHistory(state(blocks, { selectedId }));
+
+  it('one history step: after the selected block, the first new block selected, undo gives the old mail back', () => {
+    const history = insertedInto(start([text('a'), text('z')], 'a'), add);
+    if (history === 'full') throw new Error('full');
+    expect(ids(history.present)).toEqual(['a', 'x', 'y', 'z']);
+    expect(history.present.selectedId).toBe('x');
+    expect(history.past).toHaveLength(1);
+    const back = undo(history);
+    expect(ids(back.present)).toEqual(['a', 'z']);
+  });
+
+  it('at the end without a selection, after the columns block from inside one', () => {
+    const plain = insertedInto(start([text('a'), text('z')]), add);
+    expect(plain !== 'full' && ids(plain.present)).toEqual(['a', 'z', 'x', 'y']);
+    const inside = insertedInto(start([columns('c', [text('in')]), text('z')], 'in'), add);
+    expect(inside !== 'full' && ids(inside.present)).toEqual(['c', 'x', 'y', 'z']);
+  });
+
+  it('refuses more than 50 blocks', () => {
+    const many = Array.from({ length: 49 }, (_, i) => text(`b${i}`));
+    const history = start(many, 'b0');
+    expect(insertedInto(history, add)).toBe('full');
+    expect(insertedInto(history, [text('x')])).not.toBe('full');
+  });
+
+  it('nothing to insert is no step', () => {
+    const history = start([text('a')]);
+    expect(insertedInto(history, [])).toBe(history);
   });
 });

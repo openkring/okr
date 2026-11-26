@@ -1,16 +1,22 @@
 import { NgTemplateOutlet } from '@angular/common';
 import { Component, DestroyRef, OnInit, TemplateRef, computed, effect, inject, input, signal, untracked, viewChild } from '@angular/core';
 
+import { IonButton, IonIcon, ModalController, ToastController } from '@ionic/angular';
+
 import {
-  ARTICLE_EDITOR_I18N_KEYS, MAIL_PROFILE, SECTION_I18N_KEYS, articleImageChoices, firstTextId,
+  ARTICLE_BLOCKS_MAX, ARTICLE_EDITOR_I18N_KEYS, MAIL_PROFILE, SECTION_I18N_KEYS, articleImageChoices, firstTextId, mailBlocksFromArticle, teaserBlocks,
   type ArticleEditorI18n, type ArticleUpload, type EditorHistory, type EditorState, type MailEditorContext, type MailEditorDraft,
 } from '@okr/cms-section-util';
+import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import type { MailBlock, UserModel } from '@okr/shared-models';
-import type { MailEventLine } from '@okr/shared-util-core';
+import { SvgIconPipe } from '@okr/shared-pipes';
+import { showToast } from '@okr/shared-util-angular';
+import { fill, type MailEventLine } from '@okr/shared-util-core';
 
 import { ArticleEditorSurface } from './article-editor-surface';
-import { editorBlocks, uploadInto } from './article-editor-surface.util';
+import { editorBlocks, insertedInto, uploadInto } from './article-editor-surface.util';
+import type { MailArticleChoice } from './mail-article-pick.modal';
 
 type History = EditorHistory<EditorState>;
 
@@ -27,7 +33,7 @@ type History = EditorHistory<EditorState>;
 @Component({
   selector: 'okr-mail-editor-host',
   standalone: true,
-  imports: [ArticleEditorSurface, NgTemplateOutlet],
+  imports: [ArticleEditorSurface, IonButton, IonIcon, NgTemplateOutlet, SvgIconPipe],
   styles: [`
     :host { display: flex; flex-direction: column; flex: 1; min-height: 0; height: 100%; }
     .head { flex: none; border-bottom: 1px solid var(--ion-color-light-shade); }
@@ -40,6 +46,10 @@ type History = EditorHistory<EditorState>;
     <okr-article-editor-surface [profile]="profile" [history]="draft().history()" (historyChange)="onHistory($event)" [errors]="draft().errors()"
       [articleImages]="articleImages()" [onUpload]="onUpload" [storagePath]="storagePath()" [currentUser]="currentUser()"
       [eventLines]="eventLines()" [calendars]="calendars()" [active]="active()" [i18n]="i18n">
+      <ion-button barEnd fill="clear" size="small" [title]="i18n.article_editor_mail_insert_button()" (click)="insertArticle()">
+        <ion-icon slot="start" src="{{ 'add' | svgIcon }}" aria-hidden="true" />
+        {{ i18n.article_editor_mail_insert_button() }}
+      </ion-button>
       <ng-template #nothingSelected>
         @if (panel(); as panel) { <ng-container [ngTemplateOutlet]="panel" /> }
       </ng-template>
@@ -62,6 +72,9 @@ export class MailEditorHost implements OnInit {
   protected readonly profile = MAIL_PROFILE;
   protected readonly i18n = inject(I18nService).translateAll({ ...SECTION_I18N_KEYS, ...ARTICLE_EDITOR_I18N_KEYS }) as ArticleEditorI18n;
   private readonly surface = viewChild(ArticleEditorSurface);
+  private readonly modalController = inject(ModalController);
+  private readonly toastController = inject(ToastController);
+  private readonly appStore = inject(AppStore);
 
   private readonly blocks = computed<MailBlock[]>(() => editorBlocks(this.draft().history().present));
   protected readonly articleImages = computed(() => articleImageChoices(this.draft().history().present.section));
@@ -110,6 +123,38 @@ export class MailEditorHost implements OnInit {
     return true;
   }
 
+  /**
+   * «Artikel einfügen» (§8.3): the picker is loaded when it is asked for; what it answers becomes blocks (placeholders replaced, new ids) and
+   * goes in as one step. A mail of more than 50 blocks is refused with the library's note. Errors of the new blocks show as any other.
+   */
+  protected async insertArticle(): Promise<void> {
+    const pageKey = this.pageKey;
+    const { MailArticlePickModal } = await import('./mail-article-pick.modal');
+    const modal = await this.modalController.create({
+      component: MailArticlePickModal, componentProps: { i18n: this.i18n, context: this.context() }, cssClass: ['modal-wide', 'modal-fixed-height'],
+    });
+    await modal.present();
+    const { data, role } = await modal.onWillDismiss<MailArticleChoice>();
+    // the composer may have moved on (closed, another draft) while the picker was open
+    if (role !== 'confirm' || !data || this.destroyed || this.draft().pageKey() !== pageKey) return;
+    const replace = (html: string): string => this.appStore.replacePlaceholders(html);
+    const blocks = data.mode === 'teaser' && data.url
+      ? teaserBlocks(data.article, data.url, { more: this.i18n.article_editor_mail_insert_more() }, newId)
+          .map((block) => (block.type === 'text' ? { ...block, html: replace(block.html) } : block))
+      : mailBlocksFromArticle(data.article, replace, newId);
+    const go = (history: History): History => {
+      const next = insertedInto(history, blocks);
+      return next === 'full' ? history : next;
+    };
+    if (insertedInto(this.draft().history(), blocks) === 'full') {
+      void showToast(this.toastController, fill(this.i18n.article_editor_mail_full(), { max: ARTICLE_BLOCKS_MAX }));
+      return;
+    }
+    if (!this.surface()?.change(go)) this.draft().setHistory(go(this.draft().history()));
+    const first = blocks[0]?.id;
+    if (first) this.surface()?.open(first);
+  }
+
   protected onHistory(history: History): void {
     this.draft().setHistory(history);
   }
@@ -124,3 +169,5 @@ export class MailEditorHost implements OnInit {
     if (this.destroyed || !this.surface()?.change(go)) this.draft().setHistory(go(this.draft().history()));
   };
 }
+
+function newId(): string { return crypto.randomUUID(); }
