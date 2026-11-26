@@ -29,10 +29,15 @@ export function isMenuItem(menuItem: unknown, tenantId: string): menuItem is Men
 }
 
 /*-------------------------- SEARCH --------------------------------*/
+/**
+ * `nn:` (the plain-text `nickName`) is appended only when set, so a row without one keeps the
+ * former index. Mirrored in `@okr/tenant-util` (`menuIndex` in menu-seed.util, root-menu.util).
+ */
 export function getMenuIndex(menuItem: MenuItemModel): string {
-  return 'n:' + menuItem.name + ' a:' + menuItem.action + ' k:' + menuItem.okey;
+  const nickName = menuItem.nickName?.trim();
+  return 'n:' + menuItem.name + ' a:' + menuItem.action + ' k:' + menuItem.okey + (nickName ? ' nn:' + nickName : '');
 }
 
 export function getMenuIndexInfo(): string {
-  return 'n:ame a:ction k:ey';
+  return 'n:ame a:ction k:ey nn:ickName';
 }

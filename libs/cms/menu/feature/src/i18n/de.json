@@ -199,6 +199,15 @@
     "placeholder": "Name",
     "helper": "Nur bei Aktion «Toggle»: Bezeichnung für den aktiven Zustand."
   },
+  "nick_name": {
+    "label": "Suchbegriffe",
+    "placeholder": "z.B. Logbuch Fahrten",
+    "helper": "Weitere Wörter, unter denen die Menüsuche diesen Eintrag findet."
+  },
+  "search": {
+    "placeholder": "Menü durchsuchen",
+    "empty": "Kein Menüeintrag gefunden"
+  },
   "info": {
     "label": "Info-Text",
     "placeholder": "Kurzer Hinweis zu diesem Menüpunkt",

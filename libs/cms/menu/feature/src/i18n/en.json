@@ -199,6 +199,15 @@
     "placeholder": "Name",
     "helper": "Only for the «Toggle» action: label for the active state."
   },
+  "nick_name": {
+    "label": "Search words",
+    "placeholder": "e.g. logbook trips",
+    "helper": "More words the menu search finds this entry by."
+  },
+  "search": {
+    "placeholder": "Search the menu",
+    "empty": "No menu entry found"
+  },
   "info": {
     "label": "Info text",
     "placeholder": "Short note about this menu item",

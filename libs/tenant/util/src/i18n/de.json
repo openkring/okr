@@ -607,6 +607,10 @@
         "label": "Startseite",
         "helper": "Diese Seite öffnet sich beim Start der App und nach der Anmeldung. Wer im Profil eine eigene Startseite gewählt hat, kommt dorthin. Ohne Startseite, oder wenn ihre Funktion ausgeschaltet ist, öffnet sich die Willkommensseite."
       },
+      "useMenuSearch": {
+        "label": "Menüsuche",
+        "helper": "Oben im Hauptmenü erscheint ein Suchfeld. Es findet Menüeinträge nach ihrer Bezeichnung und nach ihren Suchbegriffen."
+      },
       "opName": {
         "label": "Name",
         "helper": "Wer für diese App verantwortlich ist. Steht in der Datei mit den eigenen Daten. Leer: Die Angabe fehlt dort."

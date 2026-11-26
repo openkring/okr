@@ -38,6 +38,15 @@ export const MENU_I18N_KEYS = {
   label_alt_placeholder:          PFX + 'label_alt.placeholder',
   label_alt_helper:               PFX + 'label_alt.helper',
 
+  // plain-text search words, written into the index (main-menu search)
+  nick_name_label:                PFX + 'nick_name.label',
+  nick_name_placeholder:          PFX + 'nick_name.placeholder',
+  nick_name_helper:               PFX + 'nick_name.helper',
+
+  // the search field at the top of the main menu (app-config.useMenuSearch)
+  search_placeholder:             PFX + 'search.placeholder',
+  search_empty:                   PFX + 'search.empty',
+
   info_label:                     PFX + 'info.label',
   info_placeholder:               PFX + 'info.placeholder',
   info_helper:                    PFX + 'info.helper',

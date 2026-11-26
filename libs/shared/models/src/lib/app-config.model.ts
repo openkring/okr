@@ -323,6 +323,11 @@ export class AppConfig {
   public personSortCriteria = 1; // sorting criteria for persons, e.g. 0 for name, 1 for date of birth
   public showArchivedData = false; // whether to show archived data
   public showDebugInfo = false; // whether to show debug information
+  /**
+   * Shows a search field at the top of the main menu (sidebar and static layout). Matches the menu's
+   * `index` (name, nickName) and its translated label. Legacy config docs lack it — coalesce to false.
+   */
+  public useMenuSearch = false;
 
   /**
    * `tenantId` is a CONSTRUCTOR PARAMETER only — it seeds the per-tenant default paths

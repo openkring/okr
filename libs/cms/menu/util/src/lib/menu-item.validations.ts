@@ -39,6 +39,10 @@ export const menuItemValidations = staticSuite((
   stringValidations('description', model.description, DESCRIPTION_LENGTH);
   stringValidations('label', model.label, SHORT_NAME_LENGTH);
   stringValidations('icon', model.icon);
+  // free-text search words, absent on every legacy row — only checked once set
+  omitWhen(model.nickName === undefined, () => {
+    stringValidations('nickName', model.nickName, LONG_NAME_LENGTH);
+  });
   // optional, and absent on every existing row — only checked once it is set
   omitWhen(model.info === undefined, () => {
     stringValidations('info', model.info, DESCRIPTION_LENGTH);

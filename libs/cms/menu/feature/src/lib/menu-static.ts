@@ -14,6 +14,7 @@ import { MenuBarAccount } from './menu-bar-account';
 import { MenuBarLabel } from './menu-bar-label';
 import { MenuItemsStore } from './menu-items.store';
 import { MenuLayout } from './menu-layout.service';
+import { MenuSearch } from './menu-search';
 import { MenuStore } from './menu.store';
 
 /**
@@ -41,7 +42,7 @@ import { MenuStore } from './menu.store';
 @Component({
   selector: 'okr-menu-static',
   imports: [
-    NgTemplateOutlet, MenuBarAccount, MenuBarLabel, SvgIconPipe, AvatarUser, ConnectionStatusButton,
+    NgTemplateOutlet, MenuBarAccount, MenuBarLabel, MenuSearch, SvgIconPipe, AvatarUser, ConnectionStatusButton,
     IonButton, IonIcon, IonPopover, IonContent, IonList, IonLabel, IonItem,
   ],
   providers: [MenuStore],
@@ -100,13 +101,18 @@ import { MenuStore } from './menu.store';
     .active-color { color: var(--okr-static-bullet); }
     .active-underline { text-decoration: underline 2px var(--okr-static-bullet); text-underline-offset: 4px; }
     .warn { margin-top: 8px; font-size: 13px; color: var(--ion-color-medium); }
+    okr-menu-search.search { display: block; max-width: 420px; margin-inline-start: -8px; }
   `],
   template: `
     <div #block class="static"
       [style.--okr-static-bullet]="bulletColor()"
       [style.--okr-submenu-offset.px]="layout.submenuOffset()">
       <nav class="rows" [attr.aria-label]="store.i18n.static_nav_label()">
-        <div class="grid" [class.no-bullet]="!showBullet()">
+        <!-- app-config.useMenuSearch: the results replace the rows while a term is entered -->
+        @if (showSearch()) {
+          <okr-menu-search class="search" [rootName]="rootName()" (searching)="searching.set($event)" />
+        }
+        <div class="grid" [class.no-bullet]="!showBullet()" [style.display]="searching() ? 'none' : null">
           @for (row of rows(); track $index) {
             @if (row.item.action === 'divider') {
               <div class="divider" aria-hidden="true"></div>
@@ -242,6 +248,11 @@ export class MenuStatic {
   protected readonly showBullet = computed(() => this.layout.staticMenu().bulletShape !== 'none');
   protected readonly bulletColor = computed(() => staticBulletColorCss(this.layout.staticMenu().bulletColor));
   protected readonly activeClass = computed(() => `active-${this.layout.staticMenu().activeStyle}`);
+
+  /** The search field, while the tenant enabled it (`app-config.useMenuSearch`). */
+  protected readonly showSearch = computed(() => this.store.appStore.appConfig()?.useMenuSearch === true);
+  /** A search term is entered: the rows are hidden behind the results. */
+  protected readonly searching = signal(false);
 
   /** The `sub` row the person opened last (`childrenVisibility: 'active'`); undefined when none. */
   protected readonly openSub = signal<string | undefined>(undefined);
