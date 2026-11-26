@@ -1,5 +1,6 @@
 import * as logger from 'firebase-functions/logger';
 import type { AddressModel } from '@okr/shared-models';
+import { foldName } from '@okr/shared-util-core';
 
 /** One address from the swisstopo (geo.admin.ch) address search. Public open data. */
 export interface SwissAddressHit {
@@ -32,12 +33,7 @@ export function normaliseQuery(q: string): string {
 
 /** Case-, diacritics- and whitespace-insensitive form of an address part (the geocoder's match rule). */
 export function foldAddressPart(s: string): string {
-  return s
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .replace(/\s+/g, ' ')
-    .trim()
-    .toLowerCase();
+  return foldName(s);
 }
 
 /** A street name as the register spells it: folded, «ß» as «ss», «str.»/«str» spelled out («Seestr.» = «Seestrasse»). */
