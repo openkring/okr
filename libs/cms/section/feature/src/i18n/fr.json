@@ -2129,7 +2129,8 @@
     "layerUnknown": "Choisis l'un des fonds de carte proposés.",
     "trackRequired": "Choisis un parcours.",
     "imageLink": "Ce lien n’est pas possible. Utilise une adresse avec https://, mailto: ou tel:.",
-    "mailImageLink": "Ce lien n’est pas possible. Utilise une adresse avec https://, mailto: ou tel:, ou une page de l’application (/…)."
+    "mailImageLink": "Ce lien n’est pas possible. Utilise une adresse avec https://, mailto: ou tel:, ou une page de l’application (/…).",
+    "mailTextPicture": "Cette image ne peut pas être affichée dans l’e-mail. Ajoute les images avec le bloc «Image»."
   },
   "advent": {
     "label": "Calendrier de l'Avent",

@@ -2129,7 +2129,8 @@
     "layerUnknown": "Scegli uno dei livelli di mappa proposti.",
     "trackRequired": "Scegli un percorso.",
     "imageLink": "Questo link non è possibile. Usa un indirizzo con https://, mailto: o tel:.",
-    "mailImageLink": "Questo link non è possibile. Usa un indirizzo con https://, mailto: o tel:, o una pagina dell’app (/…)."
+    "mailImageLink": "Questo link non è possibile. Usa un indirizzo con https://, mailto: o tel:, o una pagina dell’app (/…).",
+    "mailTextPicture": "Questa immagine non può essere mostrata nell’e-mail. Aggiungi le immagini con il blocco «Immagine»."
   },
   "advent": {
     "label": "Calendario dell'Avvento",

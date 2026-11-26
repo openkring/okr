@@ -3,7 +3,7 @@
 // The html of a text or callout block, made fit for a mail (spec 1.176 §9.1): links a mail client can open, styles and
 // pictures that cannot break the layout, nothing active. Works on the OUTPUT of `sanitizeEmailBody` only, which is well
 // formed (values in double quotes, `<`, `>`, `&` and `"` in them escaped, no comments), so tags can be read one by one.
-import { mailTargetUrl } from '@okr/shared-util-core';
+import { isTrackingPicture, mailTargetUrl } from '@okr/shared-util-core';
 
 import { pictureUrl } from './mail-picture.logic';
 
@@ -77,14 +77,10 @@ function pixels(value: string | undefined): number | undefined {
   return match ? Number(match[1]) : undefined;
 }
 
-/** Pictures of 1 or 2 px count who opens the mail. */
-function isTrackingPicture(attributes: Record<string, string>): boolean {
-  const ofStyle = (name: string) => new RegExp(`(?:^|;)\\s*${name}\\s*:\\s*([^;]+)`, 'i').exec(attributes['style'] ?? '')?.[1];
-  return ['width', 'height'].some((name) => [attributes[name], ofStyle(name)].some((v) => (pixels(v) ?? 3) <= 2));
-}
-
+/** A picture the mail can show (`isMailTextPicture` of shared-util-core, which the app's validation uses): a tracking one goes, any other is its alt text. */
 function pictureTag(attributes: Record<string, string>, options: MailTextOptions): string {
   const alt = attributes['alt'] ?? '';
+  // pictures of 1 or 2 px count who opens the mail
   if (isTrackingPicture(attributes)) return '';
   const width = pixels(attributes['width']);
   const src = pictureUrl(attributes['src'], 2 * Math.min(Math.round(width ?? options.widestWidth), options.widestWidth));

@@ -2,7 +2,7 @@ import {
   ARTICLE_BLOCK_TYPES, CAPTION_POSITIONS, IMAGE_STYLE_SHAPE, ImageActionType, ImageType,
   type ArticleBlockType, type BlockAlign, type CalloutTone, type ColumnContentBlock, type ImageConfig, type ImageStyle, type MailBlock, type SectionCta, type TextBlock,
 } from '@okr/shared-models';
-import { mailTargetUrl } from '@okr/shared-util-core';
+import { isMailTextPicture, isTrackingPicture, mailTargetUrl } from '@okr/shared-util-core';
 
 import { BLOCK_ALIGNS, SPACE_SIZES, isObject, type Loose } from './article-block.util';
 import type { NewId } from './article-editor.util';
@@ -20,11 +20,53 @@ export function objectOf(value: unknown): Loose {
   return isObject(value) ? value : {};
 }
 
-/** Whether an html shows anything: an image, or text that is no blank (the server's rule for an empty mail). */
+/** A tag; a quoted value may hold `>` (a browser does not escape it there). */
+const TAG = /<(?:[^>"']|"[^"]*"|'[^']*')*>/g;
+const PICTURE_TAG = /<img\b((?:[^>"']|"[^"]*"|'[^']*')*)>/gi;
+const ATTRIBUTE = /([^\s"'<>/=]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+)))?/g;
+const NAMED_ENTITIES: Record<string, string> = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: '\u00a0' };
+
+function decodeEntities(value: string): string {
+  return value.replace(/&(#x[\da-f]+|#\d+|[a-z]+);/gi, (entity, name: string) => {
+    if (name[0] !== '#') return NAMED_ENTITIES[name.toLowerCase()] ?? entity;
+    const code = name[1] === 'x' || name[1] === 'X' ? parseInt(name.slice(2), 16) : parseInt(name.slice(1), 10);
+    return code > 0 && code <= 0x10ffff ? String.fromCodePoint(code) : entity;
+  });
+}
+
+function attributesOf(raw: string): Record<string, string> {
+  const attributes: Record<string, string> = {};
+  for (const [, name, double, single, bare] of raw.matchAll(ATTRIBUTE)) {
+    const key = name.toLowerCase();
+    // as a browser reads it: the first one counts
+    if (!(key in attributes)) attributes[key] = decodeEntities(double ?? single ?? bare ?? '');
+  }
+  return attributes;
+}
+
+/** What a reader never sees and that could run. */
+function withoutHidden(html: string): string {
+  return html.replace(/<!--[\s\S]*?-->|<style\b[\s\S]*?<\/style>|<script\b[\s\S]*?<\/script>/gi, '');
+}
+
+/** The attributes of every picture (<img>) of an html, by lower-case name with decoded values; none for what is no text. */
+export function textPictures(html: unknown): Record<string, string>[] {
+  return typeof html === 'string' ? [...withoutHidden(html).matchAll(PICTURE_TAG)].map((tag) => attributesOf(tag[1])) : [];
+}
+
+/**
+ * Whether an html shows anything in a mail (the server's rule for an empty mail): a picture the mail shows (`isMailTextPicture`), or text
+ * that is no blank. A picture the mail cannot show is its alt text there, a tracking picture is nothing.
+ */
 export function showsSomething(html: unknown): boolean {
   if (typeof html !== 'string') return false;
-  const body = html.replace(/<!--[\s\S]*?-->|<style\b[\s\S]*?<\/style>|<script\b[\s\S]*?<\/script>/gi, '');
-  return /<img\b/i.test(body) || body.replace(/<[^>]*>/g, '').replace(/&nbsp;|&#160;|&#xa0;/gi, ' ').trim() !== '';
+  let shown = false;
+  const text = withoutHidden(html).replace(PICTURE_TAG, (_tag, raw: string) => {
+    const attributes = attributesOf(raw);
+    if (isMailTextPicture(attributes)) shown = true;
+    return isTrackingPicture(attributes) ? '' : ` ${attributes['alt'] ?? ''} `;
+  });
+  return shown || decodeEntities(text.replace(TAG, '')).trim() !== '';
 }
 
 // ------------------------------------------------------- copying -------------------------------------------------------

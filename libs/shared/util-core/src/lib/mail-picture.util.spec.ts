@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { MAIL_CONTENT_WIDTH, mailCaptionPosition, mailPictureWidth } from './mail-picture.util';
+import { MAIL_CONTENT_WIDTH, isMailTextPicture, isTrackingPicture, mailCaptionPosition, mailPictureWidth } from './mail-picture.util';
 
 describe('mailPictureWidth', () => {
   it.each<[unknown, object]>([
@@ -29,4 +29,27 @@ describe('mailCaptionPosition', () => {
   ])('%j → %s', (raw, expected) => {
     expect(mailCaptionPosition(raw)).toBe(expected);
   });
+});
+
+describe('isTrackingPicture', () => {
+  it.each<Record<string, string>>([
+    { width: '1' }, { height: '2' }, { width: '0' }, { width: '2px' }, { width: ' 1 ', height: '300' }, { width: '1.5' },
+    { style: 'width:1px' }, { style: 'height: 2px; border:0' }, { style: 'color:red;WIDTH:0' }, { width: '300', style: 'height:1px' },
+  ])('%j counts who opens the mail', (attributes) => expect(isTrackingPicture(attributes)).toBe(true));
+
+  it.each<Record<string, string>>([
+    {}, { width: '3' }, { width: '2.5' }, { width: '300', height: '200' }, { width: '50%' }, { width: 'auto' }, { width: '' },
+    { style: 'width:100%' }, { style: 'max-width:1px' }, { style: 'min-height:2px' }, { style: 'width:3px' }, { alt: '1' },
+  ])('%j is a picture', (attributes) => expect(isTrackingPicture(attributes)).toBe(false));
+});
+
+describe('isMailTextPicture', () => {
+  it.each<Record<string, string>>([
+    { src: 'tenant/scs/a.jpg' }, { src: 'https://a.ch/a.jpg', width: '300' }, { src: ' https://a.ch/a.jpg ', alt: 'x' },
+  ])('shows %j', (attributes) => expect(isMailTextPicture(attributes)).toBe(true));
+
+  it.each<Record<string, string>>([
+    {}, { src: '' }, { src: 'http://a.ch/a.jpg' }, { src: 'data:image/png;base64,AAAA' }, { src: '/a.jpg' }, { src: 'ftp://a.ch/a.jpg' },
+    { src: 'https://a.ch/a.gif', width: '1', height: '1' }, { src: 'tenant/scs/a.jpg', style: 'height:2px' },
+  ])('leaves out %j', (attributes) => expect(isMailTextPicture(attributes)).toBe(false));
 });

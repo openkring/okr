@@ -2129,7 +2129,8 @@
     "layerUnknown": "Choose one of the offered map layers.",
     "trackRequired": "Choose a track.",
     "imageLink": "This link is not possible. Use an address with https://, mailto: or tel:.",
-    "mailImageLink": "This link is not possible. Use an address with https://, mailto: or tel:, or a page of the app (/…)."
+    "mailImageLink": "This link is not possible. Use an address with https://, mailto: or tel:, or a page of the app (/…).",
+    "mailTextPicture": "This picture cannot be shown in the email. Add pictures as an “Image” block."
   },
   "advent": {
     "label": "Advent calendar",

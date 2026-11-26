@@ -2129,7 +2129,8 @@
     "layerUnknown": "Wähle eine der angebotenen Kartenebenen.",
     "trackRequired": "Wähle eine Strecke aus.",
     "imageLink": "Dieser Link ist nicht möglich. Verwende eine Adresse mit https://, mailto: oder tel:.",
-    "mailImageLink": "Dieser Link ist nicht möglich. Verwende eine Adresse mit https://, mailto: oder tel:, oder eine Seite der App (/…)."
+    "mailImageLink": "Dieser Link ist nicht möglich. Verwende eine Adresse mit https://, mailto: oder tel:, oder eine Seite der App (/…).",
+    "mailTextPicture": "Dieses Bild kann in der E-Mail nicht gezeigt werden. Füge Bilder als Block «Bild» ein."
   },
   "advent": {
     "label": "Adventskalender",

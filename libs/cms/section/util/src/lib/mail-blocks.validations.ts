@@ -1,12 +1,12 @@
 import { enforce, test } from 'vest';
 
 import { MAIL_BLOCK_TYPES, SECTION_CTA_STYLES, type MailBlock, type MailBlockType } from '@okr/shared-models';
-import { MAX_MAIL_EVENTS, isMailPictureSource, isSafeLinkTarget } from '@okr/shared-util-core';
+import { MAX_MAIL_EVENTS, isMailPictureSource, isMailTextPicture, isSafeLinkTarget } from '@okr/shared-util-core';
 
 import { BLOCK_ALIGNS, CALLOUT_TONES, COLUMN_BLOCK_TYPES, SPACE_SIZES, hasImageUrl, isObject, type Loose } from './article-block.util';
 import { ARTICLE_BLOCKS_MAX } from './article-blocks.validations';
 import { areColumns, check, checkImage, checkImageStyle, checkOneOf, columnLists, haveOwnIds } from './block-checks';
-import { isMailTarget } from './mail-block-parts';
+import { isMailTarget, textPictures } from './mail-block-parts';
 
 /** Without a value the block is incomplete. */
 function checkRequired(field: string, ok: boolean): void {
@@ -20,6 +20,16 @@ const isFilled = (value: unknown): boolean => isText(value) && value.trim() !== 
 
 /** A mail opens pages of the app, too. */
 const LINK_MESSAGE = '@cms/section/feature.validation.mailImageLink';
+/** A picture inside a text that the mail would replace by its alt text, or leave out (a tracking picture): the error of the text's html. */
+export const MAIL_TEXT_PICTURE_MESSAGE = '@cms/section/feature.validation.mailTextPicture';
+
+/** The html of a text or callout: a text, whose pictures the mail shows all (`isMailTextPicture`, the server's rule). */
+function checkTextHtml(field: string, html: unknown): void {
+  check(field, isText(html));
+  test(field, MAIL_TEXT_PICTURE_MESSAGE, () => {
+    enforce(textPictures(html).every(isMailTextPicture)).isTruthy();
+  });
+}
 
 function checkPicture(field: string, image: unknown): void {
   checkImage(field, image, LINK_MESSAGE);
@@ -41,11 +51,11 @@ function checkMailImageStyle(field: string, style: unknown): void {
 function checkContent(type: MailBlockType, block: Loose, f: (name: string) => string): void {
   switch (type) {
     case 'text':
-      check(f('html'), isText(block['html']));
+      checkTextHtml(f('html'), block['html']);
       checkOneOf(f('align'), block['align'], BLOCK_ALIGNS);
       break;
     case 'callout':
-      check(f('html'), isText(block['html']));
+      checkTextHtml(f('html'), block['html']);
       check(f('tone'), (CALLOUT_TONES as readonly unknown[]).includes(block['tone']));
       break;
     case 'image':

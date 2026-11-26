@@ -41,6 +41,26 @@ describe('mailBlocksHaveContent', () => {
     }
   });
 
+  it('a picture in a text counts as the mail draws it (isMailTextPicture): one it cannot show is its alt text, a tracking one nothing', () => {
+    const shows = (html: string) => has(text(html));
+    expect(shows('<p><img src="tenant/scs/a.jpg" alt=""></p>')).toBe(true);
+    expect(shows("<img src='https://a.ch/a.jpg'>")).toBe(true);
+    expect(shows('<img alt="" width="300" src="https://a.ch/a.jpg?a=1&amp;b=2">')).toBe(true);
+    for (const src of ['http://a.ch/a.jpg', 'data:image/png;base64,AAAA', '/a.jpg', '', 'javascript:x']) {
+      expect(shows(`<p><img src="${src}"></p>`)).toBe(false);
+      expect(shows(`<p><img src="${src}" alt=" "></p>`)).toBe(false);
+      expect(shows(`<p><img src="${src}" alt="Der Steg"></p>`)).toBe(true);
+    }
+    expect(shows('<img alt="Der Steg">')).toBe(true);
+    for (const size of ['width="1"', 'height="2"', 'width="0" height="0"', 'style="width:1px;height:1px"', 'style="display:none; height: 2px"']) {
+      expect(shows(`<p><img src="https://t.example/p.gif" ${size}></p>`)).toBe(false);
+      // its alt text goes with it
+      expect(shows(`<p><img src="https://t.example/p.gif" alt="Pixel" ${size}></p>`)).toBe(false);
+    }
+    expect(shows('<p><img src="https://t.example/p.gif" width="1"> Hallo</p>')).toBe(true);
+    expect(has({ id: 'k', type: 'callout', html: '<img src="data:image/png;base64,AAAA">', tone: 'neutral' })).toBe(false);
+  });
+
   it('a text that shows nothing does not', () => {
     for (const html of ['', '<p></p>', '<p> &nbsp;&#160;&#xA0;<br></p>', '<hr>', '<!-- x --><style>p { color: red }</style>', undefined, null, 5]) {
       expect(has(text(html))).toBe(false);

@@ -166,4 +166,24 @@ describe('mailBlocksValidations', () => {
     expect(fields([{ id: 's', type: 'space', size: 'x' }])).toEqual(['blocks.s.size']);
     for (const tone of ['primary', 'secondary', 'tertiary', 'neutral']) expect(fields([{ id: 'k', type: 'callout', html: '', tone }])).toEqual([]);
   });
+
+  it('flags a picture in a text or callout that the mail cannot show: an address that is none, or a tracking picture (isMailTextPicture)', () => {
+    const PICTURE = '@cms/section/feature.validation.mailTextPicture';
+    for (const html of [
+      '<p><img src="tenant/scs/a.jpg" alt=""></p>', '<p><img src="https://a.ch/a.jpg" width="300"></p>', "<img src='https://a.ch/a.jpg'>",
+      '<p>Kein Bild</p>', '<p>&lt;img src="http://a.ch"&gt;</p>', '',
+    ]) {
+      expect(fields([text('t', { html })])).toEqual([]);
+      expect(fields([{ id: 'k', type: 'callout', html, tone: 'neutral' }])).toEqual([]);
+    }
+    for (const html of [
+      '<p><img src="http://a.ch/a.jpg" alt="Bild"></p>', '<img src="data:image/png;base64,AAAA">', '<img src="/a.jpg">', '<img alt="x">',
+      '<img src="">', '<p>Hallo <IMG SRC="ftp://a.ch/a.jpg"></p>', '<img src="https://t.example/p.gif" width="1" height="1">',
+      '<img src="tenant/scs/a.jpg" style="height:2px">', '<p><img src="tenant/scs/a.jpg"><img src="http://a.ch/b.jpg"></p>',
+    ]) {
+      expect(errors([text('t', { html })])).toEqual({ 'blocks.t.html': [PICTURE] });
+      expect(errors([{ id: 'k', type: 'callout', html, tone: 'neutral' }])).toEqual({ 'blocks.k.html': [PICTURE] });
+      expect(errors([columns(text('ct', { html }))])).toEqual({ 'blocks.ct.html': [PICTURE] });
+    }
+  });
 });

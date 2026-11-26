@@ -16,7 +16,7 @@ import { compactImageStyle, fill, MAX_MAIL_EVENTS, resolveImageStyle } from '@ok
 import {
   ARTICLE_BLOCK_ICONS, ARTICLE_PROFILE, ArticleEditorI18n, ArticleUpload, BLOCK_ALIGNS, blockTypeLabel, COLUMN_PRESETS,
   drawableImages, EditorProfile, galleryErrors, getFieldErrors, IMAGE_CAPTION_LENGTH, ImageUploadTarget, isEventsShown, isMailCaptionHidden, isPictureMissing, MAIL_CAPTION_POSITIONS, MAIL_IMAGE_WIDTHS,
-  mailImageWidth, mailStyleCaptionPosition, mailToneOf, resizeColumn, restErrors, SectionErrors, setColumnCount, setColumnSizes, shownBlockFields, SPACE_SIZES, withMailLinks
+  MAIL_TEXT_PICTURE_MESSAGE, mailImageWidth, mailStyleCaptionPosition, mailToneOf, resizeColumn, restErrors, SectionErrors, setColumnCount, setColumnSizes, shownBlockFields, SPACE_SIZES, withMailLinks
 } from '@okr/cms-section-util';
 
 import { pickArticleImage } from './article-image-pick.modal';
@@ -76,7 +76,8 @@ const filled = (value: unknown): boolean => typeof value === 'string' && value.t
               <okr-error-note [errors]="errorsFor('align')" />
             </ion-card-content>
           </ion-card>
-          @if (errorsFor('html').length > 0) { <ion-note class="note" color="danger">{{ i18n().article_editor_error_noGerman() }}</ion-note> }
+          @if (htmlOtherError()) { <ion-note class="note" color="danger">{{ i18n().article_editor_error_noGerman() }}</ion-note> }
+          <okr-error-note [errors]="htmlPictureErrors()" />
         }
 
         @case ('image') {
@@ -242,7 +243,8 @@ const filled = (value: unknown): boolean => typeof value === 'string' && value.t
               <okr-error-note [errors]="errorsFor('tone')" />
             </ion-card-content>
           </ion-card>
-          @if (errorsFor('html').length > 0) { <ion-note class="note" color="danger">{{ i18n().article_editor_error_noGerman() }}</ion-note> }
+          @if (htmlOtherError()) { <ion-note class="note" color="danger">{{ i18n().article_editor_error_noGerman() }}</ion-note> }
+          <okr-error-note [errors]="htmlPictureErrors()" />
         }
 
         @case ('space') {
@@ -477,6 +479,9 @@ export class ArticleBlockPanel {
     const own = this.pictureMissing() ? ['images[0].url'] : ['images[0].altText', 'images[0].actionUrl'];
     return Object.fromEntries(Object.entries(this.errors()).filter(([field]) => !own.includes(field)));
   });
+  /** a picture in a text that a mail cannot show has its own words; any other error of the html is a missing German text */
+  protected readonly htmlPictureErrors = computed(() => this.errorsFor('html').filter((message) => message === MAIL_TEXT_PICTURE_MESSAGE));
+  protected readonly htmlOtherError = computed(() => this.errorsFor('html').some((message) => message !== MAIL_TEXT_PICTURE_MESSAGE));
   /** the errors of a gallery under the names of its look card */
   protected readonly lookErrors = computed(() => galleryErrors(this.errors(), this.block()));
   protected readonly rest = computed(() => restErrors(this.lookErrors(), shownBlockFields(this.block(), this.profile(), this.column() !== undefined)));
