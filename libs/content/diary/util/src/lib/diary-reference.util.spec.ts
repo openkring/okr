@@ -5,7 +5,7 @@ import { AvatarInfo, DiaryModel } from '@okr/shared-models';
 import { customLocationAvatar, customPersonAvatar, diaryAvatarId } from './diary-avatar.util';
 import {
   collectLocationReferences, collectPersonReferences, diariesWithLocationReference, filterDiaryReferences, formatDiaryDate,
-  formatDiaryDateLong, formatDiaryDateShort, formatDiaryMonthHeader,
+  formatDiaryDateLong, formatDiaryDateShort, formatDiaryMonthHeader, inChunks, locationLinkTargets,
 } from './diary-reference.util';
 
 const TENANT = 'scs';
@@ -197,5 +197,43 @@ describe('diariesWithLocationReference', () => {
     const d = diary('20260101');
     delete (d as Partial<DiaryModel>).locations;
     expect(diariesWithLocationReference([d], 'label:hafen')).toEqual([]);
+  });
+});
+
+describe('locationLinkTargets', () => {
+  const free = customLocationAvatar('Hafen');
+  const id = diaryAvatarId(free);
+  it('puts the current day first, as listed, followed by the other matching days', () => {
+    const d1 = diary('20260101', { locations: [free] });
+    const d2 = diary('20260102', { locations: [free] });
+    const d3 = diary('20260103', { locations: [customLocationAvatar('Anderswo')] });
+    const shown = { ...d2, title: 'stale copy' };
+    const targets = locationLinkTargets([d1, d2, d3], shown, id);
+    expect(targets.map(d => d.okey)).toEqual([d2.okey, d1.okey]);
+    expect(targets[0]).toBe(d2);
+  });
+  it('still links the current day when the list lacks it', () => {
+    const d1 = diary('20260101', { locations: [free] });
+    const shown = diary('20260105', { locations: [free] });
+    expect(locationLinkTargets([d1], shown, id).map(d => d.okey)).toEqual([shown.okey, d1.okey]);
+  });
+  it('returns only the current day when nothing else matches', () => {
+    const shown = diary('20260105', { locations: [free] });
+    expect(locationLinkTargets([], shown, id)).toEqual([shown]);
+  });
+});
+
+describe('inChunks', () => {
+  it('slices into batches of at most size', () => {
+    expect(inChunks([1, 2, 3, 4, 5], 2)).toEqual([[1, 2], [3, 4], [5]]);
+  });
+  it('returns no batch for an empty list', () => {
+    expect(inChunks([], 200)).toEqual([]);
+  });
+  it('treats a size below 1 as 1', () => {
+    expect(inChunks(['a', 'b'], 0)).toEqual([['a'], ['b']]);
+  });
+  it('keeps 401 items in three batches of 200', () => {
+    expect(inChunks(Array.from({ length: 401 }, (_, i) => i), 200).map(c => c.length)).toEqual([200, 200, 1]);
   });
 });

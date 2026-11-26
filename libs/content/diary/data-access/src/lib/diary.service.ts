@@ -66,13 +66,17 @@ export class DiaryService {
     );
   }
 
-  /** Writes back an edited entry — used by the reference screen to attach a location or a person. */
-  public async update(diary: DiaryModel, currentUser?: UserModel): Promise<string | undefined> {
+  /**
+   * Writes back an edited entry — used by the reference screen to attach a location or a person.
+   * `quiet` drops the per-write toasts (confirmation and error) for a bulk write whose caller sums
+   * up the outcome in one toast; a failure still returns undefined.
+   */
+  public async update(diary: DiaryModel, currentUser?: UserModel, quiet = false): Promise<string | undefined> {
     const normalised = withDiaryLocations(diary);
     normalised.albumKeys = diaryAlbumKeys(normalised);
     diary.albumKeys = normalised.albumKeys;
     return await this.firestoreService.updateModel<DiaryModel>(
-      DiaryCollection, normalised, false, this.i18n.update_conf(), this.i18n.update_error(), currentUser);
+      DiaryCollection, normalised, false, quiet ? undefined : this.i18n.update_conf(), this.i18n.update_error(), currentUser, quiet);
   }
 
   /**

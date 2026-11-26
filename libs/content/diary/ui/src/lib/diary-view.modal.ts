@@ -56,7 +56,7 @@ export interface DiaryNeighbours {
     .when { display: flex; flex-wrap: wrap; align-items: center; column-gap: 4px; }
     .when h2 { margin: 0 4px 0 0; }
     /* the same chip as a person's (okr-avatar-display with showName) */
-    .place { background-color: var(--ion-color-light); color: var(--ion-color-light-contrast); margin: 2px 0; }
+    .place { background-color: var(--ion-color-light); color: var(--ion-color-light-contrast); margin: 2px 0; cursor: pointer; }
     .place ion-avatar { width: 30px; height: 30px; }
   `],
   template: `
@@ -209,6 +209,8 @@ export class DiaryViewModal {
   public readonly neighbours = input.required<(d: DiaryModel) => Promise<DiaryNeighbours>>();
   public readonly openPerson = input.required<(a: AvatarInfo) => Promise<void>>();
   public readonly openLocation = input.required<(a: AvatarInfo) => Promise<void>>();
+  /** a free-text place becomes a location (spec 1.178 §4); resolves to the linked entry, undefined = unchanged */
+  public readonly createLocation = input.required<(d: DiaryModel, a: AvatarInfo) => Promise<DiaryModel | undefined>>();
   /** the day folder's Drive files (spec 1.106 §2.3) — the store caches per entry */
   public readonly loadMedia = input.required<(d: DiaryModel, reload?: boolean) => Promise<DiaryMediaResult>>();
   /** one image of the day folder at slider size, as a `data:` URL — the store caches per file */
@@ -224,6 +226,8 @@ export class DiaryViewModal {
 
   /** the entry on screen — starts at `diary`, swapped by prev/next/up */
   protected readonly current = linkedSignal(() => this.diary());
+  /** a second tap while the place flow runs is ignored (not template state, so a plain field) */
+  private locationBusy = false;
   protected readonly nav = signal<DiaryNeighbours>({});
   /** undefined while loading */
   protected readonly media = signal<DiaryMediaResult | undefined>(undefined);
@@ -423,9 +427,18 @@ export class DiaryViewModal {
     this.resolvedFolderId.set(media.folderId ?? '');
   }
 
-  /** a linked location opens its read-only view; a free-text one has nothing to open */
-  protected tapLocation(loc: AvatarInfo): void {
-    if (loc.key) void this.openLocation()(loc);
+  /** a linked location opens its read-only view; a free-text one is turned into a location */
+  protected async tapLocation(loc: AvatarInfo): Promise<void> {
+    if (loc.key) { void this.openLocation()(loc); return; }
+    if (this.locationBusy) return;
+    const shown = this.current();
+    this.locationBusy = true;
+    try {
+      const updated = await this.createLocation()(shown, loc).catch(() => undefined);
+      if (updated && this.current().okey === shown.okey) this.current.set(updated);
+    } finally {
+      this.locationBusy = false;
+    }
   }
 
   protected go(target: DiaryModel | undefined): void {

@@ -166,3 +166,22 @@ export function diariesWithLocationReference(diaries: DiaryModel[], referenceId:
   return diaries.filter(diary =>
     (diary.locations ?? []).some(avatar => !avatar.key && diaryAvatarId(avatar) === referenceId));
 }
+
+/**
+ * The days a «link all» writes: the author's days holding the free-text entry `referenceId`, plus
+ * `current` when it is not among them (a stale list must never skip the day the user tapped).
+ * `current` is listed first, so its write lands in the first batch.
+ */
+export function locationLinkTargets(diaries: DiaryModel[], current: DiaryModel, referenceId: string): DiaryModel[] {
+  const matches = diariesWithLocationReference(diaries, referenceId);
+  const own = matches.find(diary => diary.okey === current.okey) ?? current;
+  return [own, ...matches.filter(diary => diary.okey !== current.okey)];
+}
+
+/** `items` in consecutive slices of at most `size` (at least 1) — the batches of a bulk write. */
+export function inChunks<T>(items: readonly T[], size: number): T[][] {
+  const step = Math.max(1, Math.floor(size));
+  const chunks: T[][] = [];
+  for (let i = 0; i < items.length; i += step) chunks.push(items.slice(i, i + step));
+  return chunks;
+}

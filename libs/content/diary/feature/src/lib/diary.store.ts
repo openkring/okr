@@ -12,14 +12,19 @@ import {
   DIARY_FIRST_YEAR, DIARY_I18N_KEYS, DiarySectionRoute, DiaryTrackCard, DiaryTrackChange, toDiaryTrackCards, customLocationAvatar, locationAvatar, mainLocation, DiaryFilter, DiaryMediaResult, DiaryRange, DiaryStateFilter, albumKey, albumRefOf,
   buildDiaryRangeTree, decodeDiaryFilter, diaryFilterLabel, diaryListUrl, diaryRangeOfYear, diaryStateMatches, encodeDiaryFilter,
   diaryTrackModeLabel, formatDiaryDate, getDiaryIndex, groupDiariesByMonth, hasDiaryWeather, inDiaryDateRange, newDiary, trackFilterDates, trackFilterTitle,
+  diaryAvatarId, diaryLocationLabel, inChunks, linkLocationInDiary, locationLinkTargets,
 } from '@okr/content-diary-util';
-import { LocationService } from '@okr/location-data-access';
-import { AvatarInfo, DiaryAlbumKind, DiaryAlbumModel, DiaryModel, PersonModelName, TransportMode, TripModel, DiaryModelName } from '@okr/shared-models';
+import { LocationService, PlaceSearchService } from '@okr/location-data-access';
+import { placeHitToLocation } from '@okr/location-util';
+import { AvatarInfo, DiaryAlbumKind, DiaryAlbumModel, DiaryModel, LocationModel, PersonModelName, TransportMode, TripModel, DiaryModelName } from '@okr/shared-models';
 import { AppStore, ModelSelectService } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { AlertService, resourceParams } from '@okr/shared-util-angular';
-import { DateFormat, addIndexElement, convertDateFormatToString, getTodayStr, nameMatches } from '@okr/shared-util-core';
+import { DateFormat, addIndexElement, convertDateFormatToString, fill, getTodayStr, nameMatches } from '@okr/shared-util-core';
 import { selectDate } from '@okr/shared-ui';
+
+import { openLocationEditor } from './diary-location.helper';
+import type { DiaryLocationSearchResult } from './diary-location-search.modal';
 
 export type DiaryStoreState = {
   searchTerm: string;
@@ -63,6 +68,8 @@ const initialState: DiaryStoreState = {
 
 /** `history.state` key under which `setFilter` hands the full filter (title, dates) to the new list. */
 const FILTER_STATE_KEY = 'diaryFilter';
+/** «link all» writes this many days at once, then the next batch (spec 1.178 §6.3) */
+const LOCATION_LINK_BATCH = 200;
 
 function readHandedFilter(): DiaryFilter | undefined {
   try {
@@ -85,6 +92,7 @@ export const DiaryStore = signalStore(
     weatherService: inject(DiaryWeatherService),
     mediaService: inject(DiaryMediaService),
     locationService: inject(LocationService),
+    placeSearchService: inject(PlaceSearchService),
     modelSelectService: inject(ModelSelectService),
     modalController: inject(ModalController),
     alertController: inject(AlertController),
@@ -514,6 +522,103 @@ export const DiaryStore = signalStore(
       await modal.onDidDismiss();
     };
 
+    /** Step 1 (spec 1.178 §5): a saved location, a place-search hit or a hand-set pin; undefined on cancel. */
+    const searchLocation = async (label: string): Promise<DiaryLocationSearchResult | undefined> => {
+      const locations = await firstValueFrom(store.locationService.list()).catch(() => [] as LocationModel[]);
+      const { DiaryLocationSearchModal } = await import('./diary-location-search.modal');
+      const modal = await store.modalController.create({
+        component: DiaryLocationSearchModal,
+        cssClass: 'modal-wide',
+        componentProps: { label, locations, i18n: store.i18n },
+      });
+      await modal.present();
+      const { data, role } = await modal.onWillDismiss<DiaryLocationSearchResult>();
+      return role === 'confirm' && data ? data : undefined;
+    };
+
+    /**
+     * Step 2 (spec 1.178 §6.1–6.2): the location the choice stands for — a saved one as is, a new
+     * one pre-filled, checked in the editor and created. Undefined when cancelled or not saved.
+     */
+    const resolveLocation = async (choice: DiaryLocationSearchResult, label: string): Promise<LocationModel | undefined> => {
+      if (choice.kind === 'existing') return choice.location;
+      const tenantId = store.tenantId();
+      let seed: LocationModel;
+      if (choice.kind === 'new') {
+        seed = placeHitToLocation(choice.hit, tenantId);
+        seed.seaLevel = (await store.placeSearchService.seaLevelOf(choice.hit.lat, choice.hit.lng)) ?? 0;
+      } else {
+        seed = new LocationModel(tenantId);
+        seed.name = label;
+        seed.latitude = choice.lat;
+        seed.longitude = choice.lng;
+      }
+      const currentUser = store.currentUser();
+      const saved = await openLocationEditor(store.modalController, seed, currentUser, true);
+      if (!saved) return undefined;
+      const okey = await store.locationService.create(saved, currentUser);
+      return okey ? { ...saved, okey } : undefined;
+    };
+
+    /** «Nur diesen Tag» / «Alle n verknüpfen» — true for all. Not dismissable: the location exists by now. */
+    const confirmLinkAll = async (label: string, count: number): Promise<boolean> => {
+      const alert = await store.alertController.create({
+        message: fill(store.i18n.locationLink_ask(), { label, count }),
+        backdropDismiss: false,
+        buttons: [
+          { text: store.i18n.locationLink_one(), role: 'one' },
+          { text: fill(store.i18n.locationLink_all(), { count }), role: 'all' },
+        ],
+      });
+      await alert.present();
+      const { role } = await alert.onDidDismiss();
+      return role === 'all';
+    };
+
+    /**
+     * A tapped free-text place becomes a location (spec 1.178 §4): pick or create it, then link it
+     * to this day or to every day of the author with the same text. The writes go out in batches,
+     * quietly, and one toast sums them up (failed days named). Returns the linked shown entry, or
+     * undefined when cancelled or its own write failed.
+     */
+    const createLocation = async (diary: DiaryModel, avatar: AvatarInfo): Promise<DiaryModel | undefined> => {
+      const label = diaryLocationLabel(avatar);
+      const referenceId = diaryAvatarId(avatar);
+      const choice = await searchLocation(label);
+      if (!choice) return undefined;
+      const location = await resolveLocation(choice, label);
+      if (!location) return undefined;
+
+      const authorKey = store.authorKey();
+      const tenantId = store.tenantId();
+      const own = authorKey && tenantId
+        ? await firstValueFrom(store.diaryService.list(authorKey, tenantId)).catch(() => [] as DiaryModel[])
+        : [];
+      const all = locationLinkTargets(own, diary, referenceId);
+      const targets = all.length > 1 && await confirmLinkAll(label, all.length) ? all : [all[0]];
+
+      const currentUser = store.currentUser();
+      const failed: string[] = [];
+      let linked = 0;
+      let shown: DiaryModel | undefined;
+      for (const batch of inChunks(targets, LOCATION_LINK_BATCH)) {
+        await Promise.all(batch.map(async target => {
+          const updated = linkLocationInDiary(target, referenceId, location);
+          const ok = !!(await store.diaryService.update(updated, currentUser, true).catch(() => undefined));
+          if (!ok) { failed.push(target.date); return; }
+          linked++;
+          if (target.okey === diary.okey) shown = updated;
+        }));
+      }
+      const done = fill(store.i18n.locationLink_done(), { name: location.name, count: linked });
+      const failures = failed.length
+        ? ` ${store.i18n.update_error()} ${failed.sort().map(date => formatDiaryDate(date)).join(', ')}`
+        : '';
+      void store.alertService.showToast(done + failures);
+      reloadList();
+      return shown;
+    };
+
     const editEntry = async (diary: DiaryModel): Promise<void> => {
       const edited = await openEditor(diary, true);
       if (!edited) return;
@@ -704,7 +809,7 @@ export const DiaryStore = signalStore(
           cssClass: 'modal-wide',
           componentProps: {
             diary, i18n: store.i18n, lang: store.lang(),
-            neighbours: neighboursOf, openPerson: openPersonView, openLocation: openLocationView, loadMedia, loadImage, refreshWeather,
+            neighbours: neighboursOf, openPerson: openPersonView, openLocation: openLocationView, createLocation, loadMedia, loadImage, refreshWeather,
             loadTracks, openTrack, loadTrackThumb,
           },
         });

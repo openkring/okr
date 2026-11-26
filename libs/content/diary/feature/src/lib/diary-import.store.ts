@@ -19,6 +19,7 @@ import { AlertService } from '@okr/shared-util-angular';
 import { PersonService } from '@okr/subject-person-data-access';
 import { PersonNewFormModel, convertFormToNewPerson } from '@okr/subject-person-util';
 
+import { openLocationEditor } from './diary-location.helper';
 import type { DiaryReferenceListResult } from './diary-reference-list.modal';
 import type { DiaryUsageListResult } from './diary-usage-list.modal';
 
@@ -118,18 +119,6 @@ export const DiaryImportStore = signalStore(
       return true;
     };
 
-    /** Opens the location editor on a new or existing record; returns what was saved. */
-    const openLocationEditor = async (location: LocationModel): Promise<LocationModel | undefined> => {
-      const { LocationEditModal } = await import('@okr/location-feature');
-      const modal = await store.modalController.create({
-        component: LocationEditModal,
-        componentProps: { location, currentUser: store.appStore.currentUser(), readOnly: false },
-      });
-      await modal.present();
-      const { data, role } = await modal.onWillDismiss<LocationModel>();
-      return role === 'confirm' && data ? data : undefined;
-    };
-
     /** The shared location picker, unfiltered by type — a diary place can be any of them. */
     const pickLocation = async (): Promise<LocationModel | undefined> => {
       const currentUser = store.appStore.currentUser();
@@ -165,7 +154,7 @@ export const DiaryImportStore = signalStore(
     const addLocation = async (reference: DiaryReference, usage: DiaryUsage): Promise<boolean> => {
       const seed = new LocationModel(store.appStore.tenantId());
       seed.name = reference.label;
-      const saved = await openLocationEditor(seed);
+      const saved = await openLocationEditor(store.modalController, seed, store.appStore.currentUser(), true);
       if (!saved) return false;
       const okey = await store.locationService.create(saved, store.appStore.currentUser());
       if (!okey) return false;
@@ -247,7 +236,7 @@ export const DiaryImportStore = signalStore(
       if (!reference.resolved) return;
       if (reference.kind === 'location') {
         const location = await firstValueFrom(store.locationService.read(reference.key));
-        if (location) await openLocationEditor(location);
+        if (location) await openLocationEditor(store.modalController, location, store.appStore.currentUser(), false);
         return;
       }
       const person = await firstValueFrom(store.personService.read(reference.key));
