@@ -1,4 +1,5 @@
 import { FirebaseApp, getApp, getApps, initializeApp } from 'firebase/app';
+import { bootEnvironment } from './boot-tenant';
 import { OkrEnvironment, TenantMode } from './env';
 
 /**
@@ -16,8 +17,14 @@ import { OkrEnvironment, TenantMode } from './env';
 const DEFAULT_APP_NAME = '[DEFAULT]';
 let activeName: string | null = null;
 
+/**
+ * Fixed mode: the default app. Runtime mode: the tenant of this start, resolved exactly as `ENV` is
+ * (`bootEnvironment`: the tenant stored on the device, else the build's). Callers pass the raw
+ * environment; passing its tenant straight through named every portal tenant after the build
+ * (`kring`) and shared one login across tenants (found in the phase 2 browser check).
+ */
 export function firebaseAppName(env: OkrEnvironment, mode: TenantMode): string {
-  return mode === 'runtime' ? env.tenantId : DEFAULT_APP_NAME;
+  return mode === 'runtime' ? bootEnvironment(env, mode).tenantId : DEFAULT_APP_NAME;
 }
 
 /** Creates (or returns) the app of this start. Call once, before anything else touches Firebase. */

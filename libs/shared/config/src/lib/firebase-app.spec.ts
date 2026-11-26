@@ -21,6 +21,16 @@ describe('initOkrFirebaseApp', () => {
   it('fixed mode initialises the default app', () =>
     expect(initOkrFirebaseApp(env()).name).toBe('[DEFAULT]'));
 
+  it('runtime mode names the app after the tenant stored on the device, not the build tenant', () => {
+    localStorage.setItem('okr.portal.tenantId', 'scs');
+    try {
+      expect(initOkrFirebaseApp(env('kring'), 'runtime').name).toBe('scs');
+      expect(firebaseAppName(env('kring'), 'runtime')).toBe('scs');
+    } finally {
+      localStorage.removeItem('okr.portal.tenantId');
+    }
+  });
+
   it('runtime mode initialises an app named after the tenant', () =>
     expect(initOkrFirebaseApp(env('scs'), 'runtime').name).toBe('scs'));
 
