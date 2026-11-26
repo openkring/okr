@@ -322,7 +322,6 @@
       "liquidity": "Variación de liquidez",
       "liquidityHint": "Caja, correo y banco en este ejercicio",
       "balance": "Liquidez disponible",
-      "computeBalance": "Calcular saldo",
       "result": "Resultado",
       "budget": "Presupuesto usado",
       "noBudget": "Ningún presupuesto aprobado",

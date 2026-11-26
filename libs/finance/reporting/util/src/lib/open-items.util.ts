@@ -246,3 +246,57 @@ export function openItemsToCsv(documents: OpenItemDocument[]): string {
   const rows = documents.map((d) => [viewDate(d.date), csvCell(d.label), (d.openAmount / 100).toFixed(2)].join(';'));
   return ['date;document;open', ...rows].join('\n');
 }
+
+/**
+ * The bookings outside [start, cutoff] that the reconciliation still needs (spec 1.177 §6.4): every booking a document
+ * of the scope names (its own keys, payments, reminders), and the storno booking of every cancelled invoice (it dates
+ * the end of an open cancelled invoice). Read by key; the scope itself is read by date.
+ */
+export function openItemsLinkedKeys(side: OpenItemsSide, start: string, cutoff: string, bills: BillModel[], invoices: InvoiceModel[]): string[] {
+  const keys = new Set<string>();
+  const inScope = (date: string | undefined): boolean => !!date && date >= start && date <= cutoff;
+  if (side === 'payables') {
+    for (const b of bills) {
+      if (!inScope(b.billDate)) continue;
+      keys.add(`bill-${b.okey}`);
+      (b.bookingKeys ?? []).forEach(k => keys.add(k));
+      (b.payments ?? []).forEach(p => keys.add(p?.bookingKey ?? ''));
+    }
+  } else {
+    for (const i of invoices) {
+      if (i.state === 'cancelled') keys.add(`invoice-${i.okey}-storno`);
+      if (!inScope(i.invoiceDate)) continue;
+      keys.add(`invoice-${i.okey}`);
+      keys.add(i.bookingKey ?? '');
+      (i.bookingKeys ?? []).forEach(k => keys.add(k));
+      (i.payments ?? []).forEach(p => keys.add(p?.bookingKey ?? ''));
+      (i.reminders ?? []).forEach(r => { keys.add(r?.bookingKey ?? ''); keys.add(r?.waiveBookingKey ?? ''); });
+    }
+  }
+  keys.delete('');
+  return [...keys];
+}
+
+/**
+ * The part of the account's balance that the reduced input lacks: everything dated before `start`, as `before`
+ * (debit/credit of the account before start, dated bookings only) minus what the loaded bookings dated before start
+ * already bring. Signed like `balance` (payables credit-positive).
+ */
+export function openItemsOpening(side: OpenItemsSide, accountKey: string, start: string,
+  before: { debit: number; credit: number } | undefined, loaded: BookingModel[], lines: BookingLineModel[]): number {
+  const early = new Set(loaded.filter(b => b.status === 'posted' && b.isArchived !== true && !!b.date && b.date < start).map(b => b.okey));
+  let debit = before?.debit ?? 0;
+  let credit = before?.credit ?? 0;
+  for (const l of lines) {
+    if (l.accountKey !== accountKey || l.isArchived === true || !early.has(l.bookingKey)) continue;
+    debit -= l.debitAmount?.amount ?? 0;
+    credit -= l.creditAmount?.amount ?? 0;
+  }
+  return side === 'payables' ? credit - debit : debit - credit;
+}
+
+/** The result of the reduced input with the opening added: balance and carry-forward, the rest unchanged. */
+export function withOpening(result: OpenItemsResult, opening: number): OpenItemsResult {
+  if (!result.configured || opening === 0) return result;
+  return { ...result, balance: result.balance + opening, difference: result.difference - opening, carriedForward: result.carriedForward - opening };
+}

@@ -1,6 +1,6 @@
 import { BookingLineModel, BookingModel, LedgerBalanceModel } from '@okr/shared-models';
 
-import { buildLedgerYears, countBookings, ledgerComputedAt, ledgerFiscalYears, linesFromCells, ledgerMonthOf, openingOf, sumCellsByAccount } from './ledger-balance.util';
+import { accountSaldo, buildLedgerYears, countBookings, ledgerComputedAt, ledgerFiscalYears, linesFromCells, ledgerMonthOf, openingOf, sumCellsByAccount } from './ledger-balance.util';
 import { DebitCredit, fiscalYear, sumLinesByAccount } from './report.util';
 
 const STATUSES = ['posted', 'posted', 'posted', 'draft', 'cancelled', 'forReview'] as const;
@@ -128,6 +128,23 @@ describe('ledger balances', () => {
     const years = ledgerFiscalYears([{ year: 2025, bookingCounts: [1, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0] }, { year: 0, bookingCounts: [] }], 7);
     expect(years).toEqual([2025, 2024]);
     expect(ledgerFiscalYears([{ year: 2025, bookingCounts: [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0] }], 1)).toEqual([2025]);
+  });
+
+  it('gives the signed saldo of one account over whole months', () => {
+    const sum = (accountKey: string, from: string, before: string): number => {
+      const posted = new Map(bookings.filter(b => b.status === 'posted' && b.date && b.date >= from && b.date < before).map(b => [b.okey, b]));
+      return lines.filter(l => l.accountKey === accountKey && posted.has(l.bookingKey))
+        .reduce((s, l) => s + (l.debitAmount?.amount ?? 0) - (l.creditAmount?.amount ?? 0), 0);
+    };
+    // undated bookings count from the beginning, as in openingOf
+    const undated = (accountKey: string): number => {
+      const keys = new Set(bookings.filter(b => b.status === 'posted' && !b.date).map(b => b.okey));
+      return lines.filter(l => l.accountKey === accountKey && keys.has(l.bookingKey)).reduce((s, l) => s + (l.debitAmount?.amount ?? 0) - (l.creditAmount?.amount ?? 0), 0);
+    };
+    expect(accountSaldo(docs, 'a1020', '1020', '', '20250701')).toBe(sum('a1020', '', '20250701') + undated('a1020'));
+    expect(accountSaldo(docs, 'a6000', '6000', '20250101', '20250701')).toBe(sum('a6000', '20250101', '20250701'));
+    expect(sum('a3000', '20230101', '20260101')).not.toBe(0);
+    expect(accountSaldo(docs, 'a3000', '3000', '20230101', '20260101')).toBe(0 - sum('a3000', '20230101', '20260101'));
   });
 
   it('shows the newest computedAt', () => {

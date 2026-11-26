@@ -169,6 +169,12 @@ export async function runGates({ nonInteractive = false, acceptDrift = false, ac
   try { run('node', ['scripts/check-article-readers.mjs']); }
   catch { abort('check-article-readers failed — release aborted (no version bump made). Fix the findings above (withClassicFields, or the barrel rules of @okr/cms-article-feature).'); }
 
+  // 1a°. ledger reads (spec 1.177): a live listener on all of bookings / booking-lines put 33,000 documents into every
+  //       treasurer's cache and made the app crawl (2026-11-25). Breaks no build and no test.
+  console.log('\n[1/6] Checking ledger reads (pnpm check-ledger-reads)…');
+  try { run('node', ['scripts/check-ledger-reads.mjs']); }
+  catch { abort('check-ledger-reads failed — release aborted (no version bump made). Narrow the listener above, or read totals from ledger-balances.'); }
+
   // 1a*. ion-popover triggers: a fixed or data-derived trigger id repeats once the same list sits
   //      twice in Ionic's page stack, and the popover binds to the hidden page's button — the
   //      ellipsis shows, a click does nothing. Breaks no build and no test.

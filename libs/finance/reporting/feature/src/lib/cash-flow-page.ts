@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, DestroyRef, inject, signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { IonContent, IonHeader, IonButtons, IonMenuButton, IonItem, IonItemDivider, IonLabel, IonList, IonNote,
   IonSelect, IonSelectOption, IonSpinner, IonTitle, IonToolbar } from '@ionic/angular';
@@ -8,12 +8,12 @@ import { AccountModel, BookingLineModel, BookingModel } from '@okr/shared-models
 import { I18nService } from '@okr/shared-i18n';
 import { getTodayStr } from '@okr/shared-util-core';
 import { resourceParams } from '@okr/shared-util-angular';
-import { AccountingBooks, AccountingSegments, AccountingStore } from '@okr/finance-accounting-feature';
+import { AccountingBooks, AccountingSegments, AccountingStore, LedgerBalanceStore } from '@okr/finance-accounting-feature';
 import { AccountService } from '@okr/finance-account-data-access';
 import { BookingLineService, BookingPage, BookingService } from '@okr/finance-booking-data-access';
 import { cashFlowDirect, fiscalYearOptions, isCashAccount } from '@okr/finance-accounting-util';
-import { formatMinorAmount, openingBalance } from '@okr/finance-booking-util';
-import { fiscalYear, fiscalYearOf, REPORTING_I18N_KEYS, ReportingI18n } from '@okr/finance-reporting-util';
+import { formatMinorAmount } from '@okr/finance-booking-util';
+import { accountSaldo, fiscalYear, fiscalYearOf, REPORTING_I18N_KEYS, ReportingI18n } from '@okr/finance-reporting-util';
 
 interface PeriodData { accounts: AccountModel[]; bookings: BookingModel[]; lines: BookingLineModel[] }
 
@@ -58,7 +58,7 @@ interface PeriodData { accounts: AccountModel[]; bookings: BookingModel[]; lines
         <ion-list>
           <ion-item lines="full">
             <ion-label>{{ i18n.cashflow_opening() }}</ion-label>
-            <ion-note slot="end" class="amount">@if (openingResource.isLoading()) { <ion-spinner name="dots" /> } @else { {{ money(s.opening) }} }</ion-note>
+            <ion-note slot="end" class="amount">@if (openingLoading()) { <ion-spinner name="dots" /> } @else { {{ money(s.opening) }} }</ion-note>
           </ion-item>
 
           <ion-item-divider color="light"><ion-label>{{ i18n.cashflow_inflows() }}</ion-label></ion-item-divider>
@@ -77,7 +77,7 @@ interface PeriodData { accounts: AccountModel[]; bookings: BookingModel[]; lines
           <ion-item class="total"><ion-label>{{ i18n.cashflow_net() }}</ion-label><ion-note slot="end" class="amount">{{ money(s.net) }}</ion-note></ion-item>
           <ion-item class="total" lines="full">
             <ion-label>{{ i18n.cashflow_closing() }}</ion-label>
-            <ion-note slot="end" class="amount">@if (openingResource.isLoading()) { <ion-spinner name="dots" /> } @else { {{ money(s.closing) }} }</ion-note>
+            <ion-note slot="end" class="amount">@if (openingLoading()) { <ion-spinner name="dots" /> } @else { {{ money(s.closing) }} }</ion-note>
           </ion-item>
           @if (s.internalTransfers > 0) {
             <ion-item lines="none"><ion-label class="ion-text-wrap"><p>{{ i18n.cashflow_internal() }}: {{ money(s.internalTransfers) }}</p></ion-label></ion-item>
@@ -117,15 +117,25 @@ export class CashFlowPage {
     stream: ({ params }) => params.books && params.userKey ? from(this.loadPeriod(params.books, params.from, params.to)) : of(undefined),
   });
 
-  protected readonly openingResource = rxResource({
-    params: () => ({ ...this.params(), accounts: this.periodResource.hasValue() ? this.periodResource.value()?.accounts : undefined }),
-    stream: ({ params }) => params.books && params.accounts ? from(this.loadOpening(params.books, params.accounts, params.from)) : of(undefined),
+  /** cash at the start of the year from the ledger balances (spec 1.177): every cash account since the ledger's start */
+  private readonly ledgerStore = inject(LedgerBalanceStore);
+  protected readonly openingLoading = computed(() => this.ledgerStore.isLoading() || this.ledgerStore.refreshing());
+  private readonly opening = computed<number | undefined>(() => {
+    const data = this.periodResource.hasValue() ? this.periodResource.value() : undefined;
+    if (!data || this.openingLoading()) return undefined;
+    const before = this.range().from;
+    return data.accounts.filter(isCashAccount).reduce((sum, a) => sum + accountSaldo(this.ledgerStore.docs(), a.okey, a.id, '', before), 0);
   });
+
+  constructor() {
+    this.ledgerStore.use();
+    inject(DestroyRef).onDestroy(() => this.ledgerStore.release());
+  }
 
   protected readonly statement = computed(() => {
     const data = this.periodResource.hasValue() ? this.periodResource.value() : undefined;
     if (!data) return undefined;
-    const opening = this.openingResource.hasValue() ? this.openingResource.value() : undefined;
+    const opening = this.opening();
     return cashFlowDirect(data.bookings, data.lines, data.accounts, this.range().from, this.range().to, opening);
   });
 
@@ -148,13 +158,4 @@ export class CashFlowPage {
     return { accounts, bookings, lines };
   }
 
-  /** cash at the start of the year: every cash account's posted lines before it (balance-sheet accounts carry forward) */
-  private async loadOpening(books: string, accounts: AccountModel[], before: string): Promise<number> {
-    const cashAccounts = accounts.filter(isCashAccount);
-    const [prior, ...linesPerAccount] = await Promise.all([
-      this.bookingService.listBefore(books, '', before),
-      ...cashAccounts.map(a => this.bookingLineService.listForAccount(books, a.okey)),
-    ]) as [BookingModel[], ...BookingLineModel[][]];
-    return cashAccounts.reduce((sum, a, i) => sum + openingBalance(linesPerAccount[i], prior, a.okey, a.id, '', before), 0);
-  }
 }

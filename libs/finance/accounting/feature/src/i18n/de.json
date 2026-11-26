@@ -322,7 +322,6 @@
       "liquidity": "Veränderung flüssige Mittel",
       "liquidityHint": "Kasse, Post und Bank in diesem Geschäftsjahr",
       "balance": "Stand flüssige Mittel",
-      "computeBalance": "Stand berechnen",
       "result": "Ergebnis",
       "budget": "Budget ausgeschöpft",
       "noBudget": "Kein genehmigtes Budget",

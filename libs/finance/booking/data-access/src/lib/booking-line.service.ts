@@ -1,5 +1,4 @@
 import { inject, Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
 
 import { ENV } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
@@ -15,14 +14,6 @@ export class BookingLineService {
   private readonly env = inject(ENV);
   private readonly firestoreService = inject(FirestoreService);
   private readonly tenantId = this.env.tenantId;
-
-  public list(accountingTenantId: string): Observable<BookingLineModel[]> {
-    const query = [
-      ...getSystemQuery(this.tenantId),
-      { key: 'accountingTenantId', operator: '==' as const, value: accountingTenantId },
-    ];
-    return this.firestoreService.searchData<BookingLineModel>(BookingLineCollection, query, 'none');
-  }
 
   /**
    * The lines of the given bookings (spec 1.102): `bookingKey in [...]`, 15 keys per read (Firestore
@@ -42,14 +33,6 @@ export class BookingLineService {
       lines.push(...parts.flat());
     }
     return lines;
-  }
-
-  /** Every line on one account, all years — the base of a running saldo's opening balance. Rejects on failure. */
-  public listForAccount(accountingTenantId: string, accountKey: string): Promise<BookingLineModel[]> {
-    return this.firestoreService.getDataOnceStrict<BookingLineModel>(BookingLineCollection, [
-      ...this.booksQuery(accountingTenantId),
-      { key: 'accountKey', operator: '==', value: accountKey },
-    ]);
   }
 
   private booksQuery(accountingTenantId: string): DbQuery[] {

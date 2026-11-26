@@ -62,6 +62,8 @@ export const LedgerBalanceStore = signalStore(
   })),
   withProps(store => ({
     computedAt$: toObservable(store.computedAt),
+    /** true once the listener has answered and no refresh runs: the figures are as current as they get */
+    ready$: toObservable(computed(() => store.docsResource.hasValue() && !store.docsResource.isLoading() && !store.refreshing())),
   })),
   withMethods(store => {
     let running: Promise<boolean> | undefined;
@@ -82,6 +84,8 @@ export const LedgerBalanceStore = signalStore(
         patchState(store, { refreshing: false });
       }
     }
+
+    const isFresh = (books: string): boolean => store.lastBooks() === books && Date.now() - store.lastRefreshAt() < FRESH_MS;
 
     return {
       /**
@@ -104,6 +108,22 @@ export const LedgerBalanceStore = signalStore(
       /** A screen with balances opens: listen, and refresh unless that was done for these books a minute ago. */
       use(): void {
         patchState(store, { users: store.users() + 1 });
+        const books = store.books();
+        if (books && !isFresh(books)) void this.refresh();
+      },
+
+      /** The app itself changed the ledger (journal edit, review, import): the next screen refreshes at once. */
+      markStale(): void {
+        patchState(store, { lastRefreshAt: 0 });
+      },
+
+      /**
+       * The documents once they are as current as they get: listener answered, refresh (if any) done. For a figure read
+       * on demand (journal saldo, cash-flow opening) between `use()` and `release()`. Gives up after 20 s.
+       */
+      async whenReady(): Promise<LedgerBalanceModel[]> {
+        await firstValueFrom(store.ready$.pipe(filter(ready => ready), timeout(20_000))).catch(() => undefined);
+        return store.docs();
       },
       release(): void {
         patchState(store, { users: Math.max(0, store.users() - 1) });
@@ -118,7 +138,9 @@ export const LedgerBalanceStore = signalStore(
         const users = store.users();
         if (!books || users === 0) return;
         untracked(() => {
+          // the books changed while a screen is open (books switcher); use() covers the opening itself
           if (store.lastBooks() === books && Date.now() - store.lastRefreshAt() < FRESH_MS) return;
+          if (store.refreshing()) return;
           void store.refresh();
         });
       });

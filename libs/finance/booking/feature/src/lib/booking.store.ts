@@ -13,14 +13,14 @@ import { BillCollection, BillModel, BookingCollection, BookingLineModel, Booking
 import { getSystemQuery, getTodayStr, getYear } from '@okr/shared-util-core';
 import { exportCsv, resourceParams } from '@okr/shared-util-angular';
 
-import { AccountingStore } from '@okr/finance-accounting-feature';
+import { AccountingStore, LedgerBalanceStore } from '@okr/finance-accounting-feature';
 import { paymentLabelText } from '@okr/finance-accounting-util';
 import { CostCenterStore } from '@okr/finance-cost-center-feature';
 import { ProjectService } from '@okr/project-project-data-access';
 import { AccountService } from '@okr/finance-account-data-access';
 import { VatCodeService } from '@okr/finance-vat-code-data-access';
 import { BookingLineService, BookingPage, BookingService, ReviewBookingLine } from '@okr/finance-booking-data-access';
-import { fiscalYear, fiscalYearOf } from '@okr/finance-reporting-util';
+import { accountSaldo, fiscalYear, fiscalYearOf } from '@okr/finance-reporting-util';
 import { PeriodService } from '@okr/finance-period-data-access';
 import { invoiceBookingKeys, invoiceVoucherKeys } from '@okr/finance-invoice-util';
 import { billBookingKeys, billVoucherKeys } from '@okr/finance-bill-util';
@@ -41,7 +41,6 @@ import {
   journalLoadRange,
   journalYearOptions,
   needsOpeningBalance,
-  openingBalance,
   saldoStart,
   formatMinorAmount,
   journalToRows,
@@ -93,6 +92,7 @@ export const BookingStore = signalStore(
     bookingLineService: inject(BookingLineService),
     periodService: inject(PeriodService),
     accountingStore: inject(AccountingStore),
+    ledgerStore: inject(LedgerBalanceStore),
     costCenterStore: inject(CostCenterStore),
     projectService: inject(ProjectService),
     appStore: inject(AppStore),
@@ -345,6 +345,7 @@ export const BookingStore = signalStore(
 
     /** Pull-to-refresh and after imports: the period again, from the server. */
     async reload(): Promise<void> {
+      store.ledgerStore.markStale();
       await this.loadPeriod();
     },
 
@@ -358,6 +359,8 @@ export const BookingStore = signalStore(
      * loaded period — or drops them when the booking is gone or now dated outside the period.
      */
     async refreshBooking(bookingKey: string | undefined): Promise<void> {
+      // the ledger changed: the next balance read (saldo opening, reports) recomputes first
+      store.ledgerStore.markStale();
       const books = store.accountingTenantId();
       if (!bookingKey || !books) { await this.reload(); return; }
       try {
@@ -390,7 +393,10 @@ export const BookingStore = signalStore(
       await Promise.all([this.loadReviewCount(), this.loadOpening()]);
     },
 
-    /** The opening balance of the running saldo (spec 1.102 §3.4): that account's lines before the range. */
+    /**
+     * The opening balance of the running saldo (spec 1.102 §3.4): that account's saldo before the range, from the
+     * ledger balances (spec 1.177) — whole months, refreshed first when stale.
+     */
     async loadOpening(): Promise<void> {
       const key = store.openingKey();
       if (!key || store.opening()?.key === key) return;
@@ -400,16 +406,17 @@ export const BookingStore = signalStore(
       const accountId = store.accountIdByKey().get(accountKey) ?? '';
       const periodFrom = store.periodFrom();
       const before = store.loadRange().from;
+      store.ledgerStore.use();
       try {
-        const [lines, bookings] = await Promise.all([
-          store.bookingLineService.listForAccount(books, accountKey),
-          store.bookingService.listBefore(books, saldoStart(accountId, periodFrom), before),
-        ]);
-        if (generation !== openingGeneration) return;
-        patchState(store, { opening: { key, value: openingBalance(lines, bookings, accountKey, accountId, periodFrom, before) } });
+        const docs = await store.ledgerStore.whenReady();
+        if (generation !== openingGeneration || store.ledgerStore.books() !== books) return;
+        if (docs.length === 0) throw new Error('no ledger balances');
+        patchState(store, { opening: { key, value: accountSaldo(docs, accountKey, accountId, saldoStart(accountId, periodFrom), before) } });
       } catch (error) {
         // the saldo column keeps its dashes; switching the saldo off and on retries
         console.warn('BookingStore.loadOpening failed:', error);
+      } finally {
+        store.ledgerStore.release();
       }
     },
 

@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { BillModel, BookingLineModel, BookingModel, InvoiceModel, MoneyModel } from '@okr/shared-models';
 
 import {
-  billClaimsBooking, billOpenAmountAt, computeOpenItems, invoiceClaimsBooking, invoiceOpenAmountAt, openItemsToCsv, OpenItemsResult,
+  billClaimsBooking, billOpenAmountAt, computeOpenItems, invoiceClaimsBooking, invoiceOpenAmountAt, openItemsLinkedKeys, openItemsOpening, openItemsToCsv, OpenItemsResult, withOpening,
 } from './open-items.util';
 
 const PAYABLES = 'acc-2000';
@@ -332,5 +332,60 @@ describe('openItemsToCsv', () => {
       '01.09.2026;"DSL; 09";39.00',
       '02.10.2026;R-1;123.45',
     ]);
+  });
+});
+
+describe('reduced input (spec 1.177 §6.4)', () => {
+  /** A ledger over 2024–2026: bills and invoices booked and paid, some paid a year later, a cancelled invoice, stray bookings. */
+  function world() {
+    const bills: BillModel[] = [];
+    const invoices: InvoiceModel[] = [];
+    const bookings: BookingModel[] = [];
+    const lines: BookingLineModel[] = [];
+    let no = 1;
+    const post = (key: string, date: string, debit: string, credit: string, amount: number, status: BookingModel['status'] = 'posted') => {
+      bookings.push(booking(key, date, status, no++));
+      lines.push(line(key, debit, amount, 0), line(key, credit, 0, amount));
+    };
+    const dates = ['20240115', '20240620', '20241215', '20250210', '20250705', '20251220', '20260301', '20260815'];
+    dates.forEach((d, i) => {
+      const b = bill(`b${i}`, d, 1000 + i);
+      post(`bill-b${i}`, d, EXPENSE, PAYABLES, 1000 + i);
+      const pay = dates[i + 2];
+      if (pay) { post(`pay-b${i}`, pay, PAYABLES, BANK, 1000 + i); b.payments = [{ date: pay, amount: 1000 + i, bookingKey: `pay-b${i}` }] as never; }
+      bills.push(b);
+      const inv = invoice(`i${i}`, d, 500 + i, i === 3 ? 'cancelled' : 'pending');
+      post(`invoice-i${i}`, d, RECEIVABLES, REVENUE, 500 + i);
+      if (i === 3) post(`invoice-i${i}-storno`, dates[i + 3], REVENUE, RECEIVABLES, 500 + i);
+      else if (dates[i + 1]) { post(`ipay-i${i}`, dates[i + 1], BANK, RECEIVABLES, 500 + i); inv.payments = [{ date: dates[i + 1], amount: 500 + i, bookingKey: `ipay-i${i}` }] as never; }
+      invoices.push(inv);
+    });
+    post('stray-1', '20240301', BANK, PAYABLES, 77);
+    post('stray-2', '20250901', RECEIVABLES, BANK, 33);
+    post('draft-1', '20250902', RECEIVABLES, BANK, 999, 'draft');
+    return { bills, invoices, bookings, lines };
+  }
+
+  it.each([
+    ['payables', '20250101', '20251231'], ['payables', '20260101', '20260630'], ['payables', '20240101', '20240331'],
+    ['receivables', '20250101', '20251231'], ['receivables', '20260101', '20260930'], ['receivables', '20240101', '20240630'],
+  ] as const)('%s %s–%s: equals the full computation', (side, start, cutoff) => {
+    const { bills, invoices, bookings, lines } = world();
+    const accountKey = side === 'payables' ? PAYABLES : RECEIVABLES;
+    const full = computeOpenItems({ side, accountKey, cutoff, start, bills, invoices, bookings, lines });
+
+    const linked = new Set(openItemsLinkedKeys(side, start, cutoff, bills, invoices));
+    const loaded = bookings.filter(b => (b.date >= start && b.date <= cutoff) || linked.has(b.okey));
+    const keys = new Set(loaded.map(b => b.okey));
+    const loadedLines = lines.filter(l => keys.has(l.bookingKey));
+    // what the cells give: the account before start, posted and dated bookings only
+    const before = { debit: 0, credit: 0 };
+    const posted = new Set(bookings.filter(b => b.status === 'posted' && b.date && b.date < start).map(b => b.okey));
+    for (const l of lines) if (l.accountKey === accountKey && posted.has(l.bookingKey)) { before.debit += l.debitAmount?.amount ?? 0; before.credit += l.creditAmount?.amount ?? 0; }
+
+    const reduced = computeOpenItems({ side, accountKey, cutoff, start, bills, invoices, bookings: loaded, lines: loadedLines });
+    const opening = openItemsOpening(side, accountKey, start, before, loaded, loadedLines);
+    expect(withOpening(reduced, opening)).toEqual(full);
+    expect(loaded.length).toBeLessThan(bookings.length);
   });
 });

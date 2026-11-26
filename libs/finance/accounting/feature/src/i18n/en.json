@@ -322,7 +322,6 @@
       "liquidity": "Change in cash",
       "liquidityHint": "Cash, post and bank in this fiscal year",
       "balance": "Cash on hand",
-      "computeBalance": "Compute balance",
       "result": "Result",
       "budget": "Budget used",
       "noBudget": "No approved budget",

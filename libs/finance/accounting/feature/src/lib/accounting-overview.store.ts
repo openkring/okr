@@ -1,28 +1,25 @@
 import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { from, of } from 'rxjs';
-import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
+import { patchState, signalStore, withComputed, withHooks, withMethods, withProps, withState } from '@ngrx/signals';
 
 import { ENV } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import {
-  AccountCollection, AccountModel, BankImportRowCollection, BillCollection, BillModel, BookingCollection, BookingLineCollection, BookingLineModel, BookingModel,
+  AccountCollection, AccountModel, BankImportRowCollection, BillCollection, BillModel, BookingCollection, BookingModel,
   BudgetLineCollection, BudgetLineModel, BudgetVersionCollection, BudgetVersionModel, DbQuery, ExpenseCollection, ExpenseModel, InvoiceCollection, InvoiceModel,
   PaymentOrderCollection, PaymentOrderModel, PeriodCollection, PeriodModel,
 } from '@okr/shared-models';
 import { getSystemQuery, getTodayStr } from '@okr/shared-util-core';
 import { resourceParams } from '@okr/shared-util-angular';
 import {
-  chunk, computeKeyFigures, currentPeriod, fiscalYearOptions, KeyFigures, liquidityBalance, NewsLists, nextVisit, openTotals, OverviewTodos, storeDateTimeOf,
+  currentPeriod, fiscalYearOptions, KeyFigures, keyFiguresFromSums, liquidityFromSums, NewsLists, nextVisit, openTotals, OverviewTodos, storeDateTimeOf,
   summarizeNews, summarizeTodos, VisitMarks,
 } from '@okr/finance-accounting-util';
-import { fiscalYear, fiscalYearOf } from '@okr/finance-reporting-util';
+import { fiscalYear, fiscalYearOf, sumCellsByAccount } from '@okr/finance-reporting-util';
 
 import { AccountingStore } from './accounting.store';
-
-/** `bookingKey in [...]`: 15 keys × the 2-value tenant filter = Firestore's 30 disjunctions (see BillService). */
-const BOOKING_KEY_CHUNK = 15;
-const PARALLEL_READS = 10;
+import { LedgerBalanceStore } from './ledger-balance.store';
 
 /** One to-do source: a failed read becomes undefined, so its card shows «—» and the others still load (spec 1.100 §4.4). */
 function settle<T>(read: Promise<T>, what: string): Promise<T | undefined> {
@@ -64,13 +61,23 @@ export interface OverviewNews {
   lists: NewsLists;
 }
 
-/** Accounting overview (spec 1.100 §4.4): to-dos, key figures of ONE fiscal year, cash balance on demand, news since the last visit. */
+export interface FigureInputs {
+  accounts: AccountModel[];
+  budgetVersions: BudgetVersionModel[];
+  budgetLines: BudgetLineModel[];
+}
+
+/**
+ * Accounting overview (spec 1.100 §4.4): to-dos, key figures of ONE fiscal year, cash balance, news since the last visit.
+ * Key figures and cash come from the ledger balances (spec 1.177), not from bookings.
+ */
 export const AccountingOverviewStore = signalStore(
-  withState({ selectedYear: 0, balanceValue: undefined as { books: string; value: number } | undefined, balanceLoading: false }),
+  withState({ selectedYear: 0 }),
   withProps(() => ({
     fs: inject(FirestoreService),
     tenantId: inject(ENV).tenantId,
     accountingStore: inject(AccountingStore),
+    ledgerStore: inject(LedgerBalanceStore),
   })),
   withProps(store => ({
     /** tenant + books filter, required on every finance query */
@@ -137,25 +144,15 @@ export const AccountingOverviewStore = signalStore(
       };
     }
 
-    async function loadFigures(books: string, year: number, start: number): Promise<KeyFigures> {
-      const fy = fiscalYear(year, start);
+    /** what the key figures need besides the balances: accounts and budgets of the books (one-shot) */
+    async function loadFigureInputs(books: string): Promise<FigureInputs> {
       const q = scope(books);
-      const [accounts, bookings, budgetVersions, budgetLines] = await Promise.all([
+      const [accounts, budgetVersions, budgetLines] = await Promise.all([
         fs.getDataOnceStrict<AccountModel>(AccountCollection, q),
-        // index: bookings (tenants, accountingTenantId, isArchived, date desc) — exists
-        fs.getDataOnceStrict<BookingModel>(BookingCollection, [...q, { key: 'date', operator: '>=', value: fy.from }, { key: 'date', operator: '<=', value: fy.to }], 'date', 'desc'),
         fs.getDataOnceStrict<BudgetVersionModel>(BudgetVersionCollection, q),
         fs.getDataOnceStrict<BudgetLineModel>(BudgetLineCollection, q),
       ]);
-      const posted = bookings.filter(b => b.status === 'posted');
-      const lines: BookingLineModel[] = [];
-      // lines carry no date: read only the lines of this year's posted bookings
-      for (const batch of chunk(chunk(posted.map(b => b.okey), BOOKING_KEY_CHUNK), PARALLEL_READS)) {
-        const parts = await Promise.all(batch.map(keys =>
-          fs.getDataOnceStrict<BookingLineModel>(BookingLineCollection, [...q, { key: 'bookingKey', operator: 'in', value: keys }])));
-        lines.push(...parts.flat());
-      }
-      return computeKeyFigures({ accounts, bookings: posted, lines, from: fy.from, to: fy.to, budgetVersions, budgetLines, fiscalYear: year });
+      return { accounts, budgetVersions, budgetLines };
     }
 
     return {
@@ -169,17 +166,9 @@ export const AccountingOverviewStore = signalStore(
           ? from(fs.getDataOnceStrict<PeriodModel>(PeriodCollection, scope(params.books)))
           : of([] as PeriodModel[]),
       }),
-      figuresResource: rxResource({
-        params: resourceParams(() => ({
-          userKey: store.userKey(),
-          books: store.books(),
-          year: store.year(),
-          start: store.fiscalYearStart(),
-          ready: store.accountingStore.configLoaded(),
-        })),
-        stream: ({ params }) => params.userKey && params.books && params.ready && params.year
-          ? from(loadFigures(params.books, params.year, params.start))
-          : of(undefined),
+      figureInputsResource: rxResource({
+        params: resourceParams(() => ({ userKey: store.userKey(), books: store.books() })),
+        stream: ({ params }) => params.userKey && params.books ? from(loadFigureInputs(params.books)) : of(undefined),
       }),
     };
   }),
@@ -188,34 +177,28 @@ export const AccountingOverviewStore = signalStore(
     news: computed(() => valueOf(store.todosResource)?.news),
     todosLoading: computed(() => store.todosResource.isLoading()),
     period: computed(() => currentPeriod(valueOf(store.periodResource) ?? [], store.today(), store.fiscalYearStart())),
-    figures: computed(() => valueOf(store.figuresResource)),
-    figuresLoading: computed(() => store.figuresResource.isLoading()),
-    /** cash balance, shown only for the books it was computed for */
-    balance: computed(() => { const b = store.balanceValue(); return b && b.books === store.books() ? b.value : undefined; }),
+    figures: computed<KeyFigures | undefined>(() => {
+      const inputs = valueOf(store.figureInputsResource);
+      if (!inputs || !store.accountingStore.configLoaded() || store.ledgerStore.isLoading()) return undefined;
+      const fy = fiscalYear(store.year(), store.fiscalYearStart());
+      return keyFiguresFromSums({ ...inputs, from: fy.from, to: fy.to, fiscalYear: store.year(), sums: sumCellsByAccount(store.ledgerStore.docs(), fy.from, fy.to) });
+    }),
+    figuresLoading: computed(() => store.figureInputsResource.isLoading() || store.ledgerStore.isLoading()),
+    /** cash on hand: every posted cash line since the ledger's start (undefined while loading) */
+    balance: computed(() => {
+      const inputs = valueOf(store.figureInputsResource);
+      if (!inputs || store.ledgerStore.isLoading()) return undefined;
+      return liquidityFromSums(sumCellsByAccount(store.ledgerStore.docs(), '', ''), inputs.accounts);
+    }),
     fiscalYearLabel: computed(() => fiscalYear(store.year(), store.fiscalYearStart()).label),
   })),
   withMethods(store => ({
     selectYear(year: number): void {
       patchState(store, { selectedYear: year });
     },
-    /** «Stand berechnen»: the whole history once, on request (spec 1.100 §4.4) */
-    async computeBalance(): Promise<void> {
-      const books = store.books();
-      if (!books || store.balanceLoading()) return;
-      patchState(store, { balanceLoading: true });
-      try {
-        const q = store.scope(books);
-        const [accounts, bookings, lines] = await Promise.all([
-          store.fs.getDataOnceStrict<AccountModel>(AccountCollection, q),
-          store.fs.getDataOnceStrict<BookingModel>(BookingCollection, q),
-          store.fs.getDataOnceStrict<BookingLineModel>(BookingLineCollection, q),
-        ]);
-        patchState(store, { balanceValue: { books, value: liquidityBalance(lines, bookings, accounts) } });
-      } catch (err) {
-        console.warn('AccountingOverviewStore.computeBalance failed:', err);
-      } finally {
-        patchState(store, { balanceLoading: false });
-      }
-    },
+  })),
+  withHooks(store => ({
+    onInit(): void { store.ledgerStore.use(); },
+    onDestroy(): void { store.ledgerStore.release(); },
   })),
 );

@@ -2,18 +2,20 @@ import { computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { ToastController } from '@ionic/angular';
-import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
-import { of } from 'rxjs';
+import { patchState, signalStore, withComputed, withHooks, withMethods, withProps, withState } from '@ngrx/signals';
+import { from, of } from 'rxjs';
 
 import { I18nService } from '@okr/shared-i18n';
+import { BookingLineModel, BookingModel } from '@okr/shared-models';
 import { resourceParams, showToast } from '@okr/shared-util-angular';
 import { convertDateFormatToString, DateFormat, fill, getTodayStr } from '@okr/shared-util-core';
 
-import { AccountingStore } from '@okr/finance-accounting-feature';
+import { AccountingStore, LedgerBalanceStore } from '@okr/finance-accounting-feature';
+import { BookingLineService, BookingService } from '@okr/finance-booking-data-access';
 import { ReportingService } from '@okr/finance-reporting-data-access';
 import {
-  computeOpenItems, downloadCsv, fiscalYear, fiscalYearOf, OpenItemDocument, OpenItemsResult, OpenItemsSide, openItemsToCsv,
-  REPORTING_I18N_KEYS, ReportingI18n,
+  computeOpenItems, downloadCsv, fiscalYear, fiscalYearOf, OpenItemDocument, openItemsLinkedKeys, openItemsOpening, OpenItemsResult, OpenItemsSide,
+  openItemsToCsv, openingOf, REPORTING_I18N_KEYS, ReportingI18n, withOpening,
 } from '@okr/finance-reporting-util';
 
 type OpenItemsState = {
@@ -22,14 +24,22 @@ type OpenItemsState = {
 
 /**
  * Offene-Posten-Abstimmung (spec 1.86): open bills and invoices at the cut-off against the Kreditoren
- * and Debitoren account balance, with the bookings and documents that explain a difference. Read-only;
- * computed client-side from the posted ledger (the reports' read) and the documents of the books.
+ * and Debitoren account balance, with the bookings and documents that explain a difference. Read-only.
+ * Since spec 1.177 §6.4 it reads only the bookings of the scope (fiscal-year start … cut-off), the bookings the scope's
+ * documents name, and the storno bookings; everything earlier enters as the opening balance from the ledger balances.
+ * The result equals the one over the whole ledger.
  */
+
+/** The bookings of the scope plus the linked ones, with their lines. */
+export interface ScopeLedger { bookings: BookingModel[]; lines: BookingLineModel[] }
 export const OpenItemsStore = signalStore(
   withState<OpenItemsState>({ cutoff: getTodayStr(DateFormat.StoreDate) }),
   withProps(() => ({
     reportingService: inject(ReportingService),
+    bookingService: inject(BookingService),
+    bookingLineService: inject(BookingLineService),
     accountingStore: inject(AccountingStore),
+    ledgerStore: inject(LedgerBalanceStore),
     router: inject(Router),
     toastController: inject(ToastController),
     i18n: inject(I18nService).translateAll(REPORTING_I18N_KEYS) as ReportingI18n,
@@ -41,12 +51,6 @@ export const OpenItemsStore = signalStore(
       external: store.accountingStore.isExternallyManaged(),
     }));
     return {
-      bookingsResource: rxResource({
-        params, stream: ({ params }) => params.id && !params.external ? store.reportingService.getJournalEntries(params.id) : of([]),
-      }),
-      linesResource: rxResource({
-        params, stream: ({ params }) => params.id && !params.external ? store.reportingService.getAllLines(params.id) : of([]),
-      }),
       billsResource: rxResource({
         params, stream: ({ params }) => params.id && !params.external ? store.reportingService.getBills(params.id) : of([]),
       }),
@@ -58,22 +62,60 @@ export const OpenItemsStore = signalStore(
   withComputed(store => ({
     accountingTenantId: computed(() => store.accountingStore.accountingTenantId()),
     isExternallyManaged: computed(() => store.accountingStore.isExternallyManaged()),
-    isLoading: computed(() => store.bookingsResource.isLoading() || store.linesResource.isLoading()
-      || store.billsResource.isLoading() || store.invoicesResource.isLoading()),
     /** Scope start (Q3): the first day of the fiscal year that contains the cut-off. */
     start: computed(() => {
       const startMonth = store.accountingStore.config()?.fiscalYearStart ?? 1;
       return fiscalYear(fiscalYearOf(store.cutoff(), startMonth), startMonth).from;
     }),
   })),
+  withProps(store => {
+    async function loadScope(books: string, start: string, cutoff: string, linked: string[]): Promise<ScopeLedger> {
+      const inScope = await store.bookingService.listPeriod(books, start, cutoff);
+      const have = new Set(inScope.map(b => b.okey));
+      const extra = await store.bookingService.listByKeys(books, linked.filter(k => !have.has(k)));
+      const bookings = [...inScope, ...extra];
+      const lines = await store.bookingLineService.listForBookings(books, bookings.map(b => b.okey));
+      return { bookings, lines };
+    }
+    return {
+      scopeResource: rxResource({
+        params: resourceParams(() => {
+          const id = store.accountingStore.accountingTenantId();
+          if (!id || store.accountingStore.isExternallyManaged() || !store.billsResource.hasValue() || !store.invoicesResource.hasValue()) return undefined;
+          const bills = store.billsResource.value() ?? [];
+          const invoices = store.invoicesResource.value() ?? [];
+          const start = store.start(), cutoff = store.cutoff();
+          const linked = [...new Set([
+            ...openItemsLinkedKeys('payables', start, cutoff, bills, invoices),
+            ...openItemsLinkedKeys('receivables', start, cutoff, bills, invoices),
+          ])].sort();
+          return { id, start, cutoff, linked };
+        }),
+        stream: ({ params }) => from(loadScope(params.id, params.start, params.cutoff, params.linked)),
+      }),
+    };
+  }),
+  withComputed(store => ({
+    isLoading: computed(() => store.scopeResource.isLoading() || store.billsResource.isLoading() || store.invoicesResource.isLoading()
+      || store.ledgerStore.isLoading() || store.ledgerStore.refreshing()),
+  })),
   withComputed(store => {
-    const side = (side: OpenItemsSide, accountKey: string): OpenItemsResult => computeOpenItems({
-      side, accountKey, cutoff: store.cutoff(), start: store.start(),
-      bills: side === 'payables' ? store.billsResource.value() ?? [] : [],
-      invoices: side === 'receivables' ? store.invoicesResource.value() ?? [] : [],
-      bookings: store.bookingsResource.value() ?? [],
-      lines: store.linesResource.value() ?? [],
-    });
+    const side = (side: OpenItemsSide, accountKey: string): OpenItemsResult => {
+      const scope = store.scopeResource.hasValue() ? store.scopeResource.value() : undefined;
+      const bookings = scope?.bookings ?? [];
+      const lines = scope?.lines ?? [];
+      const start = store.start();
+      const result = computeOpenItems({
+        side, accountKey, cutoff: store.cutoff(), start,
+        bills: side === 'payables' ? store.billsResource.value() ?? [] : [],
+        invoices: side === 'receivables' ? store.invoicesResource.value() ?? [] : [],
+        bookings, lines,
+      });
+      // everything before the scope, from the balances — dated years only, as computeOpenItems skips undated bookings
+      const dated = store.ledgerStore.docs().filter(d => d.year > 0);
+      const before = accountKey ? openingOf(dated, [accountKey], start).get(accountKey) : undefined;
+      return withOpening(result, openItemsOpening(side, accountKey, start, before, bookings, lines));
+    };
     return {
       // legacy config docs lack the fields (Firestore reads skip model defaults)
       payables: computed(() => side('payables', store.accountingStore.config()?.payablesAccountKey ?? '')),
@@ -115,5 +157,9 @@ export const OpenItemsStore = signalStore(
     viewDate(storeDate: string): string {
       return convertDateFormatToString(storeDate, DateFormat.StoreDate, DateFormat.ViewDate, false) || storeDate;
     },
+  })),
+  withHooks(store => ({
+    onInit(): void { store.ledgerStore.use(); },
+    onDestroy(): void { store.ledgerStore.release(); },
   })),
 );

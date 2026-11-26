@@ -322,7 +322,6 @@
       "liquidity": "Variation des liquidités",
       "liquidityHint": "Caisse, poste et banque pendant cet exercice",
       "balance": "Liquidités disponibles",
-      "computeBalance": "Calculer le solde",
       "result": "Résultat",
       "budget": "Budget utilisé",
       "noBudget": "Aucun budget approuvé",

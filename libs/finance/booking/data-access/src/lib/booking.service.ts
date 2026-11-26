@@ -135,14 +135,6 @@ export class BookingService {
     await this.writeViaFunction({ mode: 'delete', bookingKey: booking.okey });
   }
 
-  public list(accountingTenantId: string, orderBy = 'date', sortOrder = 'desc'): Observable<BookingModel[]> {
-    const query = [
-      ...getSystemQuery(this.tenantId),
-      { key: 'accountingTenantId', operator: '==' as const, value: accountingTenantId },
-    ];
-    return this.firestoreService.searchData<BookingModel>(BookingCollection, query, orderBy, sortOrder);
-  }
-
   /** tenant + books filter, plus an optional date range ('' = open end) */
   private periodQuery(accountingTenantId: string, from: string, to: string, toExclusive = false): DbQuery[] {
     return [
@@ -175,12 +167,6 @@ export class BookingService {
    */
   public listPeriod(accountingTenantId: string, from: string, to: string): Promise<BookingModel[]> {
     return this.firestoreService.getDataOnceStrict<BookingModel>(BookingCollection, this.periodQuery(accountingTenantId, from, to), 'date', 'desc');
-  }
-
-  /** All bookings dated in [from, before) — the headers an opening balance joins its lines to. Rejects on failure. */
-  public listBefore(accountingTenantId: string, from: string, before: string): Promise<BookingModel[]> {
-    return this.firestoreService.getDataOnceStrict<BookingModel>(BookingCollection,
-      this.periodQuery(accountingTenantId, from, before, true), 'date', 'desc');
   }
 
   /**

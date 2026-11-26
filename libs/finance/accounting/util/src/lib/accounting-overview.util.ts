@@ -101,8 +101,13 @@ function sumWhere(sums: Map<string, DebitCredit>, accounts: Map<string, AccountM
 
 /** Key figures of one fiscal year: change in cash, result (Ertrag + 7–9 − Aufwand), budget used. */
 export function computeKeyFigures(input: KeyFigureInput): KeyFigures {
+  return keyFiguresFromSums({ ...input, sums: sumLinesByAccount(input.lines, input.bookings, input.from, input.to) });
+}
+
+/** Key figures from debit/credit per account of the fiscal year (e.g. the ledger balances, spec 1.177). */
+export function keyFiguresFromSums(input: Omit<KeyFigureInput, 'lines' | 'bookings'> & { sums: Map<string, DebitCredit> }): KeyFigures {
   const accounts = idsByKey(input.accounts);
-  const sums = sumLinesByAccount(input.lines, input.bookings, input.from, input.to);
+  const sums = input.sums;
   const isPnl = (a: AccountModel) => ['revenue', 'expense', 'result'].includes(accountClass(a.id));
   const isExpense = (a: AccountModel) => accountClass(a.id) === 'expense';
   const expenseActual = sumWhere(sums, accounts, isExpense, dc => dc.debit - dc.credit);
@@ -125,6 +130,11 @@ export function computeKeyFigures(input: KeyFigureInput): KeyFigures {
 export function liquidityBalance(lines: BookingLineModel[], bookings: BookingModel[], accounts: AccountModel[]): number {
   const byKey = idsByKey(accounts);
   return sumWhere(sumLinesByAccount(lines, bookings, '', ''), byKey, isCashAccount, dc => dc.debit - dc.credit);
+}
+
+/** Cash on hand from debit/credit per account since the ledger's start (e.g. the ledger balances, spec 1.177). */
+export function liquidityFromSums(sums: Map<string, DebitCredit>, accounts: AccountModel[]): number {
+  return sumWhere(sums, idsByKey(accounts), isCashAccount, dc => dc.debit - dc.credit);
 }
 
 const NOT_OPEN_INVOICE = ['draft', 'issuing', 'cancelled'];

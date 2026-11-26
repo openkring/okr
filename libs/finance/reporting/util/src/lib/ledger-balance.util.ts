@@ -1,6 +1,6 @@
 import { BookingLineModel, BookingModel, LedgerBalanceCell, LedgerBalanceModel } from '@okr/shared-models';
 
-import { DebitCredit } from './report.util';
+import { accountClass, DebitCredit, signedBalance } from './report.util';
 
 /**
  * Ledger balances (spec 1.177): the posted lines summed per calendar month × account × Kostenstelle × project,
@@ -188,6 +188,19 @@ export function openingOf(docs: Pick<LedgerBalanceModel, 'year' | 'cells'>[], ac
     }
   }
   return out;
+}
+
+/**
+ * Signed saldo of one account over [from, before) — `from` '' = since the beginning; both are the first day of a month
+ * (or ''). The opening balance of a running saldo or of the cash in a cash-flow statement. Same as `openingBalance`
+ * (booking util) over posted bookings.
+ */
+export function accountSaldo(docs: Pick<LedgerBalanceModel, 'year' | 'cells'>[], accountKey: string, accountId: string, from: string, before: string): number {
+  const cls = accountClass(accountId);
+  const upTo = openingOf(docs, [accountKey], before).get(accountKey);
+  const pre = from ? openingOf(docs, [accountKey], from).get(accountKey) : undefined;
+  const dc = { debit: (upTo?.debit ?? 0) - (pre?.debit ?? 0), credit: (upTo?.credit ?? 0) - (pre?.credit ?? 0) };
+  return signedBalance(cls, dc);
 }
 
 /** Bookings of every status dated in [from, to] (whole months). Undated ones count only from the beginning. */

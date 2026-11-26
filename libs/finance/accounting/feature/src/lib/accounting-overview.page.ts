@@ -99,11 +99,7 @@ function chf(minor: number | undefined): string {
               <span class="k">{{ i18n.overview_fig_liquidity() }}</span>
               <span class="v">@if (store.figuresLoading()) {<ion-spinner name="dots" />} @else { {{ money(store.figures()?.liquidityChange) }} }</span>
               <span class="s">{{ i18n.overview_fig_liquidityHint() }}</span>
-              @if (store.balance() !== undefined) {
-                <span class="s">{{ i18n.overview_fig_balance() }}: {{ money(store.balance()) }}</span>
-              } @else {
-                <ion-button fill="clear" size="small" [disabled]="store.balanceLoading()" (click)="store.computeBalance()">{{ i18n.overview_fig_computeBalance() }}</ion-button>
-              }
+              <span class="s">{{ i18n.overview_fig_balance() }}: @if (store.balance() === undefined) {<ion-spinner name="dots" />} @else { {{ money(store.balance()) }} }</span>
             </div>
             <div class="card">
               <span class="k">{{ i18n.overview_fig_result() }} {{ store.fiscalYearLabel() }}</span>

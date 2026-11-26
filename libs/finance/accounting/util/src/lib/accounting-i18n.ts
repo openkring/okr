@@ -209,7 +209,6 @@ export const ACCOUNTING_I18N_KEYS = {
   overview_fig_liquidity: PFX + 'overview.fig.liquidity',
   overview_fig_liquidityHint: PFX + 'overview.fig.liquidityHint',
   overview_fig_balance: PFX + 'overview.fig.balance',
-  overview_fig_computeBalance: PFX + 'overview.fig.computeBalance',
   overview_fig_result: PFX + 'overview.fig.result',
   overview_fig_budget: PFX + 'overview.fig.budget',
   overview_fig_noBudget: PFX + 'overview.fig.noBudget',
