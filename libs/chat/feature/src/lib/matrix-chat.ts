@@ -1352,6 +1352,8 @@ export class MatrixChat {
       if (await this.showUploadLimitToast([error])) return;
       console.error('Failed to send file:', error);
       this.reportSilentFailure('onFileSent', error);
+      // SCS-M1: a voice message lost to a 504 left the user believing it was sent.
+      await this.alertService.showToast(this.store.i18n.files_send_error());
     }
   }
 
@@ -1574,6 +1576,7 @@ export class MatrixChat {
       if (await this.showUploadLimitToast([error])) return;
       console.error('Failed to send thread image:', error);
       this.reportSilentFailure('onThreadFileQueued', error);
+      await this.alertService.showToast(this.store.i18n.files_send_error());
     }
   }
 
