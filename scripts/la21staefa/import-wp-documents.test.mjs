@@ -31,3 +31,14 @@ test('only moved files are rewritten, in every nested string', () => {
   const v = { html: `<a href="${OLD}">a</a> <a href="${other}">b</a>`, blocks: [{ t: OLD }], n: 1 };
   assert.deepEqual(rewriteDeep(v, urls), { html: `<a href="NEW">a</a> <a href="${other}">b</a>`, blocks: [{ t: 'NEW' }], n: 1 });
 });
+
+test('an unlinked file loses its anchor and gets no folder', () => {
+  const list = 'https://www.la21staefa.ch/wp-content/uploads/2024/10/E-Mail-Liste-2.pdf';
+  const urls = new Map([['2024/10/E-Mail-Liste-2.pdf', 'NEW']]);
+  assert.equal(rewriteDeep(`<p><a href="${list}">Download Teilnehmerliste</a></p>`, urls), '<p>Download Teilnehmerliste</p>');
+  assert.equal(rewriteDeep(`<a href=\\"${list}\\">T</a>`, urls), 'T');
+  const d = documentOf({ file: 'E-Mail-Liste-2.pdf', rel: '2024/10/E-Mail-Liste-2.pdf', year: '2024', month: '10', path: 'p', url: 'u', size: 1, hash: 'h', mimeType: 'application/pdf' });
+  assert.deepEqual(d.folderKeys, []);
+  assert.match(d.title, /^Teilnehmerliste/);
+  assert.equal(d.index, `n:${d.title} h:h m:application/pdf`);
+});

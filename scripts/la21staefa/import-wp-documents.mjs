@@ -12,7 +12,9 @@
  *   title from the file name, creation date = the upload month of the old site, SHA-256 hash;
  * - rewrites every link to it in the la21staefa sections to the document's download url.
  * Create-only and idempotent: an existing document is reused (its url), a section without old links is untouched.
- * HELD lists files that are NOT moved (personal data, owner decision pending); their links stay as they are.
+ * UNLINKED files (personal data) are copied the same way but belong to no folder and are linked nowhere: only
+ * «Alle Dokumente» (content admins) lists them. Their links lose the anchor (text kept), and a section that held
+ * nothing but such a link comes off the pages that list it (the section document stays).
  */
 import { createHash, randomUUID } from 'node:crypto';
 import { createRequire } from 'node:module';
@@ -26,8 +28,16 @@ const BUCKET = 'bkaiser-org.appspot.com';
 const FOLDER = `${T}_website`;
 const WP = /https?:\/\/(?:www\.)?la21staefa\.ch\/wp-content\/uploads\/(\d{4})\/(\d{2})\/([^"'\s<>\\)?#]+)/g;
 
-/** files that stay on the old site for now: the participant list of the KreisWERK event (names and mail addresses) */
-export const HELD = ['2024/10/E-Mail-Liste-2.pdf'];
+/**
+ * copied, never linked (owner, 2026-11-26): the participant list of the BTVZ event of 26.9.2024 (names and mail
+ * addresses). `section` = the section that held only its link, taken off its pages.
+ */
+export const UNLINKED = {
+  '2024/10/E-Mail-Liste-2.pdf': {
+    title: 'Teilnehmerliste Veranstaltung Kreislaufwirtschaft im Bauwesen 26.9.2024',
+    section: `${T}_btvzbauteilezur_content_s33`,
+  },
+};
 
 /** the old site's file link → { year, month, file, rel } (rel = 'yyyy/mm/file') */
 export function parseWpUrl(url) {
@@ -50,12 +60,14 @@ export const storagePathOf = (file) => `tenant/${T}/document/${file}`;
 export const downloadUrl = (path, token) =>
   `https://firebasestorage.googleapis.com/v0/b/${BUCKET}/o/${encodeURIComponent(path)}?alt=media&token=${token}`;
 
-export function documentOf({ file, year, month, path, url, size, hash, mimeType }) {
-  const title = titleOf(file);
+export function documentOf({ file, rel, year, month, path, url, size, hash, mimeType }) {
+  const unlinked = UNLINKED[rel];
+  const title = unlinked?.title ?? titleOf(file);
+  const folderKeys = unlinked ? [] : [FOLDER];
   const date = `${year}${month}01`;
   return {
-    tenants: [T], isArchived: false, tags: '', folderKeys: [FOLDER],
-    index: `n:${title} h:${hash} m:${mimeType} f:${FOLDER}`,
+    tenants: [T], isArchived: false, tags: '', folderKeys,
+    index: `n:${title} h:${hash} m:${mimeType}${folderKeys.length ? ` f:${folderKeys.join(' ')}` : ''}`,
     fullPath: path, description: '', title, altText: '', type: 'info', source: 'storage', credit: '', url, mimeType, size,
     authorKey: '', authorName: '', dateOfDocCreation: date, dateOfDocLastUpdate: date, locationKey: '', hash,
     priorVersionKey: '', version: '1.0', renderings: [],
@@ -63,10 +75,17 @@ export function documentOf({ file, year, month, path, url, size, hash, mimeType 
   };
 }
 
-/** `value` with every old link of a moved file replaced by its new url (`urls`: rel → url); deep copy */
+const relOf = (y, m, f) => `${y}/${m}/${decodeURIComponent(f)}`;
+const ANCHOR = new RegExp(`<a\\s[^>]*href=(\\\\?)"(${WP.source})\\1"[^>]*>([\\s\\S]*?)</a>`, 'g');
+
+/**
+ * `value` with every old link of a moved file replaced by its new url (`urls`: rel → url) and the anchors of an
+ * UNLINKED file (that is in `urls`) removed, their text kept; deep copy
+ */
 export function rewriteDeep(value, urls) {
   if (typeof value === 'string') {
-    return value.replace(WP, (whole, y, m, f) => urls.get(`${y}/${m}/${decodeURIComponent(f)}`) ?? whole);
+    const unwrapped = value.replace(ANCHOR, (whole, _q, _u, y, m, f, text) => (UNLINKED[relOf(y, m, f)] && urls.has(relOf(y, m, f)) ? text : whole));
+    return unwrapped.replace(WP, (whole, y, m, f) => (UNLINKED[relOf(y, m, f)] ? whole : urls.get(relOf(y, m, f)) ?? whole));
   }
   if (Array.isArray(value)) return value.map((v) => rewriteDeep(v, urls));
   if (value && typeof value === 'object' && value.constructor === Object) {
@@ -97,7 +116,7 @@ async function main() {
   for (const s of sections) {
     for (const m of JSON.stringify(s.data()).matchAll(WP)) {
       const p = parseWpUrl(m[0]);
-      if (p && !HELD.includes(p.rel)) files.set(p.rel, p);
+      if (p) files.set(p.rel, p);
     }
   }
   const byName = new Map();
@@ -105,7 +124,12 @@ async function main() {
     if (byName.has(p.file)) throw new Error(`two files named ${p.file}: ${byName.get(p.file)} and ${p.rel} — give one its own name first`);
     byName.set(p.file, p.rel);
   }
-  console.log(`${files.size} linked file(s), ${HELD.length} held back: ${HELD.join(', ')}\n`);
+  // an UNLINKED file whose link is already gone is still copied (a second run must find the document)
+  for (const rel of Object.keys(UNLINKED)) {
+    const [year, month, file] = rel.split('/');
+    if (!files.has(rel)) files.set(rel, { year, month, file, rel });
+  }
+  console.log(`${files.size} file(s), of them unlinked: ${Object.keys(UNLINKED).join(', ')}\n`);
 
   // 2. folder
   const folderRef = db.doc(`folders/${FOLDER}`);
@@ -139,7 +163,7 @@ async function main() {
     const hash = createHash('sha256').update(body).digest('hex');
     const url = downloadUrl(path, token);
     say(exists ? 'reuse object' : 'upload', `${path} (${Math.round(body.length / 1024)} KB)`);
-    say('create', `docs/${key} «${titleOf(p.file)}»`);
+    say('create', `docs/${key} «${UNLINKED[p.rel]?.title ?? titleOf(p.file)}»${UNLINKED[p.rel] ? ' (no folder, linked nowhere)' : ''}`);
     if (write) {
       if (!exists) await object.save(body, { contentType: mimeType, resumable: false, metadata: { metadata: { firebaseStorageDownloadTokens: token } } });
       await docRef.create(documentOf({ ...p, path, url, size: body.length, hash, mimeType }));
@@ -162,6 +186,15 @@ async function main() {
     const n = new Set([...JSON.stringify(data).matchAll(WP)].map((m) => parseWpUrl(m[0]).rel).filter((r) => urls.has(r))).size;
     say('update', `sections/${s.id}: ${n} file link(s)`);
     if (write) await s.ref.update(patch);
+  }
+  // 5. a section that held only the link of an UNLINKED file comes off its pages
+  for (const [rel, { section }] of Object.entries(UNLINKED)) {
+    if (!section || !urls.has(rel)) continue;
+    const pages = await db.collection('pages').where('sections', 'array-contains', section).get();
+    for (const page of pages.docs) {
+      say('update', `pages/${page.id}.sections: without ${section}`);
+      if (write) await page.ref.update({ sections: page.get('sections').filter((k) => k !== section) });
+    }
   }
   console.log(`\n${urls.size} document(s), ${changed} section(s) ${write ? 'updated' : 'to update'}`);
   if (failed.length) console.log(`NOT moved (old site did not deliver):\n  ${failed.join('\n  ')}`);
