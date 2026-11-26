@@ -5,7 +5,7 @@ import { of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { IonButton, IonContent, IonNote, IonSpinner } from '@ionic/angular';
 
-import { isValidTenantId, PORTAL_CHOOSER_PATH, TenantMode } from '@okr/shared-config';
+import { ENV, isValidTenantId, PORTAL_CHOOSER_PATH, TenantMode } from '@okr/shared-config';
 import { AppConfigService } from '@okr/shared-data-access';
 import { I18nService } from '@okr/shared-i18n';
 import { Header } from '@okr/shared-ui';
@@ -46,6 +46,7 @@ export class TenantLinkPage {
 
   private readonly appConfigService = inject(AppConfigService);
   private readonly router = inject(Router);
+  private readonly bootTenantId = inject(ENV).tenantId;
   protected readonly i18n = inject(I18nService).translateAll(PORTAL_I18N_KEYS);
 
   private readonly configResource = rxResource({
@@ -61,7 +62,7 @@ export class TenantLinkPage {
 
   protected readonly action = computed(() => {
     if (this.configResource.isLoading()) return undefined;
-    return resolveTenantLink(this.tenantId() ?? '', this.tenantMode() ?? 'fixed', this.configResource.value() ?? undefined);
+    return resolveTenantLink(this.tenantId() ?? '', this.tenantMode() ?? 'fixed', this.configResource.value() ?? undefined, this.bootTenantId);
   });
 
   private readonly apply = effect(() => {
@@ -72,6 +73,8 @@ export class TenantLinkPage {
       } catch {
         // blocked storage: the note path below is not reached; the person stays here
       }
+    } else if (action?.kind === 'home') {
+      void this.router.navigateByUrl('/', { replaceUrl: true });
     } else if (action?.kind === 'redirect') {
       globalThis.location.replace(action.url);
     }

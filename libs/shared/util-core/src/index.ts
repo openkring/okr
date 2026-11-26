@@ -83,3 +83,4 @@ export * from './lib/list-copy.util';
 export * from './lib/i18n-ref.util';
 export * from './lib/cox.util';
 export * from './lib/geo.util';
+export * from './lib/launch-url.util';

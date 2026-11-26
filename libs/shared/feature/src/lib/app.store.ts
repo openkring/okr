@@ -10,7 +10,7 @@ import { App } from '@capacitor/app';
 import { AUTH, clearStalledRestoreNote, ENV, FIRESTORE, noteStalledExpiredRestore, usesLocalStorageOnlySession, wasStalledSessionDropped } from '@okr/shared-config';
 import { AppConfigService, AppStoreMin, FirestoreService } from '@okr/shared-data-access';
 import { AddressDirectoryCollection, AddressDirectoryModel, AppConfig, getAddressDirectoryKey, AvailableLanguages, CalEventCollection, CalEventModel, CategoryCollection, CategoryItemModel, CategoryListModel, DefaultLanguage, DefaultLanguageCode, GroupCollection, GroupModel, InvitationCollection, InvitationModel, OrgCollection, OrgModel, PersonCollection, PersonModel, PrivacySettings, privacyUsageToAccessor, ResourceCollection, ResourceModel, ResourceModelName, stricterAccessor, TagCollection, TagModel, TaskCollection, TaskModel, UserCollection, UserModel } from '@okr/shared-models';
-import { appLinkOrigins, countableInvitationsOf, die, getSystemQuery, hasRole, hiddenFieldsOf, isBadgeSourceLoaded, indexBy, openInvitationsOf, pickForTenant, publicAppOrigin, replacePlaceholders, resolveAppOrigin, sortPersons, withOfflineSnapshot } from '@okr/shared-util-core';
+import { appLinkOrigins, countableInvitationsOf, die, getSystemQuery, hasRole, hiddenFieldsOf, isBadgeSourceLoaded, indexBy, openInvitationsOf, pickForTenant, publicAppOrigin, replacePlaceholders, resolveAppOrigin, sortPersons, takeLaunchUrl, withOfflineSnapshot } from '@okr/shared-util-core';
 import { AppNavigationService, armStartupStallCheck, HelperVisibility, installScrollDiagnostics, isBrowser, markStartup, dropExpiredSessionIdb, probeStoredSession, probeStoredSessionIdb, reportStartupTiming, StoredSessionState, VersionCheckService, resourceParams } from '@okr/shared-util-angular';
 
 import { authPhase, isDegradedBoot, openBootGate, type BootState } from './boot-readiness.util';
@@ -22,6 +22,15 @@ import { InstallHintService } from './install-hint.service';
 import { WakeWatchdogService } from './wake-watchdog.service';
 import { DepartureNavigationService } from './departure-navigation.service';
 
+
+/** Never throws: reading `sessionStorage` itself throws where site data is blocked. */
+function sessionStorageOrUndefined(): Storage | undefined {
+  try {
+    return globalThis.sessionStorage ?? undefined;
+  } catch {
+    return undefined;
+  }
+}
 export type AppState = {
   tenantId: string;
   production: boolean;
@@ -985,8 +994,10 @@ export const AppStore = signalStore(
 
       // Cold start: the launch URL is consumed before any listener could be attached,
       // so it has to be read once at startup. Returns undefined for a normal launch.
+      // Once per web-view session: the launch URL outlives a reload, and the portal reloads to switch
+      // tenant (spec 1.179) — following it again re-opened /t/<id> in a loop.
       void App.getLaunchUrl()
-        .then((launch) => store.appNavigationService.navigateToDeepLink(launch?.url))
+        .then((launch) => store.appNavigationService.navigateToDeepLink(takeLaunchUrl(launch?.url, sessionStorageOrUndefined())))
         // not available outside a native shell — a plain browser load carries no launch URL
         .catch(() => undefined);
 

@@ -10,10 +10,15 @@ import { resolveTenantAppUrl, TenantConfigMeta } from './tenant-switcher.util';
 export type TenantLinkAction =
   | { kind: 'switch'; tenantId: string }
   | { kind: 'redirect'; url: string }
+  | { kind: 'home' }
   | { kind: 'chooser'; note: 'unknown' };
 
-export function resolveTenantLink(tenantId: string, mode: TenantMode, config: TenantConfigMeta | undefined): TenantLinkAction {
+export function resolveTenantLink(
+  tenantId: string, mode: TenantMode, config: TenantConfigMeta | undefined, bootTenantId?: string,
+): TenantLinkAction {
   if (!isValidTenantId(tenantId) || !config) return { kind: 'chooser', note: 'unknown' };
+  // the tenant already running: no reload (a reload would meet the same link again)
+  if (mode === 'runtime' && tenantId === bootTenantId) return { kind: 'home' };
   if (mode === 'runtime') return { kind: 'switch', tenantId };
   return { kind: 'redirect', url: resolveTenantAppUrl(tenantId, config.appDomain) };
 }

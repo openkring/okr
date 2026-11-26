@@ -16,4 +16,10 @@ describe('resolveTenantLink', () => {
 
   it('rejects an invalid id without reading', () =>
     expect(resolveTenantLink('../x', 'runtime', { appName: 'x' })).toEqual({ kind: 'chooser', note: 'unknown' }));
+
+  it('goes home without a reload when the link names the tenant already running', () =>
+    expect(resolveTenantLink('scs', 'runtime', { appName: 'Seeclub' }, 'scs')).toEqual({ kind: 'home' }));
+
+  it('still switches to another tenant', () =>
+    expect(resolveTenantLink('p13', 'runtime', { appName: 'P13' }, 'scs')).toEqual({ kind: 'switch', tenantId: 'p13' }));
 });
