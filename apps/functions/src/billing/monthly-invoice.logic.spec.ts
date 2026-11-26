@@ -86,7 +86,7 @@ describe('monthlyPositions', () => {
     });
     expect(skipped).toEqual([]);
     expect(positions).toHaveLength(4);
-    expect(positions[0]).toEqual({ title: 'Kring M — Dezember 2026', amount: 1900, accountKey: '6000' });
+    expect(positions[0]).toEqual({ title: 'Kring M — Dezember 2026', amount: 3500, accountKey: '6000' });
     expect(positions[1].amount).toBe(2000);
     expect(positions[2].amount).toBe(1000);
     expect(positions[3].amount).toBe(0);

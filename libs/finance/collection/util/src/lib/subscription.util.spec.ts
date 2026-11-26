@@ -32,11 +32,11 @@ describe('aboStateKey', () => {
 
 describe('nextInvoiceEstimate', () => {
   it('is the band price plus the subscribed options, in Rappen', () => {
-    expect(nextInvoiceEstimate('KringS', ['buchhaltung', 'logbuch'])).toEqual({ kind: 'amount', amount: (15 + 20 + 5) * 100 });
+    expect(nextInvoiceEstimate('KringS', ['buchhaltung', 'logbuch'])).toEqual({ kind: 'amount', amount: (25 + 20 + 5) * 100 });
   });
   it('is the band price alone without options', () => expect(nextInvoiceEstimate('KringXXS', [])).toEqual({ kind: 'amount', amount: 900 }));
   it('counts a duplicated option once and an unknown option as 0', () => {
-    expect(nextInvoiceEstimate('KringXS', ['crm', 'crm', 'unknown'])).toEqual({ kind: 'amount', amount: 2200 });
+    expect(nextInvoiceEstimate('KringXS', ['crm', 'crm', 'unknown'])).toEqual({ kind: 'amount', amount: 2500 });
   });
   it('is unmeasured without a band', () => {
     expect(nextInvoiceEstimate('', ['crm'])).toEqual({ kind: 'unmeasured', amount: 0 });

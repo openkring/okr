@@ -19,7 +19,7 @@ describe('the band table itself', () => {
   });
 
   it('matches the published prices exactly', () => {
-    expect(BANDS.map(b => b.price)).toEqual([9, 12, 15, 19, 25, 39, 59, 99]);
+    expect(BANDS.map(b => b.price)).toEqual([9, 15, 25, 35, 49, 79, 119, 199]);
   });
 });
 
@@ -107,19 +107,19 @@ describe('applyHysteresis (§9.1) — up now, down after two months', () => {
 
 describe('commissionForTenant — the arithmetic the 10 % rests on', () => {
   // C3 §2's worked example, the reason per-tenant records are mandatory: the same 400 weighted
-  // users are worth 3.8× more split across eight tenants than held in one.
-  it('one tenant of 400 weighted users yields CHF 2.50', () => {
+  // users are worth 2.4× more split across eight tenants than held in one.
+  it('one tenant of 400 weighted users yields CHF 4.90', () => {
     const r = commissionForTenant({ totalUsers: 400, privilegedUsers: 0, addOns: [] });
     expect(r.band).toBe('KringL');
-    expect(r.subtotal).toBe(25);
-    expect(r.commission).toBe(2.5);
+    expect(r.subtotal).toBe(49);
+    expect(r.commission).toBe(4.9);
   });
 
-  it('eight tenants of 50 yield CHF 9.60 together', () => {
+  it('eight tenants of 50 yield CHF 12.00 together', () => {
     const each = commissionForTenant({ totalUsers: 50, privilegedUsers: 0, addOns: [] });
     expect(each.band).toBe('KringXS');
-    expect(each.subtotal).toBe(12);
-    expect(roundToFiveCentimes(each.commission * 8)).toBe(9.6);
+    expect(each.subtotal).toBe(15);
+    expect(roundToFiveCentimes(each.commission * 8)).toBe(12);
   });
 
   it('the CHF 9 floor counts — there is no free tenant (§8.2)', () => {
@@ -131,10 +131,10 @@ describe('commissionForTenant — the arithmetic the 10 % rests on', () => {
     const r = commissionForTenant({
       totalUsers: 100, privilegedUsers: 0, addOns: ['buchhaltung', 'logbuch'],
     });
-    expect(r.bandPrice).toBe(15);       // KringS
+    expect(r.bandPrice).toBe(25);       // KringS
     expect(r.addOnTotal).toBe(25);
-    expect(r.subtotal).toBe(40);
-    expect(r.commission).toBe(4);
+    expect(r.subtotal).toBe(50);
+    expect(r.commission).toBe(5);
   });
 
   it('bills the held band, not the measured one, during a one-month dip', () => {
@@ -143,7 +143,7 @@ describe('commissionForTenant — the arithmetic the 10 % rests on', () => {
     });
     expect(r.weightedUsers).toBe(990);  // measured: KringXL
     expect(r.band).toBe('KringXXL');    // billed: held
-    expect(r.bandPrice).toBe(59);
+    expect(r.bandPrice).toBe(119);
   });
 
   it('weights privileged users before choosing the band', () => {
@@ -154,10 +154,10 @@ describe('commissionForTenant — the arithmetic the 10 % rests on', () => {
   });
 
   it('rounds to five centimes', () => {
-    // KringM 19 + Lohnbuchhaltung 5 = 24 → 2.40; and an odd subtotal rounds, never truncates.
+    // KringM 35 + Lohnbuchhaltung 5 = 40 → 4.00; and an odd subtotal rounds, never truncates.
     expect(commissionForTenant({
       totalUsers: 150, privilegedUsers: 0, addOns: ['lohnbuchhaltung'],
-    }).commission).toBe(2.4);
+    }).commission).toBe(4);
     expect(roundToFiveCentimes(2.43)).toBe(2.45);
     expect(roundToFiveCentimes(2.41)).toBe(2.4);
   });
@@ -165,11 +165,11 @@ describe('commissionForTenant — the arithmetic the 10 % rests on', () => {
 
 describe('the formula is not the price (§5)', () => {
   it('the table wins where f(n) disagrees', () => {
-    // f(1000) = 9 + 0.16·1000^0.75 ≈ 37.5, the table says 59. Anyone "fixing" the table to match
-    // the formula would halve every commission in that band.
-    const f = (n: number) => 9 + 0.16 * Math.pow(n, 0.75);
+    // f(1000) = 3.45 + 1.03·1000^0.62 ≈ 78, the table says 119. Anyone "fixing" the table to match
+    // the formula would cut every commission in that band by a third.
+    const f = (n: number) => 3.45 + 1.03 * Math.pow(n, 0.62);
     expect(Math.round(f(1000))).not.toBe(priceOfBand('KringXXL'));
-    expect(priceOfBand('KringXXL')).toBe(59);
+    expect(priceOfBand('KringXXL')).toBe(119);
   });
 });
 

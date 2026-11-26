@@ -5,9 +5,9 @@
  * §4 and §7 — that document is the single source of truth, this file is its executable copy.
  * Change one and you must change the other in the same commit.
  *
- * ⚠️ **Never derive a price from the formula.** The spec's `f(n) = 9 + 0.16·n^(3/4)` is labelled
+ * ⚠️ **Never derive a price from the formula.** The spec's `f(n) = 3.45 + 1.03·n^0.62` is labelled
  * explicitly NON-normative: it exists to explain the *shape* of the curve. A price computed from it
- * and a price read from this table disagree by up to CHF 2.17, and the table wins — a mismatch is a
+ * and a price read from this table disagree by up to CHF 3.69, and the table wins — a mismatch is a
  * documentation bug, never a pricing bug. This is not hypothetical: two undocumented multipliers
  * (1.8×/2.5× above 500 users) once lived in the websites' calculator and would have paid partners
  * about half of what their own calculator quoted the customer.
@@ -31,13 +31,15 @@ export interface Band {
 /** Pricing spec §4. Ordered ascending; the last band is the absolute cap. */
 export const BANDS: readonly Band[] = [
   { id: 'KringXXS',  from: 1,    to: 25,       price: 9 },
-  { id: 'KringXS',   from: 26,   to: 50,       price: 12 },
-  { id: 'KringS',    from: 51,   to: 100,      price: 15 },
-  { id: 'KringM',    from: 101,  to: 249,      price: 19 },
-  { id: 'KringL',    from: 250,  to: 499,      price: 25 },
-  { id: 'KringXL',   from: 500,  to: 999,      price: 39 },
-  { id: 'KringXXL',  from: 1000, to: 1999,     price: 59 },
-  { id: 'KringXXXL', from: 2000, to: Infinity, price: 99 },
+  { id: 'KringXS',   from: 26,   to: 50,       price: 15 },
+  { id: 'KringS',    from: 51,   to: 100,      price: 25 },
+  { id: 'KringM',    from: 101,  to: 249,      price: 35 },
+  { id: 'KringL',    from: 250,  to: 499,      price: 49 },
+  { id: 'KringXL',   from: 500,  to: 999,      price: 79 },
+  // Never published (spec §4: «nach Absprache» from 1'000) and never billed by the monthly run
+  // (INDIVIDUAL_PRICING_FROM) — only the partner-commission floor. Raised with the 2026-11-26 bands.
+  { id: 'KringXXL',  from: 1000, to: 1999,     price: 119 },
+  { id: 'KringXXXL', from: 2000, to: Infinity, price: 199 },
 ] as const;
 
 /**
