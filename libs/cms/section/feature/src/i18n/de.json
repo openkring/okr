@@ -169,7 +169,7 @@
     },
     "add": {
       "label": "Hinzufügen:",
-      "button": "Button",
+      "button": "Link-Button",
       "subTitle": "Untertitel",
       "intro": "Einleitung",
       "background": "Hintergrundfarbe",
@@ -186,7 +186,7 @@
         "text": "Text",
         "image": "Bild",
         "gallery": "Galerie",
-        "button": "Button",
+        "button": "Link-Button",
         "columns": "Spalten",
         "callout": "Hinweis",
         "divider": "Trennlinie",
@@ -410,6 +410,9 @@
           "later": "Hier stehen die nächsten Anlässe.",
           "none": "In diesem Kalender stehen zurzeit keine Anlässe an. Ohne Anlässe fehlt dieser Block in der E-Mail."
         }
+      },
+      "button": {
+        "hint": "Ein Link-Button führt zu einer Seite der App oder zu einem Link. Soll ein Button etwas auslösen, zum Beispiel eine Datei herunterladen oder einen Vertrag anfragen, nimm die Sektion «Aktions-Button»."
       }
     }
   },
@@ -436,10 +439,10 @@
   "button": {
     "name": "Button",
     "label": "Button",
-    "edit": "Button Konfiguration ändern",
-    "title": "Button Konfiguration",
+    "edit": "Aktions-Button ändern",
+    "title": "Aktions-Button",
     "subtitle": "Definiere das Aussehen des Buttons",
-    "description": "Button mit Icon und/oder Text für Download oder Navigation.",
+    "description": "Ein Aktions-Button löst etwas aus: eine Datei herunterladen, ein Bild gross zeigen, einen Vertrag anfragen oder eine Regel starten. Er kann ein Icon und einen Text daneben haben.",
     "label2": {
       "label": "Bezeichnung",
       "placeholder": "Text auf dem Button",
@@ -506,7 +509,8 @@
       "left": "Button links, Text rechts",
       "right": "Text links, Button rechts",
       "helper": "Legt fest, wo der Button im Verhältnis zum Text steht. Bei «Nur der Button» wird der Text nicht angezeigt. Links und rechts stehen Button und Text nebeneinander, die Spaltengrösse bestimmt dann die Breite des Buttons."
-    }
+    },
+    "hint": "Ein Aktions-Button löst etwas aus: eine Datei herunterladen, ein Bild gross zeigen, einen Vertrag anfragen oder eine Regel starten. Führt der Button nur zu einer Seite oder einem Link, nimm besser einen Artikel mit dem Block «Link-Button»."
   },
   "calendar": {
     "calevents": "Ereignisse",
@@ -1664,8 +1668,8 @@
       "description": "Artikel mit Titel, Untertitel und Freitext. Das Bild ist optional und die Anordnung kann eingestellt werden."
     },
     "button": {
-      "label": "Button",
-      "description": "Die Sektion zeigt einen Button mit optionalem Text."
+      "label": "Aktions-Button",
+      "description": "Ein Button, der etwas auslöst: Download, Zoom, Vertrag oder Regel. Für einen Button, der nur zu einer Seite oder einem Link führt, nimm im Artikel den Block «Link-Button»."
     },
     "cal": {
       "label": "Kalender",
@@ -2410,7 +2414,7 @@
     }
   },
   "cta": {
-    "title": "Buttons",
+    "title": "Link-Buttons",
     "subtitle": "Buttons, die zu einer Seite oder einem Link führen",
     "button": "Button {n}",
     "empty": "Noch keine Buttons",

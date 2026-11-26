@@ -35,6 +35,7 @@ export const ARTICLE_EDITOR_I18N_KEYS = {
   article_editor_panel_unknown:                 PFX + 'article.editor.panel.unknown',
   article_editor_panel_writeInArticle:          PFX + 'article.editor.panel.writeInArticle',
   article_editor_panel_look:                    PFX + 'article.editor.panel.look',
+  article_editor_button_hint:                   PFX + 'article.editor.button.hint',
   article_editor_panel_tab_label:               PFX + 'article.editor.panel.tab.label',
   article_editor_panel_tab_blocks:              PFX + 'article.editor.panel.tab.blocks',
   article_editor_panel_tab_article:             PFX + 'article.editor.panel.tab.article',

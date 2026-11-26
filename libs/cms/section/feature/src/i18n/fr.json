@@ -169,7 +169,7 @@
     },
     "add": {
       "label": "Ajouter :",
-      "button": "Bouton",
+      "button": "Bouton lien",
       "subTitle": "Sous-titre",
       "intro": "Introduction",
       "background": "Couleur de fond",
@@ -186,7 +186,7 @@
         "text": "Texte",
         "image": "Image",
         "gallery": "Galerie",
-        "button": "Bouton",
+        "button": "Bouton lien",
         "columns": "Colonnes",
         "callout": "Remarque",
         "divider": "Ligne de séparation",
@@ -410,6 +410,9 @@
           "later": "Les prochains événements apparaissent ici.",
           "none": "Il n'y a pas d'événements à venir dans ce calendrier pour le moment. Sans événements, ce bloc n'apparaît pas dans l'e-mail."
         }
+      },
+      "button": {
+        "hint": "Un bouton lien mène à une page de l'app ou à un lien. Si un bouton doit déclencher quelque chose, par exemple télécharger un fichier ou demander un contrat, utilise la section « Bouton d'action »."
       }
     }
   },
@@ -436,10 +439,10 @@
   "button": {
     "name": "Bouton",
     "label": "Bouton",
-    "edit": "Modifier la configuration du bouton",
-    "title": "Configuration du bouton",
+    "edit": "Modifier le bouton d'action",
+    "title": "Bouton d'action",
     "subtitle": "Définir l'apparence du bouton",
-    "description": "Bouton avec icône et/ou texte pour le téléchargement ou la navigation.",
+    "description": "Un bouton d'action déclenche quelque chose : télécharger un fichier, afficher une image en grand, demander un contrat ou lancer une règle. Il peut avoir une icône et un texte à côté.",
     "label2": {
       "label": "Désignation",
       "placeholder": "Texte sur le bouton",
@@ -506,7 +509,8 @@
       "left": "Bouton à gauche, texte à droite",
       "right": "Texte à gauche, bouton à droite",
       "helper": "Définit où se trouve le bouton par rapport au texte. Avec «Seulement le bouton», le texte n'est pas affiché. À gauche et à droite, le bouton et le texte sont côte à côte ; la taille de colonne fixe alors la largeur du bouton."
-    }
+    },
+    "hint": "Un bouton d'action déclenche quelque chose : télécharger un fichier, afficher une image en grand, demander un contrat ou lancer une règle. Si le bouton mène seulement à une page ou à un lien, prends plutôt un article avec le bloc « Bouton lien »."
   },
   "calendar": {
     "calevents": "Événements",
@@ -1664,8 +1668,8 @@
       "description": "Article avec titre, sous-titre et texte libre. L'image est facultative et la disposition peut être réglée."
     },
     "button": {
-      "label": "Bouton",
-      "description": "La section affiche un bouton avec un texte facultatif."
+      "label": "Bouton d'action",
+      "description": "Un bouton qui déclenche quelque chose : téléchargement, zoom, contrat ou règle. Pour un bouton qui mène seulement à une page ou à un lien, utilise le bloc « Bouton lien » dans un article."
     },
     "cal": {
       "label": "Calendrier",
@@ -2410,7 +2414,7 @@
     }
   },
   "cta": {
-    "title": "Boutons",
+    "title": "Boutons lien",
     "subtitle": "Des boutons qui mènent à une page ou à un lien",
     "button": "Bouton {n}",
     "empty": "Pas encore de boutons",

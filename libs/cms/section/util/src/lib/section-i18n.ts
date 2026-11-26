@@ -148,6 +148,7 @@ export const SECTION_I18N_KEYS = {
   contract_document_unavailable:            PFX + 'contractDocument.unavailable',
   button_action_label:                      PFX + 'button.action.label',
   button_title:                             PFX + 'button.title',
+  button_hint:                              PFX + 'button.hint',
   button_segment_button:                    PFX + 'button.segment.button',
   button_segment_icon:                      PFX + 'button.segment.icon',
   button_segment_action:                    PFX + 'button.segment.action',

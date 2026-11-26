@@ -181,6 +181,8 @@ const filled = (value: unknown): boolean => typeof value === 'string' && value.t
         }
 
         @case ('button') {
+          <!-- an article's button only links; what does something is the section «Aktions-Button» -->
+          @if (profile().kind === 'article') { <ion-note class="note">{{ i18n().article_editor_button_hint() }}</ion-note> }
           <okr-cta-config [formData]="ctas()" (formDataChange)="setCta($event)" [max]="1" errorKey="cta" [showHeader]="false" [readOnly]="false" [i18n]="i18n()" [errors]="errors()" />
           <ion-card>
             <ion-card-content>

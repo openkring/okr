@@ -169,7 +169,7 @@
     },
     "add": {
       "label": "Add:",
-      "button": "Button",
+      "button": "Link button",
       "subTitle": "Subtitle",
       "intro": "Intro",
       "background": "Background colour",
@@ -186,7 +186,7 @@
         "text": "Text",
         "image": "Image",
         "gallery": "Gallery",
-        "button": "Button",
+        "button": "Link button",
         "columns": "Columns",
         "callout": "Note",
         "divider": "Divider",
@@ -410,6 +410,9 @@
           "later": "The next events appear here.",
           "none": "There are no upcoming events in this calendar at the moment. Without events this block is left out of the email."
         }
+      },
+      "button": {
+        "hint": "A link button leads to a page of the app or to a link. If a button should do something, such as download a file or request a contract, use the «Action button» section."
       }
     }
   },
@@ -436,10 +439,10 @@
   "button": {
     "name": "Button",
     "label": "Button",
-    "edit": "Change button configuration",
-    "title": "Button configuration",
+    "edit": "Edit action button",
+    "title": "Action button",
     "subtitle": "Define the appearance of the button",
-    "description": "Button with icon and/or text for download or navigation.",
+    "description": "An action button does something: it downloads a file, shows an image enlarged, requests a contract or starts a rule. It can have an icon and some text next to it.",
     "label2": {
       "label": "Label",
       "placeholder": "Text on the button",
@@ -506,7 +509,8 @@
       "left": "Button left, text right",
       "right": "Text left, button right",
       "helper": "Defines where the button sits relative to the text. With «Button only» the text is not shown. Left and right place button and text side by side; the column size then sets the width of the button."
-    }
+    },
+    "hint": "An action button does something: it downloads a file, shows an image enlarged, requests a contract or starts a rule. If the button only leads to a page or a link, use an article with the «Link button» block instead."
   },
   "calendar": {
     "calevents": "Events",
@@ -1664,8 +1668,8 @@
       "description": "Article with title, subtitle and free text. The image is optional and the arrangement can be set."
     },
     "button": {
-      "label": "Button",
-      "description": "The section shows a button with optional text."
+      "label": "Action button",
+      "description": "A button that does something: download, zoom, contract or rule. For a button that only leads to a page or a link, use the «Link button» block in an article."
     },
     "cal": {
       "label": "Calendar",
@@ -2410,7 +2414,7 @@
     }
   },
   "cta": {
-    "title": "Buttons",
+    "title": "Link buttons",
     "subtitle": "Buttons that lead to a page or a link",
     "button": "Button {n}",
     "empty": "No buttons yet",

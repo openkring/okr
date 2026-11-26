@@ -169,7 +169,7 @@
     },
     "add": {
       "label": "Añadir:",
-      "button": "Botón",
+      "button": "Botón de enlace",
       "subTitle": "Subtítulo",
       "intro": "Introducción",
       "background": "Color de fondo",
@@ -186,7 +186,7 @@
         "text": "Texto",
         "image": "Imagen",
         "gallery": "Galería",
-        "button": "Botón",
+        "button": "Botón de enlace",
         "columns": "Columnas",
         "callout": "Nota",
         "divider": "Línea divisoria",
@@ -410,6 +410,9 @@
           "later": "Aquí aparecen los próximos eventos.",
           "none": "En este momento no hay próximos eventos en este calendario. Sin eventos, este bloque no aparece en el correo."
         }
+      },
+      "button": {
+        "hint": "Un botón de enlace lleva a una página de la app o a un enlace. Si un botón debe hacer algo, por ejemplo descargar un archivo o solicitar un contrato, usa la sección «Botón de acción»."
       }
     }
   },
@@ -436,10 +439,10 @@
   "button": {
     "name": "Botón",
     "label": "Botón",
-    "edit": "Modificar la configuración del botón",
-    "title": "Configuración del botón",
+    "edit": "Editar el botón de acción",
+    "title": "Botón de acción",
     "subtitle": "Definir la apariencia del botón",
-    "description": "Botón con icono y/o texto para descarga o navegación.",
+    "description": "Un botón de acción hace algo: descarga un archivo, muestra una imagen en grande, solicita un contrato o inicia una regla. Puede tener un icono y un texto al lado.",
     "label2": {
       "label": "Denominación",
       "placeholder": "Texto en el botón",
@@ -506,7 +509,8 @@
       "left": "Botón a la izquierda, texto a la derecha",
       "right": "Texto a la izquierda, botón a la derecha",
       "helper": "Define dónde se sitúa el botón respecto al texto. Con «Solo el botón» el texto no se muestra. A la izquierda y a la derecha, botón y texto quedan uno al lado del otro; el tamaño de columna fija entonces el ancho del botón."
-    }
+    },
+    "hint": "Un botón de acción hace algo: descarga un archivo, muestra una imagen en grande, solicita un contrato o inicia una regla. Si el botón solo lleva a una página o a un enlace, mejor usa un artículo con el bloque «Botón de enlace»."
   },
   "calendar": {
     "calevents": "Eventos",
@@ -1664,8 +1668,8 @@
       "description": "Artículo con título, subtítulo y texto libre. La imagen es opcional y la disposición se puede ajustar."
     },
     "button": {
-      "label": "Botón",
-      "description": "La sección muestra un botón con texto opcional."
+      "label": "Botón de acción",
+      "description": "Un botón que hace algo: descarga, zoom, contrato o regla. Para un botón que solo lleva a una página o a un enlace, usa el bloque «Botón de enlace» en un artículo."
     },
     "cal": {
       "label": "Calendario",
@@ -2410,7 +2414,7 @@
     }
   },
   "cta": {
-    "title": "Botones",
+    "title": "Botones de enlace",
     "subtitle": "Botones que llevan a una página o a un enlace",
     "button": "Botón {n}",
     "empty": "Todavía no hay botones",

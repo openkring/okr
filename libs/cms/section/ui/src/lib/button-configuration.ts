@@ -1,5 +1,5 @@
 import { Component, computed, input, output, signal } from '@angular/core';
-import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonLabel, IonSegment, IonSegmentButton } from '@ionic/angular';
+import { IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonLabel, IonNote, IonSegment, IonSegmentButton } from '@ionic/angular';
 
 import { BUTTON_STYLE_SHAPE, ButtonAction, ButtonActionConfig, ButtonStyle, ICON_CONFIG_SHAPE, IconConfig } from '@okr/shared-models';
 import { BUTTON_SEGMENT_FIELDS, getErrorSegments, SectionErrors, SectionI18n } from '@okr/cms-section-util';
@@ -22,10 +22,11 @@ const SEGMENTS: readonly Segment[] = ['button', 'icon', 'action'];
   standalone: true,
   imports: [
     ButtonStyleConfiguration, IconConfiguration, ButtonActionConfiguration,
-    IonCard, IonCardHeader, IonCardTitle, IonCardSubtitle, IonCardContent, IonSegment, IonSegmentButton, IonLabel
+    IonCard, IonCardHeader, IonCardTitle, IonCardSubtitle, IonCardContent, IonSegment, IonSegmentButton, IonLabel, IonNote
   ],
   styles: [`
     @media (width <= 600px) { ion-card { margin: 5px; } }
+    .hint { display: block; margin-bottom: 12px; }
     .error-dot { display: inline-block; width: 8px; height: 8px; margin-inline-start: 6px; border-radius: 50%; background: var(--ion-color-danger); vertical-align: middle; }
   `],
   template: `
@@ -35,6 +36,8 @@ const SEGMENTS: readonly Segment[] = ['button', 'icon', 'action'];
         <ion-card-subtitle>{{ i18n().button_style_subtitle() }}</ion-card-subtitle>
       </ion-card-header>
       <ion-card-content>
+        <!-- this section does something; a button that only links is the block «Link-Button» of an article -->
+        <ion-note class="hint">{{ i18n().button_hint() }}</ion-note>
         <ion-segment [value]="segment()" (ionChange)="onSegmentChange($event.detail.value)">
           <ion-segment-button value="button">
             <ion-label>{{ i18n().button_segment_button() }}@if (hasErrors('button')) {<span class="error-dot" role="img" [attr.aria-label]="i18n().segment_errors()"></span>}</ion-label>

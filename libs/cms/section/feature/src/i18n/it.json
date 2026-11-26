@@ -169,7 +169,7 @@
     },
     "add": {
       "label": "Aggiungi:",
-      "button": "Pulsante",
+      "button": "Pulsante link",
       "subTitle": "Sottotitolo",
       "intro": "Introduzione",
       "background": "Colore di sfondo",
@@ -186,7 +186,7 @@
         "text": "Testo",
         "image": "Immagine",
         "gallery": "Galleria",
-        "button": "Pulsante",
+        "button": "Pulsante link",
         "columns": "Colonne",
         "callout": "Nota",
         "divider": "Linea divisoria",
@@ -410,6 +410,9 @@
           "later": "Qui appaiono i prossimi eventi.",
           "none": "Al momento non ci sono eventi in programma in questo calendario. Senza eventi questo blocco non compare nell'e-mail."
         }
+      },
+      "button": {
+        "hint": "Un pulsante link porta a una pagina dell'app o a un link. Se un pulsante deve fare qualcosa, per esempio scaricare un file o richiedere un contratto, usa la sezione «Pulsante d'azione»."
       }
     }
   },
@@ -436,10 +439,10 @@
   "button": {
     "name": "Pulsante",
     "label": "Pulsante",
-    "edit": "Modificare la configurazione del pulsante",
-    "title": "Configurazione del pulsante",
+    "edit": "Modifica il pulsante d'azione",
+    "title": "Pulsante d'azione",
     "subtitle": "Definire l'aspetto del pulsante",
-    "description": "Pulsante con icona e/o testo per download o navigazione.",
+    "description": "Un pulsante d'azione fa qualcosa: scarica un file, mostra un'immagine in grande, richiede un contratto o avvia una regola. Può avere un'icona e un testo accanto.",
     "label2": {
       "label": "Denominazione",
       "placeholder": "Testo sul pulsante",
@@ -506,7 +509,8 @@
       "left": "Pulsante a sinistra, testo a destra",
       "right": "Testo a sinistra, pulsante a destra",
       "helper": "Stabilisce dove si trova il pulsante rispetto al testo. Con «Solo il pulsante» il testo non viene mostrato. A sinistra e a destra pulsante e testo stanno affiancati; la dimensione della colonna fissa allora la larghezza del pulsante."
-    }
+    },
+    "hint": "Un pulsante d'azione fa qualcosa: scarica un file, mostra un'immagine in grande, richiede un contratto o avvia una regola. Se il pulsante porta solo a una pagina o a un link, usa piuttosto un articolo con il blocco «Pulsante link»."
   },
   "calendar": {
     "calevents": "Eventi",
@@ -1664,8 +1668,8 @@
       "description": "Articolo con titolo, sottotitolo e testo libero. L'immagine è facoltativa e la disposizione può essere impostata."
     },
     "button": {
-      "label": "Pulsante",
-      "description": "La sezione mostra un pulsante con testo facoltativo."
+      "label": "Pulsante d'azione",
+      "description": "Un pulsante che fa qualcosa: download, zoom, contratto o regola. Per un pulsante che porta solo a una pagina o a un link, usa il blocco «Pulsante link» in un articolo."
     },
     "cal": {
       "label": "Calendario",
@@ -2410,7 +2414,7 @@
     }
   },
   "cta": {
-    "title": "Pulsanti",
+    "title": "Pulsanti link",
     "subtitle": "Pulsanti che portano a una pagina o a un link",
     "button": "Pulsante {n}",
     "empty": "Ancora nessun pulsante",
