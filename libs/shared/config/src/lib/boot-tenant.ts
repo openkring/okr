@@ -37,6 +37,15 @@ export function resolveBootTenant(env: OkrEnvironment, mode: TenantMode, stored:
 
 const bootCache = new WeakMap<OkrEnvironment, OkrEnvironment>();
 
+/** Reading the `localStorage` property itself throws where site data is blocked (SecurityError). */
+function localStorageOrUndefined(): Storage | undefined {
+  try {
+    return globalThis.localStorage ?? undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 /**
  * The environment of this app start. Fixed mode returns `env` itself; runtime mode returns a copy
  * with `tenantId` and `appId` set to the stored choice, computed once per `env` object so that
@@ -46,8 +55,7 @@ export function bootEnvironment(env: OkrEnvironment, mode: TenantMode = 'fixed')
   if (mode === 'fixed') return env;
   const cached = bootCache.get(env);
   if (cached) return cached;
-  const storage = typeof globalThis.localStorage === 'undefined' ? undefined : globalThis.localStorage;
-  const tenantId = resolveBootTenant(env, mode, readStoredTenant(storage));
+  const tenantId = resolveBootTenant(env, mode, readStoredTenant(localStorageOrUndefined()));
   const result: OkrEnvironment = { ...env, tenantId, appId: tenantId };
   bootCache.set(env, result);
   return result;

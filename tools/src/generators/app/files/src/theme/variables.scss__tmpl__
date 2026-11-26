@@ -67,16 +67,16 @@
   --bk-form-field-background: white;
   --bk-form-field-padding: 0;
   --bk-form-button-padding: 0.5em;
-  --bk-banner-background: #475569;  // Platzhalter
+  --bk-banner-background: #475569;  /* Platzhalter */
   --bk-row-selection-color: lightblue;
   --bk-test-color: #ccffff;
   --bk-light-warning-color: #ffe6993e;
   --bk-archived-color: #ffcc99;
-  --bk-fab-background: #475569;  // Platzhalter
+  --bk-fab-background: #475569;  /* Platzhalter */
 
-  // FontAwesome colouring
-  --fa-primary-color: #475569;  // Platzhalter
-  --fa-secondary-color: #334155;  // Platzhalter
+  /* FontAwesome colouring */
+  --fa-primary-color: #475569;  /* Platzhalter */
+  --fa-secondary-color: #334155;  /* Platzhalter */
 
   /** primary **/
   --ion-color-primary: #475569;

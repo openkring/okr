@@ -9,14 +9,17 @@
  *
  *   node scripts/tenant-themes.mjs
  */
-import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = resolve(fileURLToPath(import.meta.url), '..', '..');
 const OUT = join(ROOT, 'dist', 'tenant-themes');
-const SASS = /@use\b|@import\b|@include\b|@mixin\b|#\{|^\s*\$[\w-]+\s*:/m;
+// `//` comments are Sass only: CSS reads `// x` plus the next declaration as one invalid declaration
+// and drops both (la21staefa lost its primary colour that way). `(^|[^:])` spares `https://`.
+const SASS = /@use\b|@import\b|@include\b|@mixin\b|#\{|^\s*\$[\w-]+\s*:|(^|[^:])\/\//m;
 
+rmSync(OUT, { recursive: true, force: true }); // a removed app's theme must not linger
 mkdirSync(OUT, { recursive: true });
 const written = [];
 for (const dir of readdirSync(join(ROOT, 'apps')).filter((d) => d.endsWith('-app')).sort()) {

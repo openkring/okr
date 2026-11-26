@@ -68,6 +68,16 @@ describe('bootEnvironment', () => {
     localStorage.removeItem(PORTAL_TENANT_KEY);
   });
 
+  it('runtime mode boots the build tenant when reading localStorage itself throws', () => {
+    const original = Object.getOwnPropertyDescriptor(globalThis, 'localStorage');
+    Object.defineProperty(globalThis, 'localStorage', { configurable: true, get: () => { throw new DOMException('blocked', 'SecurityError'); } });
+    try {
+      expect(bootEnvironment(env(), 'runtime').tenantId).toBe('kring');
+    } finally {
+      if (original) Object.defineProperty(globalThis, 'localStorage', original);
+    }
+  });
+
   it('runtime mode returns the same object on every call', () => {
     const e = env();
     expect(bootEnvironment(e, 'runtime')).toBe(bootEnvironment(e, 'runtime'));
