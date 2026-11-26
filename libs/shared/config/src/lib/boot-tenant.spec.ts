@@ -78,6 +78,14 @@ describe('bootEnvironment', () => {
     }
   });
 
+  it('runtime mode keeps the build id', () => {
+    localStorage.setItem(PORTAL_TENANT_KEY, 'scs');
+    const result = bootEnvironment(env(), 'runtime');
+    expect(result.appId).toBe('scs');
+    expect(result.buildId).toBe('kring');
+    localStorage.removeItem(PORTAL_TENANT_KEY);
+  });
+
   it('runtime mode returns the same object on every call', () => {
     const e = env();
     expect(bootEnvironment(e, 'runtime')).toBe(bootEnvironment(e, 'runtime'));

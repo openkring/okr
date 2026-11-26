@@ -56,7 +56,7 @@ export function bootEnvironment(env: OkrEnvironment, mode: TenantMode = 'fixed')
   const cached = bootCache.get(env);
   if (cached) return cached;
   const tenantId = resolveBootTenant(env, mode, readStoredTenant(localStorageOrUndefined()));
-  const result: OkrEnvironment = { ...env, tenantId, appId: tenantId };
+  const result: OkrEnvironment = { ...env, tenantId, appId: tenantId, buildId: env.buildId ?? env.appId };
   bootCache.set(env, result);
   return result;
 }

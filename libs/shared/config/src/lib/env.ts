@@ -8,6 +8,12 @@ export interface OkrEnvironment {
   useEmulators: boolean;
   tenantId: string;
   appId: string; // human-readable app identifier for per-app branding (e.g. 'scs', 'test')
+  /**
+   * The build's own app id when it differs from `appId`: the iOS portal serves tenant `scs` from the
+   * `kring` build, so `appId` (mail templates, branding) is `scs` and `buildId` (its version in
+   * `app-version.deployed`) is `kring`. Absent in tenant apps — use `buildId ?? appId`.
+   */
+  buildId?: string;
   firebase: {       
     apiKey: string;
     authDomain: string;

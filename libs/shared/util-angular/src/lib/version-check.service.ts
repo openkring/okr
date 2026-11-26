@@ -81,7 +81,9 @@ export class VersionCheckService {
   public readonly firestore = inject(FIRESTORE);
 
   /** Which app this build is, so the deployed-version map can be read for it. */
-  private readonly appId = inject(ENV, { optional: true })?.appId ?? '';
+  private readonly buildEnv = inject(ENV, { optional: true });
+  // the build's own id: the iOS portal serves another tenant (appId) from the kring build (spec 1.179)
+  private readonly appId = this.buildEnv?.buildId ?? this.buildEnv?.appId ?? '';
   private readonly currentVersion = CURRENT_APP_VERSION;
   private versionConfig: AppVersionConfig | undefined;
   private alertShown = false;

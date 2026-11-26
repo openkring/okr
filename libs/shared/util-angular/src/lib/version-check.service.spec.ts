@@ -54,13 +54,13 @@ describe('VersionCheckService unrecoverable-state handling', () => {
     activateUpdate: ReturnType<typeof vi.fn>;
   };
 
-  function makeService(): { service: VersionCheckService; reloadSpy: ReturnType<typeof vi.spyOn> } {
+  function makeService(env: Record<string, string> = { appId: 'p13' }): { service: VersionCheckService; reloadSpy: ReturnType<typeof vi.spyOn> } {
     (inject as ReturnType<typeof vi.fn>).mockImplementation((token: unknown) => {
       if (token === AlertController) return mockAlertController;
       if (token === SwUpdate) return mockSwUpdate;
       if (token === PLATFORM_ID) return 'browser';
       if (token === FIRESTORE) return {};
-      if (token === ENV) return { appId: 'p13' };
+      if (token === ENV) return env;
       // the update alert resolves its labels through translateAll (main-bundle keys)
       if (token === I18nService) return { translateAll: (keys: Record<string, string>) =>
         Object.fromEntries(Object.keys(keys).map(k => [k, () => k])) };
@@ -130,6 +130,13 @@ describe('VersionCheckService unrecoverable-state handling', () => {
       const { service } = makeService();
       setConfig(service, { minVersion: '7.0.0', latestVersion: '7.11.1', deployed: { scs: '7.11.1' } });
       expect(service.getLatestVersion()).toBe('7.11.1');
+    });
+
+    it('reads deployed by build id when set', () => {
+      // the iOS portal serves tenant scs from the kring build (spec 1.179): its version is kring's
+      const { service } = makeService({ appId: 'scs', buildId: 'kring' });
+      setConfig(service, { minVersion: '7.0.0', latestVersion: '7.11.1', deployed: { kring: '7.70.0', scs: '7.60.0' } });
+      expect(service.getLatestVersion()).toBe('7.70.0');
     });
 
     it('falls back to latestVersion when there is no deployed map at all', () => {
