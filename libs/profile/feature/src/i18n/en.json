@@ -270,7 +270,9 @@
     "renew": "Renew",
     "enable": "Enable",
     "blockedIos": "Blocked – you can turn them on in the iPhone settings under “Notifications” for this app.",
-    "blockedAndroid": "Blocked – you can turn them on in your device settings under “Apps” for this app."
+    "blockedAndroid": "Blocked – you can turn them on in your device settings under “Apps” for this app.",
+    "installIos": "On iPhone and iPad you only get notifications in the installed app. Here is how to add it to your Home Screen.",
+    "installIosLink": "Show me how"
   },
   "maintenance": {
     "title": "Maintenance",

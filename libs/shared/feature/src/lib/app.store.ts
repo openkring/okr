@@ -18,6 +18,7 @@ import { I18nService } from '@okr/shared-i18n';
 
 import { SessionService} from '@okr/session-data-access';
 import { OfflineNoticeService } from './offline-notice.service';
+import { InstallHintService } from './install-hint.service';
 import { WakeWatchdogService } from './wake-watchdog.service';
 import { DepartureNavigationService } from './departure-navigation.service';
 
@@ -795,6 +796,8 @@ export const AppStore = signalStore(
       inject(WakeWatchdogService).start();
       // Spec 1.158: jumps to the Notfall page when the user's Logbuch trip opens (see departure-navigation.service.ts).
       inject(DepartureNavigationService).start(store.currentUser);
+      // Spec 1.99 A2: suggests installing the app, in a browser tab only (see install-hint.service.ts).
+      inject(InstallHintService).start(store.currentUser);
 
       // Scroll-freeze instrumentation. Must be armed BEFORE a freeze: the decisive reading is a
       // capture-phase wheel counter on `window`, which a console snippet pasted afterwards cannot

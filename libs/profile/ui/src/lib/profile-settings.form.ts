@@ -6,8 +6,8 @@ import { AvatarUsages, CalendarSmallScreenViews, LanguageCategory, Languages, Na
 import { AvatarUsage, CalendarSmallScreenView, DefaultLanguage, StartPage, NameDisplay, PersonSortCriteria, RoleName, UserModel } from "@okr/shared-models";
 import { FcmService } from "@okr/shared-data-access";
 import { CategoryOld, CategoryOldI18n, Checkbox, CheckboxI18n, DeliveryChannelsControl, DeliveryChannelsI18n, ErrorNote, TextInput, TextInputI18n } from "@okr/shared-ui";
-import { isAndroid, isIOS, validateVestTree, vestErrors } from "@okr/shared-util-angular";
-import { coerceBoolean, hasRole, toEditableChannels } from "@okr/shared-util-core";
+import { isAndroid, isIOS, isRunningInstalled, validateVestTree, vestErrors } from "@okr/shared-util-angular";
+import { coerceBoolean, hasRole, installGuideUrl, toEditableChannels } from "@okr/shared-util-core";
 
 import { userValidations } from "@okr/user-util";
 import { ProfileI18n } from "@okr/profile-util";
@@ -130,6 +130,21 @@ const EDITED_FIELDS = [
                   </ion-item>
                 </ion-col>
               </ion-row>
+            } @else if (showIosInstallLink()) {
+              <!-- iPhone/iPad in a Safari tab: push needs the installed app (spec 1.99 A2) -->
+              <ion-row>
+                <ion-col size="12">
+                  <ion-item lines="none">
+                    <ion-label>
+                      <h3>{{ i18n().push_title() }}</h3>
+                      <p>{{ i18n().push_install_ios() }}</p>
+                    </ion-label>
+                    <ion-button slot="end" fill="outline" size="small" (click)="openIosInstallGuide()">
+                      {{ i18n().push_install_ios_link() }}
+                    </ion-button>
+                  </ion-item>
+                </ion-col>
+              </ion-row>
             }
           </ion-grid>
         </form>
@@ -180,6 +195,13 @@ export class ProfileSettingsAccordion {
   protected showDebugInfoI18n     = computed(() => ({ name: 'showDebugInfo',    label: this.i18n().show_debug_label(),    helper: this.i18n().show_debug_helper()    } as CheckboxI18n));
   protected showArchivedDataI18n  = computed(() => ({ name: 'showArchivedData', label: this.i18n().show_archived_label(), helper: this.i18n().show_archived_helper() } as CheckboxI18n));
   protected showHelpersI18n       = computed(() => ({ name: 'showHelpers',      label: this.i18n().show_helpers_label(),  helper: this.i18n().show_helpers_helper()  } as CheckboxI18n));
+
+  /** Push is unsupported because the iPhone/iPad runs the app in a Safari tab: point to the guide instead. */
+  protected readonly showIosInstallLink = computed(() => !this.fcmService.isSupported() && isIOS() && !isRunningInstalled());
+
+  protected openIosInstallGuide(): void {
+    window.open(installGuideUrl('ios'), '_blank', 'noopener');
+  }
 
   protected notificationPermission = signal<NotificationPermission>(
     typeof Notification !== 'undefined' ? Notification.permission : 'default'

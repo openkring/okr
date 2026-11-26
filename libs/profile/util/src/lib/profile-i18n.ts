@@ -208,6 +208,8 @@ export const PROFILE_I18N_KEYS = {
   push_hint:                  PFX + 'push.hint',
   push_renew:                 PFX + 'push.renew',
   push_enable:                PFX + 'push.enable',
+  push_install_ios:           PFX + 'push.installIos',
+  push_install_ios_link:      PFX + 'push.installIosLink',
 
   // maintenance block — the user-driven escape hatch out of a stale cached build
   maint_title:                PFX + 'maintenance.title',

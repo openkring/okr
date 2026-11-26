@@ -270,7 +270,9 @@
     "renew": "Renovar",
     "enable": "Activar",
     "blockedIos": "Bloqueadas – puedes activarlas en los ajustes del iPhone, en «Notificaciones», para esta app.",
-    "blockedAndroid": "Bloqueadas – puedes activarlas en los ajustes de tu dispositivo, en «Aplicaciones», para esta app."
+    "blockedAndroid": "Bloqueadas – puedes activarlas en los ajustes de tu dispositivo, en «Aplicaciones», para esta app.",
+    "installIos": "En iPhone y iPad solo recibes notificaciones en la app instalada. Así la añades a tu pantalla de inicio.",
+    "installIosLink": "Cómo hacerlo"
   },
   "maintenance": {
     "title": "Mantenimiento",

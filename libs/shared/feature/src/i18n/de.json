@@ -62,5 +62,14 @@
     "person": "Person",
     "org": "Organisation",
     "group": "Gruppe"
+  },
+  "install": {
+    "messageInstall": "Installiere die App auf diesem Gerät: Sie startet mit eigenem Symbol und kann dir Mitteilungen senden.",
+    "messageIos": "Mitteilungen bekommst du nur, wenn die App auf deinem Home-Bildschirm liegt. Das geht in einer Minute.",
+    "messageGuide": "Leg die App ins Dock: Sie startet mit eigenem Symbol und kann dir Mitteilungen senden.",
+    "messageOtherBrowser": "In diesem Browser lässt sich die App nicht installieren. Öffne sie in Safari oder Chrome, dann geht es.",
+    "install": "Installieren",
+    "guide": "So geht's",
+    "close": "Schliessen"
   }
 }

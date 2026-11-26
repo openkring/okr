@@ -62,5 +62,14 @@
     "person": "Persona",
     "org": "Organizzazione",
     "group": "Gruppo"
+  },
+  "install": {
+    "messageInstall": "Installa l'app su questo dispositivo: si apre con la sua icona e può inviarti notifiche.",
+    "messageIos": "Ricevi le notifiche solo se l'app è nella tua schermata Home. Ci vuole un minuto.",
+    "messageGuide": "Aggiungi l'app al Dock: si apre con la sua icona e può inviarti notifiche.",
+    "messageOtherBrowser": "Questo browser non può installare l'app. Aprila in Safari o Chrome e funziona.",
+    "install": "Installa",
+    "guide": "Come fare",
+    "close": "Chiudi"
   }
 }

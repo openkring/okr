@@ -270,7 +270,9 @@
     "renew": "Rinnovare",
     "enable": "Attivare",
     "blockedIos": "Bloccate – puoi attivarle nelle impostazioni dell’iPhone, in «Notifiche», per questa app.",
-    "blockedAndroid": "Bloccate – puoi attivarle nelle impostazioni del dispositivo, in «App», per questa app."
+    "blockedAndroid": "Bloccate – puoi attivarle nelle impostazioni del dispositivo, in «App», per questa app.",
+    "installIos": "Su iPhone e iPad ricevi le notifiche solo nell'app installata. Ecco come aggiungerla alla schermata Home.",
+    "installIosLink": "Come fare"
   },
   "maintenance": {
     "title": "Manutenzione",

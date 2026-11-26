@@ -62,5 +62,14 @@
     "person": "Persona",
     "org": "Organización",
     "group": "Grupo"
+  },
+  "install": {
+    "messageInstall": "Instala la app en este dispositivo: se abre con su propio icono y puede enviarte notificaciones.",
+    "messageIos": "Solo recibes notificaciones si la app está en tu pantalla de inicio. Se hace en un minuto.",
+    "messageGuide": "Añade la app al Dock: se abre con su propio icono y puede enviarte notificaciones.",
+    "messageOtherBrowser": "Este navegador no puede instalar la app. Ábrela en Safari o Chrome y funcionará.",
+    "install": "Instalar",
+    "guide": "Cómo hacerlo",
+    "close": "Cerrar"
   }
 }

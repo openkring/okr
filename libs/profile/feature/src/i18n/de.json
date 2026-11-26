@@ -270,7 +270,9 @@
     "renew": "Erneuern",
     "enable": "Aktivieren",
     "blockedIos": "Blockiert – du kannst sie in den iPhone-Einstellungen unter «Mitteilungen» bei dieser App einschalten.",
-    "blockedAndroid": "Blockiert – du kannst sie in den Einstellungen deines Geräts unter «Apps» bei dieser App einschalten."
+    "blockedAndroid": "Blockiert – du kannst sie in den Einstellungen deines Geräts unter «Apps» bei dieser App einschalten.",
+    "installIos": "Auf dem iPhone und iPad bekommst du Mitteilungen nur in der installierten App. So legst du sie auf den Home-Bildschirm.",
+    "installIosLink": "So geht's"
   },
   "maintenance": {
     "title": "Wartung",

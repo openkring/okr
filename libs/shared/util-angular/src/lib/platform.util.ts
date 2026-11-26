@@ -1,5 +1,8 @@
 import { Capacitor } from '@capacitor/core';
-import { isBrowser } from '@okr/shared-util-core';
+import {
+  getDisplayMode, getInstallGuideSection, InstallGuideSection, isAndroidUserAgent, isBrowser, isInstalledDisplayMode, isIOSUserAgent,
+  isMacUserAgent,
+} from '@okr/shared-util-core';
 
 export { isBrowser };
 
@@ -60,19 +63,37 @@ export function isChrome(): boolean { return getBrowser() === 'chrome'; }
 export function isFirefox(): boolean { return getBrowser() === 'firefox'; }
 export function isOpera(): boolean { return getBrowser() === 'opera'; }
 
+/**
+ * iPhone, iPod or iPad. An iPad on iPadOS 13+ reports «Macintosh»; its touch points give it away
+ * (isIOSUserAgent). Until 2026-11-26 this read the user agent alone, so an iPad counted as a Mac.
+ */
 export function isIOS(): boolean {
   if (typeof navigator === 'undefined') return false;
-  return /iphone|ipad|ipod/i.test(navigator.userAgent);
+  return isIOSUserAgent(navigator.userAgent, navigator.maxTouchPoints);
 }
 
 export function isAndroid(): boolean {
   if (typeof navigator === 'undefined') return false;
-  return /android/i.test(navigator.userAgent);
+  return isAndroidUserAgent(navigator.userAgent);
 }
 
-// iPadOS 13+ reports "Macintosh" in its UA, so exclude iPhone/iPad/iPod explicitly.
+/** A real Mac; an iPad, which also reports «Macintosh», is not one (isMacUserAgent). */
 export function isMacOS(): boolean {
   if (typeof navigator === 'undefined') return false;
-  const ua = navigator.userAgent;
-  return /macintosh/i.test(ua) && !/iphone|ipad|ipod/i.test(ua);
+  return isMacUserAgent(navigator.userAgent, navigator.maxTouchPoints);
+}
+
+/** The section of the install guide for this device and browser (spec 1.99 A1). */
+export function getCurrentInstallGuideSection(): InstallGuideSection {
+  if (typeof navigator === 'undefined') return 'other-browser';
+  return getInstallGuideSection(navigator.userAgent, navigator.maxTouchPoints);
+}
+
+/** Runs as an installed app (any app display mode, or iOS's Home Screen flag), not in a browser tab. Spec 1.99 A5. */
+export function isRunningInstalled(): boolean {
+  if (typeof window === 'undefined') return false;
+  return isInstalledDisplayMode(getDisplayMode(
+    window.matchMedia ? (q) => window.matchMedia(q).matches : undefined,
+    (navigator as { standalone?: boolean }).standalone,
+  ));
 }

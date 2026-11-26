@@ -62,5 +62,14 @@
     "person": "Person",
     "org": "Organisation",
     "group": "Group"
+  },
+  "install": {
+    "messageInstall": "Install the app on this device: it starts from its own icon and can send you notifications.",
+    "messageIos": "You only get notifications when the app is on your Home Screen. It takes a minute.",
+    "messageGuide": "Add the app to your Dock: it starts from its own icon and can send you notifications.",
+    "messageOtherBrowser": "This browser cannot install the app. Open it in Safari or Chrome and it works.",
+    "install": "Install",
+    "guide": "Show me how",
+    "close": "Close"
   }
 }
