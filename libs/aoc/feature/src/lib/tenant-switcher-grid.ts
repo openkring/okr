@@ -11,15 +11,16 @@ import { TenantSwitcherEntry } from '@okr/aoc-util';
   standalone: true,
   imports: [ImgDirective, IonIcon, SvgIconPipe],
   styles: [`
-    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 12px; }
-    .tile { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 10px 6px;
+    .grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; padding: 12px; }
+    .tile { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 10px 6px; min-width: 0;
             border-radius: 10px; background: transparent; border: none; cursor: pointer; color: inherit; }
     .tile:hover:not(.current) { background: rgba(0, 0, 0, 0.06); }
     .tile.current { opacity: 0.5; cursor: default; }
     .logo { width: 40px; height: 40px; }
     .placeholder { width: 40px; height: 40px; color: var(--ion-color-medium); }
-    .label { font-size: 12px; text-align: center; max-width: 100%; overflow: hidden;
-             text-overflow: ellipsis; white-space: nowrap; }
+    .label { font-size: 12px; line-height: 1.25; text-align: center; max-width: 100%; overflow: hidden;
+             overflow-wrap: anywhere; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2;
+             line-clamp: 2; }
     .badge { font-size: 10px; color: var(--ion-color-medium); }
     @media (prefers-color-scheme: dark) { .tile:hover:not(.current) { background: rgba(255, 255, 255, 0.10); } }
   `],

@@ -27,7 +27,7 @@ import { contextMenuId } from '@okr/shared-util-core';
   standalone: true,
   imports: [IonButton, IonContent, IonIcon, IonPopover, SvgIconPipe, TenantSwitcherGrid],
   styles: [`
-    ion-popover { --width: 320px; --max-width: 92vw; }
+    ion-popover { --width: 440px; --max-width: 92vw; }
     .switcher-title { padding: 12px 14px 0; font-size: 17px; font-weight: 600; color: var(--ion-color-medium); }
   `],
   template: `
