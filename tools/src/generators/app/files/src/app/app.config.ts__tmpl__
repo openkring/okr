@@ -5,7 +5,7 @@ import { IonicRouteStrategy, provideIonicAngular } from '@ionic/angular';
 import { provideServiceWorker } from '@angular/service-worker';
 
 import * as Sentry from '@sentry/angular';
-import { ENV } from '@okr/shared-config';
+import { provideBootEnv } from '@okr/shared-config';
 import { AvailableLanguages, DefaultLanguageCode } from '@okr/shared-models';
 import { ChunkLoadErrorHandler, isBrowser, httpBreadcrumbInterceptor, VersionCheckService } from '@okr/shared-util-angular';
 import { AppStore, provideModelSelector, SentryContextService } from '@okr/shared-feature';
@@ -50,7 +50,7 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideZonelessChangeDetection(),
     provideModelSelector(),
-    { provide: ENV, useValue: environment },
+    provideBootEnv(environment),
     // Loaders, not classes: the classes would bind the person/group feature trees into main
     // (spec 1.49, Task 5d). The section stores that open these modals await the loader.
     { provide: GROUP_EDIT_MODAL, useValue: () => import('@okr/subject-group-feature').then(m => m.GroupEditModal) },
