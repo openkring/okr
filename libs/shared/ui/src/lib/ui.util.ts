@@ -9,6 +9,7 @@ import { DateSelectModal } from "./date-select.modal";
 import { ImageChoices, ImageViewModal } from "./image-view.modal";
 import { ImageSliderModal } from "./image-slider.modal";
 import { VideoViewModal } from "./video-view.modal";
+import { activeFirebaseApp } from '@okr/shared-config';
 
 export interface ValidationInfo {
   type: string,
@@ -156,7 +157,7 @@ export async function selectDate(modalController: ModalController, isoDate?: str
  * @param currentUser the current user (used for logging)
  */
 export async function updateImageDimensions(path: string, currentUser?: UserModel): Promise<Dimensions | undefined> {
-  const imageRef = ref(getStorage(), path);
+  const imageRef = ref(getStorage(activeFirebaseApp()), path);
   const url = await getDownloadURL(imageRef);
   const dimensions = await calculateDimensions(url, currentUser);
   await updateImageDimensionsMetadata(path, dimensions, currentUser);
@@ -175,7 +176,7 @@ export async function updateImageDimensionsMetadata(path: string, dimensions?: D
     return;
   }
   try {
-    const imageRef = ref(getStorage(), path);
+    const imageRef = ref(getStorage(activeFirebaseApp()), path);
     await updateMetadata(imageRef, {
       customMetadata: {
         width: dimensions.width,
@@ -219,7 +220,7 @@ export async function calculateDimensions(url: string, currentUser?: UserModel):
  */
 export async function getImageDimensionsFromMetadata(path: string): Promise<Dimensions | undefined> {
   let dimensions: Dimensions | undefined = undefined;
-  const imageRef = ref(getStorage(), path);
+  const imageRef = ref(getStorage(activeFirebaseApp()), path);
   const metadata = await getMetadata(imageRef);
   if (metadata.customMetadata?.width && metadata.customMetadata?.height) {
     dimensions = {

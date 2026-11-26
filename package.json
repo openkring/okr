@@ -28,6 +28,7 @@
     "check-article-readers": "node scripts/check-article-readers.mjs",
     "check-ledger-reads": "node scripts/check-ledger-reads.mjs",
     "check-context-menus": "node scripts/check-context-menus.mjs",
+    "check-firebase-app": "node scripts/check-firebase-app.mjs",
     "check-i18n": "node scripts/check-i18n.mjs",
     "check-i18n-assets": "node scripts/sync-i18n-assets.mjs --check",
     "sync-i18n-assets": "node scripts/sync-i18n-assets.mjs",

@@ -17,6 +17,7 @@ import { I18nService } from '@okr/shared-i18n';
 import { ESIGN_I18N_KEYS, EsignI18n } from '@okr/content-esign-util';
 import { fill } from '@okr/shared-util-core';
 import { dismissOverlay } from '@okr/shared-util-angular';
+import { activeFirebaseApp } from '@okr/shared-config';
 
 @Component({
   selector: 'okr-esign-view-modal',
@@ -190,7 +191,7 @@ export class EsignViewModal {
     const path = this.esign().signedPdfPath;
     if (!path) return;
     const { getStorage, ref, getDownloadURL } = await import('firebase/storage');
-    const url = await getDownloadURL(ref(getStorage(), path));
+    const url = await getDownloadURL(ref(getStorage(activeFirebaseApp()), path));
     await Browser.open({ url });
   }
 

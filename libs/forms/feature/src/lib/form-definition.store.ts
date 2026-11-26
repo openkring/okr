@@ -141,7 +141,7 @@ export const FormDefinitionStore = signalStore(
     async downloadPdf(form: FormDefinitionModel, submissionId?: string): Promise<void> {
       if (form.target.kind !== 'collection') return;
       const { getFirestore, collection, getDocs, query, where } = await import('firebase/firestore');
-      const db = getFirestore();
+      const db = getFirestore(activeFirebaseApp());
 
       type SubmissionDoc = Record<string, unknown> & { okey: string };
       let docsData: SubmissionDoc[];
@@ -222,7 +222,7 @@ export const FormDefinitionStore = signalStore(
     async downloadCsv(form: FormDefinitionModel): Promise<void> {
       if (form.target.kind !== 'collection') return;
       const { getFirestore, collection, getDocs, query, where } = await import('firebase/firestore');
-      const db = getFirestore();
+      const db = getFirestore(activeFirebaseApp());
       const snap = await getDocs(
         query(
           collection(db, form.target.collectionName),

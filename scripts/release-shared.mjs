@@ -197,6 +197,13 @@ export async function runGates({ nonInteractive = false, acceptDrift = false, ac
   try { run('node', ['scripts/sync-i18n-assets.mjs', '--check']); }
   catch { abort('check-i18n-assets failed — release aborted (no version bump made). Run `pnpm sync-i18n-assets` and commit the app project.json files.'); }
 
+  // 1a''''. default Firebase app: in the iOS portal (spec 1.179) the Firebase app is named after the
+  //         tenant and no default app exists, so getApp() or a getter without an app throws there while
+  //         every tenant app works — no build or test notices (form PDF and e-sign broke that way).
+  console.log('\n[1/6] Checking Firebase app usage (pnpm check-firebase-app)…');
+  try { run('node', ['scripts/check-firebase-app.mjs']); }
+  catch { abort('check-firebase-app failed — release aborted (no version bump made). Use activeFirebaseApp().'); }
+
   // 1a''. live labels: a menuItems or categories doc can name a key no source file knows, or a
   //       scope since moved in code (SCS-EA, BKA-3). Data, not code — so ask, and never block on
   //       missing creds.

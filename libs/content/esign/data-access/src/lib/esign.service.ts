@@ -65,7 +65,7 @@ export class EsignService {
   public async uploadStagingPdf(file: File, tenantId: string): Promise<string> {
     const uuid = crypto.randomUUID();
     const storagePath = `tenants/${tenantId}/esign/staging/${uuid}.pdf`;
-    const storageRef = ref(getStorage(), storagePath);
+    const storageRef = ref(getStorage(activeFirebaseApp()), storagePath);
     await uploadBytes(storageRef, file, { contentType: 'application/pdf' });
     return storagePath;
   }
