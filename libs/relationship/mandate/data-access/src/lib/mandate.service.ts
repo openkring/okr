@@ -2,7 +2,7 @@ import { inject, Injectable } from '@angular/core';
 import { Observable, of } from 'rxjs';
 
 import { FirestoreService } from '@okr/shared-data-access';
-import { MandateCollection, MandateModel, UserModel } from '@okr/shared-models';
+import { MandateCollection, MandateModel } from '@okr/shared-models';
 import { isMandateActive, revokePatch } from '@okr/relationship-mandate-util';
 import { DateFormat, getTodayStr } from '@okr/shared-util-core';
 
@@ -74,9 +74,11 @@ export class MandateService {
   /**
    * Stores a new mandate. The caller stamps `createdByKey` (the rules require it to be the caller's personKey) and
    * leaves `revokedAt` / `revokedByKey` empty. Returns the okey, or undefined if the write failed.
+   * No current user is handed to `createModel`: it would write a «created» comment on `mandates.<okey>`, and comments
+   * are readable by the whole tenant, while a family Vollmacht is visible to its two parties and admins only.
    */
-  public create(mandate: MandateModel, currentUser: UserModel): Promise<string | undefined> {
-    return this.firestoreService.createModel<MandateModel>(MandateCollection, mandate, undefined, undefined, currentUser);
+  public create(mandate: MandateModel): Promise<string | undefined> {
+    return this.firestoreService.createModel<MandateModel>(MandateCollection, mandate);
   }
 
   /**

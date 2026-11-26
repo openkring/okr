@@ -91,7 +91,7 @@ export class MandateEditModal {
     try {
       const okey = mandate.kind === 'proxy'
         ? await this.saveProxy(mandate, currentUser)
-        : await this.mandateService.create(mandate, currentUser);
+        : await this.mandateService.create(mandate);
       if (okey === '') return;   // refused; the reason was shown
       if (!okey) {
         await showToast(this.toastController, MANDATE_I18N_KEYS.save_error);
@@ -120,9 +120,14 @@ export class MandateEditModal {
     const tenantId = this.appStore.tenantId();
     if (!meeting?.okey || !actor?.key || !draft.grantor?.key || !draft.grantee?.key) return undefined;
 
-    // the draft / invited lock is app-only (the rules do not check it): read the meeting from the server
+    // the rules refuse a proxy for a meeting past draft / invited; read the meeting from the server first, so the
+    // user is told why instead of getting a failed write
     const stored = await this.appStore.firestoreService.readObjectStrict<MeetingModel>(`${MeetingCollection}/${meeting.okey}`);
-    if (!stored || !isMeetingOpenForProxies(stored)) {
+    if (!stored) {
+      await showToast(this.toastController, MANDATE_I18N_KEYS.proxy_meeting_missing);
+      return '';
+    }
+    if (!isMeetingOpenForProxies(stored)) {
       await showToast(this.toastController, MANDATE_I18N_KEYS.proxy_closed);
       return '';
     }
@@ -139,11 +144,15 @@ export class MandateEditModal {
 
     if (replaced && !await this.mandateService.revoke(replaced, actor.key)) return undefined;
     const proxy = newProxyMandate(tenantId, draft.grantor, draft.grantee, meeting.okey, actor.key);
-    const okey = await this.mandateService.create(proxy, currentUser);
+    const okey = await this.mandateService.create(proxy);
     if (okey && actor.key !== proxy.grantorKey) {
+      const text = fill(this.i18n.notice_created(), {
+        actor: actor.name1,
+        meeting: stored.name || meeting.name || this.i18n.meeting_unknown(),
+        holder: getFullName(draft.grantee.name1, draft.grantee.name2),
+      });
       try {
-        await notifyGrantor(await this.taskService(), { ...proxy, okey }, actor, draft.grantor,
-          fill(this.i18n.notice_created(), { actor: actor.name1 }), { modelType: MeetingModelName, key: meeting.okey });
+        await notifyGrantor(await this.taskService(), { ...proxy, okey }, actor, draft.grantor, text, { modelType: MeetingModelName, key: meeting.okey });
       } catch (ex) {
         warn(`MandateEditModal.saveProxy(notice): ${(ex as Error).message}`);
       }

@@ -22,9 +22,7 @@ export const MANDATE_I18N_KEYS = {
   action_answer:   PFX + 'action_answer',
   notice_attend:   PFX + 'notice_attend',
   notice_unattend: PFX + 'notice_unattend',
-  notice_answer:   PFX + 'notice_answer',
   notice_created:  PFX + 'notice_created',
-  no_proxies:      PFX + 'no_proxies',
   // profile section «Vollmachten» and the edit modal (spec 1.180 §5.1)
   intro:               PFX + 'intro',
   given_empty:         PFX + 'given_empty',
@@ -55,6 +53,12 @@ export const MANDATE_I18N_KEYS = {
   proxy_no_candidates: PFX + 'proxy_no_candidates',
   proxy_closed:        PFX + 'proxy_closed',
   proxy_cap_reached:   PFX + 'proxy_cap_reached',
+  proxy_meeting_missing: PFX + 'proxy_meeting_missing',
+  meeting_unknown:     PFX + 'meeting_unknown',
+  // a proxy in the profile section, and revoking / giving it back (spec 1.180 §5.1, §6)
+  proxy_label:             PFX + 'proxy_label',
+  proxy_revoke_confirm:    PFX + 'proxy_revoke_confirm',
+  proxy_give_back_confirm: PFX + 'proxy_give_back_confirm',
 } satisfies Record<string, string>;
 
 export type MandateI18n = { [K in keyof typeof MANDATE_I18N_KEYS]: Signal<string> };

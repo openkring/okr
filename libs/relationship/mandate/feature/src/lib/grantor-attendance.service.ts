@@ -131,7 +131,12 @@ export class GrantorAttendanceService {
     if (!context) return false;
     const mandate = await this.checkedMandate(grantorKey, actor.key, 'calevent.attend', context.name);
     if (!mandate) return false;
-    const subject = newAvatarInfo(grantorKey, context.name, this.appStore.getPerson(grantorKey)?.lastName ?? '', 'person', '', '', '');
+    // the same name the grantor's own answer writes (the person's first and last name); a grantor the app has not
+    // loaded is named as on the Vollmacht, never ''
+    const person = this.appStore.getPerson(grantorKey);
+    const subject = person
+      ? newAvatarInfo(grantorKey, person.firstName, person.lastName, 'person', '', '', '')
+      : newAvatarInfo(grantorKey, mandate.grantor?.name1 || context.name, mandate.grantor?.name2 ?? '', 'person', '', '', '');
 
     // the waiting-list hint is read from the event as loaded, before the write — as for my own sign-up
     const { attendees, waitlisted } = applyAttendanceFor(calEvent.attendees, subject, newState, actor.key, calEvent.maxAttendees);
@@ -186,7 +191,8 @@ export class GrantorAttendanceService {
     if (!await this.invitationService.respond(invitation, newState, currentUser, undefined, actor.key)) return false;
 
     const subject = newAvatarInfo(grantorKey, invitation.inviteeFirstName || name, invitation.inviteeLastName ?? '', 'person', '', '', '');
-    const text = fill(this.mandateI18n.notice_answer(), {
+    // the same wording as a sign-up or sign-off from the event list: the grantor learns what was answered
+    const text = fill(newState === 'accepted' ? this.mandateI18n.notice_attend() : this.mandateI18n.notice_unattend(), {
       actor: actor.name1,
       event: `${invitation.name}, ${formatDateTimeLabel(invitation.date)}`,
     });

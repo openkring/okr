@@ -7,8 +7,9 @@ import { isMandateActive } from './mandate.util';
 
 /**
  * The Vollmacht form (spec 1.180). Field names are the form's: `grantee` is the grantee picker (`granteeKey`).
- * `existing` are the mandates already loaded for the pair's tenant, `today` a StoreDate; the callable re-checks
- * everything server-side, this suite only keeps an obviously wrong Vollmacht from being sent.
+ * `existing` are the mandates already loaded for the pair's tenant, `today` a StoreDate. The Firestore rules re-check
+ * the record on write (`mandateCreateOk`: shape per kind, parties, no self-grant, who may create); the duplicate and
+ * the date checks are app-only. This suite keeps an obviously wrong Vollmacht from being sent.
  */
 export const mandateValidations = staticSuite((model: MandateModel, existing: MandateModel[], today: string) => {
   test('grantee', V.grantee_required, () => {
