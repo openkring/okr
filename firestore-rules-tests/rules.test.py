@@ -3036,6 +3036,14 @@ seed("mandates/mProxyRevoke", proxy(createdByKey="pVCh"))
 seed("mandates/mFamT2", mandate(tenants=["t2"]))
 seed("mandates/mFamRevoked", mandate(revokedAt="20261120100000", revokedByKey="pA"))  # already revoked by the grantor
 seed("mandates/mFamStamp", mandate())
+# the draft / invited lock (security review S3): from `held` on a proxy is neither created nor revoked
+seed("meetings/mtgVHeld", {"tenants": ["t1"], "isArchived": False, "name": "GV held", "state": "held",
+                           "chair": {"key": "pVCh", "name1": "C", "name2": "H", "modelType": "person"}})
+seed("meetings/mtgVLegacy", {"tenants": ["t1"], "isArchived": False, "name": "GV legacy",
+                             "chair": {"key": "pVCh", "name1": "C", "name2": "H", "modelType": "person"}})
+seed("mandates/mProxyHeld", proxy(meetingKey="mtgVHeld"))
+seed("mandates/mProxyOpenGrantor", proxy())
+seed("mandates/mProxyOpenAdmin", proxy())
 
 def _allowed(code):
     return code in (200, 201)
@@ -3139,6 +3147,24 @@ def test_mandate_create_grantee_avatar_must_match_key():
     return not _create("cGranteeAvatar", mandate(grantee={"key": "pX", "name1": "X", "name2": "X", "modelType": "person"}), A)
 def test_mandate_create_self_grant_rejected():
     return not _create("cSelfGrant", mandate(granteeKey="pA"), A)
+# draft / invited lock (S3)
+def test_mandate_proxy_create_after_held_denied():
+    return (not _create("cHeldGrantor", proxy(meetingKey="mtgVHeld"), A)
+            and not _create("cHeldChair", proxy(meetingKey="mtgVHeld", createdByKey="pVCh"), VCH)
+            and not _create("cHeldAdmin", proxy(meetingKey="mtgVHeld", createdByKey="pM"), M))
+def test_mandate_proxy_revoke_after_held_denied():
+    return (not _patch("mProxyHeld", REVOKE_BY("pA"), A)
+            and not _patch("mProxyHeld", REVOKE_BY("pE"), E)
+            and not _patch("mProxyHeld", REVOKE_BY("pVCh"), VCH)
+            and not _patch("mProxyHeld", REVOKE_BY("pM"), M))
+def test_mandate_proxy_create_while_invited_allowed():
+    return (_create("cOpenGrantor", proxy(), A)
+            and _create("cOpenAdmin", proxy(createdByKey="pM"), M)
+            and _create("cOpenChair", proxy(createdByKey="pVCh"), VCH))
+def test_mandate_proxy_revoke_while_invited_allowed():
+    return _patch("mProxyOpenGrantor", REVOKE_BY("pA"), A) and _patch("mProxyOpenAdmin", REVOKE_BY("pM"), M)
+def test_mandate_proxy_on_legacy_meeting_without_state_allowed():
+    return _create("cLegacyGrantor", proxy(meetingKey="mtgVLegacy"), A)
 
 mandate_tests = [v for k, v in list(globals().items()) if k.startswith("test_mandate_") and callable(v)]
 for fn in mandate_tests:

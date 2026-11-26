@@ -24,7 +24,7 @@
 import { inject, Injectable, PLATFORM_ID } from '@angular/core';
 import { ToastController } from '@ionic/angular';
 import { captureMessage } from '@sentry/angular';
-import { arrayRemove, collection, deleteDoc, doc, getCountFromServer, getDoc, getDocFromServer, getDocs, query, runTransaction, setDoc, Transaction, updateDoc, WriteBatch, writeBatch } from 'firebase/firestore';
+import { arrayRemove, collection, deleteDoc, doc, getCountFromServer, getDoc, getDocFromServer, getDocs, getDocsFromServer, query, runTransaction, setDoc, Transaction, updateDoc, WriteBatch, writeBatch } from 'firebase/firestore';
 import type { FieldPath } from 'firebase/firestore';
 import { collectionData, docData, fromRef } from 'rxfire/firestore';
 import { catchError, concat, defer, delay, firstValueFrom, from, map, MonoTypeOperatorFunction, Observable, of, ReplaySubject, retry, share, switchMap, tap, timer } from 'rxjs';
@@ -1261,6 +1261,19 @@ export class FirestoreService {
     const queries = orderByParam === 'none' ? getQuery(dbQuery, 'none') : getQuery(dbQuery, orderByParam, sortOrderParam);
     const queryRef = query(collection(this.firestore, collectionName), ...queries);
     const snapshot = await getDocs(queryRef);
+    return snapshot.docs.map(d => ({ ...d.data(), okey: d.id })) as T[];
+  }
+
+  /**
+   * Like getDataOnceStrict, but always from the SERVER (never the local cache), so a write made elsewhere a moment ago
+   * is seen. For checks that guard a write (e.g. a per-meeting cap). Rejects when the server cannot be reached.
+   */
+  public async getDataFromServerStrict<T>(collectionName: string, dbQuery: DbQuery[]): Promise<T[]> {
+    if (!isBrowser(this.platformId) || !isFirestoreInitializedCheck()) {
+      throw new Error(`FirestoreService.getDataFromServerStrict(${collectionName}): Firestore is not available.`);
+    }
+    const queryRef = query(collection(this.firestore, collectionName), ...getQuery(dbQuery, 'none'));
+    const snapshot = await getDocsFromServer(queryRef);
     return snapshot.docs.map(d => ({ ...d.data(), okey: d.id })) as T[];
   }
 

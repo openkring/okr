@@ -45,6 +45,17 @@ export interface MinutesDocumentOptions {
   readonly signatures?: readonly MinutesSignature[];
 }
 
+/**
+ * The display name of a proxy's holder. The stored `grantee` avatar is written by whoever recorded the proxy, so the
+ * name is taken from the meeting's attendee list by `granteeKey` first; the stored avatar is only the fallback for a
+ * holder who is not (or no longer) an attendee.
+ */
+export function proxyHolderName(proxy: Pick<MandateModel, 'granteeKey' | 'grantee'>, attendees: readonly MeetingAttendee[]): string {
+  const attendee = proxy.granteeKey ? attendees.find(a => a.person?.key === proxy.granteeKey)?.person : undefined;
+  const holder = attendee ?? (proxy.grantee?.key === proxy.granteeKey ? proxy.grantee : undefined);
+  return `${holder?.name1 ?? ''} ${holder?.name2 ?? ''}`.trim();
+}
+
 /** The name, followed by «vertreten durch {holder}» when `representedBy` knows a holder of an active proxy. */
 function attendeeNames(attendees: MeetingAttendee[], state: MeetingAttendee['state'], representedBy: (personKey: string) => string): string[] {
   return attendees
@@ -112,8 +123,7 @@ export function buildMinutesDocument(meeting: MeetingModel, options: MinutesDocu
     if (!personKey || proxies.length === 0) return '';
     const proxy = proxyFor([...proxies], meeting.okey ?? '', personKey, asOf);
     if (!proxy) return '';
-    const holder = proxy.grantee?.key ? proxy.grantee : attendees.find(a => a.person?.key === proxy.granteeKey)?.person;
-    const holderName = `${holder?.name1 ?? ''} ${holder?.name2 ?? ''}`.trim();
+    const holderName = proxyHolderName(proxy, attendees);
     return holderName === '' ? '' : fill(labels.representedBy, { name: holderName });
   };
 

@@ -74,6 +74,25 @@ describe('buildMinutesDocument', () => {
     expect(html).toContain('Anna Muster, vertreten durch Beat Beispiel');
   });
 
+  it('prints the holder by the attendee list, not by the name stored on the proxy', () => {
+    const m = { ...meeting(), okey: 'm1', meetingDate: '20260901' };
+    m.attendees = [
+      { person: avatar('Anna', 'Muster'), state: 'excused' },
+      { person: avatar('Beat', 'Beispiel'), state: 'present' },
+    ];
+    const forged = { ...avatar('Beat', 'Beispiel'), name1: 'Präsident', name2: 'Persönlich' };
+    const proxy = { ...newProxyMandate('scs', avatar('Anna', 'Muster'), forged, 'm1', 'Anna'), okey: 'p1' };
+    const html = buildMinutesDocument(m, options, [proxy]);
+    expect(html).toContain('Anna Muster, vertreten durch Beat Beispiel');
+    expect(html).not.toContain('Präsident');
+  });
+
+  it('falls back to the stored name for a holder who is not an attendee', () => {
+    const m = { ...meeting(), okey: 'm1', meetingDate: '20260901' };
+    const proxy = { ...newProxyMandate('scs', avatar('Anna', 'Muster'), avatar('Cla', 'Gast'), 'm1', 'Anna'), okey: 'p1' };
+    expect(buildMinutesDocument(m, options, [proxy])).toContain('Anna Muster, vertreten durch Cla Gast');
+  });
+
   it('leaves a revoked proxy and a proxy of another meeting out', () => {
     const m = { ...meeting(), okey: 'm1', meetingDate: '20260901' };
     const revoked: MandateModel = {

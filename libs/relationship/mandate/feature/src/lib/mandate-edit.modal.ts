@@ -1,6 +1,5 @@
 import { Component, computed, inject, Injector, input, linkedSignal, signal } from '@angular/core';
 import { IonContent, ModalController, ToastController } from '@ionic/angular';
-import { firstValueFrom } from 'rxjs';
 
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
@@ -19,7 +18,7 @@ import { isMeetingOpenForProxies, MANDATE_I18N_KEYS, MandateI18n, mayReceiveProx
  * injected here — `MandateStore` opens this modal, importing it back would be circular.
  *
  * Proxy mode: the grantee is picked among `suggestions` (the meeting's attendees who may still receive one). On save
- * the meeting is re-read from the server (still draft / invited?), the proxies of the meeting are re-read (cap), the
+ * the meeting is re-read from the server (still draft / invited?), the proxies of the meeting are re-read from the server (cap), the
  * grantor's previous proxy is revoked and then the new one is created. A proxy recorded by somebody else than the
  * grantor tells the grantor with a task (§5.3).
  */
@@ -129,7 +128,7 @@ export class MandateEditModal {
     }
 
     const today = getTodayStr(DateFormat.StoreDate);
-    const proxies = await firstValueFrom(this.mandateService.listProxiesForMeeting(tenantId, meeting.okey));
+    const proxies = await this.mandateService.listProxiesForMeetingFromServer(tenantId, meeting.okey);
     const replaced = proxyReplaces(proxies, meeting.okey, draft.grantorKey, today);
     // the proxy being replaced does not count against its holder's cap
     const counted = proxies.filter(p => p.okey !== replaced?.okey);

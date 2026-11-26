@@ -5,7 +5,7 @@ import { AttendeeState, MandateModel, MeetingAttendee } from '@okr/shared-models
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { DateFormat, fill, getTodayStr } from '@okr/shared-util-core';
 
-import { MeetingI18n, countPresent } from '@okr/calendar-meeting-util';
+import { MeetingI18n, countPresent, proxyHolderName } from '@okr/calendar-meeting-util';
 import { proxiesHeldBy, proxyFor } from '@okr/relationship-mandate-util';
 
 /**
@@ -102,8 +102,7 @@ export class AttendeeList {
   protected representedBy(personKey: string): string {
     const proxy = proxyFor(this.proxies(), this.meetingKey(), personKey, this.today);
     if (!proxy) return '';
-    const holder = proxy.grantee?.key ? proxy.grantee : this.attendees().find(a => a.person.key === proxy.granteeKey)?.person;
-    const name = `${holder?.name1 ?? ''} ${holder?.name2 ?? ''}`.trim();
+    const name = proxyHolderName(proxy, this.attendees());
     return name ? fill(this.i18n().proxy_representedBy(), { name }) : '';
   }
 

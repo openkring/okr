@@ -762,18 +762,22 @@ service cloud.firestore {
     // Vollmacht (spec 1.180 §7): grantor → grantee, exactly one tenant, never deleted by a client (revoking sets
     // revokedAt). The family actions themselves are checked in the app; these rules guard the records.
     // The caller's person key is bound once per evaluation as `pk` (1000-expression limit), and the meeting
-    // get() runs only on the proxy branch, after the cheaper checks have failed.
+    // get() runs only on the proxy branch, once, and is shared by the lock and the chair check.
     function isMandateAdmin() {
       return isPrivileged() || hasRole('memberAdmin');
     }
-    // The caller is the chair of the meeting a proxy names, and that meeting lives in the proxy's tenant.
-    // A missing meeting makes get() error, i.e. deny; a key with '/' never reaches get().
-    function isMandateMeetingChair(d, pk) {
-      return isDocKey(d.meetingKey)
-             && isChairOfMeetingData(get(/databases/$(database)/documents/meetings/$(d.meetingKey)).data, d, pk);
+    // A proxy is tied to one meeting, read once per evaluation: it must live in the proxy's tenant and still be
+    // `draft` or `invited` (a meeting without state is a draft) — from `held` on a proxy is neither created nor
+    // revoked, so regenerated minutes stay what they were. A missing meeting makes get() error, i.e. deny; a key
+    // with '/' never reaches get().
+    function proxyMeeting(d) {
+      return get(/databases/$(database)/documents/meetings/$(d.meetingKey)).data;
     }
-    function isChairOfMeetingData(m, d, pk) {
-      return m.get('chair', {}).get('key', '') == pk && m.tenants.hasAny(d.tenants);
+    function isOpenMeetingOfProxy(m, d) {
+      return m.tenants.hasAny(d.tenants) && m.get('state', 'draft') in ['draft', 'invited'];
+    }
+    function isChairOf(m, pk) {
+      return m.get('chair', {}).get('key', '') == pk;
     }
     // Read: grantor, grantee, privileged / memberAdmin, and for a proxy every member of the tenant (chair and
     // attendees see the representation, like meetings). The grantor/grantee branch is provable for the
@@ -813,21 +817,31 @@ service cloud.firestore {
              && d.get('revokedAt', '') == ''
              && d.get('revokedByKey', '') == ''
              && d.get('createdByKey', '') == pk
-             && (d.grantorKey == pk
-                 || isMandateAdmin()
-                 || (d.kind == 'proxy' && isMandateMeetingChair(d, pk)));
+             && (d.kind == 'proxy'
+                   ? isDocKey(d.meetingKey) && proxyCreateOk(proxyMeeting(d), d, pk)
+                   : (d.grantorKey == pk || isMandateAdmin()));
+    }
+    function proxyCreateOk(m, d, pk) {
+      return isOpenMeetingOfProxy(m, d) && (d.grantorKey == pk || isMandateAdmin() || isChairOf(m, pk));
     }
     // Update: only revokedAt / revokedByKey (+ validTo by the grantor); by grantor, grantee, privileged /
-    // memberAdmin, or (proxy only) the meeting's chair. Identity fields stay as they are.
+    // memberAdmin, or (proxy only) the meeting's chair — and a proxy only while its meeting is open. Identity
+    // fields stay as they are.
     function mandateUpdateOk(before, after, pk) {
       let changed = after.diff(before).affectedKeys();
       return pk != ''
              && mandateRevocationOk(before, after, changed, pk)
-             && ((before.grantorKey == pk && changed.hasOnly(['revokedAt', 'revokedByKey', 'validTo']))
-                 || (changed.hasOnly(['revokedAt', 'revokedByKey'])
-                     && (before.granteeKey == pk
-                         || isMandateAdmin()
-                         || (before.kind == 'proxy' && isMandateMeetingChair(before, pk)))));
+             && (before.kind == 'proxy'
+                   ? isDocKey(before.meetingKey) && proxyUpdateOk(proxyMeeting(before), before, changed, pk)
+                   : mandatePartyUpdateOk(before, changed, pk, false));
+    }
+    function mandatePartyUpdateOk(before, changed, pk, isChair) {
+      return (before.grantorKey == pk && changed.hasOnly(['revokedAt', 'revokedByKey', 'validTo']))
+             || (changed.hasOnly(['revokedAt', 'revokedByKey'])
+                 && (before.granteeKey == pk || isMandateAdmin() || isChair));
+    }
+    function proxyUpdateOk(m, before, changed, pk) {
+      return isOpenMeetingOfProxy(m, before) && mandatePartyUpdateOk(before, changed, pk, isChairOf(m, pk));
     }
     match /mandates/{id} {
       // resource == null: a get() on a missing doc — the clean not-found (same rationale as tenantRead()).

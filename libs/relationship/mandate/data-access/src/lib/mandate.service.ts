@@ -59,6 +59,19 @@ export class MandateService {
   }
 
   /**
+   * The proxies for one meeting, read from the SERVER (never the cache): the cap check before recording a proxy must
+   * see a proxy recorded elsewhere a moment ago. Rejects when the server cannot be reached.
+   */
+  public async listProxiesForMeetingFromServer(tenantId: string, meetingKey: string): Promise<MandateModel[]> {
+    if (!tenantId || !meetingKey) return [];
+    return this.firestoreService.getDataFromServerStrict<MandateModel>(MandateCollection, [
+      { key: 'tenants', operator: 'array-contains', value: tenantId },
+      { key: 'meetingKey', operator: '==', value: meetingKey },
+      { key: 'kind', operator: '==', value: 'proxy' },
+    ]);
+  }
+
+  /**
    * Stores a new mandate. The caller stamps `createdByKey` (the rules require it to be the caller's personKey) and
    * leaves `revokedAt` / `revokedByKey` empty. Returns the okey, or undefined if the write failed.
    */
