@@ -44,7 +44,8 @@ export function proxyReplaces(mandates: MandateModel[], meetingKey: string, gran
 
 /**
  * Proxies are recorded and revoked only while the meeting is `draft` or `invited` (spec §6); from `held` on they are
- * read-only. A legacy meeting without `state` counts as a draft (the model default). The rules do not check this.
+ * read-only. A legacy meeting without `state` counts as a draft (the model default). The Firestore rules enforce the
+ * same lock on create and revoke (`isOpenMeetingOfProxy`); this is the app's side of it, to offer only what may work.
  */
 export function isMeetingOpenForProxies(meeting: Pick<MeetingModel, 'state'>): boolean {
   const state = meeting.state ?? 'draft';
@@ -65,6 +66,28 @@ export function mayRecordProxy(
 ): boolean {
   if (!meeting.okey || !grantorKey || !callerKey || cap <= 0 || !isMeetingOpenForProxies(meeting)) return false;
   return isAdmin || callerKey === grantorKey || callerKey === (meeting.chair?.key ?? '');
+}
+
+/** What the caller may do with an active proxy: give it back (the holder), revoke it, or nothing ('' ). */
+export type ProxyRevokeAction = 'give_back' | 'revoke' | '';
+
+/**
+ * May `callerKey` end this proxy (spec §5.1, §6), and in which role? Only while the proxy is active and its meeting is
+ * open (`draft` / `invited`). The holder (grantee) gives it back; the grantor, the chair (`meeting.chair.key` is the raw
+ * personKey) or an admin (`isAdmin` = privileged or memberAdmin, decided by the caller) revoke it. Mirrors
+ * `mandateUpdateOk` in the Firestore rules.
+ */
+export function proxyRevokeAction(
+  meeting: Pick<MeetingModel, 'okey' | 'state' | 'chair'>,
+  proxy: MandateModel,
+  callerKey: string,
+  isAdmin: boolean,
+  today: string,
+): ProxyRevokeAction {
+  if (!callerKey || !meeting.okey || proxy.kind !== 'proxy' || proxy.meetingKey !== meeting.okey) return '';
+  if (!isMandateActive(proxy, today) || !isMeetingOpenForProxies(meeting)) return '';
+  if (proxy.granteeKey === callerKey) return 'give_back';
+  return isAdmin || proxy.grantorKey === callerKey || callerKey === (meeting.chair?.key ?? '') ? 'revoke' : '';
 }
 
 export function revokePatch(byKey: string, now: string): Pick<MandateModel, 'revokedAt' | 'revokedByKey'> {

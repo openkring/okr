@@ -6,10 +6,10 @@ import { DEFAULT_NOTES, DEFAULT_TAGS, LONG_NAME_LENGTH } from '@okr/shared-const
 import { AgendaItem, AvatarInfo, MandateModel, MeetingModel, RoleName, UserModel } from '@okr/shared-models';
 import { Chips, DateInput, DateInputI18n, ErrorNote, TextareaInput, TextareaInputI18n, TextInput, TextInputI18n, TimeInput, TimeInputI18n } from '@okr/shared-ui';
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
-import { coerceBoolean, freeTextLocationAvatar, getEventLocationName, hasRole } from '@okr/shared-util-core';
+import { DateFormat, coerceBoolean, freeTextLocationAvatar, getEventLocationName, getTodayStr, hasRole } from '@okr/shared-util-core';
 
 import { MeetingI18n, meetingValidations } from '@okr/calendar-meeting-util';
-import { mayRecordProxy } from '@okr/relationship-mandate-util';
+import { mayRecordProxy, ProxyRevokeAction, proxyFor, proxyRevokeAction } from '@okr/relationship-mandate-util';
 import { AgendaList } from './agenda-list';
 import { AttendeeList } from './attendee-list';
 
@@ -60,7 +60,8 @@ import { AttendeeList } from './attendee-list';
         <okr-attendee-list [attendees]="attendees()" (attendeesChange)="onListChange('attendees', $event)"
           [i18n]="i18n()" [readOnly]="isReadOnly()"
           [meetingKey]="meetingKey()" [proxies]="proxies()" [recordProxyFor]="recordProxyFor()"
-          (recordProxy)="recordProxy.emit($event)" />
+          [proxyActions]="proxyActions()"
+          (recordProxy)="recordProxy.emit($event)" (revokeProxy)="revokeProxy.emit($event)" />
 
         <okr-agenda-list [agenda]="agenda()" (agendaChange)="onListChange('agenda', $event)"
           [i18n]="i18n()" [readOnly]="isReadOnly()" [minutesMode]="minutesMode()"
@@ -103,6 +104,8 @@ export class MeetingForm {
   public readonly addTask = output<AgendaItem>();
   /** «Vollmacht erfassen» on an attendee row: the grantor's personKey */
   public readonly recordProxy = output<string>();
+  /** «Widerrufen» / «Vollmacht zurückgeben» on an attendee row: the grantor's personKey */
+  public readonly revokeProxy = output<string>();
 
   // signal form — wraps formData with Vest validation
   // The suite needs '', this.allTags(), which validateVestTree does not pass — so the bridge
@@ -148,6 +151,25 @@ export class MeetingForm {
     return (meeting.attendees ?? [])
       .map(a => a.person?.key ?? '')
       .filter(key => mayRecordProxy(meeting, key, callerKey, this.proxyCap(), isAdmin));
+  });
+
+  /**
+   * Per grantor with an active proxy: may the caller revoke it (grantor, chair, privileged / memberAdmin) or give it
+   * back (the holder)? Only while the meeting is open (draft / invited); rows without an action are left out.
+   */
+  protected readonly proxyActions = computed(() => {
+    const meeting = this.formData();
+    const callerKey = this.currentUser()?.personKey ?? '';
+    const actions: Record<string, ProxyRevokeAction> = {};
+    if (!meeting?.okey || !callerKey) return actions;
+    const isAdmin = this.hasRole('privileged') || this.hasRole('memberAdmin');
+    const today = getTodayStr(DateFormat.StoreDate);
+    for (const key of (meeting.attendees ?? []).map(a => a.person?.key ?? '')) {
+      const proxy = key ? proxyFor(this.proxies(), meeting.okey, key, today) : undefined;
+      const action = proxy ? proxyRevokeAction(meeting, proxy, callerKey, isAdmin, today) : '';
+      if (action) actions[key] = action;
+    }
+    return actions;
   });
 
   protected nameI18n = computed(() => ({

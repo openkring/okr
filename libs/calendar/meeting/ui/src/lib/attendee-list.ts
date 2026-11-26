@@ -6,7 +6,7 @@ import { SvgIconPipe } from '@okr/shared-pipes';
 import { DateFormat, fill, getTodayStr } from '@okr/shared-util-core';
 
 import { MeetingI18n, countPresent, proxyHolderName } from '@okr/calendar-meeting-util';
-import { proxiesHeldBy, proxyFor } from '@okr/relationship-mandate-util';
+import { ProxyRevokeAction, proxiesHeldBy, proxyFor } from '@okr/relationship-mandate-util';
 
 /**
  * Attendance record of one meeting — one segment per person, four states.
@@ -14,7 +14,9 @@ import { proxiesHeldBy, proxyFor } from '@okr/relationship-mandate-util';
  * Proxies (Vollmacht, spec 1.180 §6) are read from `proxies`, never from the attendance: a grantor's row says
  * «vertreten durch {Name}», a holder's row «+n Vollmacht». «Vollmacht erfassen» shows on the rows listed in
  * `recordProxyFor` (the parent decides who may record what) and emits the grantor's personKey — also in read-only
- * mode, because a plain attendee views the meeting read-only and may still record their own proxy.
+ * mode, because a plain attendee views the meeting read-only and may still record their own proxy. Likewise a grantor's
+ * row with an active proxy offers «Widerrufen» or «Vollmacht zurückgeben» when `proxyActions` names it (grantor, chair
+ * or admin revoke, the holder gives back, only while the meeting is open) and emits the grantor's personKey.
  */
 @Component({
   selector: 'okr-attendee-list',
@@ -47,6 +49,20 @@ import { proxiesHeldBy, proxyFor } from '@okr/relationship-mandate-util';
                     }
                     @if (holdsProxies(attendee.person.key); as note) {
                       <p>{{ note }}</p>
+                    }
+                    @switch (proxyActions()[attendee.person.key]) {
+                      @case ('revoke') {
+                        <ion-button class="proxy-action" fill="clear" size="small" color="danger" (click)="revokeProxy.emit(attendee.person.key)">
+                          <ion-icon slot="start" src="{{ 'cancel-circle' | svgIcon }}" />
+                          {{ i18n().proxy_revoke() }}
+                        </ion-button>
+                      }
+                      @case ('give_back') {
+                        <ion-button class="proxy-action" fill="clear" size="small" color="danger" (click)="revokeProxy.emit(attendee.person.key)">
+                          <ion-icon slot="start" src="{{ 'cancel-circle' | svgIcon }}" />
+                          {{ i18n().proxy_giveBack() }}
+                        </ion-button>
+                      }
                     }
                     @if (canRecord(attendee.person.key)) {
                       <ion-button class="proxy-action" fill="clear" size="small" (click)="recordProxy.emit(attendee.person.key)">
@@ -87,10 +103,14 @@ export class AttendeeList {
   public readonly proxies = input<MandateModel[]>([]);
   /** personKeys of the rows that offer «Vollmacht erfassen» */
   public readonly recordProxyFor = input<string[]>([]);
+  /** per grantor personKey: whether the caller may revoke or give back that grantor's active proxy */
+  public readonly proxyActions = input<Record<string, ProxyRevokeAction>>({});
 
   // outputs
   /** the grantor's personKey */
   public readonly recordProxy = output<string>();
+  /** «Widerrufen» / «Vollmacht zurückgeben»: the grantor's personKey */
+  public readonly revokeProxy = output<string>();
 
   /** StoreDate of today: a proxy is shown while it is active */
   private readonly today = getTodayStr(DateFormat.StoreDate);

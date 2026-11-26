@@ -2,7 +2,7 @@ import { Component, Injector, computed, inject, input, signal } from '@angular/c
 import { AlertController, IonAccordion, IonButton, IonIcon, IonItem, IonLabel, IonList, IonListHeader, IonNote } from '@ionic/angular';
 
 import type { MandateStore } from '@okr/relationship-mandate-feature';
-import { MANDATE_I18N_KEYS, MandateI18n, isMandateActive } from '@okr/relationship-mandate-util';
+import { MANDATE_I18N_KEYS, MandateI18n, isMandateActive, proxyRevokeAction } from '@okr/relationship-mandate-util';
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { AvatarInfo, MandateModel } from '@okr/shared-models';
@@ -13,15 +13,19 @@ import { DateFormat, convertDateFormatToString, fill, getFullName, getTodayStr }
 type MandateRow = {
   mandate: MandateModel;
   name: string; // the other person: the grantee in «Von mir erteilt», the grantor in «Mir erteilt»
-  actions: string;
-  validity: string; // «bis 31.12.2026», «bis auf Widerruf», or why it no longer applies
+  actions: string; // a family Vollmacht: what it allows; a proxy: «Vertretung: <meeting>»
+  validity: string; // «bis 31.12.2026», «bis auf Widerruf», or why it no longer applies; '' for an unrevoked proxy
   recordedBy: string; // set when somebody else than the grantor recorded it
   isActive: boolean;
+  canEnd: boolean; // revoke / give back is offered (a proxy only while its meeting is open)
+  meetingName: string; // a proxy: the meeting's name, «Versammlung» if unknown; '' for a family Vollmacht
 };
 
 /**
  * «Vollmachten» (spec 1.180 §5.1): the Vollmachten I gave and the ones I received, in all states — the inactive ones
- * greyed out. I can give a new one, revoke one I gave, or give back one I received.
+ * greyed out. I can give a new one, revoke one I gave, or give back one I received. Proxies for a meeting (§6) are
+ * listed too, labelled with the meeting; they can be revoked or given back only while the meeting is still open
+ * (draft / invited) and are read-only afterwards, or when the meeting cannot be read.
  *
  * `MandateStore` (and with it the edit modal and its form) lives in the mandate feature lib and is loaded on demand
  * (`await import()`), so the profile chunk does not pull them into the eager bundle. The `import type` above is
@@ -51,10 +55,10 @@ type MandateRow = {
               <ion-label class="ion-text-wrap">
                 <h3>{{ row.name }}</h3>
                 <p>{{ row.actions }}</p>
-                <p>{{ row.validity }}</p>
+                @if (row.validity) { <p>{{ row.validity }}</p> }
                 @if (row.recordedBy) { <p>{{ row.recordedBy }}</p> }
               </ion-label>
-              @if (row.isActive) {
+              @if (row.canEnd) {
                 <ion-button slot="end" fill="outline" color="danger" [disabled]="busy()" (click)="revoke(row)">{{ i18n.revoke() }}</ion-button>
               }
             </ion-item>
@@ -78,10 +82,10 @@ type MandateRow = {
               <ion-label class="ion-text-wrap">
                 <h3>{{ row.name }}</h3>
                 <p>{{ row.actions }}</p>
-                <p>{{ row.validity }}</p>
+                @if (row.validity) { <p>{{ row.validity }}</p> }
                 @if (row.recordedBy) { <p>{{ row.recordedBy }}</p> }
               </ion-label>
-              @if (row.isActive) {
+              @if (row.canEnd) {
                 <ion-button slot="end" fill="outline" color="danger" [disabled]="busy()" (click)="giveBack(row)">{{ i18n.give_back() }}</ion-button>
               }
             </ion-item>
@@ -107,6 +111,8 @@ export class MandatesAccordion {
 
   protected readonly givenRows = computed(() => this.toRows(this.store()?.given() ?? [], 'grantee'));
   protected readonly receivedRows = computed(() => this.toRows(this.store()?.received() ?? [], 'grantor'));
+  /** the meetings of my proxies, as far as they could be read */
+  private readonly meetings = computed(() => this.store()?.proxyMeetings() ?? []);
 
   constructor() {
     void this.loadStore();
@@ -130,21 +136,44 @@ export class MandatesAccordion {
   private toRows(mandates: MandateModel[], other: 'grantor' | 'grantee'): MandateRow[] {
     const today = getTodayStr(DateFormat.StoreDate);
     const i18n = this.i18n;
+    const meetings = this.meetings();
+    const callerKey = this.appStore.currentUser()?.personKey ?? '';
     return mandates
-      .filter((m) => m.kind === 'family')
+      .filter((m) => m.kind === 'family' || m.kind === 'proxy')
       .map((m) => {
         const isActive = isMandateActive(m, today);
+        const name = this.avatarName(m[other], other === 'grantor' ? m.grantorKey : m.granteeKey);
+        const recordedBy = m.createdByKey && m.createdByKey !== m.grantorKey ? fill(i18n.recorded_by(), { name: this.personName(m.createdByKey) }) : '';
+        if (m.kind === 'proxy') {
+          const meeting = meetings.find((mt) => mt.okey === m.meetingKey);
+          const meetingName = meeting?.name || i18n.meeting_unknown();
+          return {
+            mandate: m, name, recordedBy, isActive, meetingName,
+            actions: fill(i18n.proxy_label(), { meeting: meetingName }),
+            validity: (m.revokedAt ?? '') !== '' ? i18n.state_revoked() : '',
+            // as grantor (given) I revoke, as holder (received) I give back — own rows need no admin role
+            canEnd: !!meeting && proxyRevokeAction(meeting, m, callerKey, false, today) !== '',
+          };
+        }
         return {
-          mandate: m,
-          name: this.avatarName(m[other], other === 'grantor' ? m.grantorKey : m.granteeKey),
+          mandate: m, name, recordedBy, isActive, meetingName: '',
           actions: (m.actions ?? []).map((a) => a === 'calevent.attend' ? i18n.action_attend() : a === 'invitation.answer' ? i18n.action_answer() : '')
             .filter((a) => a !== '').join(', '),
           validity: this.validity(m, today),
-          recordedBy: m.createdByKey && m.createdByKey !== m.grantorKey ? fill(i18n.recorded_by(), { name: this.personName(m.createdByKey) }) : '',
-          isActive,
+          canEnd: isActive,
         };
       })
       .sort((a, b) => Number(b.isActive) - Number(a.isActive) || a.name.localeCompare(b.name));
+  }
+
+  /** the grantor and the holder of a proxy row, for its confirm text */
+  private proxyNames(row: MandateRow): { grantor: string; holder: string; meeting: string } {
+    const m = row.mandate;
+    return {
+      grantor: this.avatarName(m.grantor, m.grantorKey),
+      holder: this.avatarName(m.grantee, m.granteeKey),
+      meeting: row.meetingName,
+    };
   }
 
   private validity(m: MandateModel, today: string): string {
@@ -179,7 +208,10 @@ export class MandatesAccordion {
 
   protected async revoke(row: MandateRow): Promise<void> {
     const i18n = this.i18n;
-    if (!await confirm(this.alertController, fill(i18n.revoke_confirm(), { name: row.name }), i18n.revoke(), i18n.cancel(), true)) return;
+    const message = row.mandate.kind === 'proxy'
+      ? fill(i18n.proxy_revoke_confirm(), this.proxyNames(row))
+      : fill(i18n.revoke_confirm(), { name: row.name });
+    if (!await confirm(this.alertController, message, i18n.revoke(), i18n.cancel(), true)) return;
     this.busy.set(true);
     try {
       await (await this.loadStore())?.revoke(row.mandate);
@@ -190,7 +222,10 @@ export class MandatesAccordion {
 
   protected async giveBack(row: MandateRow): Promise<void> {
     const i18n = this.i18n;
-    if (!await confirm(this.alertController, fill(i18n.give_back_confirm(), { name: row.name }), i18n.give_back(), i18n.cancel(), true)) return;
+    const message = row.mandate.kind === 'proxy'
+      ? fill(i18n.proxy_give_back_confirm(), this.proxyNames(row))
+      : fill(i18n.give_back_confirm(), { name: row.name });
+    if (!await confirm(this.alertController, message, i18n.give_back(), i18n.cancel(), true)) return;
     this.busy.set(true);
     try {
       await (await this.loadStore())?.giveBack(row.mandate);

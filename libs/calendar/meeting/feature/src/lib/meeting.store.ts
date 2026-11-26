@@ -168,6 +168,11 @@ export const MeetingStore = signalStore(
         await this.recordProxy(edited, grantorKey, readOnly, minutesMode);
         return;
       }
+      if (role === 'revokeProxy' && data) {
+        const { meeting: edited, grantorKey } = data as { meeting: MeetingModel; grantorKey: string };
+        await this.revokeProxy(edited, grantorKey, readOnly, minutesMode);
+        return;
+      }
       if (readOnly || !data) return;
 
       if (role === 'confirm') {
@@ -204,6 +209,25 @@ export const MeetingStore = signalStore(
       }
       if (!meeting.okey) return;
       await store.mandateStore.recordProxy(meeting, grantorKey);
+      await this.edit(meeting, readOnly, minutesMode);
+    },
+
+    /**
+     * «Widerrufen» / «Vollmacht zurückgeben» on an attendee row (spec 1.180 §5.1, §6). As for `recordProxy`, the edits
+     * made so far are saved first in edit mode; a read-only viewer (the grantor or holder) saves nothing.
+     * `MandateStore.revokeProxy` checks who may end the proxy and the draft / invited lock, asks for confirmation and
+     * revokes; the meeting modal then reopens with the proxies read afresh.
+     */
+    async revokeProxy(edited: MeetingModel, grantorKey: string, readOnly: boolean, minutesMode: boolean): Promise<void> {
+      let meeting = edited;
+      if (!readOnly) {
+        const savedKey = await this.save(edited);
+        if (!savedKey) return;
+        meeting = { ...edited, okey: savedKey };
+        this.reload();
+      }
+      if (!meeting.okey) return;
+      await store.mandateStore.revokeProxy(meeting, grantorKey);
       await this.edit(meeting, readOnly, minutesMode);
     },
 

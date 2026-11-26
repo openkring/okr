@@ -16,7 +16,8 @@ import { MeetingForm } from './meeting.form';
  *
  * `addTask` is dismissed with its own role so the calling store can open the task
  * modal with the agenda item's title and the meeting back-link. `recordProxy` likewise
- * (role 'recordProxy', with the grantor's personKey): the store opens the Vollmacht modal.
+ * (role 'recordProxy', with the grantor's personKey): the store opens the Vollmacht modal. `revokeProxy` (role
+ * 'revokeProxy', with the grantor's personKey): the store asks for confirmation and revokes or gives back the proxy.
  */
 @Component({
   selector: 'okr-meeting-edit-modal',
@@ -47,6 +48,7 @@ import { MeetingForm } from './meeting.form';
           [proxies]="proxies()"
           [proxyCap]="proxyCap()"
           (recordProxy)="requestProxy($event)"
+          (revokeProxy)="requestRevokeProxy($event)"
         />
       }
     </ion-content>
@@ -116,6 +118,11 @@ export class MeetingEditModal {
   /** Hand the grantor back to the store, together with the edits made so far. */
   protected async requestProxy(grantorKey: string): Promise<void> {
     await dismissOverlay(this.modalController, { meeting: this.formData(), grantorKey }, 'recordProxy');
+  }
+
+  /** Hand the grantor whose proxy is to end back to the store, together with the edits made so far. */
+  protected async requestRevokeProxy(grantorKey: string): Promise<void> {
+    await dismissOverlay(this.modalController, { meeting: this.formData(), grantorKey }, 'revokeProxy');
   }
 
   protected onFormDataChange(formData: MeetingModel): void {

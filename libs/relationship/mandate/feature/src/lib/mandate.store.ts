@@ -1,19 +1,21 @@
 import { computed, inject, Signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { ModalController, ToastController } from '@ionic/angular';
+import { AlertController, ModalController, ToastController } from '@ionic/angular';
 import { signalStore, withComputed, withMethods, withProps } from '@ngrx/signals';
-import { firstValueFrom, of } from 'rxjs';
+import { catchError, combineLatest, firstValueFrom, map, of } from 'rxjs';
 
 import { HouseholdService } from '@okr/relationship-household-data-access';
 import { MandateService } from '@okr/relationship-mandate-data-access';
 import { PersonalRelService } from '@okr/relationship-personal-rel-data-access';
-import { grantorKeysFor, isMandateActive, mandatePartyName, MANDATE_I18N_KEYS, mayReceiveProxy, mayRecordProxy, proxyReplaces } from '@okr/relationship-mandate-util';
+import { grantorKeysFor, isMandateActive, mandatePartyName, MANDATE_I18N_KEYS, MandateI18n, mayReceiveProxy, mayRecordProxy, proxyFor, proxyReplaces, proxyRevokeAction } from '@okr/relationship-mandate-util';
 import { AppStore } from '@okr/shared-feature';
-import { AvatarInfo, MandateAction, MandateModel, MeetingModel } from '@okr/shared-models';
-import { resourceParams, showToast } from '@okr/shared-util-angular';
-import { DateFormat, getAvatarInfoForCurrentUser, getTodayStr, hasRole, newAvatarInfo } from '@okr/shared-util-core';
+import { I18nService } from '@okr/shared-i18n';
+import { AvatarInfo, MandateAction, MandateModel, MeetingCollection, MeetingModel } from '@okr/shared-models';
+import { confirm, resourceParams, showToast } from '@okr/shared-util-angular';
+import { DateFormat, fill, getAvatarInfoForCurrentUser, getFullName, getTodayStr, hasRole, newAvatarInfo } from '@okr/shared-util-core';
 
 const NO_MANDATES: MandateModel[] = [];
+const NO_MEETINGS: MeetingModel[] = [];
 
 /**
  * Vollmachten of the current user (spec 1.180 §5): the ones I gave (`given`) and the ones I received (`received`),
@@ -32,6 +34,8 @@ export const MandateStore = signalStore(
     appStore: inject(AppStore),
     modalController: inject(ModalController),
     toastController: inject(ToastController),
+    alertController: inject(AlertController),
+    i18n: inject(I18nService).translateAll(MANDATE_I18N_KEYS) as MandateI18n,
   })),
   withProps((store) => {
     const params = resourceParams(() => ({
@@ -54,18 +58,39 @@ export const MandateStore = signalStore(
     received: computed(() => store.receivedResource.value() ?? NO_MANDATES),
     personKey: computed(() => store.appStore.currentUser()?.personKey ?? ''),
   })),
+  withProps((store) => {
+    // the meetings of my proxies (given or received), for their name and whether they are still open
+    const params = resourceParams(() => ({
+      keys: [...new Set([...store.given(), ...store.received()].filter((m) => m.kind === 'proxy' && !!m.meetingKey).map((m) => m.meetingKey))].sort(),
+    }));
+    return {
+      proxyMeetingsResource: rxResource({
+        params,
+        stream: ({ params: p }) => p.keys.length === 0 ? of(NO_MEETINGS) : combineLatest(p.keys.map((key) =>
+          store.appStore.firestoreService.readModel<MeetingModel>(MeetingCollection, key).pipe(
+            // a meeting I cannot read (or that is gone) just stays unknown: its proxies are shown read-only
+            catchError(() => of(undefined)),
+          ))).pipe(map((meetings) => meetings.filter((m): m is MeetingModel => !!m))),
+      }),
+    };
+  }),
   withComputed((store) => ({
     /** the Vollmachten I may act on today */
     activeAsGrantee: computed(() => {
       const today = getTodayStr(DateFormat.StoreDate);
       return store.received().filter((m) => isMandateActive(m, today));
     }),
+    /** the meetings my proxies are for, as far as they could be read */
+    proxyMeetings: computed(() => store.proxyMeetingsResource.value() ?? NO_MEETINGS),
   })),
   withMethods((store) => ({
-    /** Sets `revokedAt` / `revokedByKey` = me. The live lists pick the change up; a failed or thrown write shows a toast. */
-    async revokeAsMe(mandate: MandateModel): Promise<void> {
+    /**
+     * Sets `revokedAt` / `revokedByKey` = me. The live lists pick the change up; a failed or thrown write shows a toast.
+     * @returns true when the revocation was written
+     */
+    async revokeAsMe(mandate: MandateModel): Promise<boolean> {
       const personKey = store.personKey();
-      if (!personKey || !mandate.okey) return;
+      if (!personKey || !mandate.okey) return false;
       let ok = false;
       try {
         ok = await store.mandateService.revoke(mandate, personKey);
@@ -73,6 +98,7 @@ export const MandateStore = signalStore(
         console.error('MandateStore.revoke:', error);
       }
       if (!ok) await showToast(store.toastController, MANDATE_I18N_KEYS.revoke_error);
+      return ok;
     },
   })),
   withMethods((store) => ({
@@ -205,14 +231,42 @@ export const MandateStore = signalStore(
       return role === 'confirm';
     },
 
+    /**
+     * Revokes the active proxy of `grantorKey` for `meeting`, or gives it back when I hold it (spec 1.180 §5.1, §6),
+     * after a confirm. Refused silently unless `proxyRevokeAction` allows it (open meeting; holder, grantor, chair or
+     * admin) — the rules check the same. The proxies are read afresh, so a proxy changed elsewhere is not touched.
+     * @returns true when the proxy was ended
+     */
+    async revokeProxy(meeting: MeetingModel, grantorKey: string): Promise<boolean> {
+      const currentUser = store.appStore.currentUser();
+      const callerKey = currentUser?.personKey ?? '';
+      const isAdmin = hasRole('privileged', currentUser) || hasRole('memberAdmin', currentUser);
+      const today = getTodayStr(DateFormat.StoreDate);
+      const proxy = proxyFor(await store.proxiesForMeeting(meeting.okey), meeting.okey, grantorKey, today);
+      if (!proxy) return false;
+      const action = proxyRevokeAction(meeting, proxy, callerKey, isAdmin, today);
+      if (action === '') return false;
+      const i18n = store.i18n;
+      const names = {
+        grantor: getFullName(proxy.grantor?.name1 ?? '', proxy.grantor?.name2 ?? '') || i18n.person_unknown(),
+        holder: getFullName(proxy.grantee?.name1 ?? '', proxy.grantee?.name2 ?? '') || i18n.person_unknown(),
+        meeting: meeting.name || i18n.meeting_unknown(),
+      };
+      const [message, label] = action === 'give_back'
+        ? [fill(i18n.proxy_give_back_confirm(), names), i18n.give_back()]
+        : [fill(i18n.proxy_revoke_confirm(), names), i18n.revoke()];
+      if (!await confirm(store.alertController, message, label, i18n.cancel(), true)) return false;
+      return store.revokeAsMe(proxy);
+    },
+
     /** The grantor revokes a Vollmacht (one-way; the rules require my own personKey as `revokedByKey`). */
-    async revoke(mandate: MandateModel): Promise<void> {
-      await store.revokeAsMe(mandate);
+    async revoke(mandate: MandateModel): Promise<boolean> {
+      return store.revokeAsMe(mandate);
     },
 
     /** The grantee gives a Vollmacht back — the same revocation, stamped with the grantee's own key. */
-    async giveBack(mandate: MandateModel): Promise<void> {
-      await store.revokeAsMe(mandate);
+    async giveBack(mandate: MandateModel): Promise<boolean> {
+      return store.revokeAsMe(mandate);
     },
   })),
 );

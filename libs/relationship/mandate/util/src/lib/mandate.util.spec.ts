@@ -14,6 +14,7 @@ import {
   proxiesHeldBy,
   proxyFor,
   proxyReplaces,
+  proxyRevokeAction,
   revokePatch,
 } from './mandate.util';
 
@@ -205,5 +206,35 @@ describe('mayRecordProxy', () => {
   });
   it('refuses without a caller', () => {
     expect(mayRecordProxy(meeting, 'g1', '', 1, true)).toBe(false);
+  });
+});
+
+describe('proxyRevokeAction', () => {
+  const meeting = { okey: 'mt1', state: 'invited' as const, chair: avatar('c1') };
+  it('lets the holder give the proxy back', () => {
+    expect(proxyRevokeAction(meeting, proxy(), 'h1', false, TODAY)).toBe('give_back');
+  });
+  it('lets the holder give it back even when they are also the chair or an admin', () => {
+    expect(proxyRevokeAction({ ...meeting, chair: avatar('h1') }, proxy(), 'h1', true, TODAY)).toBe('give_back');
+  });
+  it('lets the grantor, the chair and an admin revoke it', () => {
+    expect(proxyRevokeAction(meeting, proxy(), 'g1', false, TODAY)).toBe('revoke');
+    expect(proxyRevokeAction(meeting, proxy(), 'c1', false, TODAY)).toBe('revoke');
+    expect(proxyRevokeAction(meeting, proxy(), 'x', true, TODAY)).toBe('revoke');
+  });
+  it('offers nothing to another plain attendee', () => {
+    expect(proxyRevokeAction(meeting, proxy(), 'x', false, TODAY)).toBe('');
+  });
+  it('offers nothing once the meeting is held; a legacy meeting without state counts as a draft', () => {
+    expect(proxyRevokeAction({ ...meeting, state: 'held' }, proxy(), 'g1', true, TODAY)).toBe('');
+    expect(proxyRevokeAction({ okey: 'mt1', state: undefined as unknown as 'draft', chair: avatar('c1') }, proxy(), 'g1', false, TODAY)).toBe('revoke');
+  });
+  it('offers nothing for a revoked proxy, a family Vollmacht or a proxy of another meeting', () => {
+    expect(proxyRevokeAction(meeting, proxy({ revokedAt: '20261120', revokedByKey: 'g1' }), 'g1', false, TODAY)).toBe('');
+    expect(proxyRevokeAction(meeting, mandate(), 'g1', true, TODAY)).toBe('');
+    expect(proxyRevokeAction(meeting, proxy({ meetingKey: 'mt2' }), 'g1', true, TODAY)).toBe('');
+  });
+  it('offers nothing without a caller', () => {
+    expect(proxyRevokeAction(meeting, proxy(), '', true, TODAY)).toBe('');
   });
 });

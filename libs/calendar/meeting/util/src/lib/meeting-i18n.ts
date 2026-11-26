@@ -75,6 +75,8 @@ export const MEETING_I18N_KEYS = {
   proxy_record:                    MANDATE_I18N_KEYS.record_proxy,
   proxy_representedBy:             MANDATE_I18N_KEYS.represented_by,
   proxy_holds:                     MANDATE_I18N_KEYS.holds_proxies,
+  proxy_revoke:                    MANDATE_I18N_KEYS.revoke,
+  proxy_giveBack:                  MANDATE_I18N_KEYS.give_back,
 
   // minutes PDF
   pdf_title:                       PFX + 'pdf.title',
