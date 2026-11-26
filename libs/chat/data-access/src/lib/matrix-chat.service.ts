@@ -11,7 +11,7 @@ import { MatrixConfig, MatrixMessage, MatrixReadReceipt, MatrixRoom, TypingNotif
 import { APP_STORE_MIN, ChatStatusService } from '@okr/shared-data-access';
 import { checkVideoLimits, debugData, debugMessage, MAX_CHAT_VIDEO_BYTES } from '@okr/shared-util-core';
 import { OKR_VIDEO_FIELD, videoLink } from '@okr/content-document-util';
-import { convertHeicToJpeg, isHeicFile, materializeFile, resolveFileMimeType, extractVideoPoster, UploadTooLargeError, initMatrixLogLevel, ensurePromiseWithResolvers, buildMentionContent, escapeHtml, MentionRef, OKR_TENANT_EVENT, resolveMatrixDisplayName, canPostWithPower, VideoLimitError, VideoUploadError, buildPollContent, PollAnswerDef, POLL_START_EVENT, PinboardInput, AvailablePinboard, UNREAD_FROM_EVENT, MARKED_UNREAD_EVENT, flaggedUnreadFrom, countUnmutedUnread, filterRoomsOfTenant, serverNameOf, indexBookmarkEntries, bookmarkedMessageIds, PinPreview, pinPreviewOf, storedCredentialsAction } from '@okr/chat-util';
+import { convertHeicToJpeg, isHeicFile, materializeFile, resolveFileMimeType, extractVideoPoster, UploadTooLargeError, initMatrixLogLevel, ensurePromiseWithResolvers, buildMentionContent, escapeHtml, MentionRef, OKR_TENANT_EVENT, resolveMatrixDisplayName, canPostWithPower, VideoLimitError, VideoUploadError, buildPollContent, PollAnswerDef, POLL_START_EVENT, PinboardInput, AvailablePinboard, UNREAD_FROM_EVENT, MARKED_UNREAD_EVENT, flaggedUnreadFrom, countUnmutedUnread, filterRoomsOfTenant, serverNameOf, indexBookmarkEntries, bookmarkedMessageIds, PinPreview, pinPreviewOf, storedCredentialsAction, syncStoreDecision } from '@okr/chat-util';
 
 import { mediaMimeHint, mxcAvatarHttpUrl } from './matrix-helpers';
 import { MatrixMediaService } from './matrix-media.service';
@@ -25,6 +25,8 @@ import { activeFirebaseApp } from '@okr/shared-config';
 
 /** IndexedDB of matrix-js-sdk's sync store (one per origin). */
 const MATRIX_STORE_DB_NAME = 'okr-matrix';
+/** The Matrix user whose sync the store holds; changes only together with a reset of the store. */
+const MATRIX_STORE_OWNER_KEY = 'okr-matrix.owner';
 
 /**
  * SCS-92: refresh a Matrix access token this long before it lapses, so a session that
@@ -298,9 +300,7 @@ export class MatrixChatService {
         }
         // Stale (old UID-based id) or expiring (SCS-92) — discard and mint a fresh token.
         this.clearStoredCredentials();
-        // Another person's credentials (two tenants, two persons on the portal's one origin, spec 1.179):
-        // their cached sync must not seed this user's client.
-        if (action === 'reset') await this.deleteSyncStore();
+        // A different person's credentials end here; their cached sync is dropped by claimSyncStore().
       }
 
       const fn = httpsCallable(getFunctions(activeFirebaseApp(), 'europe-west6'), 'getMatrixCredentials');
@@ -426,6 +426,9 @@ export class MatrixChatService {
         useAuthorizationHeader: true,
       };
 
+      // The cached sync belongs to one Matrix user; another user's cache is dropped before it is opened.
+      if (config.userId) await this.claimSyncStore(config.userId);
+      else await this.deleteSyncStore(); // no known owner: never reuse a cache
       const store = this.createPersistentStore();
       this.client = createClient({ ...clientOptions, ...(store ? { store } : {}) });
 
@@ -488,7 +491,25 @@ export class MatrixChatService {
    * hook). initialize() calls `store.startup()` itself right before `startClient()`;
    * matrix-js-sdk does NOT do this for us.
    */
-  /** Drops the cached sync of the previous Matrix user (see `storedCredentialsAction`). Never throws. */
+  /**
+   * Makes `userId` the owner of the cached sync: keeps its own cache, drops another user's (the portal
+   * serves every tenant from one origin, spec 1.179). Never throws; without storage the store opens as before.
+   */
+  private async claimSyncStore(userId: string): Promise<void> {
+    let owner: string | null = null;
+    try {
+      owner = window.localStorage.getItem(MATRIX_STORE_OWNER_KEY);
+    } catch {
+      return; // no localStorage: matrix-js-sdk falls back to a memory store anyway
+    }
+    const decision = syncStoreDecision(owner, userId);
+    if (decision === 'reset') await this.deleteSyncStore();
+    if (decision !== 'keep') {
+      try { window.localStorage.setItem(MATRIX_STORE_OWNER_KEY, userId); } catch { /* best effort */ }
+    }
+  }
+
+  /** Deletes the cached sync (IndexedDB `okr-matrix`). Never throws. */
   private async deleteSyncStore(): Promise<void> {
     if (typeof window === 'undefined' || !window.indexedDB) return;
     await new Promise<void>((resolve) => {

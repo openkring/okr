@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { storedCredentialsAction } from './matrix-credentials.util';
+import { storedCredentialsAction, syncStoreDecision } from './matrix-credentials.util';
 
 describe('storedCredentialsAction', () => {
   const me = '@p1:chat.example';
@@ -15,4 +15,16 @@ describe('storedCredentialsAction', () => {
 
   it('nothing stored: fetch new credentials, nothing to drop', () =>
     expect(storedCredentialsAction(undefined, me, false)).toBe('renew'));
+});
+
+describe('syncStoreDecision', () => {
+  const me = '@p1:chat.example';
+
+  it('keeps the cache of the same user', () => expect(syncStoreDecision(me, me)).toBe('keep'));
+
+  it("drops another user's cache, whatever the stored credentials say", () =>
+    expect(syncStoreDecision('@p2:chat.example', me)).toBe('reset'));
+
+  it('adopts a cache without owner (an install from before the marker existed)', () =>
+    expect(syncStoreDecision(null, me)).toBe('adopt'));
 });
