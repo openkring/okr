@@ -62,6 +62,14 @@ import { RichTextInput } from '@okr/shared-ui-editor';
                   <okr-error-note [errors]="labelErrors()" />
                 </ion-col>
 
+                <!-- plain-text search words, written into the index for the main-menu search -->
+                @if(menuAction() === 'navigate' || menuAction() === 'browse') {
+                  <ion-col size="12" size-md="6">
+                    <okr-text-input [i18n]="nickNameI18n()" [value]="nickName()" (valueChange)="onFieldChange('nickName', $event)" [showHelper]=true [maxLength]="nickNameLength" [readOnly]="isReadOnly()" />
+                    <okr-error-note [errors]="nickNameErrors()" />
+                  </ion-col>
+                }
+
                 <!-- toggle: alternate icon/label shown while the toggled state is active -->
                 @if(menuAction() === 'toggle') {
                   <ion-col size="12" size-md="6">
@@ -223,6 +231,8 @@ export class MenuForm {
   protected readonly shortNameLength = SHORT_NAME_LENGTH;
   /** kept in step with the cap the Vest suite enforces on this field */
   protected readonly descriptionLength = DESCRIPTION_LENGTH;
+  /** kept in step with the cap the Vest suite enforces on this field */
+  protected readonly nickNameLength = LONG_NAME_LENGTH;
   // inputs
   public readonly formData = model.required<MenuItemModel>();
   public readonly types = input.required<CategoryListModel>();
@@ -255,6 +265,10 @@ export class MenuForm {
 
   protected labelI18n = computed(() => ({
     name: 'label', label: this.i18n().label_label(), placeholder: this.i18n().label_placeholder(), helper: this.i18n().label_helper()
+  } as TextInputI18n));
+
+  protected nickNameI18n = computed(() => ({
+    name: 'nickName', label: this.i18n().nick_name_label(), placeholder: this.i18n().nick_name_placeholder(), helper: this.i18n().nick_name_helper()
   } as TextInputI18n));
 
   protected iconI18n = computed(() => ({
@@ -305,6 +319,7 @@ export class MenuForm {
   protected nameErrors = computed(() => this.validationResult().getErrors('name'));
   protected iconErrors = computed(() => this.validationResult().getErrors('icon'));
   protected labelErrors = computed(() => this.validationResult().getErrors('label'));
+  protected nickNameErrors = computed(() => this.validationResult().getErrors('nickName'));
   protected urlErrors = computed(() => this.validationResult().getErrors('url'));
   protected infoErrors = computed(() => this.validationResult().getErrors('info'));
   protected menuTypeErrors = computed(() => this.validationResult().getErrors('menuType'));
@@ -328,6 +343,8 @@ export class MenuForm {
   protected iconAlt = computed(() => this.formData().iconAlt ?? '');
   protected label = computed(() => this.formData().label ?? '');
   protected labelAlt = computed(() => this.formData().labelAlt ?? '');
+  // absent on every legacy row (Firestore reads skip model defaults)
+  protected nickName = computed(() => this.formData().nickName ?? '');
   protected info = computed(() => this.formData().info ?? '');
   protected url = computed(() => this.formData().url ?? DEFAULT_URL);
   protected data = computed(() => this.formData().data ?? []);

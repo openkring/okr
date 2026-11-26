@@ -7,3 +7,4 @@ export * from './lib/menu-layout.service';
 export * from './lib/menu-bar';
 export * from './lib/menu-bar-label';
 export * from './lib/menu-static';
+export * from './lib/menu-search';

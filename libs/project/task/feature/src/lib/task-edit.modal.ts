@@ -1,7 +1,7 @@
-import { Component, computed, inject, input, linkedSignal, resource, signal } from '@angular/core';
+import { Component, computed, inject, Injector, input, linkedSignal, resource, runInInjectionContext, signal } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
-import { catchError, of, switchMap } from 'rxjs';
+import { catchError, firstValueFrom, of, switchMap } from 'rxjs';
 import { IonAccordionGroup, IonButton, IonButtons, IonContent, IonIcon, IonItem, IonLabel, ModalController } from '@ionic/angular';
 
 import { I18nService } from '@okr/shared-i18n';
@@ -11,7 +11,8 @@ import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-
 import { coerceBoolean, hasRole, newAvatarInfo, safeStructuredClone, warn } from '@okr/shared-util-core';
 
 import { CommentsAccordion } from '@okr/comment-feature';
-import { TaskForm } from '@okr/project-task-ui';
+import { ApplicationTaskCard, TaskForm } from '@okr/project-task-ui';
+import { parseApplicationTask } from '@okr/project-task-util';
 import { AvatarSelect } from '@okr/avatar-ui';
 import { AlertService, dismissOverlay, navigateByUrl, resourceParams } from '@okr/shared-util-angular';
 import { ApprovalService } from '@okr/system-workflow-data-access';
@@ -35,7 +36,7 @@ const COURSE_HELP_OPEN_KEY = '@calendar/course/feature.help.open';
   selector: 'okr-task-edit-modal',
   standalone: true,
   imports: [
-    Header, ChangeConfirmation, TaskForm, CommentsAccordion,
+    Header, ChangeConfirmation, TaskForm, ApplicationTaskCard, CommentsAccordion,
     AvatarSelect, ApprovalDecisionCard, ExitSettlementCard, SvgIconPipe,
     IonContent, IonAccordionGroup, IonButton, IonButtons, IonIcon, IonItem, IonLabel
   ],
@@ -82,11 +83,16 @@ const COURSE_HELP_OPEN_KEY = '@calendar/course/feature.help.open';
           [importances]="importances()"
           [projects]="projects()"
           [readOnly]="isReadOnly()"
+          [showPayload]="!applicationInfo()"
           [(showAdvanced)]="showAdvanced"
           (dirty)="formDirty.set($event)"
           (valid)="formValid.set($event)"
           (relatedClicked)="openRelated($event)"
         />
+      }
+      @if(applicationInfo(); as info) {
+        <okr-application-task-card [info]="info" [i18n]="store.i18n" [senderName]="senderName()"
+          [canEdit]="canEditApplication()" (editClicked)="editApplication($event)" />
       }
 
       @if(showAdvanced()) {
@@ -144,6 +150,7 @@ export class TaskEditModal {
   private readonly alertService = inject(AlertService);
   private readonly membershipService = inject(MembershipService);
   private readonly i18nService = inject(I18nService);
+  private readonly injector = inject(Injector);
   protected readonly exitI18n = inject(I18nService).translateAll(EXIT_SETTLEMENT_I18N_KEYS) as ExitSettlementI18n;
   protected readonly workflowI18n = inject(I18nService).translateAll(WORKFLOW_I18N_KEYS) as WorkflowI18n;
 
@@ -218,6 +225,12 @@ export class TaskEditModal {
       }
     },
   }).value;
+  /** an Anmeldung task: the applicant from the submission note, shown as a card instead of the raw JSON */
+  protected readonly applicationInfo = computed(() => parseApplicationTask(this.task()));
+  // `applications` is readable by privileged/admin only (firestore.rules)
+  protected readonly canEditApplication = computed(() => hasRole('privileged', this.currentUser()));
+  protected readonly senderName = computed(() => `${this.currentUser()?.firstName ?? ''} ${this.currentUser()?.lastName ?? ''}`.trim());
+
   /** spec 1.132 §10 — the end task and the treasurer's review task of a course link to it with `course.<key>` */
   protected readonly isCourseTask = computed(() => (this.task().linkKey ?? '').startsWith(COURSE_LINK_PREFIX));
   // the course bundle is only fetched for a course task: the label is the only reason this modal would load it
@@ -248,6 +261,38 @@ export class TaskEditModal {
   protected async showCourseHelp(): Promise<void> {
     const [{ openCourseHelp }, { courseTaskHelpRole }] = await Promise.all([import('@okr/calendar-course-ui'), import('@okr/calendar-course-util')]);
     await openCourseHelp(this.modalController, courseTaskHelpRole(this.task()));
+  }
+
+  /**
+   * «Anmeldung ändern»: the application edit modal over this one. The application libs load on the
+   * first click only (same lazy edge as the course help).
+   */
+  protected async editApplication(applicationKey: string): Promise<void> {
+    if (!applicationKey) return;
+    try {
+      const [{ ApplicationService }, { ApplicationEditModal }, { APPLICATION_I18N_KEYS }] = await Promise.all([
+        import('@okr/application-data-access'), import('@okr/application-ui'), import('@okr/application-util'),
+      ]);
+      const service = this.injector.get(ApplicationService);
+      const application = await firstValueFrom(service.read(applicationKey));
+      if (!application || application.isArchived) {
+        await this.alertService.showToast(this.store.i18n.application_edit_not_found());
+        return;
+      }
+      // translateAll builds signals (toSignal): it needs an injection context outside the constructor
+      const i18n = runInInjectionContext(this.injector, () => this.i18nService.translateAll(APPLICATION_I18N_KEYS));
+      const modal = await this.modalController.create({
+        component: ApplicationEditModal,
+        componentProps: { application, currentUser: this.currentUser(), i18n },
+      });
+      await modal.present();
+      const { data, role } = await modal.onWillDismiss();
+      if (role === 'confirm' && data) await service.update(data, this.currentUser());
+    } catch (error) {
+      // never swallow: a failed open would look like a dead button
+      warn('TaskEditModal.editApplication: ' + error);
+      this.alertService.error(this.store.i18n.application_edit_error());
+    }
   }
 
   /** Leave the modal for the record this task was opened for (its `relatedKey` back-link). */

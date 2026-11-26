@@ -111,6 +111,7 @@ const languageSuite = staticSuite((m: TenantSettings, context: SettingsContext) 
 const startSuite = staticSuite((m: TenantSettings, context: SettingsContext) => {
   skipUnchanged('start', m, context);
   stringValidations('rootUrl', m.rootUrl, undefined, 1, true);
+  booleanValidations('useMenuSearch', m.useMenuSearch);
 });
 
 const operatorSuite = staticSuite((m: TenantSettings, context: SettingsContext) => {

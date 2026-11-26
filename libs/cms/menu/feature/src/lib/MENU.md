@@ -18,7 +18,8 @@ Collection name: `menuItems`
 | `tenants` | string[] | Multi-tenancy isolation; queries always filter by tenantId |
 | `isArchived` | boolean | Soft-delete flag |
 | `name` | string | Internal unique name used as a lookup key (e.g. `aoc`, `help`, `members`) |
-| `index` | string | Search index — format `n:<name> a:<action> k:<okey>` |
+| `index` | string | Search index — format `n:<name> a:<action> k:<okey>[ nn:<nickName>]` |
+| `nickName` | string? | Plain-text search words (not an i18n key), written into `index`; offered for `navigate`/`browse` rows |
 | `label` | string | i18n key displayed to the user in the menu (may contain `@VERSION@` placeholder) |
 | `icon` | string | Ion-icon name shown next to the label (default: `help-circle`) |
 | `action` | string | The action type (see Actions below) |
@@ -93,6 +94,7 @@ hoisting the list, → 1 expected after dropping `menuResource`.
 | `MenuList` | `okr-menu-list` | Admin list with search/filter and CRUD action sheet |
 | `MenuBar` | `okr-menu-bar` | The main menu as a bar (`menuType` `top` or `segmented`); see the `menu` skill, section 5 |
 | `MenuStatic` | `okr-menu-static` | The main menu as a fixed block above the page (`menuType` `static`, wide screens); at most 8 rows, one level, 2 children per submenu |
+| `MenuSearch` | `okr-menu-search` | Search field at the top of the sidebar and the static block, while `app-config.useMenuSearch` is true |
 | `MenuLayout` | (service) | `menuType`, `side`, `barActive`, `staticActive`, `sidebarReplaced`, `staticMenu`, `submenuOffset` for the shell |
 | `MenuItemModal` | (modal) | Edit/view modal for a single menu item |
 
@@ -106,7 +108,24 @@ hoisting the list, → 1 expected after dropping `menuResource`.
 
 ## Search Index Format
 
-`n:<name> a:<action> k:<okey>`
+`n:<name> a:<action> k:<okey>`, followed by ` nn:<nickName>` when the row has a `nickName`.
+
+## Main-menu search
+
+Switched on per tenant by `app-config.useMenuSearch` (default `false`; settings card «Startseite»). The field
+sits at the top of the sidebar (`main` case of `okr-menu`, depth 0) and of the static block; the bar layouts
+(`top`, `segmented`) have none. While a term is entered, the results replace the rows.
+
+A row matches when every word of the term is contained in its search text (`menuSearchText` in
+`@okr/cms-menu-util`): the stored `index`, the `nickName`, and the label **translated into the current
+language at search time**. Translations are never written into `index`: a stored text would hold one
+language, go stale with each bundle or tenant override, and be missing on rows the feature picker or seed
+scripts write. Case and diacritics are ignored.
+
+Only `navigate` and `browse` rows below the root are offered, and only through the gates the rendered menu
+applies (role, feature block, `hiddenMenuKeys`, missing token values, narrow-screen flag); a row inside a
+hidden `sub` is not offered. Each result shows its `sub` path («Ressourcen › Boote»). Labels are translated
+only after the field is first focused, so the search costs nothing at boot.
 
 ## Dynamic Tokens
 

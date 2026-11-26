@@ -16,7 +16,7 @@ export const SETTINGS_GROUPS: Record<SettingsGroupId, readonly (keyof AppConfig)
   app: ['appName', 'appTitle', 'appSubtitle', 'description', 'brandColor'],
   images: ['welcomeBannerUrl', 'notfoundBannerUrl'],
   language: ['locale', 'enabledLanguages'],
-  start: ['rootUrl'],
+  start: ['rootUrl', 'useMenuSearch'],
   operator: ['opName', 'opEmail', 'opStreet', 'opZipCode', 'opCity', 'opCountryCode', 'opWebUrl', 'issueUrl'],
   mail: ['mailFrom'],
   privacy: [

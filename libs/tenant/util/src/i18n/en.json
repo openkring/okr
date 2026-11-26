@@ -607,6 +607,10 @@
         "label": "Start page",
         "helper": "This page opens when the app starts and after signing in. Whoever chose an own start page in the profile gets there. Without a start page, or when its feature is switched off, the welcome page opens."
       },
+      "useMenuSearch": {
+        "label": "Menu search",
+        "helper": "A search field appears at the top of the main menu. It finds menu entries by their name and their search words."
+      },
       "opName": {
         "label": "Name",
         "helper": "Who is responsible for this app. Shown in the file with the own data. Empty: the detail is missing there."

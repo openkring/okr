@@ -392,6 +392,12 @@ function buildSubmissionEmailHtml(
   `.trim();
 }
 
+/** «Vorname Nachname» of an application submission, '' when the form asked for neither */
+function applicantNameOf(values: Record<string, unknown>): string {
+  const part = (v: unknown) => (typeof v === 'string' ? v.trim() : '');
+  return [part(values['firstName']), part(values['lastName'])].filter(Boolean).join(' ');
+}
+
 async function runSideEffects(
   db: FirebaseFirestore.Firestore,
   sectionProps: FormSectionProperties,
@@ -415,6 +421,7 @@ async function runSideEffects(
       const resp = respSnap.data() as ResponsibilityDoc | undefined;
       const assignee = resp?.responsibleAvatar;
 
+      const isApplicationTarget = formDef.target.kind === 'collection' && formDef.target.collectionName === ApplicationCollection;
       if (assignee) {
         const taskRef = await db.collection('tasks').add({
           ...buildSubmissionTask({
@@ -423,12 +430,13 @@ async function runSideEffects(
             assignee,
             // without the AHV numbers: they stay in the target record (privacy 1.19)
             notes: buildSubmissionTaskNotes(formDef.fields, submissionId, formDef.formKey, values),
+            applicantName: isApplicationTarget ? applicantNameOf(values) : '',
           }),
           createdAt: FieldValue.serverTimestamp(),
         });
         logger.info(`${cfName}: approval task created responsibilityKey=${responsibilityKey}`);
         // deciding the application closes this task (ApplicationService.closeLinkedTask)
-        if (formDef.target.kind === 'collection' && formDef.target.collectionName === ApplicationCollection) {
+        if (isApplicationTarget) {
           await db.collection(ApplicationCollection).doc(submissionId).update({ taskKey: taskRef.id });
         }
       } else {

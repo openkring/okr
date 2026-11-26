@@ -199,6 +199,15 @@
     "placeholder": "Nome",
     "helper": "Solo per l'azione «Toggle»: denominazione per lo stato attivo."
   },
+  "nick_name": {
+    "label": "Parole di ricerca",
+    "placeholder": "ad es. diario uscite",
+    "helper": "Altre parole con cui la ricerca nel menu trova questa voce."
+  },
+  "search": {
+    "placeholder": "Cerca nel menu",
+    "empty": "Nessuna voce di menu trovata"
+  },
   "info": {
     "label": "Testo informativo",
     "placeholder": "Breve nota su questa voce di menu",

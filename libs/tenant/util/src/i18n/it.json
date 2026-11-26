@@ -607,6 +607,10 @@
         "label": "Pagina iniziale",
         "helper": "Questa pagina si apre all'avvio dell'app e dopo l'accesso. Chi ha scelto una propria pagina iniziale nel profilo arriva lì. Senza pagina iniziale, o se la sua funzione è disattivata, si apre la pagina di benvenuto."
       },
+      "useMenuSearch": {
+        "label": "Ricerca nel menu",
+        "helper": "In cima al menu principale appare un campo di ricerca. Trova le voci per nome e per parole di ricerca."
+      },
       "opName": {
         "label": "Nome",
         "helper": "Chi è responsabile di questa app. Appare nel file con i propri dati. Vuoto: il dato vi manca."

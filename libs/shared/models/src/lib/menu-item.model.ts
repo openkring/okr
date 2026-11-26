@@ -33,6 +33,12 @@ export class MenuItemModel implements OkrModel, NamedModel, SearchableModel, Tag
   public action = DEFAULT_MENU_ACTION; // the action that should be taken when the menu item is clicked
   public url = DEFAULT_URL; // the url that should be navigated to when the menu item is clicked
   public label = ''; // label (i18n), the text that the users sees in the menu
+  /**
+   * Optional plain-text search words (not an i18n key), e.g. 'Logbuch Fahrten Ruderbuch'. Written into
+   * `index` by `getMenuIndex`, so the main-menu search finds the row by the club's own words as well as
+   * by its translated label. Absent on legacy docs — coalesce on read.
+   */
+  public nickName?: string;
   public icon = 'help-circle'; // the icon that should be displayed in the menu
   // action 'toggle' only: the alternate icon/label shown while the toggled state is active (true).
   // The base icon/label are shown while it is inactive (false).

@@ -203,6 +203,8 @@ export function indexMenuDocsByName(
  * `type:util` in the `tenant` domain and `@okr/cms-menu-util` is a different domain —
  * importing it here for a 3-concatenation string is not worth the cross-domain coupling.
  * If the two ever need to change together, that is a signal to extract a shared helper.
+ * `getMenuIndex` appends ` nn:<nickName>` when a row has one; a catalogue spec carries no
+ * nickName and this only runs on create, so the seeded index is the same either way.
  */
 function menuIndex(name: string, action: string, okey: string): string {
   return `n:${name} a:${action} k:${okey}`;

@@ -39,6 +39,9 @@
     { "path": "../../../shared/ui/tsconfig.lib.json" },
     { "path": "../../../shared/util-angular/tsconfig.lib.json" },
     { "path": "../../../shared/util-core/tsconfig.lib.json" },
+    { "path": "../../../subject/application/data-access/tsconfig.lib.json" },
+    { "path": "../../../subject/application/ui/tsconfig.lib.json" },
+    { "path": "../../../subject/application/util/tsconfig.lib.json" },
     { "path": "../../../system/workflow/data-access/tsconfig.lib.json" },
     { "path": "../../../system/workflow/ui/tsconfig.lib.json" },
     { "path": "../../../system/workflow/util/tsconfig.lib.json" }

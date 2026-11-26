@@ -13,13 +13,14 @@ import { isHiddenOnNarrowScreen, isMenuBlocked, nextVisitedKeys, popoverOffsetX,
 
 import { MenuItemsStore } from './menu-items.store';
 import { MenuLayout } from './menu-layout.service';
+import { MenuSearch } from './menu-search';
 import { MenuStore } from './menu.store';
 
 @Component({
   selector: 'okr-menu',
   standalone: true,
   imports: [
-    forwardRef(() => Menu), Spinner, MultiAvatar, MenuInfo,
+    forwardRef(() => Menu), Spinner, MultiAvatar, MenuInfo, MenuSearch,
     IonList, IonItem, IonLabel, IonAccordionGroup, IonAccordion, IonItemDivider, IonSegment, IonSegmentButton, IonProgressBar
   ],
   styles: [`
@@ -107,7 +108,12 @@ import { MenuStore } from './menu.store';
               }
             }
             @case('main') {
-              <ion-list [style.--okr-submenu-offset.px]="layout.submenuOffset()">
+              <!-- app-config.useMenuSearch: the search replaces the rows while a term is entered.
+                   display:none, not @if, so the opened sub-menus keep their state behind the results. -->
+              @if (showSearch()) {
+                <okr-menu-search [rootName]="menuName()" (searching)="searching.set($event)" />
+              }
+              <ion-list [style.display]="searching() ? 'none' : null" [style.--okr-submenu-offset.px]="layout.submenuOffset()">
                 @for(menuItemName of menuItem.menuItems; track menuItemName) {
                   @if(isBlocked(menuItemName)) {
                     @if(isAdmin()) {
@@ -223,6 +229,11 @@ export class Menu {
     if (isHiddenOnNarrowScreen(this.menuItem(), this.isWideScreen)) return false;
     return this.forceVisible() || this.forceVisibleSelf() || hasRole(this.roleNeeded(), this.currentUser());
   });
+  /** 'main' at the top of the tree only (the sidebar): the search field, while the tenant enabled it. */
+  protected readonly showSearch = computed(() =>
+    this.inputDepth() === 0 && this.menuStore.appStore.appConfig()?.useMenuSearch === true);
+  /** 'main' only: a search term is entered, the rows are hidden behind the results. */
+  protected readonly searching = signal(false);
   /** the release-notes row (catalogue `version`; a tenant fork keeps the name) */
   protected readonly isReleaseRow = computed(() => this.menuItem()?.name === 'version');
   protected readonly notificationCount = computed(() => this.menuStore.notificationCount());

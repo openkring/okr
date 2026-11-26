@@ -160,5 +160,26 @@
       "label": "Erledigte Aufgaben archivieren nach (Tagen)",
       "helper": "0 heisst: nie automatisch archivieren"
     }
+  },
+  "application": {
+    "title": "Anmeldung",
+    "born": "geboren am {date} · {age} Jahre",
+    "kind": {
+      "youth": "Jugendliche/r",
+      "adult": "Erwachsene/r",
+      "transfer": "Übertritt"
+    },
+    "parent": "Eltern",
+    "mail": {
+      "label": "Per E-Mail antworten",
+      "subject": "Deine Anmeldung",
+      "body": "Hallo {firstName}\n\nvielen Dank für deine Anmeldung. Wir haben sie erhalten und melden uns bald bei dir.\n\nFreundliche Grüsse\n{senderName}"
+    },
+    "call": "Anrufen",
+    "edit": {
+      "label": "Anmeldung ändern",
+      "notFound": "Die Anmeldung gibt es nicht mehr. Vielleicht wurde sie zusammengeführt oder gelöscht.",
+      "error": "Die Anmeldung konnte nicht geöffnet werden. Bitte versuche es später noch einmal."
+    }
   }
 }

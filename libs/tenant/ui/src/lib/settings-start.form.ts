@@ -1,17 +1,20 @@
 import { Component, computed, input } from '@angular/core';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular';
 
-import { ErrorNote, StringSelect } from '@okr/shared-ui';
+import { Checkbox, CheckboxI18n, ErrorNote, StringSelect } from '@okr/shared-ui';
 import type { SettingsPageOption } from '@okr/tenant-util';
 
 import { SettingsFormBase } from './settings-form.base';
 import { SettingsPublicNote } from './settings-public-note';
 
-/** Settings group «Startseite»: picked from the menus and public pages of the tenant, never typed (spec 1.174 §7.4). */
+/**
+ * Settings group «Startseite»: picked from the menus and public pages of the tenant, never typed (spec 1.174 §7.4),
+ * and the switch for the search field at the top of the main menu (`useMenuSearch`).
+ */
 @Component({
   selector: 'okr-settings-start-form',
   standalone: true,
-  imports: [ErrorNote, SettingsPublicNote, StringSelect, IonCard, IonCardContent, IonCol, IonGrid, IonRow],
+  imports: [Checkbox, ErrorNote, SettingsPublicNote, StringSelect, IonCard, IonCardContent, IonCol, IonGrid, IonRow],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
     @if (showForm()) {
@@ -31,6 +34,13 @@ import { SettingsPublicNote } from './settings-public-note';
                   <okr-error-note [errors]="errors()['rootUrl']" />
                 </ion-col>
               </ion-row>
+              <ion-row>
+                <ion-col size="12">
+                  <okr-checkbox [i18n]="menuSearchI18n()" [checked]="formData().useMenuSearch === true" [toggle]="true"
+                    (checkedChange)="onFieldChange('useMenuSearch', $event)" [showHelper]="true" [readOnly]="isReadOnly()" />
+                  <okr-error-note [errors]="errors()['useMenuSearch']" />
+                </ion-col>
+              </ion-row>
             </ion-grid>
           </ion-card-content>
         </ion-card>
@@ -47,6 +57,11 @@ export class SettingsStartForm extends SettingsFormBase {
 
   /** changes when the list or one of its labels does, not when another page is selected */
   protected readonly listVersion = computed(() => JSON.stringify(this.startOptions()));
+
+  /** absent on every legacy config doc: reads as off */
+  protected readonly menuSearchI18n = computed(() => ({
+    name: 'useMenuSearch', label: this.fields()['useMenuSearch'].label, helper: this.fields()['useMenuSearch'].helper,
+  } as CheckboxI18n));
 
   protected get group(): 'start' { return 'start'; }
 }

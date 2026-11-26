@@ -199,6 +199,15 @@
     "placeholder": "Nom",
     "helper": "Uniquement pour l'action «Toggle» : désignation pour l'état actif."
   },
+  "nick_name": {
+    "label": "Mots de recherche",
+    "placeholder": "p. ex. journal sorties",
+    "helper": "D'autres mots avec lesquels la recherche du menu trouve cette entrée."
+  },
+  "search": {
+    "placeholder": "Rechercher dans le menu",
+    "empty": "Aucune entrée de menu trouvée"
+  },
   "info": {
     "label": "Texte d’info",
     "placeholder": "Courte remarque sur cette entrée de menu",
