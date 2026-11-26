@@ -43,7 +43,7 @@ function deviceStorage(): Storage | undefined {
   ],
   styles: [`
     .logo { width: 40px; height: 40px; margin-right: 12px; border-radius: 8px; }
-    .empty { padding: 16px; }
+    .empty { display: block; padding: 16px; }
   `],
   template: `
     <okr-header [i18n]="{ title: i18n.portal_title() }" [showCloseButton]="false" />
