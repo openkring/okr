@@ -74,16 +74,10 @@
       "path": "../../../user/data-access/tsconfig.lib.json"
     },
     {
-      "path": "../../../relationship/mandate/data-access/tsconfig.lib.json"
-    },
-    {
       "path": "../../../relationship/mandate/feature/tsconfig.lib.json"
     },
     {
       "path": "../../../relationship/mandate/util/tsconfig.lib.json"
-    },
-    {
-      "path": "../../../project/task/data-access/tsconfig.lib.json"
     }
   ]
 }

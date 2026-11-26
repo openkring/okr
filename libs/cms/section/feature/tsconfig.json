@@ -182,9 +182,6 @@
       "path": "../../../finance/expense/feature/tsconfig.lib.json"
     },
     {
-      "path": "../../../relationship/mandate/data-access/tsconfig.lib.json"
-    },
-    {
       "path": "../../../relationship/mandate/feature/tsconfig.lib.json"
     },
     {

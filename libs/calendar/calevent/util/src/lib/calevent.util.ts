@@ -621,13 +621,21 @@ export type GrantorAttendCandidate = { key: string; name: string; hasInvitation:
  * runs for the user themself runs for the GRANTOR here (spec 1.180 §5.2): `canAttendCalevent` with
  * the grantor's invitation, the grantor's group reach and the grantor's own attendee entry.
  *
+ * One rule is stricter than for the user themself: `canAttendCalevent` lets anybody answer a personal event
+ * (its organiser is neither in reach nor invited). A grantor is offered one only when they are invited to it
+ * or already on its attendee list — a Vollmacht never opens somebody else's private appointment.
+ *
  * @param calevent the event
  * @param grantors per grantor: first name, whether they hold an invitation to this event, and
  *                 `mayJoinOpenCalevent` evaluated with THEIR calendars
  */
 export function grantorAttendOptions(calevent: CalEventModel, grantors: GrantorAttendCandidate[]): { key: string; name: string; state: string }[] {
   return grantors
-    .filter(g => canAttendCalevent(calevent, g.hasInvitation, g.mayJoinOpen, isCaleventAttendee(calevent, g.key)))
+    .filter(g => {
+      const isAttendee = isCaleventAttendee(calevent, g.key);
+      if (isPersonalCalevent(calevent) && !g.hasInvitation && !isAttendee) return false;
+      return canAttendCalevent(calevent, g.hasInvitation, g.mayJoinOpen, isAttendee);
+    })
     .map(g => ({ key: g.key, name: g.name, state: getAttendanceState(calevent, g.key) ?? 'invited' }));
 }
 

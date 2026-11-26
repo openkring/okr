@@ -17,6 +17,10 @@
     "@okr/relationship-mandate-ui": "*",
     "@okr/relationship-mandate-util": "*",
     "@okr/relationship-household-data-access": "*",
-    "@okr/relationship-personal-rel-data-access": "*"
+    "@okr/relationship-personal-rel-data-access": "*",
+    "@okr/calendar-calevent-util": "*",
+    "@okr/relationship-invitation-data-access": "*",
+    "@okr/relationship-membership-data-access": "*",
+    "@okr/project-task-data-access": "*"
   }
 }

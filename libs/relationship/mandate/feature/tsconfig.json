@@ -63,6 +63,18 @@
     },
     {
       "path": "../../personal-rel/data-access/tsconfig.lib.json"
+    },
+    {
+      "path": "../../../calendar/calevent/util/tsconfig.lib.json"
+    },
+    {
+      "path": "../../invitation/data-access/tsconfig.lib.json"
+    },
+    {
+      "path": "../../membership/data-access/tsconfig.lib.json"
+    },
+    {
+      "path": "../../../project/task/data-access/tsconfig.lib.json"
     }
   ]
 }

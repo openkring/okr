@@ -3020,6 +3020,11 @@ def mandate(**extra):
          "granteeKey": "pE", "grantee": {"key": "pE", "name1": "E", "name2": "E", "modelType": "person"},
          "actions": ["calevent.attend", "invitation.answer"], "validFrom": "", "validTo": "",
          "meetingKey": "", "createdByKey": "pA", "revokedAt": "", "revokedByKey": ""}
+    # keep the display avatars in step with an overridden key, unless a test sets the avatar itself
+    if "grantorKey" in extra and "grantor" not in extra:
+        d["grantor"] = {**d["grantor"], "key": extra["grantorKey"]}
+    if "granteeKey" in extra and "grantee" not in extra:
+        d["grantee"] = {**d["grantee"], "key": extra["granteeKey"]}
     d.update(extra)
     return d
 def proxy(**extra):
@@ -3128,6 +3133,12 @@ def test_mandate_family_shape():
             and not _create("cFamMeeting", mandate(meetingKey="mtgV"), A))
 def test_mandate_create_needs_empty_revoked_by():
     return not _create("cRevokedBy", mandate(revokedByKey="pA"), A)
+def test_mandate_create_grantor_avatar_must_match_key():
+    return not _create("cGrantorAvatar", mandate(grantor={"key": "pX", "name1": "X", "name2": "X", "modelType": "person"}), A)
+def test_mandate_create_grantee_avatar_must_match_key():
+    return not _create("cGranteeAvatar", mandate(grantee={"key": "pX", "name1": "X", "name2": "X", "modelType": "person"}), A)
+def test_mandate_create_self_grant_rejected():
+    return not _create("cSelfGrant", mandate(granteeKey="pA"), A)
 
 mandate_tests = [v for k, v in list(globals().items()) if k.startswith("test_mandate_") and callable(v)]
 for fn in mandate_tests:

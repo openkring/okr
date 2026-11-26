@@ -801,11 +801,15 @@ service cloud.firestore {
                  && after.get('revokedByKey', '') == pk);
     }
     // Create: one tenant, not revoked, createdByKey == caller; by the grantor, privileged / memberAdmin, or —
-    // proxy only — the chair of the meeting named by meetingKey.
+    // proxy only — the chair of the meeting named by meetingKey. The display avatars must name the same persons
+    // as the keys (the app builds attendee entries and notices from them), and nobody grants to themself.
     function mandateCreateOk(d, pk) {
       return pk != ''
              && d.tenants.size() == 1
              && mandateKindShapeOk(d)
+             && d.get('grantor', {}).get('key', '') == d.grantorKey
+             && d.get('grantee', {}).get('key', '') == d.granteeKey
+             && d.granteeKey != d.grantorKey
              && d.get('revokedAt', '') == ''
              && d.get('revokedByKey', '') == ''
              && d.get('createdByKey', '') == pk

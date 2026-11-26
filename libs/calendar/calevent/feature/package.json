@@ -37,9 +37,7 @@
     "@okr/user-data-access": "*",
     "@okr/mobility-transit-feature": "*",
     "@okr/mobility-transit-util": "*",
-    "@okr/relationship-mandate-data-access": "*",
     "@okr/relationship-mandate-feature": "*",
-    "@okr/relationship-mandate-util": "*",
-    "@okr/project-task-data-access": "*"
+    "@okr/relationship-mandate-util": "*"
   }
 }

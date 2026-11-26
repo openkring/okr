@@ -939,6 +939,15 @@ describe('grantorAttendOptions', () => {
       .toEqual([{ key: 'anna', name: 'ANNA', state: 'accepted' }]);
   });
 
+  it('offers a personal event only to a grantor who is invited or already on the list', () => {
+    const personal = groupEvent({ calendars: [] });
+    expect(grantorAttendOptions(personal, [grantor('anna')])).toEqual([]);
+    expect(grantorAttendOptions(personal, [grantor('anna', { hasInvitation: true })]))
+      .toEqual([{ key: 'anna', name: 'ANNA', state: 'invited' }]);
+    const listed = groupEvent({ calendars: [], attendees: [{ person: { key: 'anna', name1: 'Anna', name2: '', modelType: 'person', type: '', subType: '', label: '' }, state: 'declined' }] });
+    expect(grantorAttendOptions(listed, [grantor('anna')])).toEqual([{ key: 'anna', name: 'ANNA', state: 'declined' }]);
+  });
+
   it('offers nothing on a closed event', () => {
     expect(grantorAttendOptions(groupEvent({ state: 'cancelled' }), [grantor('anna', { hasInvitation: true })])).toEqual([]);
   });
