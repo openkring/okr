@@ -69,9 +69,11 @@ export class MandateService {
   /**
    * Revokes a mandate. Writes ONLY `revokedAt` + `revokedByKey` (field update): the rules allow nothing else on a
    * revocation, and a full-model update would be denied. `byKey` must be the caller's personKey.
+   * Returns false when the write failed (`updateFields` catches the error and returns undefined).
    */
-  public async revoke(mandate: MandateModel, byKey: string): Promise<void> {
-    await this.firestoreService.updateFields(MandateCollection, mandate.okey, revokePatch(byKey, getTodayStr(DateFormat.StoreDateTime)));
+  public async revoke(mandate: MandateModel, byKey: string): Promise<boolean> {
+    const key = await this.firestoreService.updateFields(MandateCollection, mandate.okey, revokePatch(byKey, getTodayStr(DateFormat.StoreDateTime)));
+    return key !== undefined;
   }
 
   /**

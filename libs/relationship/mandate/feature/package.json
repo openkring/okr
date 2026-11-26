@@ -15,6 +15,8 @@
     "@okr/shared-util-core": "*",
     "@okr/relationship-mandate-data-access": "*",
     "@okr/relationship-mandate-ui": "*",
-    "@okr/relationship-mandate-util": "*"
+    "@okr/relationship-mandate-util": "*",
+    "@okr/relationship-household-data-access": "*",
+    "@okr/relationship-personal-rel-data-access": "*"
   }
 }

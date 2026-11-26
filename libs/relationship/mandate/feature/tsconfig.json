@@ -57,6 +57,12 @@
     },
     {
       "path": "../util/tsconfig.lib.json"
+    },
+    {
+      "path": "../../household/data-access/tsconfig.lib.json"
+    },
+    {
+      "path": "../../personal-rel/data-access/tsconfig.lib.json"
     }
   ]
 }

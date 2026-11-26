@@ -3,7 +3,7 @@ import { IonContent, ModalController, ToastController } from '@ionic/angular';
 
 import { AppStore } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
-import { MandateModel } from '@okr/shared-models';
+import { AvatarInfo, MandateModel } from '@okr/shared-models';
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
 import { dismissOverlay, showToast } from '@okr/shared-util-angular';
 import { safeStructuredClone } from '@okr/shared-util-core';
@@ -33,6 +33,7 @@ import { MANDATE_I18N_KEYS, MandateI18n } from '@okr/relationship-mandate-util';
           (formDataChange)="onFormDataChange($event)"
           [i18n]="i18n"
           [existing]="existing()"
+          [suggestions]="suggestions()"
           [readOnly]="isSaving()"
           [showForm]="showForm()"
           (dirty)="formDirty.set($event)"
@@ -53,6 +54,8 @@ export class MandateEditModal {
   public readonly mandate = input.required<MandateModel>();
   /** the grantor's stored Vollmachten, for the duplicate check */
   public readonly existing = input<MandateModel[]>([]);
+  /** household members and related persons, offered first in the form */
+  public readonly suggestions = input<AvatarInfo[]>([]);
 
   // signals
   protected formDirty = signal(false);

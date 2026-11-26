@@ -1,8 +1,8 @@
 import { Component, computed, effect, inject, input, model, output } from '@angular/core';
 import { form } from '@angular/forms/signals';
-import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonRow } from '@ionic/angular';
+import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonChip, IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonRow } from '@ionic/angular';
 
-import { MandateAction, MandateModel } from '@okr/shared-models';
+import { AvatarInfo, MandateAction, MandateModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { Checkbox, CheckboxI18n, DateInput, DateInputI18n, ErrorNote } from '@okr/shared-ui';
 import { MODEL_SELECTOR, validateVestTree, vestErrors } from '@okr/shared-util-angular';
@@ -19,7 +19,7 @@ import { MandateI18n, mandateValidations } from '@okr/relationship-mandate-util'
   imports: [
     SvgIconPipe,
     Checkbox, DateInput, ErrorNote,
-    IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonGrid, IonRow, IonCol, IonItem, IonLabel, IonButton, IonIcon,
+    IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonGrid, IonRow, IonCol, IonItem, IonLabel, IonButton, IonIcon, IonChip,
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
@@ -30,6 +30,16 @@ import { MandateI18n, mandateValidations } from '@okr/relationship-mandate-util'
             <ion-card-title>{{ i18n().grantee_label() }}</ion-card-title>
           </ion-card-header>
           <ion-card-content class="ion-no-padding">
+            @if (!isReadOnly() && offered().length > 0) {
+              <div class="ion-padding-horizontal">
+                @for (person of offered(); track person.key) {
+                  <ion-chip [outline]="person.key !== granteeKey()" [color]="person.key === granteeKey() ? 'primary' : undefined"
+                    (click)="setGrantee(person)">
+                    <ion-label>{{ fullName(person) }}</ion-label>
+                  </ion-chip>
+                }
+              </div>
+            }
             <ion-item lines="none">
               @if (granteeName(); as name) {
                 <ion-label>{{ name }}</ion-label>
@@ -83,6 +93,8 @@ export class MandateForm {
   public formData = model.required<MandateModel>();
   /** the grantor's Vollmachten already stored: a second active one for the same person is refused */
   public readonly existing = input<MandateModel[]>([]);
+  /** household members and related persons, offered as one-tap choices above the full picker (spec §5.1) */
+  public readonly suggestions = input<AvatarInfo[]>([]);
   public readonly readOnly = input(false);
   public readonly showForm = input(true); // toggled by the parent to reset the form state on cancel
 
@@ -114,6 +126,12 @@ export class MandateForm {
   protected readonly granteeName = computed(() => {
     const g = this.formData()?.grantee;
     return g?.key ? getFullName(g.name1, g.name2) : '';
+  });
+  protected readonly granteeKey = computed(() => this.formData()?.granteeKey ?? '');
+  /** the suggestions without the grantor */
+  protected readonly offered = computed(() => {
+    const grantorKey = this.formData()?.grantorKey ?? '';
+    return this.suggestions().filter((p) => p.key && p.key !== grantorKey);
   });
   protected readonly actions = computed(() => this.formData()?.actions ?? []);
   protected readonly validTo = computed(() => this.formData()?.validTo ?? '');
@@ -148,7 +166,16 @@ export class MandateForm {
     const grantorKey = this.formData()?.grantorKey ?? '';
     const avatar = await this.modelSelector.selectPersonAvatar('', '', false, false, { excludeKeys: grantorKey ? [grantorKey] : [] });
     if (!avatar?.key) return;
+    this.setGrantee(avatar);
+  }
+
+  protected setGrantee(avatar: AvatarInfo): void {
+    if (avatar.key === this.granteeKey()) return;
     this.dirty.emit(true);
     this.formData.update((vm) => ({ ...vm, granteeKey: avatar.key, grantee: avatar }));
+  }
+
+  protected fullName(avatar: AvatarInfo): string {
+    return getFullName(avatar.name1, avatar.name2);
   }
 }

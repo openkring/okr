@@ -2,14 +2,16 @@ import { computed, inject, Signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { ModalController, ToastController } from '@ionic/angular';
 import { signalStore, withComputed, withMethods, withProps } from '@ngrx/signals';
-import { of } from 'rxjs';
+import { firstValueFrom, of } from 'rxjs';
 
+import { HouseholdService } from '@okr/relationship-household-data-access';
 import { MandateService } from '@okr/relationship-mandate-data-access';
+import { PersonalRelService } from '@okr/relationship-personal-rel-data-access';
 import { grantorKeysFor, isMandateActive, MANDATE_I18N_KEYS } from '@okr/relationship-mandate-util';
 import { AppStore } from '@okr/shared-feature';
-import { MandateAction, MandateModel } from '@okr/shared-models';
+import { AvatarInfo, MandateAction, MandateModel } from '@okr/shared-models';
 import { resourceParams, showToast } from '@okr/shared-util-angular';
-import { DateFormat, getAvatarInfoForCurrentUser, getTodayStr } from '@okr/shared-util-core';
+import { DateFormat, getAvatarInfoForCurrentUser, getTodayStr, newAvatarInfo } from '@okr/shared-util-core';
 
 const NO_MANDATES: MandateModel[] = [];
 
@@ -25,6 +27,8 @@ export const MandateStore = signalStore(
   { providedIn: 'root' },
   withProps(() => ({
     mandateService: inject(MandateService),
+    householdService: inject(HouseholdService),
+    personalRelService: inject(PersonalRelService),
     appStore: inject(AppStore),
     modalController: inject(ModalController),
     toastController: inject(ToastController),
@@ -58,16 +62,53 @@ export const MandateStore = signalStore(
     }),
   })),
   withMethods((store) => ({
-    /** Sets `revokedAt` / `revokedByKey` = me. The live lists pick the change up; a failure shows a toast. */
+    /** Sets `revokedAt` / `revokedByKey` = me. The live lists pick the change up; a failed or thrown write shows a toast. */
     async revokeAsMe(mandate: MandateModel): Promise<void> {
       const personKey = store.personKey();
       if (!personKey || !mandate.okey) return;
+      let ok = false;
       try {
-        await store.mandateService.revoke(mandate, personKey);
+        ok = await store.mandateService.revoke(mandate, personKey);
       } catch (error) {
         console.error('MandateStore.revoke:', error);
-        await showToast(store.toastController, MANDATE_I18N_KEYS.revoke_error);
       }
+      if (!ok) await showToast(store.toastController, MANDATE_I18N_KEYS.revoke_error);
+    },
+  })),
+  withMethods((store) => ({
+    /**
+     * The persons offered first in the modal (spec §5.1, a convenience — they receive nothing automatically): the
+     * other members of my household and my current personal relationships (I am subject or object), deduplicated.
+     * Best effort: a failed or denied read just means fewer suggestions.
+     */
+    async suggestionsFor(personKey: string): Promise<AvatarInfo[]> {
+      const tenantId = store.appStore.tenantId();
+      const today = getTodayStr(DateFormat.StoreDate);
+      const byKey = new Map<string, AvatarInfo>();
+      const add = (key: string, firstName: string, lastName: string): void => {
+        if (!key || key === personKey || byKey.has(key)) return;
+        byKey.set(key, newAvatarInfo(key, firstName, lastName, 'person', '', '', ''));
+      };
+      try {
+        const households = await firstValueFrom(store.householdService.listForPerson(tenantId, personKey));
+        for (const key of households.flatMap((h) => h.memberKeys ?? [])) {
+          const p = store.appStore.getPerson(key);
+          if (p) add(key, p.firstName, p.lastName);
+        }
+      } catch (error) {
+        console.error('MandateStore.suggestionsFor(household):', error);
+      }
+      try {
+        const rels = await firstValueFrom(store.personalRelService.listPersonalRelsOfPerson(personKey));
+        for (const r of rels) {
+          if (r.isArchived || ((r.validTo ?? '') !== '' && r.validTo < today)) continue;
+          if (r.subjectKey === personKey) add(r.objectKey, r.objectFirstName, r.objectLastName);
+          else add(r.subjectKey, r.subjectFirstName, r.subjectLastName);
+        }
+      } catch (error) {
+        console.error('MandateStore.suggestionsFor(personalRel):', error);
+      }
+      return [...byKey.values()];
     },
   })),
   withMethods((store) => ({
@@ -92,10 +133,10 @@ export const MandateStore = signalStore(
       mandate.grantor = grantor;
       mandate.actions = ['calevent.attend', 'invitation.answer'];
       mandate.createdByKey = grantor.key;
-      const { MandateEditModal } = await import('./mandate-edit.modal');
+      const [{ MandateEditModal }, suggestions] = await Promise.all([import('./mandate-edit.modal'), store.suggestionsFor(grantor.key)]);
       const modal = await store.modalController.create({
         component: MandateEditModal,
-        componentProps: { mandate, existing: store.given() },
+        componentProps: { mandate, existing: store.given(), suggestions },
       });
       await modal.present();
       await modal.onWillDismiss();
