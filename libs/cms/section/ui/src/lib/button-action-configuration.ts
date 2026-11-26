@@ -6,7 +6,7 @@ import {
 
 import { ButtonAction, ButtonActionConfig } from '@okr/shared-models';
 import { CategoryOld, CategoryOldI18n, ErrorNote, TextInput, TextInputI18n } from '@okr/shared-ui';
-import { SectionErrors, getFieldErrors } from '@okr/cms-section-util';
+import { SectionErrors, buttonActionChoices, getFieldErrors } from '@okr/cms-section-util';
 import { COMMENT_LENGTH, DEFAULT_URL, URL_LENGTH } from '@okr/shared-constants';
 import { ButtonActions } from '@okr/shared-categories';
 
@@ -45,7 +45,7 @@ export interface ContractOption { okey: string; name: string; }
         <ion-grid>
           <ion-row>
             <ion-col size="12" size-md="6">
-              <okr-category-old [i18n]="buttonActionI18n()" [value]="type()" (valueChange)="onFieldChange('type', $event)" [categories]="buttonActions" [readOnly]="readOnly()" />
+              <okr-category-old [i18n]="buttonActionI18n()" [value]="type()" (valueChange)="onFieldChange('type', $event)" [categories]="buttonActions()" [readOnly]="readOnly()" />
             </ion-col>
             @if(type() === BA.ContractDocument && contracts().length > 0) {
               <!-- spec 1.97: the contractKey is picked, never typed (it is a foreign key) -->
@@ -102,7 +102,8 @@ export class ButtonActionConfiguration {
   protected readonly urlLength = URL_LENGTH;
   /** kept in step with the cap the Vest suite enforces on action.altText */
   protected readonly altTextLength = COMMENT_LENGTH;
-  protected buttonActions = ButtonActions;
+  /** without Navigate and Browse, which the «Link-Button» of an article does; a stored one still shows */
+  protected buttonActions = computed(() => buttonActionChoices(ButtonActions, this.type()));
 
 
 
