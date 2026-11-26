@@ -71,6 +71,9 @@
     "trip": {
       "label": "Libro di bordo"
     },
+    "tracker": {
+      "label": "Registrazione percorsi"
+    },
     "consent": {
       "label": "Consenso"
     },

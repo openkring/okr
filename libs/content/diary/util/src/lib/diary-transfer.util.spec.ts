@@ -42,7 +42,8 @@ describe('offeredDiarySources', () => {
     expect(offeredDiarySources(new Set(['cms']))).toEqual([]);
   });
 
-  it('offers tracker with trip or journal', () => {
+  it('offers tracker with tracker, trip or journal', () => {
+    expect(offeredDiarySources(new Set(['tracker']))).toEqual(['tracker']);
     expect(offeredDiarySources(new Set(['journal']))).toEqual(['tracker']);
     expect(offeredDiarySources(new Set(['trip']))).toEqual(['tracker']);
     expect(offeredDiarySources(new Set(['diary']))).toEqual([]);

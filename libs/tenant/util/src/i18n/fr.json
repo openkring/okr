@@ -71,6 +71,9 @@
     "trip": {
       "label": "Carnet de sorties"
     },
+    "tracker": {
+      "label": "Enregistrement de parcours"
+    },
     "consent": {
       "label": "Consentement"
     },

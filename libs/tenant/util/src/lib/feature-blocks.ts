@@ -875,9 +875,7 @@ const trip: FeatureBlock = {
     // authored onto the tenant-bespoke `sport-menu` grouping before this catalogue existed);
     // the next `applyFeatureSelection` for `scs` converges that, one time, intentionally.
     { key: 'logbuch', name: 'logbuch', url: '/trips/logbuch/c-trips', action: 'navigate', roleNeeded: 'registered', icon: 'track', label: '@item.logbuch' },
-    // The tracker (spec 1.123 §8): a member records an outing on the phone; the crew sees it in the Logbuch.
-    // Top-level like `logbuch`, so the picker appends it to the root nav (admins may move it under `sport-menu`).
-    { key: 'trip-tracker', name: 'trip-tracker', url: '/tracker', action: 'navigate', roleNeeded: 'registered', icon: 'track', label: '@item.trip-tracker' },
+    // `trip-tracker` («Strecke aufzeichnen») LEFT this block on 2026-11-26: it is the `tracker` block below.
     // 'registered', not 'kiosk': every member may open the sheet to reach the two read-only
     // statistics. The write actions below keep their own 'kiosk'/'admin' gate, so a member sees
     // a context menu holding nothing but boat + person statistics.
@@ -897,6 +895,38 @@ const trip: FeatureBlock = {
       { key: 'maint-divider', name: 'maint-divider', url: '', action: 'divider', roleNeeded: 'admin', icon: 'help-circle', label: '@item.maint-divider' },
       { key: 'trip-kiosk', name: 'trip-kiosk', url: '/trips/kiosk', action: 'navigate', roleNeeded: 'admin', icon: 'settings', label: '@item.trip-kiosk' },
     ] },
+  ],
+};
+
+/**
+ * Strecken — the tracker (`libs/mobility/tracker`, spec 1.121 / 1.123), split out of `trip` on 2026-11-26
+ * (owner decision): the Logbuch is a rowing-club feature, but recording an outing on the phone is useful in
+ * any app. Free: no paid option switches it on (`ADD_ON_BLOCKS` in `@okr/business-metering-util`; the option
+ * `logbuch` stays `['trip']`). A tenant that had `trip` before the split got `tracker` added by
+ * `scripts/migrate-tracker-split.mjs`, so its «Strecke aufzeichnen» row stays.
+ *
+ * `dependsOn: []` — the tracker reads and writes only its own recordings. The Logbuch link (a recording
+ * offered to a Logbuch trip of the same crew, spec 1.123 §5) queries `trips` of type Logbuch and simply finds
+ * none in an app without `trip`; nothing else needs the Logbuch to be on. The reverse is not a block
+ * dependency either: `trip` and `diary` import tracker UI/util code to SHOW a recording, which builds fine
+ * whether or not this block is switched on.
+ *
+ * `collections: []` — a recording is a `trips` document of type `tracker` (`TRACKER_TRIP_TYPE`), and `trips`
+ * is owned by the `trip` block; `collections` records ownership, one owner per collection. The nightly expiry
+ * (`apps/functions/src/trip/expiring-tenants.ts`) reads this block, not the collection owner.
+ */
+const tracker: FeatureBlock = {
+  id: 'tracker',
+  bundle: 'events',
+  label: '@tenant/util.feature.tracker.label',
+  icon: 'track',
+  defaultAvailability: 'ga',
+  dependsOn: [],
+  collections: [],
+  menu: [
+    // Top-level, so the picker appends it to the root nav (admins may move it under `sport-menu`). The key keeps
+    // its old `trip-` prefix: live `menuItems` docs and every tenant's root array reference it by name.
+    { key: 'trip-tracker', name: 'trip-tracker', url: '/tracker', action: 'navigate', roleNeeded: 'registered', icon: 'track', label: '@item.trip-tracker' },
   ],
 };
 
@@ -3574,7 +3604,7 @@ const newsCenter: FeatureBlock = {
 
 export const FEATURE_BLOCKS: FeatureBlock[] = [
   calevent, course, fileTransfer, learningBlock, newsCenter, aoc, activity, task, instruments, games, quiz, zip, hearingQuiz, crossword, muehle, battleship, bimaru, sudoku, murdoku, memory, backgammon, klondike, mahjong, jasstafel, tetris, mampf, wordle, chess,
-  auth, cms, user, profile, session, security, i18n, avatar, category, comment, geo, trip, consent,
+  auth, cms, user, profile, session, security, i18n, avatar, category, comment, geo, trip, tracker, consent,
   subject, relationship, vcard, contactsDav,
   resource, mobility,
   finance, costAccounting, expense, asset, memberFee, trainerBilling, esign, pdfTemplate,

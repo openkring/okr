@@ -4,11 +4,12 @@ import { AppConfigCollection, FeatureRolloutCollection } from '@okr/shared-model
 import { effectiveFeatures, FEATURE_BLOCKS, type FeatureRollout } from '@okr/tenant-util';
 
 /**
- * A club app whose recordings expire: it has the Logbuch (`trip`) and neither a diary nor a travel journal. A diary
- * or journal app keeps its own recordings for good. Pure.
+ * An app whose recordings expire: it records (`tracker`, or `trip` for a tenant not yet migrated to the
+ * 2026-11-26 split) and has neither a diary nor a travel journal. A diary or journal app keeps its own
+ * recordings for good. Pure.
  */
 export function isExpiringTenant(features: Set<string>): boolean {
-  return features.has('trip') && !features.has('diary') && !features.has('journal');
+  return (features.has('tracker') || features.has('trip')) && !features.has('diary') && !features.has('journal');
 }
 
 /** The tenants whose recordings expire. A tenant whose app-config cannot be read is not among them. */

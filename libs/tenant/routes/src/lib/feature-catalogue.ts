@@ -546,7 +546,13 @@ const trip: BlockRoutes = {
         { path: ':listId/:contextMenuName', loadComponent: () => import('@okr/trip-feature').then(m => m.TripList) },
       ],
     },
-    // The tracker (spec 1.121, 1.123 §8) behind the Logbuch switch, for the `trip-tracker` menu row. Apps that
+  ],
+};
+
+const tracker: BlockRoutes = {
+  id: 'tracker',
+  routes: (): Route[] => [
+    // The tracker (spec 1.121, 1.123 §8) behind its own switch (split out of `trip` on 2026-11-26), for the `trip-tracker` menu row. Apps that
     // record (bkg, scs) also mount TRACKER_ROUTES before the app-ready gate; that ungated copy matches first.
     // Lazy, so no app's start bundle carries the tracker. No kiosk guard here: this copy sits inside each app's
     // feature parent, which in scs (the only app with a kiosk) already carries kioskLockGuard.
@@ -1923,7 +1929,7 @@ const newsCenter: BlockRoutes = {
 
 export const FEATURE_ROUTES: BlockRoutes[] = [
   calevent, course, fileTransfer, learning, newsCenter, aoc, activity, task, instruments, games, quiz, zip, hearingQuiz, crossword, muehle, battleship, bimaru, sudoku, murdoku, memory, backgammon, klondike, mahjong, jasstafel, tetris, mampf, wordle, chess,
-  auth, cms, user, profile, session, security, i18n, avatar, category, comment, geo, trip, consent,
+  auth, cms, user, profile, session, security, i18n, avatar, category, comment, geo, trip, tracker, consent,
   subject, relationship, vcard, contactsDav,
   resource, mobility,
   finance, costAccounting, expense, asset, memberFee, trainerBilling, esign, pdfTemplate,

@@ -10,11 +10,13 @@ const rec = (extra: Partial<TripModel> = {}, track: Partial<NonNullable<TripMode
 
 describe('isExpiringTenant', () => {
   it('expires a club app with the Logbuch', () => expect(isExpiringTenant(new Set(['trip', 'calendar']))).toBe(true));
+  it('expires an app with Strecken but no Logbuch', () => expect(isExpiringTenant(new Set(['tracker', 'calendar']))).toBe(true));
   it('never expires a diary or journal app', () => {
     expect(isExpiringTenant(new Set(['trip', 'diary']))).toBe(false);
     expect(isExpiringTenant(new Set(['trip', 'journal']))).toBe(false);
+    expect(isExpiringTenant(new Set(['tracker', 'diary']))).toBe(false);
   });
-  it('never expires an app without the Logbuch', () => expect(isExpiringTenant(new Set(['calendar']))).toBe(false));
+  it('never expires an app that does not record', () => expect(isExpiringTenant(new Set(['calendar']))).toBe(false));
 });
 
 describe('recordingExpiry', () => {

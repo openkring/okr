@@ -71,6 +71,9 @@
     "trip": {
       "label": "Logbuch (Fahrtenbuch)"
     },
+    "tracker": {
+      "label": "Strecken aufzeichnen"
+    },
     "consent": {
       "label": "Einwilligung"
     },

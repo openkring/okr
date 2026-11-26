@@ -71,6 +71,9 @@
     "trip": {
       "label": "Logbook"
     },
+    "tracker": {
+      "label": "Route recording"
+    },
     "consent": {
       "label": "Consent"
     },

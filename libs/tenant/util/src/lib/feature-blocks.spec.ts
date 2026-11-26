@@ -75,6 +75,14 @@ describe('FEATURE_BLOCKS Wartung rows (1.101 phase 2)', () => {
     ]);
   });
 
+  it('Strecken is its own free block, apart from the Logbuch (split 2026-11-26)', () => {
+    expect(blockOwnersOfMenuKey(FEATURE_BLOCKS, 'trip-tracker')).toEqual(['tracker']);
+    expect(blockOwnersOfMenuKey(FEATURE_BLOCKS, 'logbuch')).toEqual(['trip']);
+    const tracker = FEATURE_BLOCKS.find(b => b.id === 'tracker');
+    expect(tracker).toMatchObject({ dependsOn: [], defaultAvailability: 'ga' });
+    expect(tracker?.core).toBeFalsy();
+  });
+
   it('c-trips holds the tripAdmin maintenance row before the admin-only kiosk row', () => {
     const tail = (findContext('c-trips')?.children ?? []).slice(-4);
     expect(tail.map(c => c.name)).toEqual(['maint-divider-trip', 'trip-maintenance', 'maint-divider', 'trip-kiosk']);

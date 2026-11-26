@@ -7,7 +7,8 @@ import { DIARY_SOURCES, DiarySource } from '@okr/shared-models';
 export const DIARY_SOURCE_BLOCKS: Partial<Record<DiarySource, string[]>> = {
   taskDone: ['task'],
   jasstafel: ['jasstafel'],
-  tracker: ['trip', 'journal'],
+  // `trip` stays listed for tenants not yet migrated to the `tracker` block (split 2026-11-26).
+  tracker: ['tracker', 'trip', 'journal'],
 };
 
 /** The rows an app with these effective blocks offers, in `DIARY_SOURCES` order (spec 1.77 §12.4). */
