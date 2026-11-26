@@ -346,6 +346,8 @@ export const generateQrBill = Address.generateQrBill;
 
 // location conversion (address ↔ coords ↔ what3words)
 export const convertLocation = Location.convertLocation;
+// place search (swisstopo SearchServer) for the diary, through the gateway
+export const searchPlaces = Gateway.searchPlaces;
 // location avatar: Gemeinde coat of arms → canton/Bundesland → country flag, as shared avatars/location.<okey>
 export const onLocationWritten = Location.onLocationWritten;
 

@@ -1,0 +1,195 @@
+{
+    "results": [
+        {
+            "attrs": {
+                "detail": "pfaeffikon zh",
+                "featureId": "177",
+                "geom_quadindex": "03001",
+                "geom_st_box2d": "BOX(8.750917 47.337082,8.841997 47.403082)",
+                "label": "<b>Pfäffikon (ZH)</b>",
+                "lat": 47.37028121948242,
+                "lon": 8.781831741333008,
+                "num": 1,
+                "objectclass": "",
+                "origin": "gg25",
+                "rank": 2,
+                "x": 8.781831741333008,
+                "y": 47.37028121948242,
+                "zoomlevel": 4294967295
+            },
+            "id": 109,
+            "weight": 100
+        },
+        {
+            "attrs": {
+                "detail": "pfaeffikon sz freienbach",
+                "geom_quadindex": "030030330010230222001",
+                "geom_st_box2d": "BOX(8.781892 47.200042,8.781892 47.200042)",
+                "label": "<i>Ort</i> <b>Pfäffikon SZ</b> (SZ) - Freienbach",
+                "lat": 47.20003890991211,
+                "lon": 8.781903266906738,
+                "num": 1,
+                "objectclass": "TLM_SIEDLUNGSNAME",
+                "origin": "gazetteer",
+                "rank": 5,
+                "x": 8.781903266906738,
+                "y": 47.20003890991211,
+                "zoomlevel": 10
+            },
+            "id": 191019,
+            "weight": 100
+        },
+        {
+            "attrs": {
+                "detail": "pfaeffikon zh pfaeffikon",
+                "geom_quadindex": "030012310003231110213",
+                "geom_st_box2d": "BOX(8.783683 47.366794,8.783683 47.366794)",
+                "label": "<i>Ort</i> <b>Pfäffikon ZH</b> (ZH) - Pfäffikon",
+                "lat": 47.366790771484375,
+                "lon": 8.783695220947266,
+                "num": 1,
+                "objectclass": "TLM_SIEDLUNGSNAME",
+                "origin": "gazetteer",
+                "rank": 5,
+                "x": 8.783695220947266,
+                "y": 47.366790771484375,
+                "zoomlevel": 10
+            },
+            "id": 248665,
+            "weight": 100
+        },
+        {
+            "attrs": {
+                "detail": "pfaeffikon im saumholz 300/50/25m pfaeffikon",
+                "geom_quadindex": "030012301102320132003",
+                "geom_st_box2d": "BOX(8.768542 47.366888,8.768542 47.366888)",
+                "label": "<i>Gebaeude</i> <b>Pfäffikon Im Saumholz 300/50/25m</b> (ZH) - Pfäffikon",
+                "lat": 47.366886138916016,
+                "lon": 8.768553733825684,
+                "num": 1,
+                "objectclass": "TLM_GEBAEUDE",
+                "origin": "gazetteer",
+                "rank": 6,
+                "x": 8.768553733825684,
+                "y": 47.366886138916016,
+                "zoomlevel": 9
+            },
+            "id": 17798,
+            "weight": 100
+        },
+        {
+            "attrs": {
+                "detail": "pfaeffikon hermatswil 300m pfaeffikon",
+                "geom_quadindex": "030012131122130322322",
+                "geom_st_box2d": "BOX(8.819666 47.396704,8.819666 47.396704)",
+                "label": "<i>Gebaeude</i> <b>Pfäffikon Hermatswil 300m</b> (ZH) - Pfäffikon",
+                "lat": 47.39670181274414,
+                "lon": 8.819677352905273,
+                "num": 1,
+                "objectclass": "TLM_GEBAEUDE",
+                "origin": "gazetteer",
+                "rank": 6,
+                "x": 8.819677352905273,
+                "y": 47.39670181274414,
+                "zoomlevel": 9
+            },
+            "id": 210994,
+            "weight": 100
+        },
+        {
+            "attrs": {
+                "detail": "pfaeffikon roggenacher 300/50/25m freienbach",
+                "geom_quadindex": "030030321120201020100",
+                "geom_st_box2d": "BOX(8.762877 47.196737,8.762877 47.196737)",
+                "label": "<i>Gebaeude</i> <b>Pfäffikon Roggenacher 300/50/25m</b> (SZ) - Freienbach",
+                "lat": 47.19673538208008,
+                "lon": 8.762887954711914,
+                "num": 1,
+                "objectclass": "TLM_GEBAEUDE",
+                "origin": "gazetteer",
+                "rank": 6,
+                "x": 8.762887954711914,
+                "y": 47.19673538208008,
+                "zoomlevel": 9
+            },
+            "id": 266351,
+            "weight": 100
+        },
+        {
+            "attrs": {
+                "detail": "pfaeffikon freienbach",
+                "geom_quadindex": "030030331000023003333",
+                "geom_st_box2d": "BOX(8.800169 47.200785,8.800169 47.200785)",
+                "label": "<i>Ausfahrt</i> <b>Pfäffikon</b> (SZ) - Freienbach",
+                "lat": 47.200782775878906,
+                "lon": 8.800179481506348,
+                "num": 1,
+                "objectclass": "TLM_AUS_EINFAHRT",
+                "origin": "gazetteer",
+                "rank": 6,
+                "x": 8.800179481506348,
+                "y": 47.200782775878906,
+                "zoomlevel": 9
+            },
+            "id": 386839,
+            "weight": 100
+        },
+        {
+            "attrs": {
+                "detail": "pfaeffikon freienbach",
+                "geom_quadindex": "030030331000023111101",
+                "geom_st_box2d": "BOX(8.800449 47.200846,8.800449 47.200846)",
+                "label": "<i>Ausfahrt</i> <b>Pfäffikon</b> (SZ) - Freienbach",
+                "lat": 47.200843811035156,
+                "lon": 8.800459861755371,
+                "num": 1,
+                "objectclass": "TLM_AUS_EINFAHRT",
+                "origin": "gazetteer",
+                "rank": 6,
+                "x": 8.800459861755371,
+                "y": 47.200843811035156,
+                "zoomlevel": 9
+            },
+            "id": 414170,
+            "weight": 100
+        },
+        {
+            "attrs": {
+                "detail": "pfaeffikon pfaeffikon",
+                "geom_quadindex": "03001230112",
+                "geom_st_box2d": "BOX(8.768994 47.364964,8.770738 47.365984)",
+                "label": "<i>Abwasserreinigungsareal</i> <b>Pfäffikon</b> (ZH) - Pfäffikon",
+                "lat": 47.36544418334961,
+                "lon": 8.769811630249023,
+                "num": 1,
+                "objectclass": "TLM_NUTZUNGSAREAL",
+                "origin": "gazetteer",
+                "rank": 6,
+                "x": 8.769811630249023,
+                "y": 47.36544418334961,
+                "zoomlevel": 9
+            },
+            "id": 437120,
+            "weight": 100
+        },
+        {
+            "attrs": {
+                "detail": "pfaeffikon roggenacher 300/50/25m freienbach",
+                "geom_quadindex": "030030321120200113333",
+                "geom_st_box2d": "BOX(8.762852 47.196743,8.762852 47.196743)",
+                "label": "<i>Gebaeude Einzelhaus</i> <b>Pfäffikon Roggenacher 300/50/25m</b> (SZ) - Freienbach",
+                "lat": 47.19674301147461,
+                "lon": 8.762862205505371,
+                "num": 1,
+                "objectclass": "tlm_gebaeude",
+                "origin": "gazetteer",
+                "rank": 6,
+                "x": 8.762862205505371,
+                "y": 47.19674301147461,
+                "zoomlevel": 10
+            },
+            "id": 445886,
+            "weight": 100
+        }
+    ]
+}
