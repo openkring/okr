@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { ENV, OkrEnvironment } from './env';
 import {
   bootEnvironment,
+  consumeTenantQueryParam,
   isValidTenantId,
   PORTAL_TENANT_KEY,
   provideBootEnv,
@@ -77,5 +78,43 @@ describe('provideBootEnv', () => {
   it('provides ENV with the boot environment', () => {
     const e = env();
     expect(provideBootEnv(e)).toEqual({ provide: ENV, useValue: e });
+  });
+});
+
+describe('consumeTenantQueryParam', () => {
+  const mem = (v: string | null) => {
+    const data: Record<string, string> = v ? { [PORTAL_TENANT_KEY]: v } : {};
+    return { data, getItem: (k: string) => data[k] ?? null, setItem: (k: string, x: string) => { data[k] = x; } };
+  };
+
+  it('consumeTenantQueryParam reports a change only for a different valid tenant', () => {
+    const s = mem('scs');
+    const r = consumeTenantQueryParam({ href: 'https://x.test/home?tenant=p13&a=1#f' }, s);
+    expect(r).toEqual({ changed: true, cleanUrl: 'https://x.test/home?a=1#f' });
+    expect(s.data[PORTAL_TENANT_KEY]).toBe('p13');
+  });
+
+  it('the same tenant is no change', () => {
+    const s = mem('scs');
+    expect(consumeTenantQueryParam({ href: 'https://x.test/?tenant=scs' }, s))
+      .toEqual({ changed: false, cleanUrl: 'https://x.test/' });
+  });
+
+  it('an invalid tenant stores nothing and still cleans the url', () => {
+    const s = mem('scs');
+    expect(consumeTenantQueryParam({ href: 'https://x.test/?tenant=..%2Fx' }, s))
+      .toEqual({ changed: false, cleanUrl: 'https://x.test/' });
+    expect(s.data[PORTAL_TENANT_KEY]).toBe('scs');
+  });
+
+  it('without the parameter nothing happens', () => {
+    const s = mem(null);
+    expect(consumeTenantQueryParam({ href: 'https://x.test/a?b=1' }, s)).toEqual({ changed: false, cleanUrl: null });
+    expect(s.data).toEqual({});
+  });
+
+  it('a first choice without a stored tenant is a change', () => {
+    const s = mem(null);
+    expect(consumeTenantQueryParam({ href: 'https://x.test/?tenant=p13' }, s).changed).toBe(true);
   });
 });
