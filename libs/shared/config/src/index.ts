@@ -7,3 +7,4 @@ export * from './lib/firestore';
 export * from './lib/masks';
 export * from './lib/stalled-restore';
 export * from './lib/storage';
+export * from './lib/tenant-theme';
