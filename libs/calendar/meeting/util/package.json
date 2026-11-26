@@ -10,6 +10,7 @@
     "@okr/shared-constants": "*",
     "@okr/shared-models": "*",
     "@okr/shared-util-core": "*",
-    "@okr/security-processing-util": "*"
+    "@okr/security-processing-util": "*",
+    "@okr/relationship-mandate-util": "*"
   }
 }

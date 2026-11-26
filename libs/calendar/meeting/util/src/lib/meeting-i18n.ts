@@ -1,5 +1,7 @@
 import { Signal } from '@angular/core';
 
+import { MANDATE_I18N_KEYS } from '@okr/relationship-mandate-util';
+
 const PFX = '@calendar/meeting/feature.';
 
 export const MEETING_I18N_KEYS = {
@@ -68,6 +70,11 @@ export const MEETING_I18N_KEYS = {
   attendees_absent:                PFX + 'attendees.state.absent',
   attendees_invited:               PFX + 'attendees.state.invited',
   attendees_presentCount:          PFX + 'attendees.presentCount',
+
+  // proxies (Vollmacht, spec 1.180 §6) — the strings live in the mandate scope
+  proxy_record:                    MANDATE_I18N_KEYS.record_proxy,
+  proxy_representedBy:             MANDATE_I18N_KEYS.represented_by,
+  proxy_holds:                     MANDATE_I18N_KEYS.holds_proxies,
 
   // minutes PDF
   pdf_title:                       PFX + 'pdf.title',

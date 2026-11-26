@@ -3,12 +3,13 @@ import { form } from '@angular/forms/signals';
 import { IonCard, IonCardContent, IonCol, IonGrid, IonRow } from '@ionic/angular';
 
 import { DEFAULT_NOTES, DEFAULT_TAGS, LONG_NAME_LENGTH } from '@okr/shared-constants';
-import { AgendaItem, AvatarInfo, MeetingModel, RoleName, UserModel } from '@okr/shared-models';
+import { AgendaItem, AvatarInfo, MandateModel, MeetingModel, RoleName, UserModel } from '@okr/shared-models';
 import { Chips, DateInput, DateInputI18n, ErrorNote, TextareaInput, TextareaInputI18n, TextInput, TextInputI18n, TimeInput, TimeInputI18n } from '@okr/shared-ui';
 import { validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { coerceBoolean, freeTextLocationAvatar, getEventLocationName, hasRole } from '@okr/shared-util-core';
 
 import { MeetingI18n, meetingValidations } from '@okr/calendar-meeting-util';
+import { mayRecordProxy } from '@okr/relationship-mandate-util';
 import { AgendaList } from './agenda-list';
 import { AttendeeList } from './attendee-list';
 
@@ -57,7 +58,9 @@ import { AttendeeList } from './attendee-list';
         </ion-card>
 
         <okr-attendee-list [attendees]="attendees()" (attendeesChange)="onListChange('attendees', $event)"
-          [i18n]="i18n()" [readOnly]="isReadOnly()" />
+          [i18n]="i18n()" [readOnly]="isReadOnly()"
+          [meetingKey]="meetingKey()" [proxies]="proxies()" [recordProxyFor]="recordProxyFor()"
+          (recordProxy)="recordProxy.emit($event)" />
 
         <okr-agenda-list [agenda]="agenda()" (agendaChange)="onListChange('agenda', $event)"
           [i18n]="i18n()" [readOnly]="isReadOnly()" [minutesMode]="minutesMode()"
@@ -89,11 +92,17 @@ export class MeetingForm {
   public readonly showForm = input(true);
   /** minutes mode reveals the per-item minutes/decision fields of the agenda */
   public readonly minutesMode = input(false);
+  /** the proxies recorded for this meeting (spec 1.180 §6) */
+  public readonly proxies = input<MandateModel[]>([]);
+  /** the tenant's maxProxiesPerHolder; 0 = no proxies, the action is hidden */
+  public readonly proxyCap = input(0);
 
   // outputs
   public readonly dirty = output<boolean>();
   public readonly valid = output<boolean>();
   public readonly addTask = output<AgendaItem>();
+  /** «Vollmacht erfassen» on an attendee row: the grantor's personKey */
+  public readonly recordProxy = output<string>();
 
   // signal form — wraps formData with Vest validation
   // The suite needs '', this.allTags(), which validateVestTree does not pass — so the bridge
@@ -125,6 +134,21 @@ export class MeetingForm {
   protected readonly tags = computed(() => this.formData()?.tags ?? DEFAULT_TAGS);
   protected readonly agenda = computed(() => this.formData()?.agenda ?? []);
   protected readonly attendees = computed(() => this.formData()?.attendees ?? []);
+  protected readonly meetingKey = computed(() => this.formData()?.okey ?? '');
+
+  /**
+   * The rows that offer «Vollmacht erfassen»: a stored meeting in draft / invited, a tenant that allows proxies, and the
+   * caller is the grantor (their own row), the chair or privileged / memberAdmin (every row).
+   */
+  protected readonly recordProxyFor = computed(() => {
+    const meeting = this.formData();
+    const callerKey = this.currentUser()?.personKey ?? '';
+    if (!meeting || !callerKey) return [];
+    const isAdmin = this.hasRole('privileged') || this.hasRole('memberAdmin');
+    return (meeting.attendees ?? [])
+      .map(a => a.person?.key ?? '')
+      .filter(key => mayRecordProxy(meeting, key, callerKey, this.proxyCap(), isAdmin));
+  });
 
   protected nameI18n = computed(() => ({
     name: 'name',

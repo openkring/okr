@@ -2,7 +2,7 @@ import { Component, computed, inject, input, linkedSignal, signal } from '@angul
 import { IonContent, ModalController } from '@ionic/angular';
 
 import { I18nService } from '@okr/shared-i18n';
-import { AgendaItem, MeetingModel, UserModel } from '@okr/shared-models';
+import { AgendaItem, MandateModel, MeetingModel, UserModel } from '@okr/shared-models';
 import { ChangeConfirmation, ChangeConfirmationI18n, Header } from '@okr/shared-ui';
 import { coerceBoolean, safeStructuredClone } from '@okr/shared-util-core';
 
@@ -15,7 +15,8 @@ import { MeetingForm } from './meeting.form';
  * input and dismisses the edited copy — no store, no service.
  *
  * `addTask` is dismissed with its own role so the calling store can open the task
- * modal with the agenda item's title and the meeting back-link.
+ * modal with the agenda item's title and the meeting back-link. `recordProxy` likewise
+ * (role 'recordProxy', with the grantor's personKey): the store opens the Vollmacht modal.
  */
 @Component({
   selector: 'okr-meeting-edit-modal',
@@ -43,6 +44,9 @@ import { MeetingForm } from './meeting.form';
           (dirty)="formDirty.set($event)"
           (valid)="formValid.set($event)"
           (addTask)="requestTask($event)"
+          [proxies]="proxies()"
+          [proxyCap]="proxyCap()"
+          (recordProxy)="requestProxy($event)"
         />
       }
     </ion-content>
@@ -66,6 +70,11 @@ export class MeetingEditModal {
   public readonly readOnly = input(true);
   /** true when the modal is opened to write the minutes rather than to prepare the agenda */
   public readonly minutesMode = input(false);
+
+  /** the proxies recorded for this meeting (spec 1.180 §6), loaded by the store */
+  public readonly proxies = input<MandateModel[]>([]);
+  /** the tenant's maxProxiesPerHolder; 0 = no proxies */
+  public readonly proxyCap = input(0);
 
   protected readonly isReadOnly = computed(() => coerceBoolean(this.readOnly()));
   protected readonly isMinutesMode = computed(() => coerceBoolean(this.minutesMode()));
@@ -102,6 +111,11 @@ export class MeetingEditModal {
   /** Hand the agenda item back to the store, together with the edits made so far. */
   protected async requestTask(item: AgendaItem): Promise<void> {
     await dismissOverlay(this.modalController, { meeting: this.formData(), agendaItem: item }, 'addTask');
+  }
+
+  /** Hand the grantor back to the store, together with the edits made so far. */
+  protected async requestProxy(grantorKey: string): Promise<void> {
+    await dismissOverlay(this.modalController, { meeting: this.formData(), grantorKey }, 'recordProxy');
   }
 
   protected onFormDataChange(formData: MeetingModel): void {

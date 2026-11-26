@@ -1,4 +1,4 @@
-import { AvatarInfo, MandateAction, MandateModel } from '@okr/shared-models';
+import { AvatarInfo, MandateAction, MandateModel, MeetingModel } from '@okr/shared-models';
 
 /**
  * Pure rules of the Vollmacht (spec 1.180). `today` is a StoreDate string (yyyymmdd) passed in by the caller —
@@ -40,6 +40,31 @@ export function mayReceiveProxy(mandates: MandateModel[], meetingKey: string, gr
 /** The active proxy a new one for this grantor and meeting has to revoke (one proxy per grantor and meeting). */
 export function proxyReplaces(mandates: MandateModel[], meetingKey: string, grantorKey: string, today: string): MandateModel | undefined {
   return proxyFor(mandates, meetingKey, grantorKey, today);
+}
+
+/**
+ * Proxies are recorded and revoked only while the meeting is `draft` or `invited` (spec §6); from `held` on they are
+ * read-only. A legacy meeting without `state` counts as a draft (the model default). The rules do not check this.
+ */
+export function isMeetingOpenForProxies(meeting: Pick<MeetingModel, 'state'>): boolean {
+  const state = meeting.state ?? 'draft';
+  return state === 'draft' || state === 'invited';
+}
+
+/**
+ * May `callerKey` record a proxy of `grantorKey` for this meeting (spec §6)? The meeting must be stored and open, the
+ * tenant must allow proxies (`cap` = maxProxiesPerHolder > 0), and the caller must be the grantor, the chair
+ * (`meeting.chair.key` is the raw personKey) or an admin (`isAdmin` = privileged or memberAdmin, decided by the caller).
+ */
+export function mayRecordProxy(
+  meeting: Pick<MeetingModel, 'okey' | 'state' | 'chair'>,
+  grantorKey: string,
+  callerKey: string,
+  cap: number,
+  isAdmin: boolean,
+): boolean {
+  if (!meeting.okey || !grantorKey || !callerKey || cap <= 0 || !isMeetingOpenForProxies(meeting)) return false;
+  return isAdmin || callerKey === grantorKey || callerKey === (meeting.chair?.key ?? '');
 }
 
 export function revokePatch(byKey: string, now: string): Pick<MandateModel, 'revokedAt' | 'revokedByKey'> {

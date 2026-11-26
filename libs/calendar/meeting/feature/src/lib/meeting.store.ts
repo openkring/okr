@@ -18,6 +18,7 @@ import { DocGenerationService } from '@okr/content-pdf-template-data-access';
 import { openBulkEmailFlow, type VersandRecipient } from '@okr/content-pdf-template-feature';
 import { EsignService } from '@okr/content-esign-data-access';
 import { MembershipService } from '@okr/relationship-membership-data-access';
+import { MandateStore } from '@okr/relationship-mandate-feature';
 import { TaskService } from '@okr/project-task-data-access';
 
 export type MeetingState = {
@@ -46,6 +47,7 @@ export const MeetingStore = signalStore(
     docGenerationService: inject(DocGenerationService),
     esignService: inject(EsignService),
     i18nService: inject(I18nService),
+    mandateStore: inject(MandateStore),
   })),
   withProps((store) => ({
     i18n: store.i18nService.translateAll(MEETING_I18N_KEYS),
@@ -143,7 +145,10 @@ export const MeetingStore = signalStore(
 
     async edit(meeting: MeetingModel, readOnly = true, minutesMode = false): Promise<void> {
       // dynamic import: the modal lives in the ui lib and is only needed on demand
-      const { MeetingEditModal } = await import('@okr/calendar-meeting-ui');
+      const [{ MeetingEditModal }, proxies] = await Promise.all([
+        import('@okr/calendar-meeting-ui'),
+        store.mandateStore.proxiesForMeeting(meeting.okey ?? ''),
+      ]);
       const modal = await store.modalController.create({
         component: MeetingEditModal,
         componentProps: {
@@ -152,10 +157,17 @@ export const MeetingStore = signalStore(
           tagModel: MeetingModelName,
           readOnly,
           minutesMode,
+          proxies,
+          proxyCap: store.appStore.appConfig().maxProxiesPerHolder ?? 1,
         }
       });
       modal.present();
       const { data, role } = await modal.onDidDismiss();
+      if (role === 'recordProxy' && data) {
+        const { meeting: edited, grantorKey } = data as { meeting: MeetingModel; grantorKey: string };
+        await this.recordProxy(edited, grantorKey, readOnly, minutesMode);
+        return;
+      }
       if (readOnly || !data) return;
 
       if (role === 'confirm') {
@@ -173,6 +185,26 @@ export const MeetingStore = signalStore(
         const reloaded = await firstValueFrom(store.meetingService.read(savedKey ?? edited.okey));
         if (reloaded) await this.edit(reloaded, false, minutesMode);
       }
+    },
+
+    /**
+     * «Vollmacht erfassen» on an attendee row (spec 1.180 §6). In edit mode the edits made so far are saved first, as
+     * for `addTask`, and the saved copy is used (a re-read may still answer from the cache); a read-only viewer (a plain
+     * attendee recording their own proxy) saves nothing and works on the meeting as loaded. `MandateStore.recordProxy`
+     * checks who may record and the draft / invited lock, the Vollmacht modal re-checks the lock against the server
+     * before it writes, and the meeting modal reopens where the user left off.
+     */
+    async recordProxy(edited: MeetingModel, grantorKey: string, readOnly: boolean, minutesMode: boolean): Promise<void> {
+      let meeting = edited;
+      if (!readOnly) {
+        const savedKey = await this.save(edited);
+        if (!savedKey) return;
+        meeting = { ...edited, okey: savedKey };
+        this.reload();
+      }
+      if (!meeting.okey) return;
+      await store.mandateStore.recordProxy(meeting, grantorKey);
+      await this.edit(meeting, readOnly, minutesMode);
     },
 
     /** Write the meeting; returns its okey (existing or freshly created). */
@@ -220,6 +252,8 @@ export const MeetingStore = signalStore(
           }))
           .filter(s => s.email !== '');
 
+        // represented attendees are printed «vertreten durch …» (spec 1.180 §6)
+        const proxies = await store.mandateStore.proxiesForMeeting(meeting.okey);
         const html = buildMinutesDocument(meeting, {
           signatures,
           tenantName: store.appStore.appConfig().appName,
@@ -239,8 +273,9 @@ export const MeetingStore = signalStore(
             decision: store.i18n.agenda_decision_label(),
             generated: store.i18n.pdf_generated(),
             signatures: store.i18n.pdf_signatures(),
+            representedBy: store.i18n.proxy_representedBy(),
           },
-        });
+        }, proxies);
 
         const generated = await store.docGenerationService.generate({
           html,

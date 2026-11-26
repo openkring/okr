@@ -44,6 +44,9 @@
   "cancel": "Annuler",
   "mandate_inactive": "La procuration de {name} n’est plus valable.",
   "mandate_check_error": "La procuration n’a pas pu être vérifiée pour l’instant. Réessaie, s’il te plaît.",
+  "proxy_no_candidates": "Personne ne peut prendre cette procuration pour l’instant. Tous les autres participants représentent déjà autant de membres que permis.",
+  "proxy_closed": "La séance a déjà eu lieu. Les procurations ne peuvent être enregistrées qu’avant.",
+  "proxy_cap_reached": "{name} représente déjà autant de membres que permis. Choisis une autre personne, s’il te plaît.",
   "validation": {
     "grantee_required": "Choisis qui reçoit la procuration.",
     "grantee_is_grantor": "Tu ne peux pas te donner une procuration à toi-même.",

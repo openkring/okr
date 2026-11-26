@@ -51,6 +51,10 @@ export const MANDATE_I18N_KEYS = {
   // refusals of a delegated change (spec 1.180 §5.2)
   mandate_inactive:    PFX + 'mandate_inactive',
   mandate_check_error: PFX + 'mandate_check_error',
+  // recording a proxy for a meeting (spec 1.180 §6)
+  proxy_no_candidates: PFX + 'proxy_no_candidates',
+  proxy_closed:        PFX + 'proxy_closed',
+  proxy_cap_reached:   PFX + 'proxy_cap_reached',
 } satisfies Record<string, string>;
 
 export type MandateI18n = { [K in keyof typeof MANDATE_I18N_KEYS]: Signal<string> };

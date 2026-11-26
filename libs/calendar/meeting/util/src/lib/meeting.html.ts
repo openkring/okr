@@ -1,6 +1,7 @@
-import type { AgendaItem, MeetingAttendee, MeetingModel } from '@okr/shared-models';
-import { getEventLocationName } from '@okr/shared-util-core';
+import type { AgendaItem, MandateModel, MeetingAttendee, MeetingModel } from '@okr/shared-models';
+import { fill, getEventLocationName } from '@okr/shared-util-core';
 import { escapeHtml } from '@okr/security-processing-util';
+import { proxyFor } from '@okr/relationship-mandate-util';
 
 /**
  * The printable minutes, handed to the same `generateDocument` HTML→PDF Cloud Function
@@ -25,6 +26,7 @@ export interface MinutesDocumentLabels {
   readonly decision: string;
   readonly generated: string;    // 'Erstellt am'
   readonly signatures: string;   // 'Unterschriften'
+  readonly representedBy: string; // 'vertreten durch {name}'
 }
 
 /** One signee of the minutes — chair and secretary. */
@@ -43,10 +45,15 @@ export interface MinutesDocumentOptions {
   readonly signatures?: readonly MinutesSignature[];
 }
 
-function attendeeNames(attendees: MeetingAttendee[], state: MeetingAttendee['state']): string[] {
+/** The name, followed by «vertreten durch {holder}» when `representedBy` knows a holder of an active proxy. */
+function attendeeNames(attendees: MeetingAttendee[], state: MeetingAttendee['state'], representedBy: (personKey: string) => string): string[] {
   return attendees
     .filter(a => a.state === state)
-    .map(a => `${a.person?.name1 ?? ''} ${a.person?.name2 ?? ''}`.trim())
+    .map(a => {
+      const name = `${a.person?.name1 ?? ''} ${a.person?.name2 ?? ''}`.trim();
+      const note = name === '' ? '' : representedBy(a.person?.key ?? '');
+      return note === '' ? name : `${name}, ${note}`;
+    })
     .filter(name => name !== '');
 }
 
@@ -92,17 +99,29 @@ function signatureBlock(signatures: readonly MinutesSignature[], label: string):
  * Render one meeting as a self-contained HTML document.
  * @param meeting the meeting whose agenda, attendance and minutes are printed
  * @param options tenant name, the two formatted dates and the translated labels
+ * @param proxies the proxies recorded for this meeting (spec 1.180 §6). A represented attendee is printed as
+ *   «Anna Muster, vertreten durch Beat Beispiel». Only proxies active on the meeting date count — a revoked one does not.
  */
-export function buildMinutesDocument(meeting: MeetingModel, options: MinutesDocumentOptions): string {
+export function buildMinutesDocument(meeting: MeetingModel, options: MinutesDocumentOptions, proxies: readonly MandateModel[] = []): string {
   const { labels } = options;
   const attendees = meeting.attendees ?? [];
   const agenda = meeting.agenda ?? [];
 
+  const asOf = meeting.meetingDate ?? '';
+  const representedBy = (personKey: string): string => {
+    if (!personKey || proxies.length === 0) return '';
+    const proxy = proxyFor([...proxies], meeting.okey ?? '', personKey, asOf);
+    if (!proxy) return '';
+    const holder = proxy.grantee?.key ? proxy.grantee : attendees.find(a => a.person?.key === proxy.granteeKey)?.person;
+    const holderName = `${holder?.name1 ?? ''} ${holder?.name2 ?? ''}`.trim();
+    return holderName === '' ? '' : fill(labels.representedBy, { name: holderName });
+  };
+
   const attendance = [
-    attendeeRow(labels.present, attendeeNames(attendees, 'present')),
-    attendeeRow(labels.excused, attendeeNames(attendees, 'excused')),
-    attendeeRow(labels.absent, attendeeNames(attendees, 'absent')),
-    attendeeRow(labels.invited, attendeeNames(attendees, 'invited')),
+    attendeeRow(labels.present, attendeeNames(attendees, 'present', representedBy)),
+    attendeeRow(labels.excused, attendeeNames(attendees, 'excused', representedBy)),
+    attendeeRow(labels.absent, attendeeNames(attendees, 'absent', representedBy)),
+    attendeeRow(labels.invited, attendeeNames(attendees, 'invited', representedBy)),
   ].join('');
 
   const body = agenda.length === 0

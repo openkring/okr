@@ -44,6 +44,9 @@
   "cancel": "Abbrechen",
   "mandate_inactive": "Die Vollmacht von {name} gilt nicht mehr.",
   "mandate_check_error": "Die Vollmacht konnte gerade nicht geprüft werden. Bitte versuche es nochmals.",
+  "proxy_no_candidates": "Gerade kann niemand diese Vollmacht übernehmen. Alle anderen Teilnehmenden vertreten schon so viele Mitglieder, wie erlaubt ist.",
+  "proxy_closed": "Die Sitzung hat schon stattgefunden. Vollmachten lassen sich nur vorher erfassen.",
+  "proxy_cap_reached": "{name} vertritt schon so viele Mitglieder, wie erlaubt ist. Bitte wähle eine andere Person.",
   "validation": {
     "grantee_required": "Bitte wähle, wer die Vollmacht erhält.",
     "grantee_is_grantor": "Du kannst dir nicht selbst eine Vollmacht erteilen.",

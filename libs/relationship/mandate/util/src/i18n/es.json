@@ -44,6 +44,9 @@
   "cancel": "Cancelar",
   "mandate_inactive": "El poder de {name} ya no es válido.",
   "mandate_check_error": "No se ha podido comprobar el poder ahora mismo. Inténtalo de nuevo.",
+  "proxy_no_candidates": "Ahora mismo nadie puede asumir este poder. Todos los demás participantes ya representan a tantos miembros como está permitido.",
+  "proxy_closed": "La reunión ya se ha celebrado. Los poderes solo se pueden registrar antes.",
+  "proxy_cap_reached": "{name} ya representa a tantos miembros como está permitido. Elige a otra persona, por favor.",
   "validation": {
     "grantee_required": "Elige quién recibe el poder.",
     "grantee_is_grantor": "No puedes otorgarte un poder a ti mismo.",

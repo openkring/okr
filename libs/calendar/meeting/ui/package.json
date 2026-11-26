@@ -14,6 +14,7 @@
     "@okr/shared-ui": "*",
     "@okr/shared-util-angular": "*",
     "@okr/shared-util-core": "*",
-    "@okr/calendar-meeting-util": "*"
+    "@okr/calendar-meeting-util": "*",
+    "@okr/relationship-mandate-util": "*"
   }
 }

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { AvatarInfo, MeetingModel } from '@okr/shared-models';
+import { AvatarInfo, MandateModel, MeetingModel } from '@okr/shared-models';
+import { newProxyMandate } from '@okr/relationship-mandate-util';
 import { freeTextLocationAvatar, locationToAvatar } from '@okr/shared-util-core';
 
 import { buildMinutesDocument, MinutesDocumentOptions } from './meeting.html';
@@ -18,7 +19,7 @@ const options: MinutesDocumentOptions = {
     title: 'Protokoll', date: 'Datum', location: 'Ort', attendees: 'Teilnehmende',
     present: 'Anwesend', excused: 'Entschuldigt', absent: 'Abwesend', invited: 'Eingeladen',
     agenda: 'Traktanden', minutes: 'Protokoll', decision: 'Beschluss', generated: 'Erstellt am',
-    signatures: 'Unterschriften',
+    signatures: 'Unterschriften', representedBy: 'vertreten durch {name}',
   },
 };
 
@@ -60,6 +61,28 @@ describe('buildMinutesDocument', () => {
     expect(html).toContain('<strong>Entschuldigt</strong> (1)');
     // states nobody has are left out entirely
     expect(html).not.toContain('Abwesend');
+  });
+
+  it('names the holder of an active proxy after the represented attendee', () => {
+    const m = { ...meeting(), okey: 'm1', meetingDate: '20260901' };
+    m.attendees = [
+      { person: avatar('Anna', 'Muster'), state: 'excused' },
+      { person: avatar('Beat', 'Beispiel'), state: 'present' },
+    ];
+    const proxy = { ...newProxyMandate('scs', avatar('Anna', 'Muster'), avatar('Beat', 'Beispiel'), 'm1', 'Anna'), okey: 'p1' };
+    const html = buildMinutesDocument(m, options, [proxy]);
+    expect(html).toContain('Anna Muster, vertreten durch Beat Beispiel');
+  });
+
+  it('leaves a revoked proxy and a proxy of another meeting out', () => {
+    const m = { ...meeting(), okey: 'm1', meetingDate: '20260901' };
+    const revoked: MandateModel = {
+      ...newProxyMandate('scs', avatar('Beat', 'Beispiel'), avatar('Anna', 'Muster'), 'm1', 'Beat'),
+      okey: 'p1', revokedAt: '20260830120000', revokedByKey: 'Beat',
+    };
+    const other = { ...newProxyMandate('scs', avatar('Beat', 'Beispiel'), avatar('Anna', 'Muster'), 'm2', 'Beat'), okey: 'p2' };
+    const html = buildMinutesDocument(m, options, [revoked, other]);
+    expect(html).not.toContain('vertreten durch');
   });
 
   it('numbers the agenda items and renders minutes and decisions', () => {

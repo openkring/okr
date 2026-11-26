@@ -1,17 +1,20 @@
 import { Component, computed, effect, inject, input, model, output } from '@angular/core';
 import { form } from '@angular/forms/signals';
-import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonChip, IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonRow } from '@ionic/angular';
+import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonChip, IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonNote, IonRow } from '@ionic/angular';
 
 import { AvatarInfo, MandateAction, MandateModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { Checkbox, CheckboxI18n, DateInput, DateInputI18n, ErrorNote } from '@okr/shared-ui';
 import { MODEL_SELECTOR, validateVestTree, vestErrors } from '@okr/shared-util-angular';
-import { coerceBoolean, DateFormat, getFullName, getTodayStr } from '@okr/shared-util-core';
+import { coerceBoolean, DateFormat, fill, getFullName, getTodayStr } from '@okr/shared-util-core';
 import { MandateI18n, mandateValidations } from '@okr/relationship-mandate-util';
 
 /**
  * A family Vollmacht (spec 1.180 §5.1): who receives it, what they may do, until when. Pure apart from the person
  * picker: the parent modal saves through the change confirmation.
+ *
+ * A proxy (`kind: 'proxy'`, spec §6) only picks the grantee, and only among `suggestions` — the meeting's attendees
+ * who may still receive one. There is no full person picker, no actions and no end date: the proxy is for one meeting.
  */
 @Component({
   selector: 'okr-mandate-form',
@@ -19,7 +22,7 @@ import { MandateI18n, mandateValidations } from '@okr/relationship-mandate-util'
   imports: [
     SvgIconPipe,
     Checkbox, DateInput, ErrorNote,
-    IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonGrid, IonRow, IonCol, IonItem, IonLabel, IonButton, IonIcon, IonChip,
+    IonCard, IonCardHeader, IonCardTitle, IonCardSubtitle, IonCardContent, IonGrid, IonRow, IonCol, IonItem, IonLabel, IonNote, IonButton, IonIcon, IonChip,
   ],
   styles: [`@media (width <= 600px) { ion-card { margin: 5px;} }`],
   template: `
@@ -28,6 +31,9 @@ import { MandateI18n, mandateValidations } from '@okr/relationship-mandate-util'
         <ion-card>
           <ion-card-header>
             <ion-card-title>{{ i18n().grantee_label() }}</ion-card-title>
+            @if (isProxy() && grantorLabel(); as label) {
+              <ion-card-subtitle>{{ label }}</ion-card-subtitle>
+            }
           </ion-card-header>
           <ion-card-content class="ion-no-padding">
             @if (!isReadOnly() && offered().length > 0) {
@@ -40,11 +46,16 @@ import { MandateI18n, mandateValidations } from '@okr/relationship-mandate-util'
                 }
               </div>
             }
+            @if (isProxy() && !isReadOnly() && offered().length === 0) {
+              <ion-item lines="none">
+                <ion-note>{{ i18n().proxy_no_candidates() }}</ion-note>
+              </ion-item>
+            }
             <ion-item lines="none">
               @if (granteeName(); as name) {
                 <ion-label>{{ name }}</ion-label>
               }
-              @if (!isReadOnly()) {
+              @if (!isReadOnly() && !isProxy()) {
                 <ion-button [slot]="granteeName() ? 'end' : 'start'" fill="clear" (click)="pickGrantee()">
                   <ion-icon slot="start" src="{{ 'person-add' | svgIcon }}" />
                   {{ granteeName() ? i18n().grantee_change() : i18n().grantee_pick() }}
@@ -55,32 +66,34 @@ import { MandateI18n, mandateValidations } from '@okr/relationship-mandate-util'
           </ion-card-content>
         </ion-card>
 
-        <ion-card>
-          <ion-card-header>
-            <ion-card-title>{{ i18n().actions_label() }}</ion-card-title>
-          </ion-card-header>
-          <ion-card-content class="ion-no-padding">
-            <okr-checkbox [i18n]="attendI18n()" [checked]="hasAction('calevent.attend')"
-              (checkedChange)="onActionChange('calevent.attend', $event)" [readOnly]="isReadOnly()" />
-            <okr-checkbox [i18n]="answerI18n()" [checked]="hasAction('invitation.answer')"
-              (checkedChange)="onActionChange('invitation.answer', $event)" [readOnly]="isReadOnly()" />
-            <okr-error-note [errors]="actionsErrors()" />
-          </ion-card-content>
-        </ion-card>
+        @if (!isProxy()) {
+          <ion-card>
+            <ion-card-header>
+              <ion-card-title>{{ i18n().actions_label() }}</ion-card-title>
+            </ion-card-header>
+            <ion-card-content class="ion-no-padding">
+              <okr-checkbox [i18n]="attendI18n()" [checked]="hasAction('calevent.attend')"
+                (checkedChange)="onActionChange('calevent.attend', $event)" [readOnly]="isReadOnly()" />
+              <okr-checkbox [i18n]="answerI18n()" [checked]="hasAction('invitation.answer')"
+                (checkedChange)="onActionChange('invitation.answer', $event)" [readOnly]="isReadOnly()" />
+              <okr-error-note [errors]="actionsErrors()" />
+            </ion-card-content>
+          </ion-card>
 
-        <ion-card>
-          <ion-card-content class="ion-no-padding">
-            <ion-grid>
-              <ion-row>
-                <ion-col size="12" size-md="6">
-                  <okr-date-input [i18n]="validToI18n()" [storeDate]="validTo()" (storeDateChange)="onValidToChange($event)"
-                    [minDate]="today" [readOnly]="isReadOnly()" />
-                  <okr-error-note [errors]="validToErrors()" />
-                </ion-col>
-              </ion-row>
-            </ion-grid>
-          </ion-card-content>
-        </ion-card>
+          <ion-card>
+            <ion-card-content class="ion-no-padding">
+              <ion-grid>
+                <ion-row>
+                  <ion-col size="12" size-md="6">
+                    <okr-date-input [i18n]="validToI18n()" [storeDate]="validTo()" (storeDateChange)="onValidToChange($event)"
+                      [minDate]="today" [readOnly]="isReadOnly()" />
+                    <okr-error-note [errors]="validToErrors()" />
+                  </ion-col>
+                </ion-row>
+              </ion-grid>
+            </ion-card-content>
+          </ion-card>
+        }
       </form>
     }
   `,
@@ -121,6 +134,13 @@ export class MandateForm {
   }
 
   protected readonly isReadOnly = computed(() => coerceBoolean(this.readOnly()));
+  protected readonly isProxy = computed(() => this.formData()?.kind === 'proxy');
+  /** «für {Name}» — whose proxy is being recorded */
+  protected readonly grantorLabel = computed(() => {
+    const g = this.formData()?.grantor;
+    const name = g?.key ? getFullName(g.name1, g.name2) : '';
+    return name ? fill(this.i18n().for_marker(), { name }) : '';
+  });
 
   // fields (raw docs may lack later fields)
   protected readonly granteeName = computed(() => {

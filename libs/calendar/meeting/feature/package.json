@@ -24,6 +24,7 @@
     "@okr/shared-util-angular": "*",
     "@okr/shared-util-core": "*",
     "@okr/project-task-data-access": "*",
-    "tslib": "^2.8.1"
+    "tslib": "^2.8.1",
+    "@okr/relationship-mandate-feature": "*"
   }
 }

@@ -44,6 +44,9 @@
   "cancel": "Annulla",
   "mandate_inactive": "La delega di {name} non è più valida.",
   "mandate_check_error": "Non è stato possibile verificare la delega in questo momento. Riprova.",
+  "proxy_no_candidates": "Al momento nessuno può assumere questa delega. Tutti gli altri partecipanti rappresentano già il numero massimo di membri consentito.",
+  "proxy_closed": "La riunione si è già svolta. Le deleghe si possono registrare solo prima.",
+  "proxy_cap_reached": "{name} rappresenta già il numero massimo di membri consentito. Scegli un’altra persona, per favore.",
   "validation": {
     "grantee_required": "Scegli chi riceve la delega.",
     "grantee_is_grantor": "Non puoi conferire una delega a te stesso.",

@@ -44,6 +44,9 @@
   "cancel": "Cancel",
   "mandate_inactive": "The proxy from {name} is no longer valid.",
   "mandate_check_error": "The proxy could not be checked just now. Please try again.",
+  "proxy_no_candidates": "Nobody can take this proxy right now. All other attendees already represent as many members as allowed.",
+  "proxy_closed": "The meeting has already taken place. Proxies can only be recorded beforehand.",
+  "proxy_cap_reached": "{name} already represents as many members as allowed. Please choose someone else.",
   "validation": {
     "grantee_required": "Please choose who receives the proxy.",
     "grantee_is_grantor": "You cannot give a proxy to yourself.",

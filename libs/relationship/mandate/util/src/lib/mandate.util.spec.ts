@@ -5,6 +5,8 @@ import { AvatarInfo, MandateModel } from '@okr/shared-models';
 import {
   grantorKeysFor,
   isMandateActive,
+  isMeetingOpenForProxies,
+  mayRecordProxy,
   mandatePartyName,
   mayReceiveProxy,
   newFamilyMandate,
@@ -161,5 +163,47 @@ describe('mandatePartyName', () => {
   it('is empty for an unknown person or an empty key, never the key', () => {
     expect(mandatePartyName('zz', given, received)).toBe('');
     expect(mandatePartyName('', given, received)).toBe('');
+  });
+});
+
+describe('isMeetingOpenForProxies', () => {
+  it('is open while draft or invited', () => {
+    expect(isMeetingOpenForProxies({ state: 'draft' })).toBe(true);
+    expect(isMeetingOpenForProxies({ state: 'invited' })).toBe(true);
+  });
+  it('is closed from held on', () => {
+    expect(isMeetingOpenForProxies({ state: 'held' })).toBe(false);
+    expect(isMeetingOpenForProxies({ state: 'approved' })).toBe(false);
+  });
+  it('treats a legacy meeting without state as a draft', () => {
+    expect(isMeetingOpenForProxies({ state: undefined as unknown as 'draft' })).toBe(true);
+  });
+});
+
+describe('mayRecordProxy', () => {
+  const meeting = { okey: 'mt1', state: 'invited' as const, chair: avatar('c1') };
+  it('lets the grantor record their own proxy', () => {
+    expect(mayRecordProxy(meeting, 'g1', 'g1', 1, false)).toBe(true);
+  });
+  it('lets the chair record a proxy for anybody', () => {
+    expect(mayRecordProxy(meeting, 'g1', 'c1', 1, false)).toBe(true);
+  });
+  it('lets an admin record a proxy for anybody', () => {
+    expect(mayRecordProxy(meeting, 'g1', 'x', 1, true)).toBe(true);
+  });
+  it('refuses another plain attendee', () => {
+    expect(mayRecordProxy(meeting, 'g1', 'x', 1, false)).toBe(false);
+  });
+  it('refuses when the tenant allows no proxies', () => {
+    expect(mayRecordProxy(meeting, 'g1', 'g1', 0, true)).toBe(false);
+  });
+  it('refuses once the meeting is held', () => {
+    expect(mayRecordProxy({ ...meeting, state: 'held' }, 'g1', 'g1', 1, true)).toBe(false);
+  });
+  it('refuses for a meeting not stored yet', () => {
+    expect(mayRecordProxy({ ...meeting, okey: '' }, 'g1', 'g1', 1, true)).toBe(false);
+  });
+  it('refuses without a caller', () => {
+    expect(mayRecordProxy(meeting, 'g1', '', 1, true)).toBe(false);
   });
 });
