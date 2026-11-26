@@ -45,7 +45,8 @@ type History = EditorHistory<EditorState>;
     }
     <okr-article-editor-surface [profile]="profile" [history]="draft().history()" (historyChange)="onHistory($event)" [errors]="draft().errors()"
       [articleImages]="articleImages()" [onUpload]="onUpload()" [storagePath]="storagePath()" [currentUser]="currentUser()"
-      [eventLines]="eventLines()" [calendars]="calendars()" [active]="active()" [i18n]="i18n">
+      [eventLines]="eventLines()" [calendars]="calendars()" [active]="active()" [i18n]="i18n"
+      [attr.inert]="draft().readOnly() ? '' : null" [attr.aria-busy]="draft().readOnly() ? 'true' : null">
       <ion-button barEnd fill="clear" size="small" [title]="i18n.article_editor_mail_insert_button()" (click)="insertArticle()">
         <ion-icon slot="start" src="{{ 'add' | svgIcon }}" aria-hidden="true" />
         {{ i18n.article_editor_mail_insert_button() }}

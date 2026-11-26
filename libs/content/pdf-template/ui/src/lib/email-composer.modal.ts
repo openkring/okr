@@ -960,6 +960,8 @@ export class EmailComposerModal {
   } as ChangeConfirmationI18n));
 
   constructor() {
+    // while a send runs, the editor cannot change the mail: the server sends the page as flushed
+    this.draft.lockWhile(() => this.isSending());
     // The Postversand segment exists only while someone gets a letter: once the last one is unticked, go back to Zustellung.
     effect(() => {
       if (this.activeSegment() === 'post' && !this.anyPost()) this.activeSegment.set('delivery');

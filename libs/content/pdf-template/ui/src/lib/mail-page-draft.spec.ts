@@ -1,4 +1,4 @@
-import { Injector } from '@angular/core';
+import { Injector, signal } from '@angular/core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { ArticleBlock, MailBlock } from '@okr/shared-models';
@@ -7,7 +7,7 @@ import type { ArticleBlock, MailBlock } from '@okr/shared-models';
 vi.mock('@okr/content-pdf-template-data-access', () => ({ MailPageService: class MailPageService {} }));
 
 import { MailPageService } from '@okr/content-pdf-template-data-access';
-import { createHistory, mailArticle, record } from '@okr/cms-section-util';
+import { createHistory, mailArticle, record, replacePresent } from '@okr/cms-section-util';
 
 import { MAIL_PAGE_SAVE_DEBOUNCE_MS, MailPageDraft } from './mail-page-draft';
 
@@ -279,5 +279,29 @@ describe('MailPageDraft', () => {
     expect(draft.valid()).toBe(false);
     expect(draft.errorCount()).toBe(1);
     expect(Object.keys(draft.errors()).length).toBeGreaterThan(0);
+  });
+
+  it('is read-only while its lock holds (a send runs): the blocks do not change, a selection does; afterwards it takes changes again', async () => {
+    const { draft, service } = setup();
+    const sending = signal(false);
+    draft.lockWhile(() => sending());
+    expect(draft.readOnly()).toBe(false);
+    sending.set(true);
+    expect(draft.readOnly()).toBe(true);
+    const before = draft.history();
+    type(draft, '<p>during the send</p>');
+    draft.setBlocks([text('t1', '<p>x</p>'), { id: 'd', type: 'divider' }]);
+    expect(draft.history()).toBe(before);
+    expect(draft.blocks()).toEqual([text('t1', '')]);
+    // a selection alone changes no block
+    draft.setHistory(replacePresent(before, { ...before.present, selectedId: 't1' }));
+    expect(draft.history().present.selectedId).toBe('t1');
+    vi.advanceTimersByTime(MAIL_PAGE_SAVE_DEBOUNCE_MS);
+    expect(await draft.flush()).toBe(true);
+    expect(service.saveDraft).not.toHaveBeenCalled();
+    sending.set(false);
+    expect(draft.readOnly()).toBe(false);
+    type(draft, '<p>after</p>');
+    expect(draft.blocks()).toEqual([text('t1', '<p>after</p>')]);
   });
 });

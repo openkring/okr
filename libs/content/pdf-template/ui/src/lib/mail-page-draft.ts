@@ -58,6 +58,9 @@ export class MailPageDraft implements MailEditorDraft {
   /** How many blocks have errors (the hint names it); 0 with an error of the mail as a whole, such as too many blocks. */
   public readonly errorCount = computed(() => this.check().errorCount);
   public readonly hasContent = computed(() => mailBlocksHaveContent(this.blocks()));
+  private readonly lock = signal<() => boolean>(() => false);
+  /** No change of the blocks now (a send runs: what the server reads must be what the sender sees); a selection still is one. */
+  public readonly readOnly = computed(() => this.lock()());
 
   private tenantId = '';
   private timer: ReturnType<typeof setTimeout> | undefined;
@@ -99,10 +102,16 @@ export class MailPageDraft implements MailEditorDraft {
     this.loaded.set(true);
   }
 
-  /** A change of the editor. A change of the blocks is written after a pause; a selection alone is not. */
+  /** The draft is read-only (`readOnly`) while `locked` says so; the composer: while a send runs. */
+  public lockWhile(locked: () => boolean): void {
+    this.lock.set(locked);
+  }
+
+  /** A change of the editor. A change of the blocks is written after a pause; a selection alone is not. Read-only, a change of blocks is refused. */
   public setHistory(history: History): void {
     const before = this.historyState();
     if (history === before) return;
+    if (this.readOnly() && blocksOf(history) !== blocksOf(before)) return;
     this.historyState.set(history);
     if (blocksOf(history) !== blocksOf(before)) this.schedule();
   }

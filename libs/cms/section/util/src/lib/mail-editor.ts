@@ -32,6 +32,8 @@ export interface MailEditorDraft {
   /** The draft page the history belongs to: a host made for one page drops what ends late for another (an upload after «Zurücksetzen»). */
   readonly pageKey: Signal<string>;
   readonly history: Signal<EditorHistory<EditorState>>;
+  /** Refuses changes of the blocks while true (a send runs); the editor is then not to be used. */
+  readonly readOnly: Signal<boolean>;
   setHistory(history: EditorHistory<EditorState>): void;
   readonly errors: Signal<SectionErrors>;
 }
