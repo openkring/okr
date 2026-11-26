@@ -50,6 +50,11 @@ export const initialInvitationState: InvitationSectionState = {
   selectedState: 'all',
 };
 
+/** Own invitations plus a grantor's (Vollmacht), mixed in by date; a stable sort, so same-day rows keep their order. */
+function mergeByDate(own: InvitationModel[], forGrantors: InvitationModel[]): InvitationModel[] {
+  return [...own, ...forGrantors].sort((a, b) => (a.date ?? '').localeCompare(b.date ?? ''));
+}
+
 export const InvitationSectionStore = signalStore(
   withState(initialInvitationState),
   withProps(() => ({
@@ -147,25 +152,33 @@ export const InvitationSectionStore = signalStore(
       // mine, and those of the persons whose invitations I may answer under a Vollmacht, mixed in by date
       myInvitations: computed(() => {
         if (!state.inviteeKey()) return [];
-        const keys = [state.inviteeKey(), ...state.grantorKeys()];
-        return state.allInvitations()
-          .filter((invitation: InvitationModel) => keys.includes(invitation.inviteeKey))
-          .sort((a, b) => (a.date ?? '').localeCompare(b.date ?? ''));
+        const own = state.allInvitations().filter((invitation: InvitationModel) =>
+          invitation.inviteeKey === state.inviteeKey()) ?? [];
+        const grantorKeys = state.grantorKeys();
+        if (grantorKeys.length === 0) return own;   // no Vollmacht: the own list, in query order, as before
+        const forGrantors = state.allInvitations().filter((invitation: InvitationModel) =>
+          invitation.inviteeKey !== state.inviteeKey() && grantorKeys.includes(invitation.inviteeKey));
+        return mergeByDate(own, forGrantors);
       }),
       // Scope 'open': the invitations the user can still answer. Derived from the raw resource
       // rather than allInvitations() on purpose — isOpenInvitation carries its own (inclusive of
       // today) date cut-off — and filtered with countableInvitationsOf, the same rule the
-      // notification badge counts with and the push gate mirrors, so card, badge and push cannot
-      // drift apart. While the events load, the last resolved map is held; an invitation whose event
-      // is not in it is left out.
-      // The grantors' open invitations (Vollmacht) are mixed in by date; the badge in AppStore keeps counting only mine.
+      // notification badge counts with and the push gate mirrors, so the user's OWN open
+      // invitations on the card, the badge and the push cannot drift apart. While the events load,
+      // the last resolved map is held; an invitation whose event is not in it is left out.
+      // A grantee (Vollmacht, spec 1.180 §5.2) also sees the grantors' open invitations here, mixed in
+      // by date; the AppStore badge counts only the own ones, so for a grantee card and badge differ
+      // by exactly those rows.
       openInvitations: computed(() => {
-        if (!state.inviteeKey()) return [];
         const invitations = state.invitationsResource.value() ?? [];
         const events = state.openInvitationEvents();
-        return [state.inviteeKey(), ...state.grantorKeys()]
-          .flatMap(personKey => countableInvitationsOf(invitations, personKey, events))
-          .sort((a, b) => (a.date ?? '').localeCompare(b.date ?? ''));
+        const own = countableInvitationsOf(invitations, state.inviteeKey(), events);
+        const grantorKeys = state.grantorKeys();
+        if (grantorKeys.length === 0 || !state.inviteeKey()) return own;   // no Vollmacht: as before
+        const forGrantors = grantorKeys
+          .filter(personKey => personKey !== state.inviteeKey())
+          .flatMap(personKey => countableInvitationsOf(invitations, personKey, events));
+        return mergeByDate(own, forGrantors);
       }),
     }
   }),
