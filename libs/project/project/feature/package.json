@@ -36,6 +36,7 @@
     "@okr/finance-booking-util": "*",
     "@okr/finance-cost-center-data-access": "*",
     "@okr/finance-budget-util": "*",
-    "@okr/finance-budget-data-access": "*"
+    "@okr/finance-budget-data-access": "*",
+    "@okr/finance-booking-data-access": "*"
   }
 }

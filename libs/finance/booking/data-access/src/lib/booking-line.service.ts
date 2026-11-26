@@ -1,4 +1,5 @@
 import { inject, Injectable } from '@angular/core';
+import { combineLatest, map, Observable, of } from 'rxjs';
 
 import { ENV } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
@@ -33,6 +34,21 @@ export class BookingLineService {
       lines.push(...parts.flat());
     }
     return lines;
+  }
+
+  /**
+   * The lines of the given projects and Kostenstellen, live, all years, each line once (spec 1.177 R5): one equality
+   * query per key, served by the single-field indexes. What a project result needs instead of the whole ledger.
+   */
+  public listByDimensions(accountingTenantId: string, projectKeys: string[], costCenterKeys: string[]): Observable<BookingLineModel[]> {
+    const lines = (key: 'projectKey' | 'costCenterKey', value: string): Observable<BookingLineModel[]> =>
+      this.firestoreService.searchData<BookingLineModel>(BookingLineCollection, [
+        ...this.booksQuery(accountingTenantId),
+        { key, operator: '==', value },
+      ], 'none');
+    const parts = [...projectKeys.map(k => lines('projectKey', k)), ...costCenterKeys.map(k => lines('costCenterKey', k))];
+    if (parts.length === 0) return of([]);
+    return combineLatest(parts).pipe(map(all => [...new Map(all.flat().map(line => [line.okey, line])).values()]));
   }
 
   private booksQuery(accountingTenantId: string): DbQuery[] {

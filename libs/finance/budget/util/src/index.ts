@@ -8,3 +8,4 @@ export * from './lib/budget-account-compare.util';
 export * from './lib/budget-board.util';
 export * from './lib/cost-allocation.validations';
 export * from './lib/project-allocation.util';
+export * from './lib/project-line-sources.util';

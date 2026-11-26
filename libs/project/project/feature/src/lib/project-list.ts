@@ -1,7 +1,7 @@
 import { AsyncPipe } from '@angular/common';
 import { Component, computed, inject, input, signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { of } from 'rxjs';
+import { from, of } from 'rxjs';
 import { Router } from '@angular/router';
 import {
   ActionSheetController, ActionSheetOptions, IonAvatar, IonButton, IonButtons, IonChip, IonContent, IonHeader, IonIcon,
@@ -18,11 +18,11 @@ import { EmptyList, ListFilter, Spinner, ImgDirective } from '@okr/shared-ui';
 import { createActionSheetButton, createActionSheetDivider, createActionSheetOptions, error, resourceParams } from '@okr/shared-util-angular';
 import { AccountService } from '@okr/finance-account-data-access';
 import { formatMinorAmount } from '@okr/finance-booking-util';
-import { ReportingService } from '@okr/finance-reporting-data-access';
+import { BookingLineService, BookingService } from '@okr/finance-booking-data-access';
 import { ProjectBudgetRow, projectBudgetSummary } from '@okr/finance-reporting-util';
 import { AccountingConfigService } from '@okr/finance-accounting-data-access';
 import { CostAllocationService } from '@okr/finance-budget-data-access';
-import { projectAllocationRows } from '@okr/finance-budget-util';
+import { projectAllocationRows, projectLineSources } from '@okr/finance-budget-util';
 import { CostCenterService } from '@okr/finance-cost-center-data-access';
 
 import { PROJECT_I18N_SCOPE } from '@okr/project-project-util';
@@ -140,14 +140,13 @@ export class ProjectList {
   protected readonly filteredCount = computed(() => this.store.filteredProjects().length);
 
   /*-------------------------- budget comparison (spec 1.65 D25) --------------------------------*/
-  private readonly reportingService = inject(ReportingService);
+  private readonly bookingLineService = inject(BookingLineService);
+  private readonly bookingService = inject(BookingService);
   private readonly accountService = inject(AccountService);
   protected readonly budgetView = signal(false);
   /** the app's default books — never the app tenant ('' = none: a hint instead of numbers) */
   protected readonly books = computed(() => this.store.appStore.appConfig().defaultAccountingTenantId ?? '');
   private readonly booksParam = resourceParams(() => ({ id: this.budgetView() ? this.books() : '' }));
-  private readonly linesResource = rxResource({ params: this.booksParam, stream: ({ params }) => params.id ? this.reportingService.getAllLines(params.id) : of([]) });
-  private readonly bookingsResource = rxResource({ params: this.booksParam, stream: ({ params }) => params.id ? this.reportingService.getJournalEntries(params.id) : of([]) });
   private readonly accountsResource = rxResource({ params: this.booksParam, stream: ({ params }) => params.id ? this.accountService.list(params.id) : of([]) });
   private readonly allocationService = inject(CostAllocationService);
   private readonly costCenterService = inject(CostCenterService);
@@ -156,14 +155,36 @@ export class ProjectList {
   private readonly costCentersResource = rxResource({ params: this.booksParam, stream: ({ params }) => params.id ? this.costCenterService.list(params.id) : of([]) });
   private readonly configResource = rxResource({ params: this.booksParam, stream: ({ params }) => params.id ? this.configService.read(params.id) : of(undefined) });
   private readonly fiscalYearStart = computed(() => this.configResource.value()?.fiscalYearStart ?? 1);
-  protected readonly budgetLoading = computed(() => this.linesResource.isLoading() || this.bookingsResource.isLoading() || this.accountsResource.isLoading());
+  /**
+   * Only the lines the Ist needs (spec 1.177 R5): those of the listed projects and the bases of the percentage Umlagen
+   * they receive — not the whole ledger. Live, as before; the bookings behind them are read once per set of lines.
+   */
+  private readonly linesResource = rxResource({
+    params: resourceParams(() => {
+      const id = this.booksParam().id;
+      if (!id || !this.rulesResource.hasValue() || !this.costCentersResource.hasValue()) return undefined;
+      const rules = (this.rulesResource.value() ?? []).filter(r => !r.isArchived);
+      return { id, ...projectLineSources(rules, this.store.projects().map(p => p.okey).sort(), this.costCentersResource.value() ?? [], id) };
+    }),
+    stream: ({ params }) => this.bookingLineService.listByDimensions(params.id, params.projectKeys, params.costCenterKeys),
+  });
+  private readonly bookingsResource = rxResource({
+    params: resourceParams(() => {
+      const id = this.booksParam().id;
+      if (!id || !this.linesResource.hasValue()) return undefined;
+      return { id, keys: [...new Set((this.linesResource.value() ?? []).map(l => l.bookingKey))].sort() };
+    }),
+    stream: ({ params }) => from(this.bookingService.listByKeys(params.id, params.keys)),
+  });
+  protected readonly budgetLoading = computed(() => this.linesResource.isLoading() || this.bookingsResource.isLoading() || this.accountsResource.isLoading()
+    || (this.budgetView() && !!this.books() && !this.bookingsResource.hasValue()));
   private readonly budgets = computed(() => {
     const out = new Map<string, { revenue: ProjectBudgetRow; expense: ProjectBudgetRow; net: ProjectBudgetRow }>();
     if (!this.budgetView() || !this.books()) return out;
-    const bookings = this.bookingsResource.value() ?? [];
+    const bookings = this.bookingsResource.hasValue() ? this.bookingsResource.value() ?? [] : [];
     const accounts = this.accountsResource.value() ?? [];
     const byProject = this.linesByProject();
-    const lines = this.linesResource.value() ?? [];
+    const lines = this.linesResource.hasValue() ? this.linesResource.value() ?? [] : [];
     const rules = (this.rulesResource.value() ?? []).filter(r => !r.isArchived);
     const costCenters = this.costCentersResource.value() ?? [];
     const start = this.fiscalYearStart();
@@ -177,7 +198,7 @@ export class ProjectList {
   /** the lines carrying a projectKey, grouped once (not re-filtered per project and keystroke) */
   private readonly linesByProject = computed(() => {
     const out = new Map<string, BookingLineModel[]>();
-    for (const l of this.linesResource.value() ?? []) {
+    for (const l of this.linesResource.hasValue() ? this.linesResource.value() ?? [] : []) {
       const k = l.projectKey ?? '';
       if (!k) continue;
       const list = out.get(k) ?? [];
