@@ -302,6 +302,8 @@ export const EMAIL_COMPOSER_I18N_KEYS = {
   test_no_address:    PFX + 'composer.test.no_address',
   test_impersonated:  PFX + 'composer.test.impersonated',
   test_provider:      PFX + 'composer.test.provider',
+  test_permission:    PFX + 'composer.test.permission',
+  test_wait:          PFX + 'composer.test.wait',
   // the editor of blocks (spec 1.176 §8.1, §13)
   page_block_errors:  PFX + 'composer.page.block_errors',
   page_blocks_invalid: PFX + 'composer.page.blocks_invalid',

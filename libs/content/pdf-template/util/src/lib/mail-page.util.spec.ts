@@ -198,6 +198,10 @@ describe('testMailRefusalKey', () => {
     expect(testMailRefusalKey(refusal('impersonated'))).toBe('test_impersonated');
     expect(testMailRefusalKey(refusal('provider', 'functions/unavailable'))).toBe('test_provider');
   });
+  it('a sender who may not send this mail any more (role, group or tenant lost) gets its own text, whatever the server says', () => {
+    expect(testMailRefusalKey(refusal('Only group admins may send.', 'functions/permission-denied'))).toBe('test_permission');
+    expect(testMailRefusalKey(refusal('', 'permission-denied'))).toBe('test_permission');
+  });
   it('maps the page refusals as the send does', () => {
     expect(testMailRefusalKey(refusal('invalid-block'))).toBe('page_refused_block');
     expect(testMailRefusalKey(refusal('sent'))).toBe('page_refused_sent');
@@ -206,6 +210,7 @@ describe('testMailRefusalKey', () => {
     expect(testMailRefusalKey(refusal('provider'))).toBeUndefined();
     expect(testMailRefusalKey(refusal('no-address', 'functions/internal'))).toBeUndefined();
     expect(testMailRefusalKey(refusal('no-layout'))).toBeUndefined();
+    expect(testMailRefusalKey(refusal('boom', 'functions/internal'))).toBeUndefined();
     expect(testMailRefusalKey(new Error('no-address'))).toBeUndefined();
     expect(testMailRefusalKey(undefined)).toBeUndefined();
   });

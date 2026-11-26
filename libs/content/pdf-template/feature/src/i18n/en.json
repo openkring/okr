@@ -306,7 +306,9 @@
       "failed": "The test email could not be sent. Please try again later.",
       "no_address": "Your account has no email address the test email can go to. Confirm your address or add an email address to your account.",
       "impersonated": "While you are signed in as another person, you cannot send a test email.",
-      "provider": "The mail service did not accept the test email. Please try again later."
+      "provider": "The mail service did not accept the test email. Please try again later.",
+      "permission": "You may no longer send this email.",
+      "wait": "The test email is still being sent. Then you can send the email."
     }
   },
   "category": {

@@ -306,7 +306,9 @@
       "failed": "Die Testmail konnte nicht gesendet werden. Versuche es später nochmals.",
       "no_address": "Zu deinem Konto gibt es keine E-Mail-Adresse, an die die Testmail gehen kann. Bestätige deine Adresse oder füge deinem Konto eine E-Mail-Adresse hinzu.",
       "impersonated": "Solange du als eine andere Person angemeldet bist, kannst du keine Testmail senden.",
-      "provider": "Der Mailversand hat die Testmail nicht angenommen. Versuche es später nochmals."
+      "provider": "Der Mailversand hat die Testmail nicht angenommen. Versuche es später nochmals.",
+      "permission": "Du darfst diese E-Mail nicht mehr versenden.",
+      "wait": "Die Testmail wird noch gesendet. Danach kannst du die E-Mail versenden."
     }
   },
   "category": {

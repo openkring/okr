@@ -165,16 +165,20 @@ export function isLetterPictureRefusal(err: unknown): boolean {
 }
 
 /** The i18n key of a refusal of «Testmail senden» (`sendTestMailing`, spec 1.176 §8.4). */
-export type TestMailRefusalKey = 'test_no_address' | 'test_impersonated' | 'test_provider' | MailPageRefusalKey;
+export type TestMailRefusalKey = 'test_no_address' | 'test_impersonated' | 'test_provider' | 'test_permission' | MailPageRefusalKey;
 
 const TEST_MAIL_REFUSALS: Readonly<Record<string, Readonly<Record<string, TestMailRefusalKey>>>> = {
   'failed-precondition': { 'no-address': 'test_no_address', impersonated: 'test_impersonated' },
   unavailable: { provider: 'test_provider' },
 };
 
-/** The message key of a refused test mail: its own refusals, else those of the page; undefined for anything else. */
+/**
+ * The message key of a refused test mail: its own refusals, else those of the page; undefined for anything else. Every
+ * `permission-denied` (role, group, tenant or answer links lost since the composer opened) is one text: its server message is technical.
+ */
 export function testMailRefusalKey(err: unknown): TestMailRefusalKey | undefined {
   const { code, message } = callableRefusal(err);
+  if (code === 'permission-denied') return 'test_permission';
   const own = hasOwn(TEST_MAIL_REFUSALS, code) ? TEST_MAIL_REFUSALS[code] : undefined;
   if (own && hasOwn(own, message)) return own[message];
   return mailPageRefusalKey(err);

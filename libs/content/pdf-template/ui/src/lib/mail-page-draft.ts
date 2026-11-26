@@ -70,7 +70,7 @@ export class MailPageDraft implements MailEditorDraft {
   private sent = false;
   /** «Entwurf behalten»: a discard leaves the page. */
   private kept = false;
-  /** The composer went: a change that is still waiting is never written. */
+  /** The composer went: the timer of a waiting change is stopped (only `leave()` still writes it, for a draft that stays). */
   private destroyed = false;
 
   constructor() {

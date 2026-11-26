@@ -306,7 +306,9 @@
       "failed": "Non è stato possibile inviare l'e-mail di prova. Riprova più tardi.",
       "no_address": "Il tuo account non ha un indirizzo e-mail a cui inviare l'e-mail di prova. Conferma il tuo indirizzo o aggiungi un indirizzo e-mail al tuo account.",
       "impersonated": "Finché sei connesso come un'altra persona, non puoi inviare un'e-mail di prova.",
-      "provider": "Il servizio di invio non ha accettato l'e-mail di prova. Riprova più tardi."
+      "provider": "Il servizio di invio non ha accettato l'e-mail di prova. Riprova più tardi.",
+      "permission": "Non puoi più inviare questa e-mail.",
+      "wait": "L'e-mail di prova è ancora in invio. Dopo puoi inviare l'e-mail."
     }
   },
   "category": {

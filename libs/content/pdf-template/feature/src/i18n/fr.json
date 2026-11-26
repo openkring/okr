@@ -142,7 +142,7 @@
       "empty": "Rien à afficher pour le moment.",
       "frame": "Aperçu de l’email",
       "error": "L’aperçu n’a pas pu être chargé.",
-      "width": "Largeur de l'aperçu",
+      "width": "Largeur de l’aperçu",
       "mobile": "Mobile",
       "desktop": "Ordinateur"
     },
@@ -305,8 +305,10 @@
       "sent": "L'e-mail de test est en route vers toi.",
       "failed": "L'e-mail de test n'a pas pu être envoyé. Réessaie plus tard.",
       "no_address": "Ton compte n'a pas d'adresse e-mail à laquelle envoyer l'e-mail de test. Confirme ton adresse ou ajoute une adresse e-mail à ton compte.",
-      "impersonated": "Tant que tu es connecté en tant qu'une autre personne, tu ne peux pas envoyer d'e-mail de test.",
-      "provider": "Le service d'envoi n'a pas accepté l'e-mail de test. Réessaie plus tard."
+      "impersonated": "Tant que tu es connecté comme une autre personne, tu ne peux pas envoyer d'e-mail de test.",
+      "provider": "Le service d'envoi n'a pas accepté l'e-mail de test. Réessaie plus tard.",
+      "permission": "Tu ne peux plus envoyer cet e-mail.",
+      "wait": "L'e-mail de test est encore en cours d'envoi. Ensuite, tu peux envoyer l'e-mail."
     }
   },
   "category": {

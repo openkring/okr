@@ -306,7 +306,9 @@
       "failed": "No se pudo enviar el correo de prueba. Vuelve a intentarlo más tarde.",
       "no_address": "Tu cuenta no tiene una dirección de correo a la que pueda llegar el correo de prueba. Confirma tu dirección o añade una dirección de correo a tu cuenta.",
       "impersonated": "Mientras hayas iniciado sesión como otra persona, no puedes enviar un correo de prueba.",
-      "provider": "El servicio de envío no aceptó el correo de prueba. Vuelve a intentarlo más tarde."
+      "provider": "El servicio de envío no aceptó el correo de prueba. Vuelve a intentarlo más tarde.",
+      "permission": "Ya no puedes enviar este correo.",
+      "wait": "El correo de prueba todavía se está enviando. Después podrás enviar el correo."
     }
   },
   "category": {

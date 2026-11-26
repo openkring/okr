@@ -414,7 +414,7 @@ interface AddressField {
                     <ion-segment-button value="desktop"><ion-label>{{ i18n.preview_desktop() }}</ion-label></ion-segment-button>
                   </ion-segment>
                   <span class="spacer"></span>
-                  <ion-button size="small" fill="outline" [disabled]="testRunning() || !draft.loaded() || !hasContent()" (click)="sendTestMail()">
+                  <ion-button size="small" fill="outline" [disabled]="testRunning() || isSending() || !draft.loaded() || !hasContent() || !draft.valid()" (click)="sendTestMail()">
                     @if (testRunning()) {
                       <ion-spinner slot="start" name="crescent" aria-hidden="true" />
                       {{ i18n.test_running() }}
@@ -931,6 +931,8 @@ export class EmailComposerModal {
   private discardChosen = false;
   /** A block the server refused: opened in the editor as soon as it is there. */
   private pendingOpen: string | undefined;
+  /** When the note «could not be saved» was last shown (ms): one flush failing for preview, price and test shows it once. */
+  private saveErrorShownAt = 0;
 
   // adapters at the shared/ui boundary (these components define their own minimal i18n interfaces)
   protected readonly fromI18n = computed(() => ({
@@ -999,11 +1001,9 @@ export class EmailComposerModal {
     this.destroyRef.onDestroy(() => {
       this.destroyed = true;
       clearTimeout(this.quoteTimer);
-      // Closed without sending (close icon, back button, swipe, «Guthaben aufladen»): the draft page goes too.
-      // A sent page belongs to its mailing (the rules forbid deleting it). The draft may still be being created.
-      // A send under way is awaited first (the header close stays active while sending): only a page that ended
-      // unsent is discarded, so a sent mail never loses its page and a failed one leaves no draft behind.
-      // A test mail under way is awaited the same way. The draft is deleted only when it is empty or the sender chose «Verwerfen»: a
+      // Closed without sending (close icon, back button, swipe, «Guthaben aufladen», a teardown): the draft may still be being created,
+      // and a send or a test mail under way is awaited first (the header close stays active meanwhile). A sent page belongs to its
+      // mailing (the rules forbid deleting it). An unsent draft is deleted only when it is empty or the sender chose «Verwerfen»; a
       // forced dismiss or a teardown keeps one with content (spec 1.176 §13; the nightly reap removes it after 30 days).
       if (this.isVersand() && !this.sent) {
         void (this.draftReady ?? Promise.resolve()).then(() => this.sendInFlight).then(() => this.testInFlight)
@@ -1145,7 +1145,7 @@ export class EmailComposerModal {
         if (request !== this.quoteRequest) return;
         this.postQuote.set(undefined);
         this.postError.set(this.i18n.page_save_error());
-        await this.showToast(this.i18n.page_save_error(), 'danger');
+        await this.showSaveError();
         return;
       }
       if (request !== this.quoteRequest) return;
@@ -1188,7 +1188,7 @@ export class EmailComposerModal {
         const refusal = mailPageRefusalKey(err);
         if (!refusal) console.error('EmailComposerModal.loadQuote: quoteMailingLetters failed', err);
         this.postError.set(refusal ? this.i18n[refusal]() : this.i18n.post_error());
-        // a refused block is selected for the editor; the Post segment stays open
+        // a refused block is selected for the editor (not while the editor is shown: a price must not move the selection there)
         this.openRefusedBlock(err, false);
       }
     } finally {
@@ -1405,7 +1405,7 @@ export class EmailComposerModal {
         if (request !== this.previewRequest) return;
         this.previewHtml.set('');
         this.previewFailed.set(true);
-        await this.showToast(this.i18n.page_save_error(), 'danger');
+        await this.showSaveError();
         return;
       }
       if (request !== this.previewRequest) return;
@@ -1427,8 +1427,7 @@ export class EmailComposerModal {
       this.previewHtml.set('');
       this.previewFailed.set(true);
       // the refused block is selected for when the sender goes to the editor; the preview stays where it is
-      const blockId = mailPageRefusalBlockId(err);
-      if (blockId) this.draft.select(blockId);
+      this.openRefusedBlock(err, false);
     } finally {
       if (request === this.previewRequest) this.previewLoading.set(false);
     }
@@ -1619,8 +1618,10 @@ export class EmailComposerModal {
    */
   private openRefusedBlock(err: unknown, show = true): void {
     const blockId = mailPageRefusalBlockId(err);
-    if (!blockId || this.destroyed || !this.isVersand() || !this.draft.select(blockId)) return;
-    if (!show) return;
+    if (!blockId || this.destroyed || !this.isVersand()) return;
+    // a refusal that arrives in the background (price, preview) never moves the selection under the sender's hands in the editor
+    if (!show && (this.activeSegment() === 'editor' || this.hostRef)) return;
+    if (!this.draft.select(blockId) || !show) return;
     const host = this.hostRef?.instance as { open?: (id: string) => boolean } | undefined;
     if (this.activeSegment() === 'editor' && host?.open?.(blockId)) return;
     this.pendingOpen = blockId;
@@ -1632,7 +1633,8 @@ export class EmailComposerModal {
    * characters are stored first. One at a time: a second press while it runs is ignored. A close waits for it.
    */
   protected async sendTestMail(): Promise<void> {
-    if (!this.isVersand() || this.testInFlight || this.destroyed || !this.draft.loaded()) return;
+    // as «Senden»: not while a send runs, and not with blocks that have errors
+    if (!this.isVersand() || this.testInFlight || this.isSending() || this.destroyed || !this.draft.loaded() || !this.draft.valid()) return;
     this.testRunning.set(true);
     const run = this.runTestMail();
     this.testInFlight = run;
@@ -1645,16 +1647,19 @@ export class EmailComposerModal {
   }
 
   private async runTestMail(): Promise<void> {
+    // the page the sender asked for: «Zurücksetzen», a continued draft or a close may replace it during the flush
+    const pageKey = this.draft.pageKey();
     try {
-      if (!(await this.draft.flush())) {
-        await this.showToast(this.i18n.page_save_error(), 'danger');
+      const stored = await this.draft.flush();
+      if (this.destroyed || !this.draft.loaded() || this.draft.pageKey() !== pageKey) return;
+      if (!stored) {
+        await this.showSaveError();
         return;
       }
-      if (this.destroyed) return;
       const fd = this.formData();
       await this.docEmailService.sendTestMailing({
         tenantId: this.appStore.tenantId(),
-        pageKey: this.draft.pageKey(),
+        pageKey,
         ...(this.groupKey() ? { groupKey: this.groupKey() } : {}),
         subject: fd.subject, layout: fd.layout,
         ...(fd.from ? { from: fd.from } : {}),
@@ -1667,7 +1672,8 @@ export class EmailComposerModal {
     } catch (err) {
       const refusal = testMailRefusalKey(err);
       if (!refusal) console.error('EmailComposerModal.sendTestMail: sendTestMailing failed', err);
-      if (this.destroyed) return;
+      // a refusal of a page the composer no longer works on says nothing about the current one
+      if (this.destroyed || this.draft.pageKey() !== pageKey) return;
       this.openRefusedBlock(err);
       // a refusal says what to do: long enough to read it
       await this.showToast(refusal ? this.i18n[refusal]() : this.i18n.test_failed(), 'danger', 6000);
@@ -1681,7 +1687,9 @@ export class EmailComposerModal {
   }
 
   protected async revert(): Promise<void> {
-    // «Zurücksetzen» starts an empty draft; one with content is kept or thrown away as the sender answers (spec 1.176 §8.5)
+    // «Zurücksetzen» starts an empty draft; one with content is kept or thrown away as the sender answers (spec 1.176 §8.5).
+    // A test mail under way first: the server still reads this page (as a close waits for it)
+    if (this.isVersand() && this.testInFlight) await this.testInFlight;
     if (this.isVersand() && this.draft.loaded() && this.draft.hasContent()) {
       const answer = await this.askClose();
       if (answer === 'back') return;
@@ -1969,6 +1977,11 @@ export class EmailComposerModal {
 
   protected async send(): Promise<void> {
     if (!this.canSend() || this.isSending()) return;
+    // not while a test mail runs: it reads the same page (the banner stays, rule 5 of building-forms; the send waits for the sender)
+    if (this.testRunning()) {
+      void this.showToast(this.i18n.test_wait(), 'warning');
+      return;
+    }
     this.isSending.set(true);
     this.confirmingRecipients = true;
     const confirmed = await this.confirmRecipients().finally(() => { this.confirmingRecipients = false; });
@@ -2022,7 +2035,7 @@ export class EmailComposerModal {
         this.sendInFlight = sending.then((key) => { if (key) this.markSent(); }, () => undefined);
         const mailingKey = await sending;
         if (!mailingKey) {
-          await this.showToast(this.i18n.page_save_error(), 'danger');
+          await this.showSaveError();
           this.isSending.set(false);
           return;
         }
@@ -2152,6 +2165,17 @@ export class EmailComposerModal {
       filter((j) => j?.state === 'sent' || j?.state === 'failed'),
     ));
     if (job?.state === 'failed') throw new Error(job.error ?? '');
+  }
+
+  /**
+   * «Die Änderung konnte nicht gespeichert werden.»: preview, price and test mail may flush together and fail together; the sender sees
+   * the note once (not again within the time it is shown).
+   */
+  private async showSaveError(): Promise<void> {
+    const now = Date.now();
+    if (now - this.saveErrorShownAt < 3000) return;
+    this.saveErrorShownAt = now;
+    await this.showToast(this.i18n.page_save_error(), 'danger');
   }
 
   protected async showToast(message: string, color: string, duration = 3000): Promise<void> {
