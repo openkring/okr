@@ -282,8 +282,8 @@ describe('find() query shapes', () => {
   // spec 1.180: the grantee's stamp on the invitee's invitation; a RAW personKey, like inviteeKey
   it('finds invitations answered under a Vollmacht by actedByKey == the RAW personKey', () => {
     const spec = SUBJECT_DATA_MAP.find((x) => x.collection === 'invitations')?.anonymizeArrayItems;
-    expect(spec).toBeDefined();
-    const q = spec!.find(CTX) as unknown as { root: string; raw: unknown[] };
+    if (!spec) throw new Error('no anonymizeArrayItems on the invitations row');
+    const q = spec.find(CTX) as unknown as { root: string; raw: unknown[] };
     const predicates: Predicate[] = [];
     for (const r of q.raw) flatten(r, predicates);
     expect(q.root).toBe('invitations');
