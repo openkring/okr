@@ -92,6 +92,11 @@
           },
           {
             "glob": "*.json",
+            "input": "libs/shared/i18n/src/root",
+            "output": "./assets/i18n"
+          },
+          {
+            "glob": "*.json",
             "input": "libs/activity/data-access/src/i18n",
             "output": "./assets/i18n/activity/data-access"
           },

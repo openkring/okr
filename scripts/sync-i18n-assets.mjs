@@ -17,7 +17,7 @@
 
 import { execSync } from 'child_process';
 import { readdirSync, readFileSync, writeFileSync, existsSync } from 'fs';
-import { resolve, join } from 'path';
+import { dirname, resolve, join } from 'path';
 import { fileURLToPath } from 'url';
 
 const ROOT = resolve(fileURLToPath(import.meta.url), '..', '..');
@@ -40,8 +40,21 @@ function makeEntry(libPath) {
   return { glob: '*.json', input: `libs/${libPath}/src/i18n`, output: `./assets/i18n/${libPath}` };
 }
 
+// The main (root) bundle is shared by every app since spec 1.179: one copy in this lib, tenant
+// labels as i18nTenantOverride rows (scripts/migrate-i18n-root-overrides.mjs). It is served at
+// assets/i18n/<lang>.json, where each app used to keep its own copy under src/assets/i18n.
+const ROOT_BUNDLE = { glob: '*.json', input: 'libs/shared/i18n/src/root', output: './assets/i18n' };
+
 function isI18nEntry(a) {
-  return typeof a === 'object' && a !== null && /^libs\/.+\/src\/i18n$/.test(a.input ?? '');
+  return typeof a === 'object' && a !== null
+    && (/^libs\/.+\/src\/i18n$/.test(a.input ?? '') || a.input === ROOT_BUNDLE.input);
+}
+
+/** An app (or the generator template) that still ships its own main bundle would shadow the shared one. */
+function ownRootBundles(dir) {
+  const i18n = join(dir, 'src', 'assets', 'i18n');
+  if (!existsSync(i18n)) return [];
+  return readdirSync(i18n).filter(f => /^[a-z]{2}\.json(__tmpl__)?$/.test(f));
 }
 
 function parseJson(filePath) {
@@ -79,17 +92,22 @@ function updateProjectJson(label, projectJsonPath, i18nEntries) {
     : [...others.slice(0, insertIdx), ...i18nEntries, ...others.slice(insertIdx)];
 
   if (CHECK) {
+    const own = ownRootBundles(dirname(projectJsonPath));
+    if (own.length) {
+      drifted.push(label);
+      console.log(`  ${label}: has its own main bundle (${own.join(', ')}) — delete it, the shared one is libs/shared/i18n/src/root`);
+    }
     const key = a => `${a.input} -> ${a.output}`;
     const have = new Set(assets.filter(isI18nEntry).map(key));
     const want = new Set(i18nEntries.map(key));
     const missing = [...want].filter(k => !have.has(k));
     const stale = [...have].filter(k => !want.has(k));
     if (missing.length || stale.length) {
-      drifted.push(label);
+      if (!drifted.includes(label)) drifted.push(label);
       console.log(`  ${label}: out of sync`);
       missing.forEach(k => console.log(`    missing: ${k}`));
       stale.forEach(k => console.log(`    stale:   ${k}`));
-    } else {
+    } else if (!own.length) {
       console.log(`  ${label}: ok`);
     }
     return;
@@ -113,6 +131,7 @@ const LEGACY_ALIASES = [
 ];
 
 const i18nEntries = [
+  ROOT_BUNDLE,
   ...libs.map(makeEntry),
   ...LEGACY_ALIASES.map(a => ({ glob: '*.json', input: a.input, output: a.output })),
 ];

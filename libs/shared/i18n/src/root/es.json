@@ -278,7 +278,7 @@
     "app": "App",
     "avatar": "Avatar",
     "bexio": "Bexio",
-    "bhproj": "Cobertizo",
+    "bhproj": "Proyecto Bootshaus",
     "billable": "Facturable",
     "blog": "Blog",
     "boat": "Barco",
@@ -287,7 +287,7 @@
     "cancelled": "Cancelado",
     "carriage": "Carruaje",
     "cgig": "CGIG",
-    "club": "Eventos del club",
+    "club": "Club",
     "comment": "Comentario",
     "culture": "Cultura",
     "diary": "Diario",
@@ -339,6 +339,7 @@
     "reserved": "Reservado",
     "resource": "Recurso",
     "review": "Revisión",
+    "scs": "SCS",
     "section": "Sección",
     "selectable": "Seleccionable",
     "social": "Social",
@@ -346,7 +347,6 @@
     "sport": "Deporte",
     "srv": "SRV",
     "stuerbord": "Stüürbord",
-    "tenant": "<%= tenantId %>",
     "tent20": "Patrocinador de la carpa 2020",
     "tenu": "Equipación",
     "test": "Prueba",
@@ -358,7 +358,8 @@
     "valid": "Válido",
     "vs": "VS",
     "weather": "Tiempo",
-    "werkstatt": "Taller"
+    "werkstatt": "Taller",
+    "tenant": "Cliente"
   },
   "validation": {
     "addressValueMandatoryForNonPostal": "El valor de la dirección es obligatorio para direcciones no postales.",

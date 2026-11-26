@@ -67,13 +67,15 @@ const allowed = (file, key) => {
   return Boolean(list && (list.includes('*') || list.includes(key)));
 };
 
+const ROOT_BUNDLE_DE = 'libs/shared/i18n/src/root/de.json';
+
 const findings = [];
 const report = (where, msg) => findings.push(`${where}  ${msg}`);
 
 // ---------------------------------------------------------------- 1. parity
 const i18nDirs = [
   ...find(`libs -path '*/src/i18n/de.json'`),
-  ...find(`apps -path '*/src/assets/i18n/de.json'`),
+  ROOT_BUNDLE_DE,
 ].map((f) => f.replace(/\/de\.json$/, ''));
 
 for (const dir of i18nDirs) {
@@ -88,8 +90,8 @@ for (const dir of i18nDirs) {
 }
 
 // ---------------------------------------------------------------- bundles
-/** main bundles: one per app (private submodules — may be absent in a public checkout) */
-const mainBundles = find(`apps -path '*/src/assets/i18n/de.json'`).map((f) => ({ file: f, json: readJson(f) }));
+/** the main bundle: one, shared by every app since spec 1.179 (tenant labels are i18nTenantOverride rows) */
+const mainBundles = [{ file: ROOT_BUNDLE_DE, json: readJson(ROOT_BUNDLE_DE) }];
 const scopeCache = new Map();
 const scopeBundle = (scope) => {
   if (!scopeCache.has(scope)) {
@@ -200,7 +202,6 @@ for (const m of (createSectionMatch?.[0] ?? '').matchAll(/case\s+'([\w-]+)'\s*:/
 }
 
 // ---------------------------------------------------------------- result
-if (mainBundles.length === 0) console.log('check-i18n: no app main bundles found (submodules not checked out) — main-bundle checks skipped');
 if (findings.length) {
   console.error(findings.join('\n'));
   console.error(`\ncheck-i18n: ${findings.length} finding(s)`);

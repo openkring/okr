@@ -278,7 +278,7 @@
     "app": "App",
     "avatar": "Avatar",
     "bexio": "Bexio",
-    "bhproj": "Rimessa",
+    "bhproj": "Progetto Bootshaus",
     "billable": "Fatturabile",
     "blog": "Blog",
     "boat": "Barca",
@@ -287,7 +287,7 @@
     "cancelled": "Annullato",
     "carriage": "Carrozza",
     "cgig": "CGIG",
-    "club": "Eventi del club",
+    "club": "Club",
     "comment": "Commento",
     "culture": "Cultura",
     "diary": "Diario",
@@ -339,6 +339,7 @@
     "reserved": "Riservato",
     "resource": "Risorsa",
     "review": "Revisione",
+    "scs": "SCS",
     "section": "Sezione",
     "selectable": "Selezionabile",
     "social": "Sociale",
@@ -346,7 +347,6 @@
     "sport": "Sport",
     "srv": "SRV",
     "stuerbord": "Stüürbord",
-    "tenant": "<%= tenantId %>",
     "tent20": "Sponsor tenda 2020",
     "tenu": "Tenuta",
     "test": "Test",
@@ -358,7 +358,8 @@
     "valid": "Valido",
     "vs": "VS",
     "weather": "Meteo",
-    "werkstatt": "Officina"
+    "werkstatt": "Officina",
+    "tenant": "Cliente"
   },
   "validation": {
     "addressValueMandatoryForNonPostal": "Il valore dell'indirizzo è obbligatorio per gli indirizzi non postali.",

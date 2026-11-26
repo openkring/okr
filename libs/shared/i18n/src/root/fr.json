@@ -278,7 +278,7 @@
     "app": "App",
     "avatar": "Avatar",
     "bexio": "Bexio",
-    "bhproj": "Hangar",
+    "bhproj": "Projet Bootshaus",
     "billable": "Facturable",
     "blog": "Blog",
     "boat": "Bateau",
@@ -287,7 +287,7 @@
     "cancelled": "Annulé",
     "carriage": "Attelage",
     "cgig": "CGIG",
-    "club": "Événements du club",
+    "club": "Club",
     "comment": "Commentaire",
     "culture": "Culture",
     "diary": "Journal",
@@ -339,6 +339,7 @@
     "reserved": "Réservé",
     "resource": "Ressource",
     "review": "Review",
+    "scs": "SCS",
     "section": "Section",
     "selectable": "Sélectionnable",
     "social": "Social",
@@ -346,7 +347,6 @@
     "sport": "Sport",
     "srv": "SRV",
     "stuerbord": "Stüürbord",
-    "tenant": "<%= tenantId %>",
     "tent20": "Sponsor de tente 2020",
     "tenu": "Tenue",
     "test": "Test",
@@ -358,7 +358,8 @@
     "valid": "Valide",
     "vs": "VS",
     "weather": "Météo",
-    "werkstatt": "Atelier"
+    "werkstatt": "Atelier",
+    "tenant": "Client"
   },
   "validation": {
     "addressValueMandatoryForNonPostal": "La valeur de l'adresse est obligatoire pour les adresses non postales.",

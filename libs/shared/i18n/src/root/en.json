@@ -278,7 +278,7 @@
     "app": "App",
     "avatar": "Avatar",
     "bexio": "Bexio",
-    "bhproj": "Boathouse",
+    "bhproj": "Boathouse Project",
     "billable": "Billable",
     "blog": "Blog",
     "boat": "Boat",
@@ -287,7 +287,7 @@
     "cancelled": "Cancelled",
     "carriage": "Carriage",
     "cgig": "CGIG",
-    "club": "Club events",
+    "club": "Club",
     "comment": "Comment",
     "culture": "Culture",
     "diary": "Diary",
@@ -339,6 +339,7 @@
     "reserved": "Reserved",
     "resource": "Resource",
     "review": "Review",
+    "scs": "SCS",
     "section": "Section",
     "selectable": "Selectable",
     "social": "Social",
@@ -346,7 +347,6 @@
     "sport": "Sport",
     "srv": "SRV",
     "stuerbord": "Stüürbord",
-    "tenant": "<%= tenantId %>",
     "tent20": "Tent sponsor 2020",
     "tenu": "Kit",
     "test": "Test",
@@ -358,7 +358,8 @@
     "valid": "Valid",
     "vs": "VS",
     "weather": "Weather",
-    "werkstatt": "Workshop"
+    "werkstatt": "Workshop",
+    "tenant": "Tenant"
   },
   "validation": {
     "addressValueMandatoryForNonPostal": "The address value is mandatory for non-postal addresses.",
