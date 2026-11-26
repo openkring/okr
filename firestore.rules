@@ -759,6 +759,61 @@ service cloud.firestore {
                      || ((isPrivileged() || hasRole('memberAdmin')) && tenantRead());
       allow write: if false;
     }
+    // Vollmacht (spec 1.180 §7): grantor → grantee, exactly one tenant, never deleted by a client (revoking sets
+    // revokedAt). The family actions themselves are checked in the app; these rules guard the records.
+    // The caller's person key is bound once per evaluation as `pk` (1000-expression limit), and the meeting
+    // get() runs only on the proxy branch, after the cheaper checks have failed.
+    function isMandateAdmin() {
+      return isPrivileged() || hasRole('memberAdmin');
+    }
+    // The caller is the chair of the meeting a proxy names, and that meeting lives in the proxy's tenant.
+    // A missing meeting makes get() error, i.e. deny; a key with '/' never reaches get().
+    function isMandateMeetingChair(d, pk) {
+      return isDocKey(d.meetingKey)
+             && isChairOfMeetingData(get(/databases/$(database)/documents/meetings/$(d.meetingKey)).data, d, pk);
+    }
+    function isChairOfMeetingData(m, d, pk) {
+      return m.get('chair', {}).get('key', '') == pk && m.tenants.hasAny(d.tenants);
+    }
+    // Read: grantor, grantee, privileged / memberAdmin, and for a proxy every member of the tenant (chair and
+    // attendees see the representation, like meetings). The grantor/grantee branch is provable for the
+    // `tenants array-contains` + `grantorKey ==` / `granteeKey ==` queries.
+    function mandateReadOk(d, pk) {
+      return belongsToTenant(d)
+             && ((pk != '' && (d.grantorKey == pk || d.granteeKey == pk))
+                 || d.kind == 'proxy'
+                 || isMandateAdmin());
+    }
+    // Create: one tenant, not revoked, createdByKey == caller; by the grantor, privileged / memberAdmin, or —
+    // proxy only — the chair of the meeting named by meetingKey.
+    function mandateCreateOk(d, pk) {
+      return pk != ''
+             && d.tenants.size() == 1
+             && d.kind in ['family', 'proxy']
+             && d.get('revokedAt', '') == ''
+             && d.get('createdByKey', '') == pk
+             && (d.grantorKey == pk
+                 || isMandateAdmin()
+                 || (d.kind == 'proxy' && isMandateMeetingChair(d, pk)));
+    }
+    // Update: only revokedAt / revokedByKey (+ validTo by the grantor); by grantor, grantee, privileged /
+    // memberAdmin, or (proxy only) the meeting's chair. Identity fields stay as they are.
+    function mandateUpdateOk(before, after, pk) {
+      let changed = after.diff(before).affectedKeys();
+      return pk != ''
+             && ((before.grantorKey == pk && changed.hasOnly(['revokedAt', 'revokedByKey', 'validTo']))
+                 || (changed.hasOnly(['revokedAt', 'revokedByKey'])
+                     && (before.granteeKey == pk
+                         || isMandateAdmin()
+                         || (before.kind == 'proxy' && isMandateMeetingChair(before, pk)))));
+    }
+    match /mandates/{id} {
+      // resource == null: a get() on a missing doc — the clean not-found (same rationale as tenantRead()).
+      allow read: if userExists() && (resource == null || mandateReadOk(resource.data, callerPersonKey()));
+      allow create: if tenantCreate() && mandateCreateOk(request.resource.data, callerPersonKey());
+      allow update: if tenantUpdate() && mandateUpdateOk(resource.data, request.resource.data, callerPersonKey());
+      allow delete: if false;
+    }
     // Activities are the audit log. Authenticated tenant members write normal activities.
     // Auth-scope events (login/logout) are logged by ActivityService.logAuth pre-auth or
     // during the post-signIn token-propagation race, i.e. with request.auth == null. Allow

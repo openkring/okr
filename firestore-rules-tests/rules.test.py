@@ -3000,5 +3000,115 @@ for label, expect, run in mailpage_cases:
     passed += ok; failed += not ok
     print(f"{'PASS' if ok else 'FAIL'}  [{code}]  {label}")
 
+
+# --------------------------------------------- mandates (spec 1.180 §7) ---
+# Vollmacht: grantor → grantee, one tenant, never deleted by a client (revoking sets revokedAt).
+# Create: the grantor, privileged / memberAdmin, or — proxy only — the chair of the meeting named by
+# meetingKey; createdByKey == caller, revokedAt == ''. Update: only revokedAt / revokedByKey (+ validTo by
+# the grantor), by grantor, grantee, privileged / memberAdmin or (proxy) the chair. Read: grantor,
+# grantee, privileged / memberAdmin, and every tenant member for a proxy.
+seed("users/uidVCh", {"tenants": ["t1"], "roles": {}, "firstName": "Ch", "personKey": "pVCh"})  # chair of mtgV
+seed("users/uidV3", {"tenants": ["t1"], "roles": {}, "firstName": "V3", "personKey": "pV3"})    # third member
+VCH, V3 = jwt("uidVCh"), jwt("uidV3")
+seed("meetings/mtgV", {"tenants": ["t1"], "isArchived": False, "name": "GV", "state": "invited",
+                       "chair": {"key": "pVCh", "name1": "C", "name2": "H", "modelType": "person"}})
+seed("meetings/mtgVt2", {"tenants": ["t2"], "isArchived": False, "name": "GV t2", "state": "invited",
+                         "chair": {"key": "pVCh", "name1": "C", "name2": "H", "modelType": "person"}})
+def mandate(**extra):
+    d = {"tenants": ["t1"], "isArchived": False, "index": "", "notes": "", "kind": "family",
+         "grantorKey": "pA", "grantor": {"key": "pA", "name1": "A", "name2": "A", "modelType": "person"},
+         "granteeKey": "pE", "grantee": {"key": "pE", "name1": "E", "name2": "E", "modelType": "person"},
+         "actions": ["calevent.attend", "invitation.answer"], "validFrom": "", "validTo": "",
+         "meetingKey": "", "createdByKey": "pA", "revokedAt": "", "revokedByKey": ""}
+    d.update(extra)
+    return d
+def proxy(**extra):
+    return mandate(**{"kind": "proxy", "actions": ["meeting.represent"], "meetingKey": "mtgV", **extra})
+seed("mandates/mFam", mandate())
+seed("mandates/mFamRevoke", mandate())
+seed("mandates/mProxy", proxy(createdByKey="pVCh"))
+seed("mandates/mProxyRevoke", proxy(createdByKey="pVCh"))
+seed("mandates/mFamT2", mandate(tenants=["t2"]))
+
+def _allowed(code):
+    return code in (200, 201)
+def _create(doc_id, d, token):
+    return _allowed(req(POST, f"mandates?documentId={doc_id}", token=token, data=body(d)))
+def _patch(doc_id, fields, token):
+    return _allowed(req(PATCH, f"mandates/{doc_id}", token=token, data=body(fields), mask=list(fields)))
+def _get(doc_id, token):
+    return _allowed(req(GET, f"mandates/{doc_id}", token=token))
+REVOKE_BY = lambda pk: {"revokedAt": "20261126120000", "revokedByKey": pk}
+
+# Each test returns True when the rules behave as specified.
+def test_mandate_grantor_creates_family():
+    return _create("cGrantor", mandate(), A)
+def test_mandate_other_member_cannot_create_for_someone():
+    return not _create("cOther", mandate(createdByKey="pE"), E)
+def test_mandate_chair_records_proxy():
+    return _create("cChairProxy", proxy(createdByKey="pVCh"), VCH)
+def test_mandate_chair_cannot_create_family():
+    return not _create("cChairFam", mandate(meetingKey="mtgV", createdByKey="pVCh"), VCH)
+def test_mandate_memberadmin_creates_for_minor():
+    return _create("cMinor", mandate(grantorKey="pKid", granteeKey="pA", createdByKey="pM"), M)
+def test_mandate_createdby_must_be_caller():
+    return not _create("cCreatedBy", mandate(createdByKey="pE"), A)
+def test_mandate_grantee_gives_back():
+    return _patch("mFamRevoke", REVOKE_BY("pE"), E)
+def test_mandate_update_cannot_change_grantee():
+    return not _patch("mFam", {"granteeKey": "pV3"}, A)
+def test_mandate_third_member_cannot_read_family():
+    return (not _get("mFam", V3)
+            and field_query("mandates", [("tenants", "ARRAY_CONTAINS", "t1"), ("granteeKey", "EQUAL", "pE")], token=V3) != 200)
+def test_mandate_member_reads_proxy():
+    return (_get("mProxy", V3)
+            and field_query("mandates", [("tenants", "ARRAY_CONTAINS", "t1"), ("meetingKey", "EQUAL", "mtgV"),
+                                         ("kind", "EQUAL", "proxy")], token=V3) == 200)
+def test_mandate_client_cannot_delete():
+    return (req(DELETE, "mandates/mFam", token=A) == 403 and req(DELETE, "mandates/mFam", token=D) == 403
+            and req(DELETE, "mandates/mProxy", token=VCH) == 403)
+def test_mandate_two_tenants_rejected():
+    return not _create("cTwoTenants", mandate(tenants=["t1", "t2"], grantorKey="pX", createdByKey="pX"), X)
+# further cases: the grantor's and grantee's own queries, chair / proxy edge cases, tenant isolation
+def test_mandate_grantee_queries_own():
+    return field_query("mandates", [("tenants", "ARRAY_CONTAINS", "t1"), ("granteeKey", "EQUAL", "pE")], token=E) == 200
+def test_mandate_grantor_queries_own():
+    return field_query("mandates", [("tenants", "ARRAY_CONTAINS", "t1"), ("grantorKey", "EQUAL", "pA")], token=A) == 200
+def test_mandate_privileged_reads_family():
+    return _get("mFam", P) and _get("mFam", M)
+def test_mandate_other_tenant_cannot_read():
+    return not _get("mFam", B) and not _get("mProxy", B) and not _get("mFamT2", E)
+def test_mandate_create_must_not_be_revoked():
+    return not _create("cRevoked", mandate(revokedAt="20261126120000", revokedByKey="pA"), A)
+def test_mandate_create_in_foreign_tenant_rejected():
+    return not _create("cForeign", mandate(tenants=["t2"]), A)
+def test_mandate_member_cannot_record_proxy_for_someone():
+    return not _create("cProxyOther", proxy(createdByKey="pV3"), V3)
+def test_mandate_chair_of_foreign_meeting_cannot_record_proxy():
+    return not _create("cProxyForeignMtg", proxy(meetingKey="mtgVt2", createdByKey="pVCh"), VCH)
+def test_mandate_chair_of_missing_meeting_cannot_record_proxy():
+    return not _create("cProxyNoMtg", proxy(meetingKey="mtgNone", createdByKey="pVCh"), VCH)
+def test_mandate_chair_revokes_proxy():
+    return _patch("mProxyRevoke", REVOKE_BY("pVCh"), VCH)
+def test_mandate_chair_cannot_revoke_family():
+    return not _patch("mFam", REVOKE_BY("pVCh"), VCH)
+def test_mandate_grantor_changes_valid_to():
+    return _patch("mFam", {"validTo": "20271231"}, A)
+def test_mandate_grantee_cannot_change_valid_to():
+    return not _patch("mFam", {"validTo": "20281231"}, E)
+def test_mandate_third_member_cannot_revoke():
+    return not _patch("mFam", REVOKE_BY("pV3"), V3)
+def test_mandate_update_cannot_change_frozen_fields():
+    return not any(_patch("mFam", {k: v}, A) for k, v in [("grantorKey", "pV3"), ("kind", "proxy"),
+                   ("meetingKey", "mtgV"), ("tenants", ["t1", "t2"]), ("createdByKey", "pE"), ("actions", ["meeting.represent"])])
+def test_mandate_memberadmin_revokes():
+    return _patch("mFam", REVOKE_BY("pM"), M)
+
+mandate_tests = [v for k, v in list(globals().items()) if k.startswith("test_mandate_") and callable(v)]
+for fn in mandate_tests:
+    ok = bool(fn())
+    passed += ok; failed += not ok
+    print(f"{'PASS' if ok else 'FAIL'}  {fn.__name__}")
+
 print(f"\n{passed} passed, {failed} failed")
 raise SystemExit(1 if failed else 0)
