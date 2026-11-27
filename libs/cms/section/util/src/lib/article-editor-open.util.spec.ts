@@ -165,6 +165,12 @@ describe('newArticleForEditor / articleWithBlocks', () => {
     expect(blocksOf(s)).toEqual([{ id: 'n1', type: 'text', html: '' }]);
   });
 
+  it('keeps the blocks a new article was made with (a new slider)', () => {
+    const gallery = { id: 'slider-gallery', type: 'gallery', images: [], layout: 'slider' } as ArticleBlock;
+    const s = newArticleForEditor(base({ blocks: [gallery] }), 'new1', counter());
+    expect(blocksOf(s)).toEqual([gallery]);
+  });
+
   it('turns an article into a block article for writers, keeping old fields', () => {
     const s = articleWithBlocks(base({ images: [img('a.jpg')] }, { position: ViewPosition.Top }));
     expect(blocksOf(s).map((b) => b.type)).toEqual(['image', 'text']);

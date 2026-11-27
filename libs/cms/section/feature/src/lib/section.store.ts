@@ -18,7 +18,7 @@ import { I18nService } from '@okr/shared-i18n';
 
 import { UploadService } from '@okr/avatar-data-access';
 import { ArticleBlocksGate, SectionService } from '@okr/cms-section-data-access';
-import { createSection, narrowSection, newArticleFrom, SECTION_I18N_KEYS, usesArticleEditor } from '@okr/cms-section-util';
+import { asEditedSection, createSection, narrowSection, newArticleFrom, SECTION_I18N_KEYS, usesArticleEditor } from '@okr/cms-section-util';
 import { allowedSectionTypesForPage } from '@okr/cms-website-render';
 
 import { openArticleEditor, type OpenedArticleEditor } from './article-editor.loader';
@@ -229,6 +229,8 @@ export const _SectionStore = signalStore(
 
       async edit(section?: SectionModel, readOnly = true): Promise<string | undefined> {
         if (!section || opening) return;
+        // a slider is edited as an article with one gallery block (spec 1.182 §5); one save converts it
+        if (!readOnly) section = asEditedSection(section);
         const roles = this.getRoles();
         const states = store.appStore.getCategory('content_state');
         opening = true;

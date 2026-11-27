@@ -22,7 +22,7 @@ import { MenuModal } from '@okr/cms-menu-feature';
 import { PageService } from '@okr/cms-page-data-access';
 import { ArticleBlocksGate, SectionService } from '@okr/cms-section-data-access';
 import { loadSectionEditModal, openArticleEditor, type ArticleEditorHost, type OpenedArticleEditor } from '@okr/cms-section-feature';
-import { SECTION_I18N_KEYS, isImageLinked, newArticleFrom, usesArticleEditor } from '@okr/cms-section-util';
+import { SECTION_I18N_KEYS, asEditedSection, isImageLinked, newArticleFrom, usesArticleEditor } from '@okr/cms-section-util';
 
 import { PAGE_I18N_KEYS } from '@okr/cms-page-util';
 
@@ -195,6 +195,7 @@ export const PageIntegrityStore = signalStore(
 
       async editSection(section: SectionModel): Promise<void> {
         if (opening) return;
+        section = asEditedSection(section);   // a slider is edited as an article (spec 1.182 §5)
         const currentUser: UserModel | undefined = store.currentUser();
         const roles = store.appStore.getCategory('roles');
         const states = store.appStore.getCategory('content_state');

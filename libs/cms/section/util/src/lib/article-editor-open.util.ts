@@ -85,10 +85,12 @@ export function openArticle(section: ArticleSection, newId: NewId): { section: A
   return { section: { ...shaped, properties }, ...(notice ? { notice } : {}) };
 }
 
-/** A new article for the editor: one empty text block. */
+/** A new article for the editor: one empty text block, or the blocks it was made with (a new slider, spec 1.182 §5). */
 export function newArticleForEditor(section: ArticleSection, okey: string, newId: NewId): ArticleSection {
   const shaped = withShapes(section);
-  return { ...shaped, okey, properties: { ...shaped.properties, blocks: [createBlock('text', newId)] } };
+  const given = articleBlocksOf(shaped);
+  const blocks = given && given.length > 0 ? normalise(given as unknown[], newId) : [createBlock('text', newId)];
+  return { ...shaped, okey, properties: { ...shaped.properties, blocks } };
 }
 
 /**

@@ -68,7 +68,7 @@ Collection name: `sections`
 | `orgchart` | `OrgchartConfig` | Interactive organization chart starting from a root group |
 | `people` | `PeopleConfig` | Persons (explicit list, group members or role holders) as cards, grid or 1–4 slider lines; imgix portraits (size, radius, facearea crop, b/w, background removal + colour); name, function, email above/below/beside/over the picture |
 | `rag` | `RagConfig` | Retrieval-augmented generation chat interface |
-| `slider` | `SliderConfig` | Image slider / carousel |
+| `slider` | `SliderConfig` | Image slider / carousel. Retired (spec 1.182): a new «Slider» and a stored one open in the article editor as an article with one gallery block (`sliderToArticle`, `asEditedSection`); one save converts it. Still drawn until the migration |
 | `table` | `TableConfig` | HTML table with an optional header row; stacks or scrolls in a narrow container; edited in the table editor (see Table Editor) |
 | `tasks` | `TasksConfig` | Task list for the current user |
 | `tracker` | `TrackerConfig` | GPS location tracker with configurable interval |
