@@ -126,7 +126,7 @@ interface PersonView {
           [style.border-radius]="radius()" [style.background-color]="item.bgColor">
           <img okrImg [src]="item.url" [alt]="item.alt" [width]="sizePx()" [height]="sizePx()" loading="lazy" />
           @if(isOverlay() && hasInfo(item)) {
-            <div class="info overlay" class="info overlay overlayBottom">
+            <div class="info overlay overlayBottom">
               <ng-container [ngTemplateOutlet]="infoTpl" [ngTemplateOutletContext]="{ $implicit: item }" />
             </div>
           }
