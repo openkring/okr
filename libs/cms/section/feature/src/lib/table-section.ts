@@ -1,137 +1,56 @@
-import { NgStyle } from '@angular/common';
 import { Component, computed, inject, input } from '@angular/core';
 import { IonCard, IonCardContent, IonItem, IonLabel } from '@ionic/angular';
 
+import { TableView } from '@okr/cms-section-ui';
 import { TableSection } from '@okr/shared-models';
 import { OptionalCardHeader, Spinner } from '@okr/shared-ui';
 import { SectionStore } from './section.store';
 
 /**
- * Data grid based on open source (Generic UI Data Grid)[https://generic-ui.com/].
- * features virtual scrolling, editing, multi sorting, searching, automatic summaries calculations
- * themes
- * See Documentation: https://generic-ui.com/guide/nx-angular-cli
- * title is shown as a legend below the table
- * subTitle is not used
+ * A table of HTML cells (`okr-table-view`), with an optional header row. The title stands above the table, as its first row, as a
+ * legend below it, or not at all (`grid.showTitleAs`). In a narrow container the table stacks or scrolls (`properties.responsive`).
  */
 @Component({
   selector: 'okr-table-section',
   standalone: true,
-  imports: [
-    Spinner, OptionalCardHeader,
-    NgStyle,
-    IonCard, IonCardContent, IonLabel, IonItem
-  ],
+  imports: [Spinner, OptionalCardHeader, TableView, IonCard, IonCardContent, IonLabel, IonItem],
   providers: [SectionStore],
   styles: [`
-  ion-card-content { padding: 5px; }
-  ion-card { padding: 0px; margin: 0px; border: 0px; box-shadow: none !important;}
-  legend { padding: 0px; margin: 0px;  }
-  ion-label { 
-    margin-top: 0px;
-    -webkit-user-select: text;
-    -moz-user-select: text;
-    -ms-user-select: text;
-    user-select: text;
-  }
-  ion-textarea {
-    -webkit-user-select: text;
-    -moz-user-select: text;
-    -ms-user-select: text;
-    user-select: text;
-  }
-`],
+    ion-card-content { padding: 5px; }
+    ion-card { padding: 0px; margin: 0px; border: 0px; box-shadow: none !important; }
+    ion-label { margin-top: 0px; user-select: text; -webkit-user-select: text; }
+  `],
   template: `
-  @if(section(); as section) {
-    <ion-card>
-      @if(showTitleAs() === 'title') {
-        <okr-optional-card-header [intro]="section.intro" [introPosition]="section.introPosition"  [title]="title()" [subTitle]="subTitle()" />
-      }
-      <ion-card-content>
-        @if(header()?.length === 0 && body()?.length === 0) {
-          <ion-item lines="none">
-            <ion-label>{{ store.i18n.table_empty() }}</ion-label>
-          </ion-item>
-        } @else {
-          <div [ngStyle]="gridStyle()">
-            @if(showTitleAs() === 'header') {
-              <!-- tbd: currently, this only works with 2 columns -->
-              <div [ngStyle]="headerStyle()">{{title()}}</div>
-              <div [ngStyle]="headerStyle()"></div>
-            }
-            @for(header of header(); track $index) {
-              <div [ngStyle]="headerStyle()">{{header}}</div>
-            }
-            @for(cell of body(); track $index) {
-              <div [ngStyle]="bodyStyle()" [innerHTML]="cell"></div>
-            }
-          </div>
+    @if (section(); as section) {
+      <ion-card>
+        @if (showTitleAs() === 'title') {
+          <okr-optional-card-header [intro]="section.intro" [introPosition]="section.introPosition" [title]="section.title" [subTitle]="section.subTitle" />
         }
-        @if(section.title && section.title !== '' && showTitleAs() === 'legend') {
-          <ion-item lines="none" class="legend">
-            <ion-label><i>{{ section.title }}</i></ion-label>
-          </ion-item>
-        }
-      </ion-card-content>
-    </ion-card>
-  } @else {
-    <okr-spinner />
-  }
-`
+        <ion-card-content>
+          @if (isEmpty()) {
+            <ion-item lines="none"><ion-label>{{ store.i18n.table_empty() }}</ion-label></ion-item>
+          } @else {
+            <okr-table-view [config]="section.properties" [title]="section.title" />
+          }
+          @if (section.title && showTitleAs() === 'legend') {
+            <ion-item lines="none" class="legend"><ion-label><i>{{ section.title }}</i></ion-label></ion-item>
+          }
+        </ion-card-content>
+      </ion-card>
+    } @else {
+      <okr-spinner />
+    }
+  `,
 })
 export class TableSectionComponent {
   protected readonly store = inject(SectionStore);
 
   // inputs
-  public section = input<TableSection>();
+  public readonly section = input<TableSection>();
 
-  // computed
-  protected config = computed(() => this.section()?.properties);
-  protected header = computed(() => this.section()?.properties?.data.header);
-  protected body = computed(() => this.section()?.properties?.data.body);
-  protected readonly title = computed(() => this.section()?.title);
-  protected readonly subTitle = computed(() => this.section()?.subTitle);
-  protected readonly showTitleAs = computed(() => this.config()?.grid.showTitleAs ?? 'title');
-
-  protected gridStyle = computed(() => {
-    return {
-      'display': 'grid',
-      'grid-template-columns': this.config()?.grid.template ?? 'auto auto',
-      'gap': '0',
-      'padding': '0',
-      'margin': '10px'
-    };
-  });
-
-  protected headerStyle = computed(() => {
-    return {
-      'background-color': this.config()?.header.backgroundColor ?? 'var(--ion-color-step-150)',
-      'text-align': this.config()?.header.textAlign ?? 'center',
-      'font-size': this.config()?.header.fontSize ?? '1rem',
-      'font-weight': this.config()?.header.fontWeight ?? 'bold',
-      'padding': this.config()?.header.padding ?? '5px',
-      'color': this.config()?.header.textColor ?? 'var(--ion-text-color)',
-      'border': this.config()?.header.border ?? '0.5px solid var(--ion-color-medium)',
-      '-webkit-user-select': 'text',
-      '-moz-user-select': 'text',
-      '-ms-user-select': 'text',
-      'user-select': 'text'
-    };
-  });
-
-  protected bodyStyle = computed(() => {
-    return {
-      'background-color': this.config()?.body.backgroundColor ?? 'var(--ion-color-background)',
-      'text-align': this.config()?.body.textAlign ?? 'left',
-      'font-size': this.config()?.body.fontSize ?? '0.8rem',
-      'font-weight': this.config()?.body.fontWeight ?? 'normal',
-      'padding': this.config()?.body.padding ?? '5px',
-      'color': this.config()?.body.textColor ?? 'var(--ion-text-color)',
-      'border': this.config()?.body.border ?? '0.5px solid var(--ion-color-medium)',
-      '-webkit-user-select': 'text',
-      '-moz-user-select': 'text',
-      '-ms-user-select': 'text',
-      'user-select': 'text'
-    };
+  protected readonly showTitleAs = computed(() => this.section()?.properties?.grid?.showTitleAs ?? 'title');
+  protected readonly isEmpty = computed(() => {
+    const data = this.section()?.properties?.data;
+    return (data?.header?.length ?? 0) === 0 && (data?.body?.length ?? 0) === 0;
   });
 }

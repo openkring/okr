@@ -41,6 +41,8 @@ export * from './lib/people-section.validations';
 export * from './lib/people-section.util';
 export * from './lib/slider-section.validations';
 export * from './lib/table-section.validations';
+export * from './lib/table-layout.util';
+export * from './lib/table-editor-i18n';
 export * from './lib/tracker-section.validations';
 export * from './lib/video-section.validations';
 export * from './lib/video-source.util';

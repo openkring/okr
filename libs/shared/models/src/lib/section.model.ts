@@ -1026,12 +1026,43 @@ export interface TableConfig {
   grid: TableGrid;
   header: TableStyle;
   body: TableStyle;
+  /** the columns as the table editor sets them; when present, `grid.template` is written from them (older apps keep reading it) */
+  columns?: TableColumn[];
+  /** how the table fits a narrow container; absent = 'auto' below 'mobile' */
+  responsive?: TableResponsive;
+}
+
+/** width of a column: 'auto' shares the rest, 'narrow' / 'wide' are flexible presets, or a CSS length (e.g. '25%', '120px') */
+export type TableColumnWidth = 'auto' | 'narrow' | 'wide' | string;
+export type TableAlign = 'left' | 'center' | 'right';
+
+export interface TableColumn {
+  width: TableColumnWidth;
+  align?: TableAlign;
+}
+
+/**
+ * 'stack': below the breakpoint each row becomes a block (cells labelled with their header, or label above value for two columns).
+ * 'scroll': the table keeps its columns and scrolls sideways, the first column pinned.
+ * 'auto': stack for up to two columns, scroll for more.
+ */
+export type TableResponsiveMode = 'auto' | 'stack' | 'scroll';
+export type TableBreakpoint = 'mobile' | 'tablet';
+export const TABLE_RESPONSIVE_MODES: readonly TableResponsiveMode[] = ['auto', 'stack', 'scroll'];
+export const TABLE_BREAKPOINTS: readonly TableBreakpoint[] = ['mobile', 'tablet'];
+
+export interface TableResponsive {
+  mode: TableResponsiveMode;
+  breakpoint: TableBreakpoint;
 }
 
 export interface TableGrid {
-    template: string; 
+    template: string;
+    /** not drawn (the renderer sets no gap); kept for stored documents */
     gap: string;
+    /** not drawn; kept for stored documents */
     backgroundColor: string;
+    /** not drawn; kept for stored documents */
     padding: string;
     showTitleAs: 'title' | 'legend' | 'header' | 'none';
 }

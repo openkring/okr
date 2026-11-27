@@ -1658,6 +1658,89 @@
         "placeholder": "normal | bold",
         "helper": "Lo spessore del carattere, ad es. normal o bold."
       }
+    },
+    "editor": {
+      "panel": {
+        "section": "Sezione",
+        "table": "Tabella",
+        "back": "Torna alla sezione",
+        "label": "Impostazioni",
+        "errors": "Queste indicazioni mancano ancora o non sono corrette:"
+      },
+      "canvas": {
+        "hint": "Fai clic su una cella per modificarla. Con Tab passi alla successiva. Le celle copiate da Excel si incollano nella cella scelta.",
+        "select": "Seleziona la tabella",
+        "cellPlaceholder": "Testo",
+        "headerPlaceholder": "Titolo della colonna",
+        "empty": "La tabella non ha ancora righe. Aggiungine una o incolla celle da Excel."
+      },
+      "row": {
+        "addAbove": "Inserisci riga sopra",
+        "addBelow": "Inserisci riga sotto",
+        "moveUp": "Sposta riga in su",
+        "moveDown": "Sposta riga in giù",
+        "delete": "Elimina riga",
+        "add": "Aggiungi riga"
+      },
+      "column": {
+        "addLeft": "Inserisci colonna a sinistra",
+        "addRight": "Inserisci colonna a destra",
+        "delete": "Elimina colonna"
+      },
+      "paste": {
+        "button": "Incolla da Excel",
+        "denied": "Il tuo browser non permette di incollare con il pulsante. Fai clic su una cella e incolla con Cmd+V o Ctrl+V."
+      },
+      "look": {
+        "title": "Aspetto",
+        "lines": "Linee",
+        "plain": "Semplice",
+        "colored": "Colorato",
+        "own": "Aspetto proprio: scegline uno per sostituirlo."
+      },
+      "header": {
+        "label": "Riga di intestazione"
+      },
+      "title": {
+        "title": "Titolo",
+        "above": "Sopra",
+        "legend": "Didascalia",
+        "header": "Come intestazione",
+        "none": "Nessuno"
+      },
+      "columns": {
+        "title": "Colonne",
+        "column": "Colonna {n}",
+        "auto": "Auto",
+        "narrow": "Stretta",
+        "wide": "Larga",
+        "own": "Larghezza propria",
+        "alignLeft": "A sinistra",
+        "alignCenter": "Al centro",
+        "alignRight": "A destra"
+      },
+      "size": {
+        "title": "Dimensione del testo",
+        "s": "S",
+        "m": "M",
+        "l": "L"
+      },
+      "responsive": {
+        "title": "Su schermi piccoli",
+        "auto": "Auto",
+        "stack": "Impila",
+        "scroll": "Scorri",
+        "autoHelper": "Fino a due colonne si impila, le tabelle più larghe scorrono di lato.",
+        "stackHelper": "Ogni riga diventa un blocco, con i titoli delle colonne accanto alle celle.",
+        "scrollHelper": "La tabella mantiene le colonne e scorre di lato; la prima colonna resta ferma.",
+        "breakpoint": "Sotto quale larghezza",
+        "mobile": "Telefono",
+        "tablet": "Tablet"
+      },
+      "custom": {
+        "title": "Personalizza",
+        "helper": "Colori, bordi, spaziature interne e allineamento di intestazione e celle, campo per campo."
+      }
     }
   },
   "task": {

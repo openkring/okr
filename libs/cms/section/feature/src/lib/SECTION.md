@@ -69,7 +69,7 @@ Collection name: `sections`
 | `people` | `PeopleConfig` | Persons (explicit list, group members or role holders) as cards, grid or 1–4 slider lines; imgix portraits (size, radius, facearea crop, b/w, background removal + colour); name, function, email above/below/beside/over the picture |
 | `rag` | `RagConfig` | Retrieval-augmented generation chat interface |
 | `slider` | `SliderConfig` | Image slider / carousel |
-| `table` | `TableConfig` | HTML-rendered data table with styled header/body |
+| `table` | `TableConfig` | HTML table with an optional header row; stacks or scrolls in a narrow container; edited in the table editor (see Table Editor) |
 | `tasks` | `TasksConfig` | Task list for the current user |
 | `tracker` | `TrackerConfig` | GPS location tracker with configurable interval |
 | `video` | `VideoConfig` | YouTube or Vimeo player, or an album video; `aspectRatio` (absent = 16:9) |
@@ -162,6 +162,20 @@ A video section that may be changed is edited graphically too: `SectionEditModal
 | `video-editor-i18n.ts` | util | `VIDEO_EDITOR_I18N_KEYS` (`video.editor.*`); the panel's own keys (`video.link.*`, `video.ratio.*`) are in `SECTION_I18N_KEYS` |
 
 YouTube is embedded from `youtube-nocookie.com`. `width`, `height` and `frameborder` are gone from `VideoConfig` (2026-11-27): the player fills the width, its height follows `aspectRatio`, a tall video is at most 80 % of the window high.
+
+## Table Editor
+
+A table section that may be changed is edited graphically too: `SectionEditModal` shows `TableEditor` (feature) when the section is a `table`, not read-only and not in the travel journal (`isTableEditor()`). The modal keeps the change confirmation and the save.
+
+| Part | Where | What |
+| --- | --- | --- |
+| `table-editor.ts` | feature | Toolbar (devices, undo, redo, text tools, «Aus Excel einfügen»), canvas, panel. Each cell is typed in place with `okr-rich-text-inline`, one at a time; a chosen cell shows the row and column tools; Tab moves on and adds a row past the last cell. A paste of several cells (Excel, Numbers, Google Sheets) is caught in the capture phase and fills the table from the chosen cell, adding rows and columns |
+| `table-view.ts` | ui | Draws the table for readers and for the canvas (with a cell template). Flexible column widths; below the breakpoint of its container (container query, not the screen) it stacks or scrolls with the first column pinned |
+| `table-panel.ts` | ui | Look (lines, plain, coloured), header row, where the title stands, text size, columns (width, alignment), «Auf kleinen Bildschirmen» (auto, stack, scroll; phone or tablet). «Anpassen» opens the former style fields and the template |
+| `table-layout.util.ts` | util | Stored table ↔ header, rows, columns (`tableContentOf`, `withTableContent`); row and column operations; looks and sizes; `parseClipboardTable` (tab-separated, quoted cells as Excel writes them) |
+| `table-editor-i18n.ts` | util | `TABLE_EDITOR_I18N_KEYS` (`table.editor.*`); resolved with the section and article editor keys as `TableEditorI18n` |
+
+**Stored as before.** `data.header` / `data.body` (row by row) and `grid.template` stay what readers and older apps draw: the editor writes the template from `columns` (Schmal = `100px`, Breit = `300px`). `columns` and `responsive` are optional additions; a table without `responsive` is `auto` below the phone width: up to two columns stack, wider tables scroll. `grid.gap`, `grid.padding` and `grid.backgroundColor` are not drawn and no longer offered. An empty stored style value draws none; only a missing one takes the default.
 
 ## Section Dispatcher
 

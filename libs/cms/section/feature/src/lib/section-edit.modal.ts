@@ -18,6 +18,7 @@ import { SECTION_I18N_KEYS, SECTION_ICON_PICKER, SectionI18n, withImageStyleDefa
 
 import { ButtonEditor } from './button-editor';
 import { HeroEditor } from './hero-editor';
+import { TableEditor } from './table-editor';
 import { VideoEditor } from './video-editor';
 import { CmsSectionIconPicker } from './section-icon-picker';
 
@@ -41,7 +42,7 @@ import { AppStore } from '@okr/shared-feature';
     selector: 'okr-section-edit-modal',
     standalone: true,
     imports: [
-      ButtonEditor, HeroEditor, ChangeConfirmation, Header, ErrorBanner, SectionForm, VideoEditor,
+      ButtonEditor, HeroEditor, TableEditor, ChangeConfirmation, Header, ErrorBanner, SectionForm, VideoEditor,
       IonContent
     ],
     providers: [SectionStore, { provide: SECTION_ICON_PICKER, useClass: CmsSectionIconPicker }],
@@ -53,8 +54,19 @@ import { AppStore } from '@okr/shared-feature';
       @if(store(); as store) {
         <okr-error-banner [message]="store.errorMessage()" (dismiss)="store.clearError()" />
       }
-      <ion-content class="ion-no-padding" [scrollY]="!isButtonEditor() && !isHeroEditor() && !isVideoEditor()">
-        @if (isButtonEditor()) {
+      <ion-content class="ion-no-padding" [scrollY]="!isButtonEditor() && !isHeroEditor() && !isVideoEditor() && !isTableEditor()">
+        @if (isTableEditor()) {
+          <!-- a table section is edited graphically too: cells typed in place, settings in the panel -->
+          <okr-table-editor
+            [formData]="$any(formData())"
+            (formDataChange)="onFormDataChange($event)"
+            [currentUser]="currentUser()"
+            [roles]="roles()"
+            [states]="states()"
+            [allTags]="allTags()"
+            (valid)="formValid.set($event)"
+          />
+        } @else if (isButtonEditor()) {
           <!-- a button section is edited graphically, as an article is: canvas and panel. Not re-mounted by «Abbrechen»: the reset is a step of its history -->
           <okr-button-editor
             [formData]="$any(formData())"
@@ -142,6 +154,8 @@ export class SectionEditModal {
   protected readonly isHeroEditor = computed(() => this.section().type === 'hero' && !this.isReadOnly() && !this.journalMode());
   /** a video section likewise; in the journal it keeps the form, which picks its clips */
   protected readonly isVideoEditor = computed(() => this.section().type === 'video' && !this.isReadOnly() && !this.journalMode());
+  /** a table section likewise: cells typed in place; in the journal and read-only it keeps the form */
+  protected readonly isTableEditor = computed(() => this.section().type === 'table' && !this.isReadOnly() && !this.journalMode());
   public roles = input.required<CategoryListModel>();
   public states = input.required<CategoryListModel>();
   public readOnly = input(true);

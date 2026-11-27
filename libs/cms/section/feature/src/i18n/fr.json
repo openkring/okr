@@ -1658,6 +1658,89 @@
         "placeholder": "normal | bold",
         "helper": "La graisse de la police, p. ex. normal ou bold."
       }
+    },
+    "editor": {
+      "panel": {
+        "section": "Section",
+        "table": "Tableau",
+        "back": "Retour à la section",
+        "label": "Réglages",
+        "errors": "Ces indications manquent encore ou ne sont pas correctes :"
+      },
+      "canvas": {
+        "hint": "Clique dans une cellule pour la modifier. Tab te mène à la suivante. Des cellules copiées depuis Excel se collent dans la cellule choisie.",
+        "select": "Choisir le tableau",
+        "cellPlaceholder": "Texte",
+        "headerPlaceholder": "Titre de colonne",
+        "empty": "Le tableau n'a pas encore de lignes. Ajoute-en une ou colle des cellules depuis Excel."
+      },
+      "row": {
+        "addAbove": "Insérer une ligne au-dessus",
+        "addBelow": "Insérer une ligne en dessous",
+        "moveUp": "Monter la ligne",
+        "moveDown": "Descendre la ligne",
+        "delete": "Supprimer la ligne",
+        "add": "Ajouter une ligne"
+      },
+      "column": {
+        "addLeft": "Insérer une colonne à gauche",
+        "addRight": "Insérer une colonne à droite",
+        "delete": "Supprimer la colonne"
+      },
+      "paste": {
+        "button": "Coller depuis Excel",
+        "denied": "Ton navigateur ne permet pas de coller avec le bouton. Clique dans une cellule et colle avec Cmd+V ou Ctrl+V."
+      },
+      "look": {
+        "title": "Apparence",
+        "lines": "Lignes",
+        "plain": "Sobre",
+        "colored": "En couleur",
+        "own": "Apparence propre : choisis-en une pour la remplacer."
+      },
+      "header": {
+        "label": "Ligne d'en-tête"
+      },
+      "title": {
+        "title": "Titre",
+        "above": "En haut",
+        "legend": "Légende",
+        "header": "Comme en-tête",
+        "none": "Aucun"
+      },
+      "columns": {
+        "title": "Colonnes",
+        "column": "Colonne {n}",
+        "auto": "Auto",
+        "narrow": "Étroite",
+        "wide": "Large",
+        "own": "Largeur propre",
+        "alignLeft": "À gauche",
+        "alignCenter": "Au centre",
+        "alignRight": "À droite"
+      },
+      "size": {
+        "title": "Taille du texte",
+        "s": "S",
+        "m": "M",
+        "l": "L"
+      },
+      "responsive": {
+        "title": "Sur petits écrans",
+        "auto": "Auto",
+        "stack": "Empiler",
+        "scroll": "Défiler",
+        "autoHelper": "Jusqu'à deux colonnes, le tableau s'empile ; plus large, il défile sur le côté.",
+        "stackHelper": "Chaque ligne devient un bloc, les titres de colonne figurent près des cellules.",
+        "scrollHelper": "Le tableau garde ses colonnes et défile sur le côté ; la première colonne reste fixe.",
+        "breakpoint": "En dessous de quelle largeur",
+        "mobile": "Téléphone",
+        "tablet": "Tablette"
+      },
+      "custom": {
+        "title": "Personnaliser",
+        "helper": "Couleurs, bordures, marges intérieures et alignement de l'en-tête et des cellules, champ par champ."
+      }
     }
   },
   "task": {

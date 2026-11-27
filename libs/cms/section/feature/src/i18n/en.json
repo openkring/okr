@@ -1658,6 +1658,89 @@
         "placeholder": "normal | bold",
         "helper": "The weight of the font, e.g. normal or bold."
       }
+    },
+    "editor": {
+      "panel": {
+        "section": "Section",
+        "table": "Table",
+        "back": "Back to the section",
+        "label": "Settings",
+        "errors": "These details are missing or not right yet:"
+      },
+      "canvas": {
+        "hint": "Click a cell to edit it. Tab takes you to the next one. Cells copied from Excel are pasted into the chosen cell.",
+        "select": "Select the table",
+        "cellPlaceholder": "Text",
+        "headerPlaceholder": "Column title",
+        "empty": "The table has no rows yet. Add one or paste cells from Excel."
+      },
+      "row": {
+        "addAbove": "Insert row above",
+        "addBelow": "Insert row below",
+        "moveUp": "Move row up",
+        "moveDown": "Move row down",
+        "delete": "Delete row",
+        "add": "Add row"
+      },
+      "column": {
+        "addLeft": "Insert column left",
+        "addRight": "Insert column right",
+        "delete": "Delete column"
+      },
+      "paste": {
+        "button": "Paste from Excel",
+        "denied": "Your browser doesn't allow pasting with the button. Click a cell and paste with Cmd+V or Ctrl+V."
+      },
+      "look": {
+        "title": "Look",
+        "lines": "Lines",
+        "plain": "Plain",
+        "colored": "Coloured",
+        "own": "A look of its own: choose one to replace it."
+      },
+      "header": {
+        "label": "Header row"
+      },
+      "title": {
+        "title": "Title",
+        "above": "Above",
+        "legend": "Caption",
+        "header": "As header row",
+        "none": "None"
+      },
+      "columns": {
+        "title": "Columns",
+        "column": "Column {n}",
+        "auto": "Auto",
+        "narrow": "Narrow",
+        "wide": "Wide",
+        "own": "Own width",
+        "alignLeft": "Left",
+        "alignCenter": "Centre",
+        "alignRight": "Right"
+      },
+      "size": {
+        "title": "Text size",
+        "s": "S",
+        "m": "M",
+        "l": "L"
+      },
+      "responsive": {
+        "title": "On small screens",
+        "auto": "Auto",
+        "stack": "Stack",
+        "scroll": "Scroll",
+        "autoHelper": "Up to two columns stack, wider tables scroll sideways.",
+        "stackHelper": "Each row becomes a block, with the column titles next to the cells.",
+        "scrollHelper": "The table keeps its columns and scrolls sideways; the first column stays put.",
+        "breakpoint": "Below which width",
+        "mobile": "Phone",
+        "tablet": "Tablet"
+      },
+      "custom": {
+        "title": "Customise",
+        "helper": "Colours, borders, padding and alignment of header and cells, field by field."
+      }
     }
   },
   "task": {

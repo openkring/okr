@@ -1658,6 +1658,89 @@
         "placeholder": "normal | bold",
         "helper": "Die Stärke der Schrift, z.B. normal oder bold."
       }
+    },
+    "editor": {
+      "panel": {
+        "section": "Abschnitt",
+        "table": "Tabelle",
+        "back": "Zurück zum Abschnitt",
+        "label": "Einstellungen",
+        "errors": "Diese Angaben fehlen noch oder stimmen nicht:"
+      },
+      "canvas": {
+        "hint": "Klicke in eine Zelle, um sie zu bearbeiten. Mit Tab springst du zur nächsten. Aus Excel kopierte Zellen fügst du mit Einfügen in die gewählte Zelle ein.",
+        "select": "Tabelle auswählen",
+        "cellPlaceholder": "Text",
+        "headerPlaceholder": "Spaltentitel",
+        "empty": "Die Tabelle hat noch keine Zeilen. Füge eine hinzu oder füge Zellen aus Excel ein."
+      },
+      "row": {
+        "addAbove": "Zeile darüber einfügen",
+        "addBelow": "Zeile darunter einfügen",
+        "moveUp": "Zeile nach oben",
+        "moveDown": "Zeile nach unten",
+        "delete": "Zeile löschen",
+        "add": "Zeile hinzufügen"
+      },
+      "column": {
+        "addLeft": "Spalte links einfügen",
+        "addRight": "Spalte rechts einfügen",
+        "delete": "Spalte löschen"
+      },
+      "paste": {
+        "button": "Aus Excel einfügen",
+        "denied": "Dein Browser erlaubt das Einfügen über den Knopf nicht. Klicke in eine Zelle und füge mit Cmd+V oder Ctrl+V ein."
+      },
+      "look": {
+        "title": "Aussehen",
+        "lines": "Linien",
+        "plain": "Schlicht",
+        "colored": "Farbig",
+        "own": "Eigenes Aussehen: wähle eines, um es zu ersetzen."
+      },
+      "header": {
+        "label": "Kopfzeile"
+      },
+      "title": {
+        "title": "Titel",
+        "above": "Oben",
+        "legend": "Legende",
+        "header": "Als Kopfzeile",
+        "none": "Keiner"
+      },
+      "columns": {
+        "title": "Spalten",
+        "column": "Spalte {n}",
+        "auto": "Auto",
+        "narrow": "Schmal",
+        "wide": "Breit",
+        "own": "Eigene Breite",
+        "alignLeft": "Links",
+        "alignCenter": "Mitte",
+        "alignRight": "Rechts"
+      },
+      "size": {
+        "title": "Schriftgrösse",
+        "s": "S",
+        "m": "M",
+        "l": "L"
+      },
+      "responsive": {
+        "title": "Auf kleinen Bildschirmen",
+        "auto": "Auto",
+        "stack": "Stapeln",
+        "scroll": "Scrollen",
+        "autoHelper": "Bis zwei Spalten wird gestapelt, breitere Tabellen scrollen seitwärts.",
+        "stackHelper": "Jede Zeile wird zu einem Block, die Spaltentitel stehen bei den Zellen.",
+        "scrollHelper": "Die Tabelle behält ihre Spalten und scrollt seitwärts, die erste Spalte bleibt stehen.",
+        "breakpoint": "Ab welcher Breite",
+        "mobile": "Handy",
+        "tablet": "Tablet"
+      },
+      "custom": {
+        "title": "Anpassen",
+        "helper": "Farben, Rahmen, Innenabstände und Ausrichtung von Kopfzeile und Zellen, Feld für Feld."
+      }
     }
   },
   "task": {

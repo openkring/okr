@@ -54,3 +54,5 @@ export * from './lib/button-panel';
 export * from './lib/hero-panel';
 export * from './lib/article-block-library';
 export * from './lib/article-image-pick.modal';
+export * from './lib/table-view';
+export * from './lib/table-panel';

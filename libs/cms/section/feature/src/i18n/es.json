@@ -1658,6 +1658,89 @@
         "placeholder": "normal | bold",
         "helper": "El grosor de la fuente, p. ej. normal o bold."
       }
+    },
+    "editor": {
+      "panel": {
+        "section": "Sección",
+        "table": "Tabla",
+        "back": "Volver a la sección",
+        "label": "Ajustes",
+        "errors": "Estos datos faltan todavía o no son correctos:"
+      },
+      "canvas": {
+        "hint": "Haz clic en una celda para editarla. Con Tab pasas a la siguiente. Las celdas copiadas de Excel se pegan en la celda elegida.",
+        "select": "Seleccionar la tabla",
+        "cellPlaceholder": "Texto",
+        "headerPlaceholder": "Título de columna",
+        "empty": "La tabla aún no tiene filas. Añade una o pega celdas de Excel."
+      },
+      "row": {
+        "addAbove": "Insertar fila encima",
+        "addBelow": "Insertar fila debajo",
+        "moveUp": "Subir fila",
+        "moveDown": "Bajar fila",
+        "delete": "Eliminar fila",
+        "add": "Añadir fila"
+      },
+      "column": {
+        "addLeft": "Insertar columna a la izquierda",
+        "addRight": "Insertar columna a la derecha",
+        "delete": "Eliminar columna"
+      },
+      "paste": {
+        "button": "Pegar desde Excel",
+        "denied": "Tu navegador no permite pegar con el botón. Haz clic en una celda y pega con Cmd+V o Ctrl+V."
+      },
+      "look": {
+        "title": "Aspecto",
+        "lines": "Líneas",
+        "plain": "Sencillo",
+        "colored": "En color",
+        "own": "Aspecto propio: elige uno para reemplazarlo."
+      },
+      "header": {
+        "label": "Fila de encabezado"
+      },
+      "title": {
+        "title": "Título",
+        "above": "Arriba",
+        "legend": "Leyenda",
+        "header": "Como encabezado",
+        "none": "Ninguno"
+      },
+      "columns": {
+        "title": "Columnas",
+        "column": "Columna {n}",
+        "auto": "Auto",
+        "narrow": "Estrecha",
+        "wide": "Ancha",
+        "own": "Ancho propio",
+        "alignLeft": "Izquierda",
+        "alignCenter": "Centro",
+        "alignRight": "Derecha"
+      },
+      "size": {
+        "title": "Tamaño del texto",
+        "s": "S",
+        "m": "M",
+        "l": "L"
+      },
+      "responsive": {
+        "title": "En pantallas pequeñas",
+        "auto": "Auto",
+        "stack": "Apilar",
+        "scroll": "Desplazar",
+        "autoHelper": "Hasta dos columnas se apila; las tablas más anchas se desplazan de lado.",
+        "stackHelper": "Cada fila se convierte en un bloque, con los títulos de columna junto a las celdas.",
+        "scrollHelper": "La tabla mantiene sus columnas y se desplaza de lado; la primera columna se queda fija.",
+        "breakpoint": "Por debajo de qué ancho",
+        "mobile": "Móvil",
+        "tablet": "Tableta"
+      },
+      "custom": {
+        "title": "Personalizar",
+        "helper": "Colores, bordes, márgenes internos y alineación del encabezado y las celdas, campo por campo."
+      }
     }
   },
   "task": {
