@@ -155,7 +155,7 @@ export class PeopleEditorCanvas {
 
   protected hide(key: string, event: Event): void {
     event.stopPropagation();
-    this.configChange.emit(hidePeoplePerson(this.config(), key));
+    this.configChange.emit(hidePeoplePerson(this.config(), key, this.persons().find((p) => p.key === key)));
   }
 
   protected show(key: string, event: Event): void {

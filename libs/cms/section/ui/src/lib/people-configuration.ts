@@ -308,7 +308,7 @@ export class PeopleConfiguration {
   /** a hidden person is shown again; the name comes from the stale `excludedPersons` entry, else the key itself */
   protected hiddenName(key: string): string {
     const person = this.formData()?.excludedPersons?.find(p => p?.key === key);
-    return person ? getAvatarName(person) : key;
+    return (person && getAvatarName(person)) || key;
   }
 
   protected onHiddenRemove(key: string): void {

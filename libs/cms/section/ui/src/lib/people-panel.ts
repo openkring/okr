@@ -324,7 +324,7 @@ export class PeoplePanel {
     if (person && (person.label ?? '') !== label) this.change((c) => setPeoplePersonLabel(c, key, label));
   }
 
-  protected hide(key: string): void { this.change((c) => hidePeoplePerson(c, key)); }
+  protected hide(key: string): void { this.change((c) => hidePeoplePerson(c, key, this.selected()?.person)); }
   protected show(key: string): void { this.change((c) => showPeoplePerson(c, key)); }
   protected showAll(): void { this.change(showAllPeople); }
   protected removeResponsibility(id: string): void { this.change((c) => removePeopleResponsibility(c, id)); }

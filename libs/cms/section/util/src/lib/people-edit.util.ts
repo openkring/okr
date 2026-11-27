@@ -86,17 +86,18 @@ export function setPeoplePersonLabel(config: PeopleConfig, key: string, label: s
  * Until the clean-up release, a group section also keeps the old `excludedPersons` in step with `hiddenKeys`, so that an app
  * on the previous version and the website function not yet redeployed hide the same persons.
  */
-function excludedFor(config: PeopleConfig, add?: string, remove?: string): AvatarInfo[] | undefined {
-  let list = [...(config.excludedPersons ?? [])];
+function excludedFor(config: PeopleConfig, add?: string, remove?: string, person?: AvatarInfo): AvatarInfo[] | undefined {
+  let list: AvatarInfo[] = Array.isArray(config.excludedPersons) ? [...config.excludedPersons] : [];
   if (remove !== undefined) list = list.filter((p) => p?.key !== remove);
-  if (add !== undefined && !list.some((p) => p?.key === add)) list.push({ ...AVATAR_INFO_SHAPE, name1: '', name2: '', label: '', key: add });
+  if (add !== undefined && !list.some((p) => p?.key === add)) list.push(person && person.key === add ? { ...person } : { ...AVATAR_INFO_SHAPE, name1: '', name2: '', label: '', key: add });
   return list.length ? list : undefined;
 }
 
-export function hidePeoplePerson(config: PeopleConfig, key: string): PeopleConfig {
+/** @param person the hidden person, when known: a group section stores it in `excludedPersons`, so the previous app can label the chip */
+export function hidePeoplePerson(config: PeopleConfig, key: string, person?: AvatarInfo): PeopleConfig {
   if (peopleHiddenKeys(config).includes(key)) return { ...config };
   const out: PeopleConfig = { ...config, hiddenKeys: [...(config.hiddenKeys ?? []), key] };
-  if (config.type === 'group') out.excludedPersons = excludedFor(config, key);
+  if (config.type === 'group') out.excludedPersons = excludedFor(config, key, undefined, person);
   if (!out.excludedPersons) delete out.excludedPersons;
   return out;
 }
@@ -104,7 +105,7 @@ export function hidePeoplePerson(config: PeopleConfig, key: string): PeopleConfi
 /** Also clears the key from the `excludedPersons` of a group section. */
 export function showPeoplePerson(config: PeopleConfig, key: string): PeopleConfig {
   const out: PeopleConfig = { ...config, hiddenKeys: (config.hiddenKeys ?? []).filter((k) => k !== key) };
-  if (config.excludedPersons) out.excludedPersons = excludedFor(config, undefined, key);
+  if (config.excludedPersons !== undefined) out.excludedPersons = excludedFor(config, undefined, key);
   if (!out.excludedPersons?.length) delete out.excludedPersons;
   return tidy(out);
 }

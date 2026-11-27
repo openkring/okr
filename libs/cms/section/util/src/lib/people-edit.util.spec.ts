@@ -126,6 +126,25 @@ describe('people edit operations', () => {
     expect(all.excludedPersons).toBeUndefined();
   });
 
+  it('hiding with the person stores its names in excludedPersons; without one the entry is key-only', () => {
+    const g = base({ type: 'group', groupId: 'g' });
+    const named = { ...person('a'), name1: 'Anna', name2: 'Muster' };
+    expect(hidePeoplePerson(g, 'a', named).excludedPersons).toEqual([named]);
+    expect(hidePeoplePerson(g, 'a', person('other')).excludedPersons?.[0]).toMatchObject({ key: 'a', name1: '', name2: '' });
+    expect(hidePeoplePerson(g, 'a').excludedPersons?.[0]).toMatchObject({ key: 'a', name1: '', name2: '' });
+    expect(hidePeoplePerson(base({ type: 'persons' }), 'a', named).excludedPersons).toBeUndefined();
+  });
+
+  it('a malformed excludedPersons neither throws nor splits: it is replaced by a proper list', () => {
+    for (const bad of [{ a: 1 }, 'abc']) {
+      const g = base({ type: 'group', groupId: 'g', excludedPersons: bad as unknown as AvatarInfo[] });
+      const h = hidePeoplePerson(g, 'a', person('a'));
+      expect(h.excludedPersons).toEqual([person('a')]);
+      expect(() => showPeoplePerson(g, 'a')).not.toThrow();
+      expect(showPeoplePerson(g, 'a').excludedPersons).toBeUndefined();
+    }
+  });
+
   it('a group section keeps a legacy excludedPersons entry when another person is hidden', () => {
     const g = base({ type: 'group', groupId: 'g', excludedPersons: [person('x')] });
     const h = hidePeoplePerson(g, 'a');

@@ -1803,7 +1803,7 @@ export class SectionForm {
       groupKey, showGroupSelect: false, excludeKeys: peopleHiddenKeys(current),
     });
     if (!avatar?.key) return;
-    this.onPeopleConfigChange(hidePeoplePerson(current, avatar.key));
+    this.onPeopleConfigChange(hidePeoplePerson(current, avatar.key, avatar));
   }
 
   /** the responsibility that gets a task for every answer to a form section */
