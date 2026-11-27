@@ -534,7 +534,10 @@
         "formHelper": "Das Formular, das sich beim Klick öffnet.",
         "emergency": "Schickt Name, Telefonnummer und Standort der Person, die drückt, in den Chat der Notfallgruppe.",
         "workflow": "Was danach passiert, legst du als Regel fest.",
-        "none": "Der Button tut nichts, bis du eine Aktion wählst."
+        "none": "Der Button tut nichts, bis du eine Aktion wählst.",
+        "upload": "Datei hochladen",
+        "uploadHelper": "Lädt eine Datei hoch und trägt ihre Adresse ein. Du kannst auch die Adresse einer Datei einfügen, die schon im Internet liegt.",
+        "uploading": "Datei wird hochgeladen …"
       },
       "look": {
         "title": "Aussehen",

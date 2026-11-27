@@ -23,6 +23,12 @@ export const LEGACY_EMERGENCY_BUTTON_NAME = 'emergency-button';
 /** about 2 cm across: 76 CSS px at 96 px per inch (how big it is on a screen depends on the device) */
 export const EMERGENCY_BUTTON_DIAMETER = '76';
 export const EMERGENCY_BUTTON_LABEL = 'Hilfe !';
+/** the label of a new button: the most common button offers a PDF to download */
+export const DOWNLOAD_BUTTON_LABEL = 'PDF herunterladen';
+/** the label the default becomes when the file uploaded into a new button is no PDF */
+export const FILE_DOWNLOAD_BUTTON_LABEL = 'Datei herunterladen';
+const PDF_ICON = 'filetypes:pdf';
+const ICON_SIZE = 24;
 
 /** height of a button with a label; width follows the label ('auto'), or the whole width */
 const HEIGHTS: Record<Exclude<ButtonSize, 'wide'>, string> = { s: '36', m: '44', l: '56' };
@@ -183,6 +189,34 @@ export function applyButtonAction(config: Partial<ButtonConfig> | undefined, typ
   if (type === ButtonAction.Emergency) return emergencyButtonConfig(current);
   const left = current.action.type === ButtonAction.Emergency ? applyButtonPreset(current, 'main') : current;
   return { ...left, action: { ...left.action, type } };
+}
+
+// --------------------------------------------------- download ---------------------------------------------------
+
+/**
+ * A new button: a link «PDF herunterladen» with the PDF icon in front, medium size, that downloads its file. The file is
+ * uploaded in the editor (or its address typed); until then the button has no url and cannot be saved.
+ */
+export function downloadButtonConfig(): ButtonConfig {
+  const style = applyButtonSize({ ...BUTTON_STYLE_SHAPE, ...LOOKS.link, label: DOWNLOAD_BUTTON_LABEL }, 'm');
+  return {
+    style,
+    icon: { name: PDF_ICON, size: ICON_SIZE, slot: 'start' },
+    action: { type: ButtonAction.Download, url: '', altText: '' },
+  } as ButtonConfig;
+}
+
+/**
+ * The button after a file was uploaded into it: it downloads that file, and its alt text names the file unless one is there.
+ * A file that is no PDF does not keep the PDF icon (it becomes 'download'), nor the default label «PDF herunterladen».
+ */
+export function withUploadedFile(config: Partial<ButtonConfig> | undefined, file: { url: string; name: string }): ButtonConfig {
+  const current = buttonConfigOf(config);
+  const isPdf = /\.pdf$/i.test(file.name);
+  const icon = !isPdf && current.icon.name === PDF_ICON ? { ...current.icon, name: 'download' } : current.icon;
+  const style = !isPdf && current.style.label === DOWNLOAD_BUTTON_LABEL ? { ...current.style, label: FILE_DOWNLOAD_BUTTON_LABEL } : current.style;
+  const action = { ...current.action, type: ButtonAction.Download, url: file.url, altText: current.action.altText || file.name };
+  return { ...current, style, icon, action };
 }
 
 // -------------------------------------------------- emergency --------------------------------------------------

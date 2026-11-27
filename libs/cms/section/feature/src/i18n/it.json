@@ -534,7 +534,10 @@
         "formHelper": "Il modulo che si apre con un clic.",
         "emergency": "Invia nome, numero di telefono e posizione della persona che preme nella chat del gruppo d’emergenza.",
         "workflow": "Cosa succede dopo lo definisci come regola.",
-        "none": "Il pulsante non fa nulla finché non scegli un’azione."
+        "none": "Il pulsante non fa nulla finché non scegli un’azione.",
+        "upload": "Carica file",
+        "uploadHelper": "Carica un file e ne inserisce l'indirizzo. Puoi anche incollare l'indirizzo di un file già online.",
+        "uploading": "Caricamento del file …"
       },
       "look": {
         "title": "Aspetto",

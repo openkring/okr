@@ -534,7 +534,10 @@
         "formHelper": "Le formulaire qui s’ouvre au clic.",
         "emergency": "Envoie le nom, le numéro de téléphone et la position de la personne qui appuie dans le chat du groupe d’urgence.",
         "workflow": "Tu définis la suite comme une règle.",
-        "none": "Le bouton ne fait rien tant que tu ne choisis pas d’action."
+        "none": "Le bouton ne fait rien tant que tu ne choisis pas d’action.",
+        "upload": "Téléverser un fichier",
+        "uploadHelper": "Téléverse un fichier et indique son adresse. Tu peux aussi coller l'adresse d'un fichier déjà en ligne.",
+        "uploading": "Téléversement du fichier …"
       },
       "look": {
         "title": "Apparence",

@@ -40,6 +40,7 @@ const RATIOS = [3, 4, 6] as const;
   styles: [`
     .field-label { display: block; margin: 0 0 6px; font-size: 0.85rem; color: var(--ion-color-medium); }
     .note { display: block; margin-top: 6px; font-size: 0.85rem; }
+    .upload { margin: 10px 0 0; text-transform: none; }
     .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
     .choice { display: flex; align-items: center; gap: 8px; min-height: 40px; padding: 6px 8px; text-align: start; font: inherit; font-size: 0.9rem;
       color: var(--ion-text-color); background: transparent; border: 1px solid var(--ion-color-light-shade); border-radius: 8px; cursor: pointer; }
@@ -89,6 +90,17 @@ const RATIOS = [3, 4, 6] as const;
           @case (BA.Emergency) { <ion-note class="note">{{ t.button_editor_action_emergency() }}</ion-note> }
           @case (BA.Workflow) { <ion-note class="note">{{ t.button_editor_action_workflow() }}</ion-note> }
           @case (BA.None) { <ion-note class="note">{{ t.button_editor_action_none() }}</ion-note> }
+          @case (BA.Download) {
+            @if (uploads()) {
+              <ion-button class="upload" fill="outline" size="small" [disabled]="readOnly() || uploading()" (click)="upload.emit()">
+                <ion-icon slot="start" src="{{ 'upload' | svgIcon }}" aria-hidden="true" />
+                {{ uploading() ? t.button_editor_action_uploading() : t.button_editor_action_upload() }}
+              </ion-button>
+              <ion-note class="note">{{ t.button_editor_action_uploadHelper() }}</ion-note>
+            }
+            <okr-text-input [i18n]="urlI18n()" [value]="url()" (valueChange)="setActionField('url', $event)" [maxLength]="urlLength" [readOnly]="readOnly()" />
+            <okr-error-note [errors]="errorsFor('action.url')" />
+          }
           @case (BA.ContractDocument) {
             @if (contracts().length > 0) {
               <ion-select [label]="t.contract_document_label()" labelPlacement="stacked" interface="popover" [value]="url()" [disabled]="readOnly()" (ionChange)="setActionField('url', $event.detail.value)">
@@ -221,11 +233,16 @@ export class ButtonPanel {
   public readonly forms = input<ButtonFormOption[]>([]);
   public readonly errors = input<SectionErrors>({});
   public readonly readOnly = input(false);
+  /** whether a file may be uploaded into a download button here (the editor knows how) */
+  public readonly uploads = input(false);
+  public readonly uploading = input(false);
   public readonly i18n = input.required<ButtonEditorI18n>();
 
   // outputs
   public readonly configChange = output<ButtonConfig>();
   public readonly contentChange = output<EditorConfig>();
+  /** pick and upload a file for the download button */
+  public readonly upload = output<void>();
 
   protected readonly customOpen = signal(false);
 

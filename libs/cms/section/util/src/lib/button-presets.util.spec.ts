@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { BUTTON_SECTION_SHAPE, ButtonAction, ButtonConfig, ButtonSection, ColorIonic, ViewPosition } from '@okr/shared-models';
 
 import {
-  applyButtonAction, applyButtonPreset, applyButtonSize, applyIconPlacement, buttonConfigOf, buttonPresetOf, buttonSizeOf, buttonSizesFor,
+  applyButtonAction, applyButtonPreset, DOWNLOAD_BUTTON_LABEL, downloadButtonConfig, FILE_DOWNLOAD_BUTTON_LABEL, withUploadedFile, applyButtonSize, applyIconPlacement, buttonConfigOf, buttonPresetOf, buttonSizeOf, buttonSizesFor,
   EMERGENCY_BUTTON_DIAMETER, EMERGENCY_BUTTON_LABEL, emergencyButtonConfig, iconPlacementOf, isEmergencyButton, withFixedEmergencyLook, withLegacyEmergency,
 } from './button-presets.util';
 
@@ -153,5 +153,38 @@ describe('withFixedEmergencyLook', () => {
   it('leaves any other button as it is', () => {
     const other = { ...BUTTON_SECTION_SHAPE, properties: config() } as ButtonSection;
     expect(withFixedEmergencyLook(other)).toBe(other);
+  });
+});
+
+describe('download button (the default of a new button)', () => {
+  it('is a medium link «PDF herunterladen» with the PDF icon in front', () => {
+    const fresh = downloadButtonConfig();
+    expect(buttonPresetOf(fresh)).toBe('link');
+    expect(buttonSizeOf(fresh.style)).toBe('m');
+    expect(iconPlacementOf(fresh.icon)).toBe('start');
+    expect(fresh.icon.name).toBe('filetypes:pdf');
+    expect(fresh.style.label).toBe(DOWNLOAD_BUTTON_LABEL);
+    expect(fresh.action).toEqual({ type: ButtonAction.Download, url: '', altText: '' });
+  });
+
+  it('a new one each time', () => {
+    expect(downloadButtonConfig()).not.toBe(downloadButtonConfig());
+    expect(downloadButtonConfig().style).not.toBe(downloadButtonConfig().style);
+  });
+
+  it('an uploaded PDF becomes its url and alt text', () => {
+    const up = withUploadedFile(downloadButtonConfig(), { url: 'https://x/y.pdf', name: 'Statuten.pdf' });
+    expect(up.action).toEqual({ type: ButtonAction.Download, url: 'https://x/y.pdf', altText: 'Statuten.pdf' });
+    expect(up.icon.name).toBe('filetypes:pdf');
+    expect(up.style.label).toBe(DOWNLOAD_BUTTON_LABEL);
+  });
+
+  it('a file that is no PDF drops the PDF icon and the default label, a typed alt text and label stay', () => {
+    const up = withUploadedFile(downloadButtonConfig(), { url: 'u', name: 'Liste.xlsx' });
+    expect(up.icon.name).toBe('download');
+    expect(up.style.label).toBe(FILE_DOWNLOAD_BUTTON_LABEL);
+    const own = withUploadedFile(config({ action: { type: ButtonAction.Download, url: '', altText: 'Mitgliederliste' } }), { url: 'u', name: 'Liste.xlsx' });
+    expect(own.action.altText).toBe('Mitgliederliste');
+    expect(own.style.label).toBe('Formular');
   });
 });

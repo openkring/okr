@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ButtonAction, ButtonSection, ColorIonic, SECTION_TYPES, SectionType, WeatherSection, LearningSection, EnergySection, CounterSection, COUNTER_CONFIG_SHAPE, FooterSection, FOOTER_CONFIG_SHAPE, JOURNAL_TRACK_CONFIG_SHAPE, JournalTrackSection } from '@okr/shared-models';
+import { ButtonAction, ButtonSection, ColorIonic, SECTION_TYPES, SectionType, WeatherSection, LearningSection, EnergySection, CounterSection, COUNTER_CONFIG_SHAPE, FooterSection, FOOTER_CONFIG_SHAPE, JOURNAL_TRACK_CONFIG_SHAPE, JournalTrackSection, ViewPosition } from '@okr/shared-models';
 
 import { createSection, narrowSection } from './section.util';
 
@@ -22,6 +22,18 @@ describe('createSection', () => {
   it('sets type-specific defaults for a button section', () => {
     const section = createSection('button', tenantId) as ButtonSection;
     expect(section.properties.action.type).toBe(ButtonAction.Download);
+    expect(section.properties.style.label).toBe('PDF herunterladen');
+    expect(section.properties.icon.name).toBe('filetypes:pdf');
+    expect(section.content.position).toBe(ViewPosition.Top);
+  });
+
+  it('a new button leaves the shared shapes alone', () => {
+    const first = createSection('button', tenantId) as ButtonSection;
+    first.properties.action.url = 'changed';
+    first.content.position = ViewPosition.Right;
+    const second = createSection('button', tenantId) as ButtonSection;
+    expect(second.properties.action.url).toBe('');
+    expect(second.content.position).toBe(ViewPosition.Top);
   });
 
   it('creates member-age, member-cat and rag sections (with defaults)', () => {

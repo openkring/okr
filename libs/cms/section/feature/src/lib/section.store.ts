@@ -353,6 +353,22 @@ export const _SectionStore = signalStore(
         }
       },
 
+      /**
+       * Picks a file and uploads it as the file of a button (and records it as a document). Returns its address and name, for the
+       * button editor to write into the form; the button itself is not saved here. undefined: nothing picked, or the upload failed.
+       */
+      async uploadButtonFile(sectionKey: string | undefined): Promise<{ url: string; name: string } | undefined> {
+        const file = await store.uploadService.pickFile(DEFAULT_MIMETYPES);
+        if (!file) return undefined;
+        // a new button has no key until it is saved: its file gets a folder of its own
+        const folder = sectionKey || `new-${Date.now()}`;
+        const storagePath = `tenant/${store.tenantId()}/section/${folder}/file/${sanitizeFileName(file.name)}`;
+        const downloadUrl = await store.uploadService.uploadFile(file, storagePath, 'Upload Section File');
+        if (!downloadUrl) return undefined;
+        await this.createDocument(file, storagePath, downloadUrl);
+        return { url: downloadUrl, name: file.name };
+      },
+
       async uploadFile(section?: ButtonSection): Promise<void> {
         if (!section) return;
         // 1) pick a file

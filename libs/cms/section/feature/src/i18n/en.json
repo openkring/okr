@@ -534,7 +534,10 @@
         "formHelper": "The form that opens on a click.",
         "emergency": "Sends the name, phone number and location of the person who presses it to the emergency group’s chat.",
         "workflow": "You set what happens next as a rule.",
-        "none": "The button does nothing until you choose an action."
+        "none": "The button does nothing until you choose an action.",
+        "upload": "Upload file",
+        "uploadHelper": "Uploads a file and fills in its address. You can also paste the address of a file that is already online.",
+        "uploading": "Uploading file …"
       },
       "look": {
         "title": "Look",

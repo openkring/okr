@@ -4,7 +4,7 @@ import { IonButton, IonCard, IonCardContent, IonIcon, IonLabel, IonNote, IonSegm
 import { ArticleHeaderEdit, historyKey, type ArticleHeaderChange } from '@okr/cms-article-feature';
 import { ButtonFormOption, ButtonPanel, ButtonWidget, SectionConfiguration } from '@okr/cms-section-ui';
 import {
-  ARTICLE_EDITOR_I18N_KEYS, BUTTON_EDITOR_I18N_KEYS, buttonConfigOf, buttonSectionValidations, createHistory, getFieldErrors, pickErrors, record, redo,
+  ARTICLE_EDITOR_I18N_KEYS, BUTTON_EDITOR_I18N_KEYS, buttonConfigOf, buttonSectionValidations, withUploadedFile, createHistory, getFieldErrors, pickErrors, record, redo,
   restErrors, SECTION_I18N_KEYS, undo, type ArticlePreviewDevice, type ButtonEditorI18n, type EditorHistory, type SectionErrors,
 } from '@okr/cms-section-util';
 import { I18nService } from '@okr/shared-i18n';
@@ -146,7 +146,8 @@ const BUTTON_FIELDS = ['style.', 'icon.', 'action.'];
 
         @if (selected() === 'button') {
           <okr-button-panel [config]="config()" (configChange)="setConfig($event)" [content]="content()" (contentChange)="setContent($event)"
-            [contracts]="contracts()" [forms]="forms()" [errors]="errors()" [readOnly]="false" [i18n]="t" />
+            [contracts]="contracts()" [forms]="forms()" [errors]="errors()" [readOnly]="false" [i18n]="t"
+            [uploads]="!!onUpload()" [uploading]="uploading()" (upload)="uploadFile()" />
         } @else {
           <!-- title, subtitle and intro are typed on the canvas: their errors stand here -->
           <div class="rest">
@@ -179,6 +180,8 @@ export class ButtonEditor {
   public readonly allTags = input('');
   public readonly contracts = input<{ okey: string; name: string }[]>([]);
   public readonly forms = input<ButtonFormOption[]>([]);
+  /** uploads a file for a download button (not saved here); none: the panel offers no upload */
+  public readonly onUpload = input<(sectionKey: string | undefined) => Promise<{ url: string; name: string } | undefined>>();
 
   // outputs
   public readonly valid = output<boolean>();
@@ -268,6 +271,21 @@ export class ButtonEditor {
 
   protected setConfig(config: ButtonConfig): void {
     this.change({ ...this.section(), properties: config }, 'button');
+  }
+
+  protected readonly uploading = signal(false);
+
+  /** uploads a file and makes it the button's download; the section is saved with the change confirmation, as any change */
+  protected async uploadFile(): Promise<void> {
+    const upload = this.onUpload();
+    if (!upload || this.uploading()) return;
+    this.uploading.set(true);
+    try {
+      const file = await upload(this.section().okey || undefined);
+      if (file) this.setConfig(withUploadedFile(this.section().properties, file));
+    } finally {
+      this.uploading.set(false);
+    }
   }
 
   protected setContent(content: EditorConfig): void {

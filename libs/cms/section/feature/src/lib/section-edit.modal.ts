@@ -65,6 +65,7 @@ import { AppStore } from '@okr/shared-feature';
             [allTags]="allTags()"
             [contracts]="contracts()"
             [forms]="forms()"
+            [onUpload]="uploadButtonFile"
             (valid)="formValid.set($event)"
           />
         } @else if (isHeroEditor()) {
@@ -153,6 +154,8 @@ export class SectionEditModal {
    * signal store must not be built inside a computed.
    */
   protected readonly store = computed(() => this.journalMode() ? undefined : untracked(() => this.injector.get(SectionStore)));
+  /** a download button's file, uploaded from the button editor (through the CMS store, which records it as a document) */
+  protected readonly uploadButtonFile = (sectionKey: string | undefined) => this.store()?.uploadButtonFile(sectionKey) ?? Promise.resolve(undefined);
   private journalI18n: SectionI18n | undefined;
   /** the section texts: the store's in the CMS, resolved here (same keys) in journal mode */
   protected readonly i18n = computed<SectionI18n>(() => this.store()?.i18n ?? this.getJournalI18n());

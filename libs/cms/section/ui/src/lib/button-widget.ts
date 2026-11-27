@@ -34,10 +34,13 @@ interface ButtonWidgetI18n {
       min-width: var(--button-width);
       min-height: var(--button-height);
     }
+    /* a button without fill reads as a link: as it is written, not in capitals */
+    ion-button.link { text-transform: none; letter-spacing: normal; }
   `],
   template: `
     <div class="container">
       <ion-button (click)="action()"
+        [class.link]="fill() === 'clear'"
         [ngStyle]="buttonStyle()"
         shape="{{ shape() }}"
         fill="{{ fill() }}"

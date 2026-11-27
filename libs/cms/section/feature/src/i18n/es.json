@@ -534,7 +534,10 @@
         "formHelper": "El formulario que se abre al hacer clic.",
         "emergency": "Envía el nombre, el teléfono y la ubicación de quien lo pulsa al chat del grupo de emergencia.",
         "workflow": "Lo que pasa después lo defines como una regla.",
-        "none": "El botón no hace nada hasta que elijas una acción."
+        "none": "El botón no hace nada hasta que elijas una acción.",
+        "upload": "Subir archivo",
+        "uploadHelper": "Sube un archivo y rellena su dirección. También puedes pegar la dirección de un archivo que ya está en internet.",
+        "uploading": "Subiendo el archivo …"
       },
       "look": {
         "title": "Aspecto",
