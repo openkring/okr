@@ -47,7 +47,7 @@ Collection name: `sections`
 | `activities` | `ActivitiesConfig` | List of latest system activity events |
 | `album` | `AlbumConfig` | Photo/video gallery from Firebase Storage directory |
 | `article` | `ArticleConfig` | Rich-text article with optional images, or a list of blocks (see Article Blocks) |
-| `button` | `ButtonConfig` | Styled action button (navigate, download, external link) |
+| `button` | `ButtonConfig` | «Aktions-Button»: download, zoom, form/reservation, workflow, contract, contract document, emergency alarm; edited in the button editor (see Button Editor) |
 | `cal` | `CalendarOptions` | Full-calendar view (FullCalendar options) |
 | `chart` | `EChartsOption` | Apache ECharts chart |
 | `chat` | `ChatConfig` | Matrix chat channel |
@@ -119,6 +119,20 @@ Spec 1.175, `planning/specs/2026-11-23-article-block-editor-design.md`. `Article
 **Trial mode** (development builds only): `localStorage.setItem('okr.articleEditor', 'trial')` and reload. The editor opens although the gate is closed, shows a notice, and a save writes nothing (`{ status: 'saved', trial: true }`; never store that key). Uploads are off. `mayWrite` stays false. Remember that a development app reads the production database; everything outside the editor writes as usual.
 
 **Saving** (`ArticleSaveService.save`): reads, compares and writes in one transaction (`SectionService.saveChecked`, `FirestoreService.writeChecked`). Results: `saved`, `conflict` (somebody else changed it), `gone`, `offline`, `failed`. The window stays open until it is saved. The old fields (`content`, `properties.images` …) are left as they are.
+
+## Button Editor
+
+A button section that may be changed is edited graphically, as an article is: `SectionEditModal` shows `ButtonEditor` (feature) in place of the form when the section is a `button`, not read-only and not in the travel journal. The modal keeps the change confirmation and the save; the editor edits its `formData`.
+
+| Part | Where | What |
+| --- | --- | --- |
+| `button-editor.ts` | feature | Toolbar (devices, undo, redo, text tools), canvas, panel. Title, subtitle and intro are typed in place with `okr-article-header-edit` (`cms-article-feature`), the text with `okr-rich-text-inline`. Runs `buttonSectionValidations` once; its own undo history (`record` / `undo` / `redo`); a reset by the modal is a step |
+| `section-configuration.ts` (`part="appearance"`) | ui | The section's own settings, shared by every section type: who sees it, state, width, name and (once there is an intro) where it stands. A change here applies to the article and the button editor |
+| `button-panel.ts` | ui | The button, shown while it is selected: what it does first (choice cards, `buttonActionChoices`), then label, alt text, look (presets), size, icon, layout next to the text. «Anpassen» opens the former `okr-button-config` field by field |
+| `button-presets.util.ts` | util | Presets `main`, `outline`, `link`, `round`, `emergency`; sizes S/M/L/whole width; icon none/left/right/only. Each writes the stored `ButtonStyle` / `IconConfig` fields, so readers and older apps draw as before; stored values that match no preset show none as chosen |
+| `button-editor-i18n.ts` | util | `BUTTON_EDITOR_I18N_KEYS` (`button.editor.*`); resolved with the section and article editor keys as `ButtonEditorI18n` |
+
+**Emergency button.** Since `ButtonAction.Emergency` (appended to the stored numeric enum) it is an ordinary button section: preset `emergency` = round, solid, `danger`, 76 px across (about 2 cm), label «Hilfe !», no icon; a press calls `SectionStore.sendEmergencyMessage()`. The former `EmergencyButtonWidget` is gone. A document stored before still carries the name `emergency-button` and another action: `withLegacyEmergency` shows it as the emergency button (button above the text) until it is patched with `emergencyButtonConfig`.
 
 ## Section Dispatcher
 

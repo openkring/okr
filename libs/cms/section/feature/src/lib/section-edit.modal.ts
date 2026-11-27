@@ -3,7 +3,7 @@ import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { catchError, firstValueFrom, from, map, of, switchMap } from 'rxjs';
 import { IonContent, ModalController } from '@ionic/angular';
 
-import { CategoryListModel, ContactSection, LocationModel, SectionModel, UserModel } from '@okr/shared-models';
+import { ButtonSection, CategoryListModel, ContactSection, LocationModel, SectionModel, UserModel } from '@okr/shared-models';
 import { ChangeConfirmation, ChangeConfirmationI18n, ErrorBanner, Header} from '@okr/shared-ui';
 import { coerceBoolean, deepEqual, hasRole, safeStructuredClone } from '@okr/shared-util-core';
 import { ChoiceFieldOption, CourseOption, FormOption, ResponsibilityOption, SectionForm } from '@okr/cms-section-ui';
@@ -14,8 +14,9 @@ import { I18nService } from '@okr/shared-i18n';
 import { FormDefinitionService } from '@okr/forms-data-access';
 import { ResponsibilityService } from '@okr/relationship-responsibility-data-access';
 import { FORM_I18N_KEYS, FormI18n } from '@okr/forms-util';
-import { SECTION_I18N_KEYS, SECTION_ICON_PICKER, SectionI18n, withImageStyleDefaults } from '@okr/cms-section-util';
+import { SECTION_I18N_KEYS, SECTION_ICON_PICKER, SectionI18n, withImageStyleDefaults, withLegacyEmergency } from '@okr/cms-section-util';
 
+import { ButtonEditor } from './button-editor';
 import { CmsSectionIconPicker } from './section-icon-picker';
 
 import { SectionStore } from './section.store';
@@ -38,7 +39,7 @@ import { AppStore } from '@okr/shared-feature';
     selector: 'okr-section-edit-modal',
     standalone: true,
     imports: [
-      ChangeConfirmation, Header, ErrorBanner, SectionForm,
+      ButtonEditor, ChangeConfirmation, Header, ErrorBanner, SectionForm,
       IonContent
     ],
     providers: [SectionStore, { provide: SECTION_ICON_PICKER, useClass: CmsSectionIconPicker }],
@@ -50,8 +51,21 @@ import { AppStore } from '@okr/shared-feature';
       @if(store(); as store) {
         <okr-error-banner [message]="store.errorMessage()" (dismiss)="store.clearError()" />
       }
-      <ion-content class="ion-no-padding">
-        @if(formData(); as formData) {
+      <ion-content class="ion-no-padding" [scrollY]="!isButtonEditor()">
+        @if (isButtonEditor()) {
+          <!-- a button section is edited graphically, as an article is: canvas and panel. Not re-mounted by «Abbrechen»: the reset is a step of its history -->
+          <okr-button-editor
+            [formData]="$any(formData())"
+            (formDataChange)="onFormDataChange($event)"
+            [currentUser]="currentUser()"
+            [roles]="roles()"
+            [states]="states()"
+            [allTags]="allTags()"
+            [contracts]="contracts()"
+            [forms]="forms()"
+            (valid)="formValid.set($event)"
+          />
+        } @else if(formData(); as formData) {
           <okr-section-form
             [i18n]="i18n()"
             [formData]="formData"
@@ -96,6 +110,8 @@ export class SectionEditModal {
   /** travel journal: only the change-record fields, no Firestore read (see the class comment) */
   public journalMode = input(false);
   protected readonly allTags = computed(() => this.tagModel() ? this.appStore.getTags(this.tagModel()) : this.tags());
+  /** a button section that may be changed is edited in its graphical editor; read-only and in the journal it shows the form */
+  protected readonly isButtonEditor = computed(() => this.section().type === 'button' && !this.isReadOnly() && !this.journalMode());
   public roles = input.required<CategoryListModel>();
   public states = input.required<CategoryListModel>();
   public readOnly = input(true);
@@ -148,10 +164,12 @@ export class SectionEditModal {
    * static graph (same reasoning as the calevent store, spec 1.132).
    */
   private readonly isFormSection = computed(() => !this.journalMode() && this.section().type === 'form');
+  /** a button may open a form: its editor offers them by name */
+  private readonly needsForms = computed(() => this.isFormSection() || this.isButtonEditor());
   private readonly formDefinitionService = inject(FormDefinitionService);
   private readonly courseService = lazyService(this.injector, () =>
     import('@okr/calendar-course-data-access').then(m => m.CourseService));
-  protected forms = toSignal(toObservable(this.isFormSection).pipe(
+  protected forms = toSignal(toObservable(this.needsForms).pipe(
     switchMap((ok) => (ok ? this.formDefinitionService.list().pipe(catchError(() => of([]))) : of([]))),
     map((list): FormOption[] => list
       .filter((def) => !def.isArchived && !!def.formKey)
@@ -212,7 +230,8 @@ export class SectionEditModal {
     return fd ? !fd.okey || fd.okey.length === 0 : false;
   });
   // missing imageStyle fields get their defaults, else the suite reports them undefined and saving is blocked
-  protected formData = linkedSignal(() => withImageStyleDefaults(safeStructuredClone(this.section())));
+  // an emergency button stored before ButtonAction.Emergency opens converted: the save banner shows, and one save patches it
+  protected formData = linkedSignal(() => this.forEditor(withImageStyleDefaults(safeStructuredClone(this.section()))));
   /** contact section: the chosen organization and person, resolved live from the address book */
   private readonly contactDetailsService = inject(ContactDetailsService);
   protected readonly contactDetails = computed(() => {
@@ -261,7 +280,7 @@ export class SectionEditModal {
   }
 
   public async cancel(): Promise<void> {
-    this.formData.set(withImageStyleDefaults(safeStructuredClone(this.section())));  // reset the form
+    this.formData.set(this.forEditor(withImageStyleDefaults(safeStructuredClone(this.section()))));  // reset the form
     // re-mount the form so its field state (touched, error notes) starts fresh
     this.showForm.set(false);
     setTimeout(() => this.showForm.set(true), 0);
@@ -269,6 +288,11 @@ export class SectionEditModal {
 
   protected onFieldChange(fieldName: string, fieldValue: string | string[] | number): void {
     this.formData.update(vm => vm ? { ...vm, [fieldName]: fieldValue } : vm);
+  }
+
+  /** what the button editor edits: a former emergency button as one (`withLegacyEmergency`); any other section as it is */
+  private forEditor<T extends SectionModel | undefined>(section: T): T {
+    return section && this.isButtonEditor() ? withLegacyEmergency(section as ButtonSection) as T : section;
   }
 
   protected onFormDataChange(formData: SectionModel): void {

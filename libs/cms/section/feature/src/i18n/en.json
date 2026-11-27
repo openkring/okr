@@ -510,7 +510,66 @@
       "right": "Text left, button right",
       "helper": "Defines where the button sits relative to the text. With «Button only» the text is not shown. Left and right place button and text side by side; the column size then sets the width of the button."
     },
-    "hint": "An action button does something: it downloads a file, shows an image enlarged, requests a contract or starts a rule. If the button only leads to a page or a link, use an article with the «Link button» block instead."
+    "hint": "An action button does something: it downloads a file, shows an image enlarged, requests a contract or starts a rule. If the button only leads to a page or a link, use an article with the «Link button» block instead.",
+    "editor": {
+      "panel": {
+        "section": "Section",
+        "button": "Button",
+        "back": "Back to the section",
+        "label": "Settings",
+        "errors": "These details are still missing or not right:"
+      },
+      "canvas": {
+        "hint": "Type the title, subtitle, intro and text right here. Click the button to see its settings on the right.",
+        "select": "Select the button",
+        "noText": "No text: choose under «Button and text» on the right where a text goes."
+      },
+      "label": {
+        "label": "Label",
+        "placeholder": "Text on the button"
+      },
+      "action": {
+        "title": "What should happen?",
+        "form": "Form",
+        "formHelper": "The form that opens on a click.",
+        "emergency": "Sends the name, phone number and location of the person who presses it to the emergency group’s chat.",
+        "workflow": "You set what happens next as a rule.",
+        "none": "The button does nothing until you choose an action."
+      },
+      "look": {
+        "title": "Look",
+        "main": "Main action",
+        "outline": "Outline",
+        "link": "Text link",
+        "round": "Round icon",
+        "emergency": "Emergency",
+        "own": "Own look: pick one to replace it."
+      },
+      "size": {
+        "title": "Size",
+        "s": "S",
+        "m": "M",
+        "l": "L",
+        "wide": "Wide",
+        "own": "Own size in pixels: pick one to replace it."
+      },
+      "icon": {
+        "title": "Icon",
+        "none": "None",
+        "start": "Left",
+        "end": "Right",
+        "only": "Icon only",
+        "choose": "Other icon"
+      },
+      "layout": {
+        "title": "Button and text",
+        "ratio": "Width of the button next to the text"
+      },
+      "custom": {
+        "title": "Customise",
+        "helper": "Set shape, fill, colour, size in pixels and the icon one by one."
+      }
+    }
   },
   "calendar": {
     "calevents": "Events",

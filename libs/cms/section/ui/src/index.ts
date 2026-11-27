@@ -17,7 +17,6 @@ export * from './lib/section-configuration';
 
 export * from './lib/button-widget';
 export * from './lib/persons-widget';
-export * from './lib/emergency-button-widget';
 
 export * from './lib/trip-stats-configuration';
 export * from './lib/sankey-configuration';
@@ -51,5 +50,6 @@ export * from './lib/section-add-chips';
 // the side panel of the article editor (spec 1.175); only the lazily loaded editor uses it
 export * from './lib/article-block-panel';
 export * from './lib/article-panel';
+export * from './lib/button-panel';
 export * from './lib/article-block-library';
 export * from './lib/article-image-pick.modal';

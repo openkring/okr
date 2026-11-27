@@ -182,8 +182,9 @@ const EMPHASES: ArticleEmphasis[] = ['none', 'banner'];
     </ion-card>
     }
 
-    <!-- «Darstellung» of an article: emphasis, background, text colour and where the intro stands (spec 1.171 §4.3) -->
-    @if (part() === 'appearance' && isArticle()) {
+    <!-- «Darstellung» of an article: emphasis, background, text colour and where the intro stands (spec 1.171 §4.3);
+         of any other section typed in a graphical editor (the button): where the intro stands, once it has one -->
+    @if (part() === 'appearance' && (isArticle() || hasIntro() || errorsFor('introPosition').length > 0)) {
       <ion-card>
         <ion-card-header>
           <ion-card-title>{{ i18n().article_look_title() }}</ion-card-title>
@@ -191,7 +192,7 @@ const EMPHASES: ArticleEmphasis[] = ['none', 'banner'];
         <ion-card-content>
           <ion-grid>
             <ion-row>
-              <ng-container [ngTemplateOutlet]="look" />
+              @if (isArticle()) { <ng-container [ngTemplateOutlet]="look" /> }
               @if (hasIntro()) {
                 <ion-col size="12" size-md="6">
                   <ion-select [label]="i18n().section_config_introPosition_label()" labelPlacement="stacked"
@@ -209,7 +210,7 @@ const EMPHASES: ArticleEmphasis[] = ['none', 'banner'];
               </ion-col>
             </ion-row>
           </ion-grid>
-          @if (!showBackground()) {
+          @if (isArticle() && !showBackground()) {
             <okr-section-add-chips [chips]="backgroundChip()" [label]="i18n().article_add_label()" [readOnly]="isReadOnly()" (add)="onAdd($event)" />
           }
         </ion-card-content>

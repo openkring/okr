@@ -83,6 +83,10 @@
     "contractDocument": {
       "label": "Aprire il documento del contratto",
       "description": "Apre il documento attuale di un contratto condiviso con i membri."
+    },
+    "emergency": {
+      "label": "Allarme d’emergenza",
+      "description": "Invia nome, numero di telefono e posizione della persona che preme nella chat del gruppo d’emergenza."
     }
   },
   "color": {

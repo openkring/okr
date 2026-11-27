@@ -510,7 +510,66 @@
       "right": "Testo a sinistra, pulsante a destra",
       "helper": "Stabilisce dove si trova il pulsante rispetto al testo. Con «Solo il pulsante» il testo non viene mostrato. A sinistra e a destra pulsante e testo stanno affiancati; la dimensione della colonna fissa allora la larghezza del pulsante."
     },
-    "hint": "Un pulsante d'azione fa qualcosa: scarica un file, mostra un'immagine in grande, richiede un contratto o avvia una regola. Se il pulsante porta solo a una pagina o a un link, usa piuttosto un articolo con il blocco «Pulsante link»."
+    "hint": "Un pulsante d'azione fa qualcosa: scarica un file, mostra un'immagine in grande, richiede un contratto o avvia una regola. Se il pulsante porta solo a una pagina o a un link, usa piuttosto un articolo con il blocco «Pulsante link».",
+    "editor": {
+      "panel": {
+        "section": "Sezione",
+        "button": "Pulsante",
+        "back": "Torna alla sezione",
+        "label": "Impostazioni",
+        "errors": "Questi dati mancano ancora o non sono giusti:"
+      },
+      "canvas": {
+        "hint": "Scrivi titolo, sottotitolo, intro e testo direttamente qui. Un clic sul pulsante mostra a destra le sue impostazioni.",
+        "select": "Seleziona il pulsante",
+        "noText": "Senza testo: scegli a destra in «Pulsante e testo» dove mettere un testo."
+      },
+      "label": {
+        "label": "Etichetta",
+        "placeholder": "Testo sul pulsante"
+      },
+      "action": {
+        "title": "Cosa deve succedere?",
+        "form": "Modulo",
+        "formHelper": "Il modulo che si apre con un clic.",
+        "emergency": "Invia nome, numero di telefono e posizione della persona che preme nella chat del gruppo d’emergenza.",
+        "workflow": "Cosa succede dopo lo definisci come regola.",
+        "none": "Il pulsante non fa nulla finché non scegli un’azione."
+      },
+      "look": {
+        "title": "Aspetto",
+        "main": "Azione principale",
+        "outline": "Contorno",
+        "link": "Link di testo",
+        "round": "Icona rotonda",
+        "emergency": "Emergenza",
+        "own": "Aspetto proprio: scegline uno per sostituirlo."
+      },
+      "size": {
+        "title": "Dimensione",
+        "s": "S",
+        "m": "M",
+        "l": "L",
+        "wide": "Larga",
+        "own": "Dimensione propria in pixel: scegline una per sostituirla."
+      },
+      "icon": {
+        "title": "Icona",
+        "none": "Nessuna",
+        "start": "Sinistra",
+        "end": "Destra",
+        "only": "Solo icona",
+        "choose": "Altra icona"
+      },
+      "layout": {
+        "title": "Pulsante e testo",
+        "ratio": "Larghezza del pulsante accanto al testo"
+      },
+      "custom": {
+        "title": "Personalizza",
+        "helper": "Imposta forma, riempimento, colore, dimensione in pixel e icona uno per uno."
+      }
+    }
   },
   "calendar": {
     "calevents": "Eventi",

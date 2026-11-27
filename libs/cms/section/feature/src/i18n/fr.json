@@ -510,7 +510,66 @@
       "right": "Texte à gauche, bouton à droite",
       "helper": "Définit où se trouve le bouton par rapport au texte. Avec «Seulement le bouton», le texte n'est pas affiché. À gauche et à droite, le bouton et le texte sont côte à côte ; la taille de colonne fixe alors la largeur du bouton."
     },
-    "hint": "Un bouton d'action déclenche quelque chose : télécharger un fichier, afficher une image en grand, demander un contrat ou lancer une règle. Si le bouton mène seulement à une page ou à un lien, prends plutôt un article avec le bloc « Bouton lien »."
+    "hint": "Un bouton d'action déclenche quelque chose : télécharger un fichier, afficher une image en grand, demander un contrat ou lancer une règle. Si le bouton mène seulement à une page ou à un lien, prends plutôt un article avec le bloc « Bouton lien ».",
+    "editor": {
+      "panel": {
+        "section": "Section",
+        "button": "Bouton",
+        "back": "Retour à la section",
+        "label": "Réglages",
+        "errors": "Ces indications manquent encore ou ne sont pas justes :"
+      },
+      "canvas": {
+        "hint": "Tu tapes le titre, le sous-titre, l’intro et le texte directement ici. Un clic sur le bouton affiche ses réglages à droite.",
+        "select": "Choisir le bouton",
+        "noText": "Sans texte : choisis à droite sous «Bouton et texte» où placer un texte."
+      },
+      "label": {
+        "label": "Libellé",
+        "placeholder": "Texte sur le bouton"
+      },
+      "action": {
+        "title": "Que doit-il se passer ?",
+        "form": "Formulaire",
+        "formHelper": "Le formulaire qui s’ouvre au clic.",
+        "emergency": "Envoie le nom, le numéro de téléphone et la position de la personne qui appuie dans le chat du groupe d’urgence.",
+        "workflow": "Tu définis la suite comme une règle.",
+        "none": "Le bouton ne fait rien tant que tu ne choisis pas d’action."
+      },
+      "look": {
+        "title": "Apparence",
+        "main": "Action principale",
+        "outline": "Contour",
+        "link": "Lien texte",
+        "round": "Icône ronde",
+        "emergency": "Urgence",
+        "own": "Apparence propre : choisis-en une pour la remplacer."
+      },
+      "size": {
+        "title": "Taille",
+        "s": "S",
+        "m": "M",
+        "l": "L",
+        "wide": "Large",
+        "own": "Taille propre en pixels : choisis-en une pour la remplacer."
+      },
+      "icon": {
+        "title": "Icône",
+        "none": "Aucune",
+        "start": "Gauche",
+        "end": "Droite",
+        "only": "Icône seule",
+        "choose": "Autre icône"
+      },
+      "layout": {
+        "title": "Bouton et texte",
+        "ratio": "Largeur du bouton à côté du texte"
+      },
+      "custom": {
+        "title": "Personnaliser",
+        "helper": "Régler la forme, le remplissage, la couleur, la taille en pixels et l’icône un par un."
+      }
+    }
   },
   "calendar": {
     "calevents": "Événements",

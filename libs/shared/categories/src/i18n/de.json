@@ -83,6 +83,10 @@
     "contractDocument": {
       "label": "Vertragsdokument öffnen",
       "description": "Öffnet das aktuelle, für Mitglieder freigegebene Dokument eines Vertrags."
+    },
+    "emergency": {
+      "label": "Notfall-Alarm",
+      "description": "Schickt Name, Telefonnummer und Standort der Person, die drückt, in den Chat der Notfallgruppe."
     }
   },
   "color": {

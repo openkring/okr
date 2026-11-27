@@ -11,4 +11,5 @@ export enum ButtonAction {
   Workflow, // fire a workflow event (ui.buttonClicked); the consequence is configured as a rule
   Contract, // request a contract (spec 1.87): action.url carries the contract kind, e.g. 'skiffPlatz'
   ContractDocument, // open the member-shared document(s) of a contract (spec 1.97): action.url carries the contractKey
+  Emergency, // raise the alarm of the tenant's emergency group (SectionStore.sendEmergencyMessage); no url
 }

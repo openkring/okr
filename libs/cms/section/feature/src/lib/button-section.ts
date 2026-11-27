@@ -11,8 +11,8 @@ import { fill, warn } from '@okr/shared-util-core';
 import { isReservation } from '@okr/relationship-reservation-util';
 import { ReservationService } from '@okr/relationship-reservation-data-access';
 
-import { ButtonWidget, EmergencyButtonWidget, RequestStatusNote } from '@okr/cms-section-ui';
-import { resolveButtonModal } from '@okr/cms-section-util';
+import { ButtonWidget, RequestStatusNote } from '@okr/cms-section-ui';
+import { resolveButtonModal, withLegacyEmergency } from '@okr/cms-section-util';
 import { SectionStore } from './section.store';
 import { activeFirebaseApp } from '@okr/shared-config';
 
@@ -28,7 +28,7 @@ type RequestStatus = { state: 'none' | 'pending' | 'approved' | 'owned' | 'notAc
   selector: 'okr-button-section',
   standalone: true,
   imports: [
-    Spinner, ButtonWidget, EmergencyButtonWidget, RequestStatusNote, OptionalCardHeader,
+    Spinner, ButtonWidget, RequestStatusNote, OptionalCardHeader,
     IonCard, IonCardContent, IonGrid, IonRow, IonCol
   ],
   providers: [SectionStore],
@@ -41,27 +41,12 @@ type RequestStatus = { state: 'none' | 'pending' | 'approved' | 'owned' | 'notAc
       <ion-card>
         <okr-optional-card-header [intro]="section.intro" [introPosition]="section.introPosition" [title]="title()" [subTitle]="subTitle()" />
         <ion-card-content>
-          <!-- we need to handle the emergency-button differently because of a different button style and action -->
-          @if(name() === 'emergency-button') {
-            <ion-grid>
-              <ion-row>
-                <ion-col size="12">
-                  <okr-emergency-button-widget [section]="section" [editMode]="editMode()" (send)="store.sendEmergencyMessage()" />
-                </ion-col>
-              </ion-row>
-              <ion-row>
-                <ion-col size="12">
-                  <div [innerHTML]="content()"></div>
-                </ion-col>
-              </ion-row>
-            </ion-grid>
-          } @else {
           @switch(position()) {
             @case(VP.Left) {
               <ion-grid>
                 <ion-row>
                   <ion-col [size]="colSizeButton()">
-                    <okr-button-widget [class.ion-hide]="buttonHidden()" [section]="section" [i18n]="store.i18n" [editMode]="editMode()" (clicked)="onClick($event)" (workflow)="onWorkflow()" (contract)="onContract()" (contractDocument)="onContractDocument($event)" />
+                    <okr-button-widget [class.ion-hide]="buttonHidden()" [section]="section" [i18n]="store.i18n" [editMode]="editMode()" (clicked)="onClick($event)" (workflow)="onWorkflow()" (contract)="onContract()" (contractDocument)="onContractDocument($event)" (emergency)="store.sendEmergencyMessage()" />
                   </ion-col>
                   <ion-col [size]="colSizeText()">
                     <div [innerHTML]="content()"></div>
@@ -76,7 +61,7 @@ type RequestStatus = { state: 'none' | 'pending' | 'approved' | 'owned' | 'notAc
                     <div [innerHTML]="content()"></div>
                   </ion-col>
                   <ion-col [size]="colSizeButton()">
-                    <okr-button-widget [class.ion-hide]="buttonHidden()" [section]="section" [i18n]="store.i18n" [editMode]="editMode()" (clicked)="onClick($event)" (workflow)="onWorkflow()" (contract)="onContract()" (contractDocument)="onContractDocument($event)" />
+                    <okr-button-widget [class.ion-hide]="buttonHidden()" [section]="section" [i18n]="store.i18n" [editMode]="editMode()" (clicked)="onClick($event)" (workflow)="onWorkflow()" (contract)="onContract()" (contractDocument)="onContractDocument($event)" (emergency)="store.sendEmergencyMessage()" />
                   </ion-col>
                 </ion-row>
               </ion-grid>
@@ -85,7 +70,7 @@ type RequestStatus = { state: 'none' | 'pending' | 'approved' | 'owned' | 'notAc
               <ion-grid>
                 <ion-row>
                   <ion-col size="12">
-                    <okr-button-widget [class.ion-hide]="buttonHidden()" [section]="section" [i18n]="store.i18n" [editMode]="editMode()" (clicked)="onClick($event)" (workflow)="onWorkflow()" (contract)="onContract()" (contractDocument)="onContractDocument($event)" />
+                    <okr-button-widget [class.ion-hide]="buttonHidden()" [section]="section" [i18n]="store.i18n" [editMode]="editMode()" (clicked)="onClick($event)" (workflow)="onWorkflow()" (contract)="onContract()" (contractDocument)="onContractDocument($event)" (emergency)="store.sendEmergencyMessage()" />
                   </ion-col>
                 </ion-row>
                 <ion-row>
@@ -104,16 +89,15 @@ type RequestStatus = { state: 'none' | 'pending' | 'approved' | 'owned' | 'notAc
                 </ion-row>
                 <ion-row>
                   <ion-col size="12">
-                    <okr-button-widget [class.ion-hide]="buttonHidden()" [section]="section" [i18n]="store.i18n" [editMode]="editMode()" (clicked)="onClick($event)" (workflow)="onWorkflow()" (contract)="onContract()" (contractDocument)="onContractDocument($event)" />
+                    <okr-button-widget [class.ion-hide]="buttonHidden()" [section]="section" [i18n]="store.i18n" [editMode]="editMode()" (clicked)="onClick($event)" (workflow)="onWorkflow()" (contract)="onContract()" (contractDocument)="onContractDocument($event)" (emergency)="store.sendEmergencyMessage()" />
                   </ion-col>
                 </ion-row>
               </ion-grid>
             }
             @default {  <!-- VP.None -->
-              <okr-button-widget [class.ion-hide]="buttonHidden()" [section]="section" [i18n]="store.i18n" [editMode]="editMode()" (clicked)="onClick($event)" (workflow)="onWorkflow()" (contract)="onContract()" (contractDocument)="onContractDocument($event)" />
+              <okr-button-widget [class.ion-hide]="buttonHidden()" [section]="section" [i18n]="store.i18n" [editMode]="editMode()" (clicked)="onClick($event)" (workflow)="onWorkflow()" (contract)="onContract()" (contractDocument)="onContractDocument($event)" (emergency)="store.sendEmergencyMessage()" />
             }
           }
-        }
           @if (requestStatus(); as status) {
             @if (status.state !== 'none' && status.text) {
               <okr-request-status-note [text]="status.text" [roomId]="status.roomId" [linkLabel]="store.i18n.contract_status_chat()" />
@@ -133,11 +117,11 @@ export class ButtonSectionComponent {
   private reservationService = inject(ReservationService);
 
   // inputs
-  public section = input<ButtonSection>();
+  /** an emergency button stored before ButtonAction.Emergency is shown as one (`withLegacyEmergency`) */
+  public section = input<ButtonSection | undefined, ButtonSection | undefined>(undefined, { transform: (s) => (s ? withLegacyEmergency(s) : s) });
   public editMode = input<boolean>(false);
 
   // computed
-  protected name = computed(() => this.section()?.name ?? '');
   protected content = computed(() => this.section()?.content?.htmlContent ?? '<p></p>');
   protected colSizeButton = computed(() => this.section()?.content?.colSize ?? 6);
   protected position = computed(() => this.section()?.content?.position ?? ViewPosition.None);

@@ -21,3 +21,4 @@ export * from './lib/article-canvas';
 export * from './lib/article-canvas.util';
 export * from './lib/article-editor-surface';
 export * from './lib/article-editor-surface.util';
+export * from './lib/article-header-edit';

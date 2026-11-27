@@ -72,6 +72,8 @@ export class ButtonWidget {
   public contract = output<void>();
   /** ButtonAction.ContractDocument (spec 1.97): the section signs the shared file(s); payload = contractKey. */
   public contractDocument = output<string>();
+  /** ButtonAction.Emergency: the section raises the alarm of the emergency group (it needs no url). */
+  public emergency = output<void>();
 
   private readonly imgixBaseUrl = this.env.services.imgixBaseUrl;
 
@@ -113,6 +115,10 @@ export class ButtonWidget {
     // Dispatched BEFORE the `if (url)` guard on purpose: a workflow button has no url, so
     // handling it inside that guard would make every trigger silently do nothing. This is the
     // single most likely implementation bug in spec 2026-08-29 §2, and it is called out there.
+    if (this.actionType() === ButtonAction.Emergency) {
+      this.emergency.emit();
+      return;
+    }
     if (this.actionType() === ButtonAction.Workflow) {
       this.workflow.emit();
       return;

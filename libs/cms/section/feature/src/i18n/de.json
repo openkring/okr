@@ -510,7 +510,66 @@
       "right": "Text links, Button rechts",
       "helper": "Legt fest, wo der Button im Verhältnis zum Text steht. Bei «Nur der Button» wird der Text nicht angezeigt. Links und rechts stehen Button und Text nebeneinander, die Spaltengrösse bestimmt dann die Breite des Buttons."
     },
-    "hint": "Ein Aktions-Button löst etwas aus: eine Datei herunterladen, ein Bild gross zeigen, einen Vertrag anfragen oder eine Regel starten. Führt der Button nur zu einer Seite oder einem Link, nimm besser einen Artikel mit dem Block «Link-Button»."
+    "hint": "Ein Aktions-Button löst etwas aus: eine Datei herunterladen, ein Bild gross zeigen, einen Vertrag anfragen oder eine Regel starten. Führt der Button nur zu einer Seite oder einem Link, nimm besser einen Artikel mit dem Block «Link-Button».",
+    "editor": {
+      "panel": {
+        "section": "Abschnitt",
+        "button": "Button",
+        "back": "Zurück zum Abschnitt",
+        "label": "Einstellungen",
+        "errors": "Diese Angaben fehlen noch oder stimmen nicht:"
+      },
+      "canvas": {
+        "hint": "Titel, Untertitel, Intro und Text tippst du direkt hier ein. Ein Klick auf den Button zeigt rechts seine Einstellungen.",
+        "select": "Button auswählen",
+        "noText": "Ohne Text: Wähle rechts unter «Button und Text», wo ein Text stehen soll."
+      },
+      "label": {
+        "label": "Beschriftung",
+        "placeholder": "Text auf dem Button"
+      },
+      "action": {
+        "title": "Was soll passieren?",
+        "form": "Formular",
+        "formHelper": "Das Formular, das sich beim Klick öffnet.",
+        "emergency": "Schickt Name, Telefonnummer und Standort der Person, die drückt, in den Chat der Notfallgruppe.",
+        "workflow": "Was danach passiert, legst du als Regel fest.",
+        "none": "Der Button tut nichts, bis du eine Aktion wählst."
+      },
+      "look": {
+        "title": "Aussehen",
+        "main": "Hauptaktion",
+        "outline": "Umriss",
+        "link": "Textlink",
+        "round": "Rundes Icon",
+        "emergency": "Notfall",
+        "own": "Eigenes Aussehen: wähle eines, um es zu ersetzen."
+      },
+      "size": {
+        "title": "Grösse",
+        "s": "S",
+        "m": "M",
+        "l": "L",
+        "wide": "Breit",
+        "own": "Eigene Grösse in Pixeln: wähle eine, um sie zu ersetzen."
+      },
+      "icon": {
+        "title": "Icon",
+        "none": "Keins",
+        "start": "Links",
+        "end": "Rechts",
+        "only": "Nur Icon",
+        "choose": "Anderes Icon"
+      },
+      "layout": {
+        "title": "Button und Text",
+        "ratio": "Breite des Buttons neben dem Text"
+      },
+      "custom": {
+        "title": "Anpassen",
+        "helper": "Form, Füllung, Farbe, Grösse in Pixeln und das Icon einzeln einstellen."
+      }
+    }
   },
   "calendar": {
     "calevents": "Ereignisse",

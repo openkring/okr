@@ -510,7 +510,66 @@
       "right": "Texto a la izquierda, botón a la derecha",
       "helper": "Define dónde se sitúa el botón respecto al texto. Con «Solo el botón» el texto no se muestra. A la izquierda y a la derecha, botón y texto quedan uno al lado del otro; el tamaño de columna fija entonces el ancho del botón."
     },
-    "hint": "Un botón de acción hace algo: descarga un archivo, muestra una imagen en grande, solicita un contrato o inicia una regla. Si el botón solo lleva a una página o a un enlace, mejor usa un artículo con el bloque «Botón de enlace»."
+    "hint": "Un botón de acción hace algo: descarga un archivo, muestra una imagen en grande, solicita un contrato o inicia una regla. Si el botón solo lleva a una página o a un enlace, mejor usa un artículo con el bloque «Botón de enlace».",
+    "editor": {
+      "panel": {
+        "section": "Sección",
+        "button": "Botón",
+        "back": "Volver a la sección",
+        "label": "Ajustes",
+        "errors": "Estos datos aún faltan o no son correctos:"
+      },
+      "canvas": {
+        "hint": "Escribe el título, el subtítulo, la intro y el texto aquí mismo. Un clic en el botón muestra sus ajustes a la derecha.",
+        "select": "Seleccionar el botón",
+        "noText": "Sin texto: elige a la derecha en «Botón y texto» dónde va un texto."
+      },
+      "label": {
+        "label": "Texto",
+        "placeholder": "Texto en el botón"
+      },
+      "action": {
+        "title": "¿Qué debe pasar?",
+        "form": "Formulario",
+        "formHelper": "El formulario que se abre al hacer clic.",
+        "emergency": "Envía el nombre, el teléfono y la ubicación de quien lo pulsa al chat del grupo de emergencia.",
+        "workflow": "Lo que pasa después lo defines como una regla.",
+        "none": "El botón no hace nada hasta que elijas una acción."
+      },
+      "look": {
+        "title": "Aspecto",
+        "main": "Acción principal",
+        "outline": "Contorno",
+        "link": "Enlace de texto",
+        "round": "Icono redondo",
+        "emergency": "Emergencia",
+        "own": "Aspecto propio: elige uno para reemplazarlo."
+      },
+      "size": {
+        "title": "Tamaño",
+        "s": "S",
+        "m": "M",
+        "l": "L",
+        "wide": "Ancho",
+        "own": "Tamaño propio en píxeles: elige uno para reemplazarlo."
+      },
+      "icon": {
+        "title": "Icono",
+        "none": "Ninguno",
+        "start": "Izquierda",
+        "end": "Derecha",
+        "only": "Solo icono",
+        "choose": "Otro icono"
+      },
+      "layout": {
+        "title": "Botón y texto",
+        "ratio": "Ancho del botón junto al texto"
+      },
+      "custom": {
+        "title": "Personalizar",
+        "helper": "Ajusta la forma, el relleno, el color, el tamaño en píxeles y el icono uno por uno."
+      }
+    }
   },
   "calendar": {
     "calevents": "Eventos",
