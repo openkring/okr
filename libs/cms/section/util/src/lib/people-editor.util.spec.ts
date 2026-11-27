@@ -3,6 +3,7 @@ import { ColorIonic, NameDisplay, type AvatarConfig, type AvatarInfo, type Peopl
 
 import { hidePeoplePerson, movePeoplePerson, setPeopleLook, showPeoplePerson } from './people-edit.util';
 import { isPeopleSectionChanged, openPeopleSection, peopleTypingTag, preparePeopleForSave } from './people-editor.util';
+import { normalizeAvatarConfig } from './people-section.util';
 
 const person = (key: string, label = ''): AvatarInfo => ({ key, name1: key, name2: '', modelType: 'person', type: '', subType: '', label }) as unknown as AvatarInfo;
 
@@ -119,6 +120,22 @@ describe('isPeopleSectionChanged', () => {
     const same = { ...opened, properties: setPeopleLook(opened.properties, { size: 'M' }) };
     expect(isPeopleSectionChanged(opened, same)).toBe(false);
     expect(isPeopleSectionChanged(opened, { ...opened, properties: setPeopleLook(opened.properties, { size: 'L' }) })).toBe(true);
+  });
+
+  it('a section saved by the release-A form (dual-written look, excludedPersons in step) opens without a change', () => {
+    let props: PeopleConfig = { type: 'group', persons: [], groupId: 'g', avatar: normalizeAvatarConfig(legacyAvatar({ imgWidth: 120 })) };
+    props = setPeopleLook(props, { size: 'L', shape: 'square', fill: 'alternating', textPosition: 'overlay', grayscale: true });
+    props = hidePeoplePerson(hidePeoplePerson(props, 'a'), 'b');
+    props = showPeoplePerson(props, 'a');
+    const saved = structuredClone(stored(props));
+    const opened = openPeopleSection(saved);
+    expect(isPeopleSectionChanged(opened, opened)).toBe(false);
+    expect(isPeopleSectionChanged(opened, openPeopleSection(structuredClone(saved)))).toBe(false);
+    const prepared = preparePeopleForSave(opened, ['a', 'b', 'c']);
+    expect(isPeopleSectionChanged(opened, prepared)).toBe(false);
+    expect(prepared.properties.hiddenKeys).toEqual(['b']);
+    expect(prepared.properties.excludedPersons).toBeUndefined();
+    expect(prepared.properties.avatar).toMatchObject({ size: 'L', shape: 'square', fill: 'alternating', textPosition: 'overlay', grayscale: true });
   });
 
   it('an empty and a missing field are one value; a typed one is a change', () => {

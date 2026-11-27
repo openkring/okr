@@ -1,12 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { AVATAR_CONFIG_SHAPE, AvatarConfig, AvatarInfo, NameDisplay, PeopleLook, resolvePeopleLook } from '@okr/shared-models';
+import { AVATAR_CONFIG_SHAPE, AvatarConfig, NameDisplay, PeopleLook, resolvePeopleLook } from '@okr/shared-models';
 
 import {
   getPeopleAltText, getPeopleBgColor, getPeopleImgixParams, getPeopleResponsibilityIds, getPeopleResponsibilityParentKey, getResponsibilityKeysUnderParent, mergeResponsibilityKeys, normalizeAvatarConfig, splitIntoRows, toHexColor
 } from './people-section.util';
-
-const config = (patch: Partial<AvatarConfig> = {}): AvatarConfig => ({ ...AVATAR_CONFIG_SHAPE, ...patch });
 
 describe('normalizeAvatarConfig', () => {
   it('returns the defaults for a missing config', () => {

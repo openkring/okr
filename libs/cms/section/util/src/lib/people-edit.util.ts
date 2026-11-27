@@ -1,5 +1,5 @@
-import type { AvatarInfo, PeopleConfig, PeopleLook } from '@okr/shared-models';
-import { peopleHiddenKeys } from '@okr/shared-models';
+import type { AvatarInfo, PeopleConfig, PeopleFill, PeopleLook, PeopleTextPosition } from '@okr/shared-models';
+import { AVATAR_INFO_SHAPE, PEOPLE_SHAPE_RADIUS, PEOPLE_SIZE_PX, peopleHiddenKeys } from '@okr/shared-models';
 
 /** The source of a people section. */
 export type PeopleSourceType = PeopleConfig['type'];
@@ -12,11 +12,15 @@ function tidy(config: PeopleConfig): PeopleConfig {
   return out;
 }
 
-/** The responsibility ids, with the deprecated single `responsibilityId` folded in. */
+/**
+ * The responsibility ids as the readers draw them (`getPeopleResponsibilityIds`): the cleaned list, or the deprecated
+ * single `responsibilityId` only while that list is empty (as migrate-people-look.logic.ts folds it).
+ */
 function responsibilityIdsOf(config: PeopleConfig): string[] {
-  const ids = [...(config.responsibilityIds ?? [])];
-  if (config.responsibilityId && !ids.includes(config.responsibilityId)) ids.unshift(config.responsibilityId);
-  return ids;
+  const ids = (config.responsibilityIds ?? []).filter((i) => typeof i === 'string' && i.trim() !== '').map((i) => i.trim());
+  if (ids.length > 0) return [...new Set(ids)];
+  const legacy = typeof config.responsibilityId === 'string' ? config.responsibilityId.trim() : '';
+  return legacy ? [legacy] : [];
 }
 
 /** Changing the source clears the overrides (they are keyed to the old source's persons); the same source is a no-op. */
@@ -78,15 +82,29 @@ export function setPeoplePersonLabel(config: PeopleConfig, key: string, label: s
   return { ...config, persons: config.persons.map((p) => (p.key === key ? { ...p, label } : p)) };
 }
 
-export function hidePeoplePerson(config: PeopleConfig, key: string): PeopleConfig {
-  if (peopleHiddenKeys(config).includes(key)) return { ...config };
-  return { ...config, hiddenKeys: [...(config.hiddenKeys ?? []), key] };
+/**
+ * Until the clean-up release, a group section also keeps the old `excludedPersons` in step with `hiddenKeys`, so that an app
+ * on the previous version and the website function not yet redeployed hide the same persons.
+ */
+function excludedFor(config: PeopleConfig, add?: string, remove?: string): AvatarInfo[] | undefined {
+  let list = [...(config.excludedPersons ?? [])];
+  if (remove !== undefined) list = list.filter((p) => p?.key !== remove);
+  if (add !== undefined && !list.some((p) => p?.key === add)) list.push({ ...AVATAR_INFO_SHAPE, name1: '', name2: '', label: '', key: add });
+  return list.length ? list : undefined;
 }
 
-/** Also clears the key from the stale `excludedPersons` of a group section. */
+export function hidePeoplePerson(config: PeopleConfig, key: string): PeopleConfig {
+  if (peopleHiddenKeys(config).includes(key)) return { ...config };
+  const out: PeopleConfig = { ...config, hiddenKeys: [...(config.hiddenKeys ?? []), key] };
+  if (config.type === 'group') out.excludedPersons = excludedFor(config, key);
+  if (!out.excludedPersons) delete out.excludedPersons;
+  return out;
+}
+
+/** Also clears the key from the `excludedPersons` of a group section. */
 export function showPeoplePerson(config: PeopleConfig, key: string): PeopleConfig {
   const out: PeopleConfig = { ...config, hiddenKeys: (config.hiddenKeys ?? []).filter((k) => k !== key) };
-  if (config.excludedPersons) out.excludedPersons = config.excludedPersons.filter((p) => p?.key !== key);
+  if (config.excludedPersons) out.excludedPersons = excludedFor(config, undefined, key);
   if (!out.excludedPersons?.length) delete out.excludedPersons;
   return tidy(out);
 }
@@ -128,13 +146,40 @@ function isSameOrder(a: readonly string[], b: readonly string[]): boolean {
   return a.length === b.length && a.every((k, i) => k === b[i]);
 }
 
-/** Writes the changed of size, shape, fill, textPosition and grayscale into `avatar`, keeping its other fields. */
+const OLD_FILL: Record<PeopleFill, { background: 'original' | 'orgColor'; bgOrgColor?: 'primary' | 'alternating' }> = {
+  original: { background: 'original' },
+  primary: { background: 'orgColor', bgOrgColor: 'primary' },
+  alternating: { background: 'orgColor', bgOrgColor: 'alternating' },
+};
+const OLD_INFO_POSITION: Record<PeopleTextPosition, 'below' | 'right' | 'overlayBottom'> = { below: 'below', right: 'right', overlay: 'overlayBottom' };
+
+/**
+ * Writes the changed of size, shape, fill, textPosition and grayscale into `avatar`, keeping its other fields.
+ * Until the clean-up release the equivalent old fields (imgWidth/imgHeight, imgRadius, background/bgOrgColor,
+ * infoPosition) are written too, so an app on the previous version and the website function not yet redeployed
+ * draw the same look. The new fields win for every reader of this version (`resolvePeopleLook`).
+ */
 export function setPeopleLook(config: PeopleConfig, patch: Partial<PeopleLook>): PeopleConfig {
   const avatar = { ...config.avatar };
-  if (patch.size !== undefined) avatar.size = patch.size;
-  if (patch.shape !== undefined) avatar.shape = patch.shape;
-  if (patch.fill !== undefined) avatar.fill = patch.fill;
-  if (patch.textPosition !== undefined) avatar.textPosition = patch.textPosition;
+  if (patch.size !== undefined) {
+    avatar.size = patch.size;
+    avatar.imgWidth = PEOPLE_SIZE_PX[patch.size];
+    avatar.imgHeight = PEOPLE_SIZE_PX[patch.size];
+  }
+  if (patch.shape !== undefined) {
+    avatar.shape = patch.shape;
+    avatar.imgRadius = PEOPLE_SHAPE_RADIUS[patch.shape];
+  }
+  if (patch.fill !== undefined) {
+    avatar.fill = patch.fill;
+    const old = OLD_FILL[patch.fill];
+    avatar.background = old.background;
+    if (old.bgOrgColor) avatar.bgOrgColor = old.bgOrgColor;
+  }
+  if (patch.textPosition !== undefined) {
+    avatar.textPosition = patch.textPosition;
+    avatar.infoPosition = OLD_INFO_POSITION[patch.textPosition];
+  }
   if (patch.grayscale !== undefined) avatar.grayscale = patch.grayscale;
   return { ...config, avatar };
 }
