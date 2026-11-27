@@ -91,10 +91,10 @@ const CLOSE_AGAIN_MS = 300;
           </div>
         </div>
         <div class="work">
-          <okr-people-editor-canvas class="canvas" [section]="section()" [selectedKey]="selectedKey()" [device]="device()" [i18n]="t"
+          <okr-people-editor-canvas class="canvas" [section]="current()" [selectedKey]="selectedKey()" [device]="device()" [i18n]="t"
             (selectPerson)="select($event)" (configChange)="onCanvasChange($event)" (add)="pickInto('person')" />
           <div class="panel">
-            <okr-people-panel [section]="section()" (sectionChange)="onSectionChange($event)" [selected]="selectedPerson()" [hiddenCount]="hiddenCount()"
+            <okr-people-panel [section]="current()" (sectionChange)="onSectionChange($event)" [selected]="selectedPerson()" [hiddenCount]="hiddenCount()"
               [groupName]="groupName()" [roles]="roles()" [states]="states()" [currentUser]="currentUser()" [allTags]="allTags()" [i18n]="t" [errors]="errors()"
               (pick)="pickInto($event)" (deselect)="select(undefined)" />
           </div>
