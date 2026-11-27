@@ -262,7 +262,7 @@
     },
     "web_version": {
       "label": "Offri una versione web",
-      "helper": "Con il link chiunque può leggere questa e-mail nel browser, anche senza accedere."
+      "helper": "In alto nell’e-mail c’è un link «Im Browser ansehen». Chi lo ha può leggere l’e-mail nel browser, anche senza accedere."
     },
     "start": {
       "title": "Come vuoi iniziare?",

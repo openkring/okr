@@ -262,7 +262,7 @@
     },
     "web_version": {
       "label": "Webversion anbieten",
-      "helper": "Mit dem Link kann jede Person diese E-Mail im Browser lesen, auch ohne Anmeldung."
+      "helper": "Oben in der E-Mail steht ein Link «Im Browser ansehen». Wer ihn hat, kann die E-Mail im Browser lesen, auch ohne Anmeldung."
     },
     "start": {
       "title": "Wie möchtest du beginnen?",

@@ -262,7 +262,7 @@
     },
     "web_version": {
       "label": "Proposer une version web",
-      "helper": "Avec le lien, toute personne peut lire cet e-mail dans le navigateur, même sans se connecter."
+      "helper": "L’e-mail contient en haut un lien «Im Browser ansehen». Toute personne qui l’a peut lire l’e-mail dans le navigateur, même sans se connecter."
     },
     "start": {
       "title": "Comment veux-tu commencer ?",

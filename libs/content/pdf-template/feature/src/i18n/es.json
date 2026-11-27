@@ -262,7 +262,7 @@
     },
     "web_version": {
       "label": "Ofrecer versión web",
-      "helper": "Con el enlace cualquier persona puede leer este correo en el navegador, incluso sin iniciar sesión."
+      "helper": "El correo lleva arriba un enlace «Im Browser ansehen». Quien lo tenga puede leer el correo en el navegador, incluso sin iniciar sesión."
     },
     "start": {
       "title": "¿Cómo quieres empezar?",

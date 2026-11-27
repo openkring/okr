@@ -262,7 +262,7 @@
     },
     "web_version": {
       "label": "Offer a web version",
-      "helper": "With the link anyone can read this email in the browser, even without signing in."
+      "helper": "The email gets a link «Im Browser ansehen» at the top. Anyone who has it can read the email in the browser, even without signing in."
     },
     "start": {
       "title": "How do you want to start?",
