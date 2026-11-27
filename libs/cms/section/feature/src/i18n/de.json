@@ -1718,43 +1718,38 @@
   },
   "video": {
     "label": "Video",
-    "edit": "Video Konfiguration ändern",
-    "youtubeId": {
-      "label": "YouTube-ID",
-      "placeholder": "ssssssssssss",
-      "helper": "Die YouTube-ID ist am Ende der URL youtube.com/watch?v=[YOUTUBE_ID] ersichtlich.",
-      "error": "Die YouTube Video ID fehlt oder ist falsch; sie muss aus 11 Buchstaben bestehen."
+    "link": {
+      "label": "Link zum Video",
+      "placeholder": "https://www.youtube.com/watch?v=…",
+      "helper": "Füge den Link ein, den du bei YouTube oder Vimeo kopiert hast, oder den aus dem Video-Player des Albums («Link kopieren»).",
+      "error": "Diesen Link erkennen wir nicht. Kopiere ihn bei YouTube, bei Vimeo oder im Video-Player des Albums."
     },
-    "width": {
-      "label": "Breite",
-      "placeholder": "560",
-      "helper": "Breite in Pixel."
+    "found": {
+      "youtube": "YouTube-Video erkannt",
+      "vimeo": "Vimeo-Video erkannt",
+      "album": "Video aus dem Album erkannt"
     },
-    "height": {
-      "label": "Höhe",
-      "placeholder": "315",
-      "helper": "Höhe in Pixel."
+    "ratio": {
+      "title": "Format",
+      "wide": "Breit 16:9",
+      "classic": "Klassisch 4:3",
+      "square": "Quadrat 1:1",
+      "portrait": "Hoch 9:16",
+      "helper": "Das Video füllt immer die ganze Breite. Hoch passt für YouTube Shorts und Handy-Videos."
     },
-    "frameborder": {
-      "label": "Rahmenbreite",
-      "placeholder": "0",
-      "helper": "Die Breite des Rahmen in Pixel. 0 = kein Rahmen, 1 = normale Breite"
-    },
-    "baseUrl": {
-      "label": "Basis-URL",
-      "placeholder": "https://",
-      "helper": "Die Basis-URL wird einer relativen URL als Prefix voran gestellt."
-    },
-    "source": {
-      "youtube": "YouTube",
-      "album": "Album"
-    },
-    "albumLink": {
-      "label": "Video-Link",
-      "placeholder": "https://…/video/…",
-      "helper": "Füge den Link ein, den du im Video-Player mit «Link kopieren» kopiert hast.",
-      "error": "Dieser Link passt nicht. Kopiere ihn im Video-Player mit «Link kopieren».",
-      "required": "Bitte füge den Link zum Video ein."
+    "editor": {
+      "panel": {
+        "section": "Abschnitt",
+        "video": "Video",
+        "back": "Zurück zum Abschnitt",
+        "label": "Einstellungen",
+        "errors": "Diese Angaben fehlen noch oder stimmen nicht:"
+      },
+      "canvas": {
+        "hint": "Titel, Untertitel und Intro tippst du direkt hier ein. Ein Klick auf das Video zeigt rechts seine Einstellungen.",
+        "select": "Video auswählen",
+        "empty": "Noch kein Video. Klicke hier und füge rechts den Link ein."
+      }
     }
   },
   "section_type": {
@@ -2281,7 +2276,10 @@
     "trackRequired": "Wähle eine Strecke aus.",
     "imageLink": "Dieser Link ist nicht möglich. Verwende eine Adresse mit https://, mailto: oder tel:.",
     "mailImageLink": "Dieser Link ist nicht möglich. Verwende eine Adresse mit https://, mailto: oder tel:, oder eine Seite der App (/…).",
-    "mailTextPicture": "Dieses Bild kann in der E-Mail nicht gezeigt werden. Füge Bilder als Block «Bild» ein."
+    "mailTextPicture": "Dieses Bild kann in der E-Mail nicht gezeigt werden. Füge Bilder als Block «Bild» ein.",
+    "videoRequired": "Füge den Link zum Video ein.",
+    "videoLinkInvalid": "Dieses Video kann hier nicht abgespielt werden. Füge seinen Link noch einmal ein.",
+    "aspectRatioInvalid": "Wähle ein Format aus."
   },
   "advent": {
     "label": "Adventskalender",

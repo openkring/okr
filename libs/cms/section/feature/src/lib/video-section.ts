@@ -9,11 +9,12 @@ import { getSafeEmbedUrl, warn } from '@okr/shared-util-core';
 import { I18nService } from '@okr/shared-i18n';
 import { videoLink } from '@okr/content-document-util';
 import { VideoUrlService } from '@okr/content-document-data-access';
-import { SECTION_I18N_KEYS } from '@okr/cms-section-util';
+import { SECTION_I18N_KEYS, videoAspectRatioCss, YOUTUBE_EMBED_BASE } from '@okr/cms-section-util';
 
 /**
- * A section that displays a video using Google's youtube player.
- * See: https://developers.google.com/youtube/player_parameters 
+ * A section that plays a video: the YouTube or Vimeo player (`baseUrl` + `url`), or an album video as a card (`documentKey`).
+ * The player fills the width; its height follows `aspectRatio` (16:9 when absent).
+ * See: https://developers.google.com/youtube/player_parameters
  */
 @Component({
   selector: 'okr-video-section',
@@ -25,7 +26,7 @@ import { SECTION_I18N_KEYS } from '@okr/cms-section-util';
   styles: [`
   ion-card-content { padding: 0px; }
   ion-card { padding: 0px; margin: 0px; border: 0px; box-shadow: none !important;}
-  iframe { aspect-ratio: 16/9; width: 100% !important;}
+  iframe { display: block; width: 100%; height: auto; margin: 0 auto; border: 0; }
   `],
   template: `
     @if(section(); as section) {
@@ -36,13 +37,13 @@ import { SECTION_I18N_KEYS } from '@okr/cms-section-util';
             <okr-video-card [posterUrl]="poster()" [available]="available()" [loading]="loading()"
               [unavailableLabel]="i18n.album_video_unavailable()" [title]="title()" (clicked)="onPlay(key)" />
           } @else {
-          <iframe 
-            id="ytplayer"
-            type="text/html"
-            [width]="width()"
-            [height]="height()"
+          <iframe
+            [style.aspect-ratio]="aspectRatio()"
+            [style.max-width]="maxWidth()"
             [src]="videoUrl()"
-            [attr.frameborder]="frameborder()"
+            [attr.title]="title() || null"
+            allow="encrypted-media; picture-in-picture; fullscreen"
+            referrerpolicy="strict-origin-when-cross-origin"
             allowfullscreen>
           </iframe>
           }
@@ -76,10 +77,10 @@ export class VideoSectionComponent {
 
   // derived
   protected url = computed(() => this.section().properties?.url ?? '');
-  protected width = computed(() => this.section().properties?.width ?? '100%');
-  protected height = computed(() => this.section().properties?.height ?? 'auto');
-  protected frameborder = computed(() => this.section().properties?.frameborder ?? '0');
-  protected baseUrl = computed(() => this.section().properties?.baseUrl ?? 'https://www.youtube.com/embed/');
+  protected baseUrl = computed(() => this.section().properties?.baseUrl ?? YOUTUBE_EMBED_BASE);
+  protected aspectRatio = computed(() => videoAspectRatioCss(this.section().properties?.aspectRatio));
+  /** a tall video is never higher than 80% of the window: it is then narrower and centred */
+  protected maxWidth = computed(() => `calc(80vh * ${this.aspectRatio()})`);
   /** album source (spec 1.82); empty/legacy → the YouTube iframe */
   protected documentKey = computed(() => this.section().properties?.documentKey ?? '');
   protected signedVideo = computed(() => this.videoUrls.signed()[this.documentKey()]);
@@ -112,8 +113,10 @@ export class VideoSectionComponent {
 
   // Validate the (editor-supplied) baseUrl + url against the embed host
   // allowlist before trusting it (H-3). An invalid URL renders an empty iframe.
+  // a url stored whole (legacy) stands for itself
   protected videoUrl = computed(() => {
-    const safe = getSafeEmbedUrl(this.baseUrl() + this.url());
+    const url = this.url();
+    const safe = getSafeEmbedUrl(/^https:\/\//.test(url) ? url : this.baseUrl() + url);
     return safe ? this.sanitizer.bypassSecurityTrustResourceUrl(safe) : '';
   });
 }

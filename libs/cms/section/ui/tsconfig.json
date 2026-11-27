@@ -20,9 +20,6 @@
   "exclude": ["dist/**/*"],
   "references": [
     {
-      "path": "../../../content/document/util/tsconfig.lib.json"
-    },
-    {
       "path": "../../../mobility/transit/util/tsconfig.lib.json"
     },
     {

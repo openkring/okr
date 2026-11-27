@@ -104,7 +104,7 @@ export function getInlineErrorFields(type: SectionType, showAdvanced = false): s
       fields.push('autostart', 'intervalInSeconds', 'enableHighAccuracy', 'maximumAge', 'exportFormat');
       break;
     case 'video':
-      fields.push('url', 'width', 'height', 'frameborder', 'baseUrl');
+      fields.push('url', 'baseUrl', 'documentKey', 'aspectRatio');
       break;
   }
   return fields;

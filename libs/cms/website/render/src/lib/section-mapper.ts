@@ -1,4 +1,4 @@
-import { APPLICATION_KIND_VALUES, SLIDESHOW_EFFECTS, isFreeArticle, withClassicFields, type ImageStyle } from '@okr/shared-models';
+import { APPLICATION_KIND_VALUES, SLIDESHOW_EFFECTS, VIDEO_ASPECT_RATIOS, isFreeArticle, withClassicFields, type ImageStyle } from '@okr/shared-models';
 import { mapBlocks } from './article-blocks-mapper';
 import { imageCaption } from './image-caption';
 import { mapAccordionFormat } from './accordion-format';
@@ -709,7 +709,9 @@ export function mapSection(
       const raw = (props['url'] as string | undefined) ?? '';
       const base = (props['baseUrl'] as string | undefined) ?? 'https://www.youtube.com/embed/';
       const url = safeEmbedUrl(youtubeNoCookie(/^https?:\/\//.test(raw) ? raw : (raw ? base + raw : '')));
-      return { type: 'video', name, title, url };
+      // CSS aspect-ratio of the player; absent or unknown = 16:9
+      const ratio = VIDEO_ASPECT_RATIOS.find((r) => r === props['aspectRatio']) ?? '16:9';
+      return { type: 'video', name, title, url, aspectRatio: ratio.replace(':', ' / ') };
     }
 
     case 'map': {

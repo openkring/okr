@@ -237,11 +237,9 @@ export const JOURNAL_TRACK_CONFIG_SHAPE = {
 // --------------------------------------- VIDEO ----------------------------------------
 export const VIDEO_CONFIG_SHAPE = {
     url: DEFAULT_URL,
-    width: '100%',
-    height: 'auto',
-    frameborder: '0px',
-    baseUrl: 'https://www.youtube.com/embed/',
-    documentKey: ''
+    baseUrl: 'https://www.youtube-nocookie.com/embed/',
+    documentKey: '',
+    aspectRatio: '16:9'
 } as VideoConfig;
 
 // --------------------------------------- CONCRETE SECTION SHAPES ----------------------------------------

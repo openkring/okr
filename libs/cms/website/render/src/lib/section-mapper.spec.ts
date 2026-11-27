@@ -158,6 +158,12 @@ describe('mapSection video embeds without cookies (spec 1.165 §12)', () => {
   it('leaves another provider alone', () => {
     expect(map({ type: 'video', name: 'v', properties: { url: 'https://player.vimeo.com/video/1' } })['url']).toBe('https://player.vimeo.com/video/1');
   });
+
+  it('hands the aspect ratio on as CSS, 16 / 9 when absent or unknown', () => {
+    expect(map({ type: 'video', name: 'v', properties: { url: 'XSu0f8rh2w4', aspectRatio: '9:16' } })['aspectRatio']).toBe('9 / 16');
+    expect(map({ type: 'video', name: 'v', properties: { url: 'XSu0f8rh2w4' } })['aspectRatio']).toBe('16 / 9');
+    expect(map({ type: 'video', name: 'v', properties: { url: 'XSu0f8rh2w4', aspectRatio: '1; color: red' } })['aspectRatio']).toBe('16 / 9');
+  });
 });
 
 describe('isColorBand', () => {

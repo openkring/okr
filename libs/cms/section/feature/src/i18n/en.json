@@ -1718,43 +1718,38 @@
   },
   "video": {
     "label": "Video",
-    "edit": "Change video configuration",
-    "youtubeId": {
-      "label": "YouTube ID",
-      "placeholder": "ssssssssssss",
-      "helper": "The YouTube ID is visible at the end of the URL youtube.com/watch?v=[YOUTUBE_ID].",
-      "error": "The YouTube video ID is missing or incorrect; it must consist of 11 letters."
+    "link": {
+      "label": "Link to the video",
+      "placeholder": "https://www.youtube.com/watch?v=…",
+      "helper": "Paste the link you copied on YouTube or Vimeo, or the one from the album's video player («Copy link»).",
+      "error": "We don't recognise this link. Copy it on YouTube, on Vimeo or in the album's video player."
     },
-    "width": {
-      "label": "Width",
-      "placeholder": "560",
-      "helper": "Width in pixels."
+    "found": {
+      "youtube": "YouTube video recognised",
+      "vimeo": "Vimeo video recognised",
+      "album": "Album video recognised"
     },
-    "height": {
-      "label": "Height",
-      "placeholder": "315",
-      "helper": "Height in pixels."
+    "ratio": {
+      "title": "Format",
+      "wide": "Wide 16:9",
+      "classic": "Classic 4:3",
+      "square": "Square 1:1",
+      "portrait": "Tall 9:16",
+      "helper": "The video always fills the full width. Tall suits YouTube Shorts and phone videos."
     },
-    "frameborder": {
-      "label": "Frame width",
-      "placeholder": "0",
-      "helper": "The width of the frame in pixels. 0 = no frame, 1 = normal width"
-    },
-    "baseUrl": {
-      "label": "Base URL",
-      "placeholder": "https://",
-      "helper": "The base URL is prepended to a relative URL as a prefix."
-    },
-    "source": {
-      "youtube": "YouTube",
-      "album": "Album"
-    },
-    "albumLink": {
-      "label": "Video link",
-      "placeholder": "https://…/video/…",
-      "helper": "Paste the link you copied with \"Copy link\" in the video player.",
-      "error": "This link does not fit. Copy it in the video player with \"Copy link\".",
-      "required": "Please paste the link to the video."
+    "editor": {
+      "panel": {
+        "section": "Section",
+        "video": "Video",
+        "back": "Back to the section",
+        "label": "Settings",
+        "errors": "These details are still missing or not right:"
+      },
+      "canvas": {
+        "hint": "Type the title, subtitle and intro right here. Click the video to see its settings on the right.",
+        "select": "Select the video",
+        "empty": "No video yet. Click here and paste its link on the right."
+      }
     }
   },
   "section_type": {
@@ -2281,7 +2276,10 @@
     "trackRequired": "Choose a track.",
     "imageLink": "This link is not possible. Use an address with https://, mailto: or tel:.",
     "mailImageLink": "This link is not possible. Use an address with https://, mailto: or tel:, or a page of the app (/…).",
-    "mailTextPicture": "This picture cannot be shown in the email. Add pictures as an “Image” block."
+    "mailTextPicture": "This picture cannot be shown in the email. Add pictures as an “Image” block.",
+    "videoRequired": "Paste the link to the video.",
+    "videoLinkInvalid": "This video can't be played here. Paste its link again.",
+    "aspectRatioInvalid": "Choose a format."
   },
   "advent": {
     "label": "Advent calendar",

@@ -43,6 +43,8 @@ export * from './lib/slider-section.validations';
 export * from './lib/table-section.validations';
 export * from './lib/tracker-section.validations';
 export * from './lib/video-section.validations';
+export * from './lib/video-source.util';
+export * from './lib/video-editor-i18n';
 export * from './lib/section-i18n';
 export * from './lib/image-slots';
 export * from './lib/image.validations';

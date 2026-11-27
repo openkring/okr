@@ -72,7 +72,7 @@ Collection name: `sections`
 | `table` | `TableConfig` | HTML-rendered data table with styled header/body |
 | `tasks` | `TasksConfig` | Task list for the current user |
 | `tracker` | `TrackerConfig` | GPS location tracker with configurable interval |
-| `video` | `VideoConfig` | Embedded video (YouTube or other iframe) |
+| `video` | `VideoConfig` | YouTube or Vimeo player, or an album video; `aspectRatio` (absent = 16:9) |
 
 ## Article Blocks
 
@@ -147,6 +147,19 @@ A hero section that may be changed is edited graphically, as a button is: `Secti
 | `hero-editor-i18n.ts` | util | `HERO_EDITOR_I18N_KEYS` (`hero.editor.*`); resolved with the section and article editor keys as `HeroEditorI18n`. Heights, focus, gradient and button fields keep their `hero.*` / `cta.*` texts |
 
 The former cards (`okr-hero-config`, `okr-hero-logo-config`, `okr-cta-config`) remain for the read-only view and the travel journal.
+
+## Video Editor
+
+A video section that may be changed is edited graphically too: `SectionEditModal` shows `VideoEditor` (feature) when the section is a `video`, not read-only and not in the travel journal (which keeps the form: it picks clips).
+
+| Part | Where | What |
+| --- | --- | --- |
+| `video-editor.ts` | feature | Toolbar (devices, undo, redo), canvas, panel, as `ButtonEditor`. Header typed in place; the video drawn by `okr-video-section` under a cover that takes the click (gone while the video is selected, so the player can be tried). A new section opens with the video selected |
+| `video-panel.ts` | ui | One field for the link as copied (YouTube, Vimeo, an album video link or key) with «… erkannt», and the format (16:9, 4:3, 1:1, 9:16). Also the read-only view in `SectionForm` |
+| `video-source.util.ts` | util | `parseVideoSource` (pasted text → `youtube` / `vimeo` / `album`), `applyVideoSource` (writes `baseUrl` + `url` or `documentKey`), `videoSourceOf`, `videoSourceLink`, `videoAspectRatioCss` |
+| `video-editor-i18n.ts` | util | `VIDEO_EDITOR_I18N_KEYS` (`video.editor.*`); the panel's own keys (`video.link.*`, `video.ratio.*`) are in `SECTION_I18N_KEYS` |
+
+YouTube is embedded from `youtube-nocookie.com`. `width`, `height` and `frameborder` are gone from `VideoConfig` (2026-11-27): the player fills the width, its height follows `aspectRatio`, a tall video is at most 80 % of the window high.
 
 ## Section Dispatcher
 

@@ -30,7 +30,7 @@ import { FooterConfiguration } from './footer-configuration';
 import { ContractOption } from './button-action-configuration';
 import { PeopleConfiguration } from './people-configuration';
 import { ResponsibilityConfiguration } from './responsibility-configuration';
-import { VideoConfiguration } from './video-configuration';
+import { VideoPanel } from './video-panel';
 import { ButtonConfiguration } from './button-configuration';
 import { ChatConfiguration } from './chat-configuration';
 import { CalendarConfiguration, CalendarDisplayOptions } from './calendar-configuration';
@@ -68,7 +68,7 @@ import { CourseOption, FormOption, FormSectionConfiguration, ResponsibilityOptio
     IonItem, IonToggle, IonSegment, IonSegmentButton, IonLabel, IonNote, SectionAddChips,
     Chips, TextareaInput, ErrorNote,
     SectionConfiguration, EditorConfiguration, ImageStyleConfiguration, ArticleImagesConfiguration, AlbumConfiguration,
-    IframeConfiguration, WeatherConfiguration, ConnectionsConfiguration, DeparturesConfiguration, EnergyConfiguration, CounterConfiguration, ContactConfiguration, FooterConfiguration, PeopleConfiguration, ResponsibilityConfiguration, VideoConfiguration,
+    IframeConfiguration, WeatherConfiguration, ConnectionsConfiguration, DeparturesConfiguration, EnergyConfiguration, CounterConfiguration, ContactConfiguration, FooterConfiguration, PeopleConfiguration, ResponsibilityConfiguration, VideoPanel,
     ButtonConfiguration, ChatConfiguration,
     MapConfiguration, TrackerConfiguration, TableGridConfiguration,  TableStyleConfiguration, TableHeader,
     TableBody, EventsConfiguration, CourseConfiguration, InvitationsConfiguration, ImagesConfiguration, CalendarConfiguration, ChartConfiguration,
@@ -622,9 +622,8 @@ import { CourseOption, FormOption, FormSectionConfiguration, ResponsibilityOptio
         }
         @case('video') {
           @if(videoConfig(); as videoConfig) {
-            <okr-video-config
-              [formData]="videoConfig" (formDataChange)="onVideoConfigChange($event)"
-              [resetKey]="formData().okey"
+            <okr-video-panel
+              [config]="videoConfig" (configChange)="onVideoConfigChange($event)"
               [linkOrigins]="linkOrigins()"
               [i18n]="i18n()"
               [readOnly]="isReadOnly()"

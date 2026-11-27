@@ -1098,13 +1098,20 @@ export interface VideoSection extends BaseSection {
   properties: VideoConfig;
 }
 
+/** How wide a video is against its height; absent on a section stored before 2026-11-27 = '16:9'. */
+export type VideoAspectRatio = '16:9' | '4:3' | '1:1' | '9:16';
+export const VIDEO_ASPECT_RATIOS: readonly VideoAspectRatio[] = ['16:9', '4:3', '1:1', '9:16'];
+
+/**
+ * A video: an embedded YouTube/Vimeo player (`baseUrl` + `url`) or an album video (`documentKey`). The editor takes the link as
+ * pasted and writes these fields (`parseVideoSource` in @okr/cms-section-util). The player always fills the width; its height
+ * follows `aspectRatio`. (Before 2026-11-27 also `width`, `height`, `frameborder`: no reader used them, old documents still carry them.)
+ */
 export interface VideoConfig {
-  url: string; // the url of the video
-  width: string; // the width of the video, default is 100%
-  height: string; // the height of the video, default is auto
-  frameborder: string; // default 0
-  baseUrl: string; // default is https://www.youtube.com/embed/
+  url: string; // the video id of the player (YouTube: 11 characters; Vimeo: the number, a private video with '?h=<hash>')
+  baseUrl: string; // the player's embed url the id is appended to, e.g. https://www.youtube-nocookie.com/embed/
   documentKey: string; // album video (DocumentModel okey, spec 1.82 §7.3); set → card instead of the iframe
+  aspectRatio?: VideoAspectRatio; // absent = '16:9'
   clips?: ImageConfig[]; // explicit clip list (travel journal, spec 1.154)
 }
 

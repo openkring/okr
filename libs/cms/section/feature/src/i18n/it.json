@@ -1718,43 +1718,38 @@
   },
   "video": {
     "label": "Video",
-    "edit": "Modificare la configurazione del video",
-    "youtubeId": {
-      "label": "ID YouTube",
-      "placeholder": "ssssssssssss",
-      "helper": "L'ID YouTube è visibile alla fine dell'URL youtube.com/watch?v=[YOUTUBE_ID].",
-      "error": "L'ID del video YouTube manca o è errato; deve essere composto da 11 caratteri."
+    "link": {
+      "label": "Link al video",
+      "placeholder": "https://www.youtube.com/watch?v=…",
+      "helper": "Incolla il link che hai copiato su YouTube o Vimeo, oppure quello del lettore video dell'album («Copia link»).",
+      "error": "Non riconosciamo questo link. Copialo su YouTube, su Vimeo o nel lettore video dell'album."
     },
-    "width": {
-      "label": "Larghezza",
-      "placeholder": "560",
-      "helper": "Larghezza in pixel."
+    "found": {
+      "youtube": "Video YouTube riconosciuto",
+      "vimeo": "Video Vimeo riconosciuto",
+      "album": "Video dell'album riconosciuto"
     },
-    "height": {
-      "label": "Altezza",
-      "placeholder": "315",
-      "helper": "Altezza in pixel."
+    "ratio": {
+      "title": "Formato",
+      "wide": "Largo 16:9",
+      "classic": "Classico 4:3",
+      "square": "Quadrato 1:1",
+      "portrait": "Verticale 9:16",
+      "helper": "Il video occupa sempre tutta la larghezza. Verticale va bene per YouTube Shorts e video dal telefono."
     },
-    "frameborder": {
-      "label": "Larghezza della cornice",
-      "placeholder": "0",
-      "helper": "La larghezza della cornice in pixel. 0 = nessuna cornice, 1 = larghezza normale"
-    },
-    "baseUrl": {
-      "label": "URL di base",
-      "placeholder": "https://",
-      "helper": "L'URL di base viene anteposto come prefisso a un URL relativo."
-    },
-    "source": {
-      "youtube": "YouTube",
-      "album": "Album"
-    },
-    "albumLink": {
-      "label": "Link del video",
-      "placeholder": "https://…/video/…",
-      "helper": "Incolla il link che hai copiato con «Copia link» nel lettore video.",
-      "error": "Questo link non va bene. Copialo nel lettore video con «Copia link».",
-      "required": "Incolla il link del video."
+    "editor": {
+      "panel": {
+        "section": "Sezione",
+        "video": "Video",
+        "back": "Torna alla sezione",
+        "label": "Impostazioni",
+        "errors": "Questi dati mancano ancora o non sono corretti:"
+      },
+      "canvas": {
+        "hint": "Scrivi titolo, sottotitolo e introduzione direttamente qui. Un clic sul video mostra le sue impostazioni a destra.",
+        "select": "Seleziona il video",
+        "empty": "Ancora nessun video. Clicca qui e incolla il suo link a destra."
+      }
     }
   },
   "section_type": {
@@ -2281,7 +2276,10 @@
     "trackRequired": "Scegli un percorso.",
     "imageLink": "Questo link non è possibile. Usa un indirizzo con https://, mailto: o tel:.",
     "mailImageLink": "Questo link non è possibile. Usa un indirizzo con https://, mailto: o tel:, o una pagina dell’app (/…).",
-    "mailTextPicture": "Questa immagine non può essere mostrata nell’e-mail. Aggiungi le immagini con il blocco «Immagine»."
+    "mailTextPicture": "Questa immagine non può essere mostrata nell’e-mail. Aggiungi le immagini con il blocco «Immagine».",
+    "videoRequired": "Incolla il link al video.",
+    "videoLinkInvalid": "Questo video non si può riprodurre qui. Incolla di nuovo il suo link.",
+    "aspectRatioInvalid": "Scegli un formato."
   },
   "advent": {
     "label": "Calendario dell'Avvento",

@@ -1718,43 +1718,38 @@
   },
   "video": {
     "label": "Vídeo",
-    "edit": "Modificar la configuración del vídeo",
-    "youtubeId": {
-      "label": "ID de YouTube",
-      "placeholder": "ssssssssssss",
-      "helper": "El ID de YouTube es visible al final de la URL youtube.com/watch?v=[YOUTUBE_ID].",
-      "error": "Falta el ID del vídeo de YouTube o es incorrecto; debe estar compuesto por 11 caracteres."
+    "link": {
+      "label": "Enlace al vídeo",
+      "placeholder": "https://www.youtube.com/watch?v=…",
+      "helper": "Pega el enlace que copiaste en YouTube o Vimeo, o el del reproductor de vídeo del álbum («Copiar enlace»).",
+      "error": "No reconocemos este enlace. Cópialo en YouTube, en Vimeo o en el reproductor de vídeo del álbum."
     },
-    "width": {
-      "label": "Anchura",
-      "placeholder": "560",
-      "helper": "Anchura en píxeles."
+    "found": {
+      "youtube": "Vídeo de YouTube reconocido",
+      "vimeo": "Vídeo de Vimeo reconocido",
+      "album": "Vídeo del álbum reconocido"
     },
-    "height": {
-      "label": "Altura",
-      "placeholder": "315",
-      "helper": "Altura en píxeles."
+    "ratio": {
+      "title": "Formato",
+      "wide": "Ancho 16:9",
+      "classic": "Clásico 4:3",
+      "square": "Cuadrado 1:1",
+      "portrait": "Vertical 9:16",
+      "helper": "El vídeo siempre ocupa todo el ancho. Vertical va bien para YouTube Shorts y vídeos de móvil."
     },
-    "frameborder": {
-      "label": "Anchura del marco",
-      "placeholder": "0",
-      "helper": "La anchura del marco en píxeles. 0 = sin marco, 1 = anchura normal"
-    },
-    "baseUrl": {
-      "label": "URL base",
-      "placeholder": "https://",
-      "helper": "La URL base se antepone como prefijo a una URL relativa."
-    },
-    "source": {
-      "youtube": "YouTube",
-      "album": "Álbum"
-    },
-    "albumLink": {
-      "label": "Enlace del vídeo",
-      "placeholder": "https://…/video/…",
-      "helper": "Pega el enlace que copiaste con «Copiar enlace» en el reproductor de vídeo.",
-      "error": "Este enlace no sirve. Cópialo en el reproductor de vídeo con «Copiar enlace».",
-      "required": "Pega el enlace del vídeo."
+    "editor": {
+      "panel": {
+        "section": "Sección",
+        "video": "Vídeo",
+        "back": "Volver a la sección",
+        "label": "Ajustes",
+        "errors": "Estos datos aún faltan o no son correctos:"
+      },
+      "canvas": {
+        "hint": "Escribe el título, el subtítulo y la introducción directamente aquí. Un clic en el vídeo muestra sus ajustes a la derecha.",
+        "select": "Seleccionar el vídeo",
+        "empty": "Todavía no hay vídeo. Haz clic aquí y pega su enlace a la derecha."
+      }
     }
   },
   "section_type": {
@@ -2281,7 +2276,10 @@
     "trackRequired": "Elige un recorrido.",
     "imageLink": "Este enlace no es posible. Usa una dirección con https://, mailto: o tel:.",
     "mailImageLink": "Este enlace no es posible. Usa una dirección con https://, mailto: o tel:, o una página de la aplicación (/…).",
-    "mailTextPicture": "Esta imagen no se puede mostrar en el correo. Añade las imágenes con el bloque «Imagen»."
+    "mailTextPicture": "Esta imagen no se puede mostrar en el correo. Añade las imágenes con el bloque «Imagen».",
+    "videoRequired": "Pega el enlace al vídeo.",
+    "videoLinkInvalid": "Este vídeo no se puede reproducir aquí. Vuelve a pegar su enlace.",
+    "aspectRatioInvalid": "Elige un formato."
   },
   "advent": {
     "label": "Calendario de Adviento",

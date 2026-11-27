@@ -10,7 +10,7 @@ export * from './lib/journal-track-configuration';
 export * from './lib/people-configuration';
 export * from './lib/responsibility-configuration';
 export * from './lib/responsibility-section.validations';
-export * from './lib/video-configuration';
+export * from './lib/video-panel';
 
 export * from './lib/section.form';
 export * from './lib/section-configuration';

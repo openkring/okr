@@ -1718,43 +1718,38 @@
   },
   "video": {
     "label": "Vidéo",
-    "edit": "Modifier la configuration de la vidéo",
-    "youtubeId": {
-      "label": "ID YouTube",
-      "placeholder": "ssssssssssss",
-      "helper": "L'ID YouTube est visible à la fin de l'URL youtube.com/watch?v=[YOUTUBE_ID].",
-      "error": "L'ID de la vidéo YouTube est manquant ou incorrect ; il doit être composé de 11 caractères."
+    "link": {
+      "label": "Lien vers la vidéo",
+      "placeholder": "https://www.youtube.com/watch?v=…",
+      "helper": "Colle le lien que tu as copié sur YouTube ou Vimeo, ou celui du lecteur vidéo de l'album («Copier le lien»).",
+      "error": "Nous ne reconnaissons pas ce lien. Copie-le sur YouTube, sur Vimeo ou dans le lecteur vidéo de l'album."
     },
-    "width": {
-      "label": "Largeur",
-      "placeholder": "560",
-      "helper": "Largeur en pixels."
+    "found": {
+      "youtube": "Vidéo YouTube reconnue",
+      "vimeo": "Vidéo Vimeo reconnue",
+      "album": "Vidéo de l'album reconnue"
     },
-    "height": {
-      "label": "Hauteur",
-      "placeholder": "315",
-      "helper": "Hauteur en pixels."
+    "ratio": {
+      "title": "Format",
+      "wide": "Large 16:9",
+      "classic": "Classique 4:3",
+      "square": "Carré 1:1",
+      "portrait": "Vertical 9:16",
+      "helper": "La vidéo occupe toujours toute la largeur. Vertical convient aux YouTube Shorts et aux vidéos de téléphone."
     },
-    "frameborder": {
-      "label": "Largeur du cadre",
-      "placeholder": "0",
-      "helper": "La largeur du cadre en pixels. 0 = pas de cadre, 1 = largeur normale"
-    },
-    "baseUrl": {
-      "label": "URL de base",
-      "placeholder": "https://",
-      "helper": "L'URL de base est ajoutée comme préfixe à une URL relative."
-    },
-    "source": {
-      "youtube": "YouTube",
-      "album": "Album"
-    },
-    "albumLink": {
-      "label": "Lien de la vidéo",
-      "placeholder": "https://…/video/…",
-      "helper": "Colle le lien que tu as copié avec «Copier le lien» dans le lecteur vidéo.",
-      "error": "Ce lien ne convient pas. Copie-le dans le lecteur vidéo avec «Copier le lien».",
-      "required": "Colle le lien de la vidéo."
+    "editor": {
+      "panel": {
+        "section": "Section",
+        "video": "Vidéo",
+        "back": "Retour à la section",
+        "label": "Réglages",
+        "errors": "Ces informations manquent encore ou ne sont pas correctes :"
+      },
+      "canvas": {
+        "hint": "Tu tapes le titre, le sous-titre et l'intro directement ici. Un clic sur la vidéo affiche ses réglages à droite.",
+        "select": "Sélectionner la vidéo",
+        "empty": "Pas encore de vidéo. Clique ici et colle son lien à droite."
+      }
     }
   },
   "section_type": {
@@ -2281,7 +2276,10 @@
     "trackRequired": "Choisis un parcours.",
     "imageLink": "Ce lien n’est pas possible. Utilise une adresse avec https://, mailto: ou tel:.",
     "mailImageLink": "Ce lien n’est pas possible. Utilise une adresse avec https://, mailto: ou tel:, ou une page de l’application (/…).",
-    "mailTextPicture": "Cette image ne peut pas être affichée dans l’e-mail. Ajoute les images avec le bloc «Image»."
+    "mailTextPicture": "Cette image ne peut pas être affichée dans l’e-mail. Ajoute les images avec le bloc «Image».",
+    "videoRequired": "Colle le lien vers la vidéo.",
+    "videoLinkInvalid": "Cette vidéo ne peut pas être lue ici. Colle à nouveau son lien.",
+    "aspectRatioInvalid": "Choisis un format."
   },
   "advent": {
     "label": "Calendrier de l'Avent",
