@@ -109,6 +109,8 @@ export * from './lib/responsibility.model';
 export * from './lib/resource.model';
 export * from './lib/roles';
 export * from './lib/section.model';
+export * from './lib/people-look';
+export * from './lib/people-overrides';
 export * from './lib/article-layout.util';
 export * from './lib/article-blocks.util';
 export * from './lib/article-migration.util';

@@ -893,11 +893,28 @@ export interface PeopleConfig {
   responsibilityParentName?: string;
   /** @deprecated replaced by responsibilityIds; still read from sections saved before 2026-11-13 */
   responsibilityId?: string;
+  /** keys of persons that are not shown (1.181), whatever the source; for type 'group' the stale `excludedPersons` count too */
+  hiddenKeys?: string[];
+  /** person keys in the wanted order (1.181), type 'group' and 'responsibility'; unlisted persons follow in source order */
+  orderKeys?: string[];
 }
 
 /** The website width of a people section (AvatarConfig.width). */
 export type PeopleWidth = 'full' | 'article';
 export const PEOPLE_WIDTHS: PeopleWidth[] = ['full', 'article'];
+
+/** Portrait size of a people section (1.181): S 120 px, M 200 px, L 300 px. */
+export type PeopleSize = 'S' | 'M' | 'L';
+export const PEOPLE_SIZES: PeopleSize[] = ['S', 'M', 'L'];
+/** Portrait shape: round = 50%, rounded = 5px, square = 0. */
+export type PeopleShape = 'round' | 'rounded' | 'square';
+export const PEOPLE_SHAPES: PeopleShape[] = ['round', 'rounded', 'square'];
+/** Portrait fill: the photo as uploaded, the tenant's primary colour, or primary/secondary alternating. */
+export type PeopleFill = 'original' | 'primary' | 'alternating';
+export const PEOPLE_FILLS: PeopleFill[] = ['original', 'primary', 'alternating'];
+/** Where the name and details sit relative to the portrait. */
+export type PeopleTextPosition = 'below' | 'right' | 'overlay';
+export const PEOPLE_TEXT_POSITIONS: PeopleTextPosition[] = ['below', 'right', 'overlay'];
 
 /** How the persons of a people section are laid out. */
 export type PeopleView = 'card' | 'grid' | 'slider';
@@ -959,6 +976,12 @@ export interface AvatarConfig {
   bgOrgColor: PeopleOrgColor; // used when background = orgColor
   bgColors: string[]; // hex colours (#rrggbb), used when background = colors
   grayscale: boolean; // portrait in black and white (sat=-100); with a removed background only the person, never the fill colour
+
+  /** 1.181 look choices; when absent the look is derived from the old fields above (see `resolvePeopleLook`) */
+  size?: PeopleSize;
+  shape?: PeopleShape;
+  fill?: PeopleFill;
+  textPosition?: PeopleTextPosition;
 
   // info
   info: PeopleInfo[]; // details shown besides the name
