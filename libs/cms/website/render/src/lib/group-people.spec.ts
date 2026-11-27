@@ -163,19 +163,55 @@ describe('mapSection people', () => {
     expect(out).toMatchObject({ photoWidth: 120, photoHeight: 120 });
   });
 
-  it('passes the configured portrait size to the template, clamped like the imgix size', () => {
+  it('passes the look size to the template: S 120, M 200, L 300, square', () => {
     const ben: PublicPerson = { key: 'p2', firstName: 'Ben', lastName: 'Bauer', label: '', showImage: true, image: 'a/ben.jpg' };
-    const run = (avatar: Record<string, unknown>) => mapSection('s1', people({ type: 'group', groupId: 'vorstand', avatar }), new Map(), sanitize, 'de', new Map([['group.vorstand', [ben]]]));
-    expect(run({ imgWidth: 160, imgHeight: 200 })).toMatchObject({ photoWidth: 160, photoHeight: 200 });
+    const run = (avatar: Record<string, unknown>) => mapSection('s1', people({ type: 'group', groupId: 'vorstand', avatar }), new Map(), sanitize, 'de', new Map([['group.vorstand', [ben]]])) as { persons: PublicPerson[] };
+    expect(run({ size: 'L' })).toMatchObject({ photoWidth: 300, photoHeight: 300 });
+    expect(run({ size: 'L' }).persons[0].image).toContain('w=300&h=300');
+    expect(run({ size: 'M' })).toMatchObject({ photoWidth: 200, photoHeight: 200 });
     expect(run({ imgWidth: 5, imgHeight: 'x' })).toMatchObject({ photoWidth: 120, photoHeight: 120 });
   });
 
-  it('styles the portraits as the section config says: size, face pad, grayscale, cut-out on alternating club colours', () => {
+  it('styles the portraits as the look says: size, grayscale, cut-out on alternating club colours (no face pad any more)', () => {
     const p = (key: string): PublicPerson => ({ key, firstName: key, lastName: '', label: '', showImage: true, image: `a/${key}.jpg` });
-    const avatar = { imgWidth: 250, imgHeight: 250, facePad: 1.5, grayscale: true, background: 'orgColor', bgOrgColor: 'alternating' };
+    const avatar = { size: 'M', facePad: 1.5, grayscale: true, fill: 'alternating' };
     const out = mapSection('s1', people({ type: 'group', groupId: 'vorstand', avatar }), new Map(), sanitize, 'de', new Map([['group.vorstand', [p('a'), p('b'), p('c')]]])) as { persons: PublicPerson[] };
-    expect(out.persons[0].image).toBe('https://bkaiser.imgix.net/a/a.jpg?w=250&h=250&dpr=2&auto=format,compress&fit=facearea&facepad=1.5&sat=-100&bg-remove=true');
+    expect(out.persons[0].image).toBe('https://bkaiser.imgix.net/a/a.jpg?w=200&h=200&dpr=2&auto=format,compress&fit=crop&crop=faces&sat=-100&bg-remove=true');
     expect(out.persons.map((x) => x.bg)).toEqual(['primary', 'secondary', 'primary']);
+  });
+
+  it('fill primary gives every person the primary colour, original gives none', () => {
+    const p = (key: string): PublicPerson => ({ key, firstName: key, lastName: '', label: '', showImage: true, image: `a/${key}.jpg` });
+    const run = (avatar: Record<string, unknown>) => (mapSection('s1', people({ type: 'group', groupId: 'vorstand', avatar }), new Map(), sanitize, 'de', new Map([['group.vorstand', [p('a'), p('b')]]])) as { persons: PublicPerson[] }).persons.map((x) => x.bg);
+    expect(run({ fill: 'primary' })).toEqual(['primary', 'primary']);
+    expect(run({ fill: 'original' })).toEqual([undefined, undefined]);
+  });
+
+  it('applies hiddenKeys and orderKeys of a group section: order c a d with b hidden', () => {
+    const mk = (key: string): PublicPerson => ({ key, firstName: key, lastName: '', label: '', showImage: false });
+    const members = new Map([['group.vorstand', [mk('a'), mk('b'), mk('c'), mk('d')]]]);
+    const out = mapSection('s1', people({ type: 'group', groupId: 'vorstand', hiddenKeys: ['b'], orderKeys: ['c'] }), new Map(), sanitize, 'de', members) as { persons: PublicPerson[] };
+    expect(out.persons.map((x) => x.key)).toEqual(['c', 'a', 'd']);
+  });
+
+  it('a hand-picked section hides hiddenKeys but keeps the array order', () => {
+    const out = mapSection('s1', people({ type: 'persons', hiddenKeys: ['p2'], orderKeys: ['p3'], persons: [{ key: 'p1', name1: 'A' }, { key: 'p2', name1: 'B' }, { key: 'p3', name1: 'C' }] }), new Map(), sanitize) as { persons: { key: string }[] };
+    expect(out.persons.map((x) => x.key)).toEqual(['p1', 'p3']);
+  });
+
+  it('maps an old-fields-only section (J+S Leiter config) exactly as before 1.181', () => {
+    const p = (key: string): PublicPerson => ({ key, firstName: key, lastName: '', label: '', showImage: true, image: `a/${key}.jpg` });
+    const avatar = { imgWidth: 200, imgHeight: 200, background: 'orgColor', bgOrgColor: 'alternating' };
+    const out = mapSection('s1', people({ type: 'group', groupId: 'vorstand', avatar }), new Map(), sanitize, 'de', new Map([['group.vorstand', [p('a'), p('b'), p('c')]]]));
+    expect(out).toEqual({
+      type: 'people', name: '', title: 'Vorstand', subTitle: '',
+      persons: [
+        { key: 'a', firstName: 'a', lastName: '', label: '', showImage: true, image: 'https://bkaiser.imgix.net/a/a.jpg?w=200&h=200&dpr=2&auto=format,compress&fit=crop&crop=faces&bg-remove=true', bg: 'primary' },
+        { key: 'b', firstName: 'b', lastName: '', label: '', showImage: true, image: 'https://bkaiser.imgix.net/a/b.jpg?w=200&h=200&dpr=2&auto=format,compress&fit=crop&crop=faces&bg-remove=true', bg: 'secondary' },
+        { key: 'c', firstName: 'c', lastName: '', label: '', showImage: true, image: 'https://bkaiser.imgix.net/a/c.jpg?w=200&h=200&dpr=2&auto=format,compress&fit=crop&crop=faces&bg-remove=true', bg: 'primary' },
+      ],
+      withPhotos: true, photoWidth: 200, photoHeight: 200,
+    });
   });
 
   it('never emits a photo when the person\'s images are not public', () => {

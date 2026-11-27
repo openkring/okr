@@ -1,9 +1,12 @@
-import { APPLICATION_KIND_VALUES, SLIDESHOW_EFFECTS, VIDEO_ASPECT_RATIOS, isFreeArticle, withClassicFields, type ImageStyle } from '@okr/shared-models';
+import {
+  APPLICATION_KIND_VALUES, PEOPLE_SIZE_PX, SLIDESHOW_EFFECTS, VIDEO_ASPECT_RATIOS, applyPeopleOverrides, isFreeArticle, peopleHiddenKeys, resolvePeopleLook, withClassicFields,
+  type AvatarConfig, type ImageStyle, type PeopleLook,
+} from '@okr/shared-models';
 import { mapBlocks } from './article-blocks-mapper';
 import { imageCaption } from './image-caption';
 import { mapAccordionFormat } from './accordion-format';
 import type { PublicPerson } from './group-people';
-import { peopleExcludedKeys, peopleSourceKey, peopleSourceOf } from './people-source';
+import { peopleOverrideConfig, peopleSourceKey, peopleSourceOf } from './people-source';
 
 export const IMGIX_BASE = 'https://bkaiser.imgix.net';
 
@@ -16,58 +19,40 @@ export function toImgixUrl(path: string): string {
   return ALPHA_SOURCE.test(path) ? `${IMGIX_BASE}/${path}?auto=format,compress` : `${IMGIX_BASE}/${path}?auto=compress,format=jpg`;
 }
 
-/** The image fields of a people section's `avatar` config the website reads (AvatarConfig, shared-models). */
-export interface PeoplePhotoConfig {
-  imgWidth?: number;
-  imgHeight?: number;
-  facePad?: number;
-  background?: 'original' | 'removed' | 'orgColor' | 'colors';
-  bgOrgColor?: 'primary' | 'secondary' | 'alternating';
-  bgColors?: string[];
-  grayscale?: boolean;
-}
-
-const HEX_COLOR = /^#[0-9a-fA-F]{6}$/;
+/** The `avatar` config of a people section as the website reads it: the new look fields and the old ones it is derived from. */
+export type PeoplePhotoConfig = Partial<AvatarConfig>;
 
 /**
  * The fill behind the portrait at `index` (twin of getPeopleBgColor, @okr/cms-section-util): 'primary' /
- * 'secondary' (the tenant colours; the template maps them to its own palette) or a #rrggbb of `bgColors`;
- * undefined when the background is not filled.
+ * 'secondary' (the tenant colours; the template maps them to its own palette); undefined for fill 'original'.
+ * 'alternating' starts with primary.
  */
-export function peoplePhotoBg(config: PeoplePhotoConfig, index: number): string | undefined {
-  if (config.background === 'orgColor') {
-    const org = config.bgOrgColor ?? 'primary';
-    return org === 'alternating' ? (index % 2 === 0 ? 'primary' : 'secondary') : org;
-  }
-  if (config.background === 'colors') {
-    const colors = (config.bgColors ?? []).filter((c) => HEX_COLOR.test(c));
-    return colors.length > 0 ? colors[index % colors.length] : undefined;
-  }
-  return undefined;
+export function peoplePhotoBg(look: PeopleLook, index: number): string | undefined {
+  if (look.fill === 'original') return undefined;
+  if (look.fill === 'primary') return 'primary';
+  return index % 2 === 0 ? 'primary' : 'secondary';
 }
 
 /**
- * The display size of a portrait in CSS px (twin of the app's imgWidth / imgHeight, default 120 × 120, 40–1200).
+ * The display size of a portrait in CSS px: a square of the look's size (S 120, M 200, L 300).
  * The website draws the photo at exactly this size; imgix delivers it at 2x (see peoplePhotoParams).
  */
-export function peoplePhotoSize(config: PeoplePhotoConfig): { width: number; height: number } {
-  const size = (v: unknown, d: number): number => (typeof v === 'number' && v >= 40 && v <= 1200 ? Math.round(v) : d);
-  return { width: size(config.imgWidth, 120), height: size(config.imgHeight, 120) };
+export function peoplePhotoSize(look: PeopleLook): { width: number; height: number } {
+  const px = PEOPLE_SIZE_PX[look.size];
+  return { width: px, height: px };
 }
 
 /**
  * The imgix query of one portrait (twin of getPeopleImgixParams, @okr/cms-section-util): size at 2x,
- * face crop, optional black and white, optional background removal. The fill is never baked in: the
- * cut-out is transparent and the template paints `bg` behind it (so a grey portrait keeps a coloured fill).
+ * face crop, optional black and white, background removal for any fill but 'original'. The fill is never
+ * baked in: the cut-out is transparent and the template paints `bg` behind it (so a grey portrait keeps a
+ * coloured fill).
  */
-export function peoplePhotoParams(config: PeoplePhotoConfig): string {
-  const { width, height } = peoplePhotoSize(config);
-  const params = [`w=${width}`, `h=${height}`, 'dpr=2', 'auto=format,compress'];
-  const pad = typeof config.facePad === 'number' ? config.facePad : 0;
-  if (pad > 0) params.push('fit=facearea', `facepad=${pad}`);
-  else params.push('fit=crop', 'crop=faces');
-  if (config.grayscale === true) params.push('sat=-100');
-  if ((config.background ?? 'original') !== 'original') params.push('bg-remove=true');
+export function peoplePhotoParams(look: PeopleLook): string {
+  const { width, height } = peoplePhotoSize(look);
+  const params = [`w=${width}`, `h=${height}`, 'dpr=2', 'auto=format,compress', 'fit=crop', 'crop=faces'];
+  if (look.grayscale) params.push('sat=-100');
+  if (look.fill !== 'original') params.push('bg-remove=true');
   return params.join('&');
 }
 
@@ -733,24 +718,23 @@ export function mapSection(
       // is a role's public alias (resolveRolePeople), and only when the section's info shows email.
       if (props['type'] === 'group' || props['type'] === 'responsibility') {
         const source = peopleSourceOf(s);
-        const excluded = new Set(peopleExcludedKeys(s));
-        // members the section hides (group only) are dropped here: the group's list is shared by its sections
-        const resolved = ((source ? people?.get(peopleSourceKey(source)) : undefined) ?? []).filter((p) => !excluded.has(p.key));
+        // hidden persons are dropped and the wanted order applied here (1.181): the source's list is shared by its sections
+        const resolved = applyPeopleOverrides((source ? people?.get(peopleSourceKey(source)) : undefined) ?? [], peopleOverrideConfig(props));
         const info = (props['avatar'] as { info?: unknown } | undefined)?.info;
         const showEmail = props['type'] === 'responsibility'
           && Array.isArray(info) && (info.includes('email') || info.includes('emailLink'));
         // as in the app (persons-widget): the whole card is a mailto: link whenever there is an address;
         // the address is written out only with info 'email' ('emailLink' alone links without showing it)
         const hideEmail = showEmail && Array.isArray(info) && !info.includes('email');
-        const avatarCfg = (props['avatar'] ?? {}) as PeoplePhotoConfig;
+        const look = resolvePeopleLook(props['avatar'] as PeoplePhotoConfig | undefined);
         let photoIndex = 0;
         const persons = resolved.map((p): PublicPerson => {
           const out: PublicPerson = { key: p.key, firstName: p.firstName, lastName: p.lastName, label: p.label };
           if (p.showImage !== undefined) out.showImage = p.showImage;
           // the avatar photo, styled as the app's people section — never when the person's images are not public
           if (p.showImage === true && typeof p.image === 'string' && p.image) {
-            const bg = peoplePhotoBg(avatarCfg, photoIndex++);
-            out.image = `${IMGIX_BASE}/${p.image.replace(/^\/+/, '')}?${peoplePhotoParams(avatarCfg)}`;
+            const bg = peoplePhotoBg(look, photoIndex++);
+            out.image = `${IMGIX_BASE}/${p.image.replace(/^\/+/, '')}?${peoplePhotoParams(look)}`;
             if (bg) out.bg = bg;
           }
           if (showEmail && isPlainEmail(p.email)) out.email = p.email;
@@ -759,7 +743,7 @@ export function mapSection(
         // photo cards as soon as one person has a photo (the others get an initials tile)
         const withPhotos = persons.some((p) => !!p.image);
         // the template draws every portrait (and the initials tile) at the configured size, not stretched to the card
-        const photoSize = peoplePhotoSize(avatarCfg);
+        const photoSize = peoplePhotoSize(look);
         return {
           type: 'people', name, title, subTitle, persons,
           ...(withPhotos ? { withPhotos: true, photoWidth: photoSize.width, photoHeight: photoSize.height } : {}),
@@ -767,7 +751,9 @@ export function mapSection(
           ...narrow,
         };
       }
+      const hidden = new Set(peopleHiddenKeys(peopleOverrideConfig(props)));
       const persons = ((props['persons'] as { key?: string; name1?: string; name2?: string; label?: string }[] | undefined) ?? [])
+        .filter(p => !hidden.has(p.key ?? ''))
         .map(p => ({
           key: p.key ?? '',
           firstName: p.name1 ?? '',

@@ -1,3 +1,5 @@
+import { peopleHiddenKeys, type PeopleConfig } from '@okr/shared-models';
+
 import type { SectionDoc } from './section-mapper';
 
 /**
@@ -43,19 +45,27 @@ export function peopleSourceOf(section: SectionDoc | undefined): PeopleSource | 
 }
 
 /**
- * The person keys a group people section hides (`excludedPersons`, the app's getPeopleExcludedKeys):
- * only for type 'group'; trimmed, deduped, non-string and empty keys dropped. The group's members are
- * resolved once per group and shared by every section of that group, so the filter is per section.
+ * The override fields of a people section's properties (1.181), as `applyPeopleOverrides` /
+ * `peopleHiddenKeys` read them. The legacy `excludedPersons` keys are trimmed here as the website always did.
+ */
+export function peopleOverrideConfig(props: Record<string, unknown>): Partial<PeopleConfig> {
+  const excluded = Array.isArray(props['excludedPersons'])
+    ? (props['excludedPersons'] as unknown[]).map((p) => {
+        const key = p && typeof p === 'object' ? (p as { key?: unknown }).key : undefined;
+        return { key: typeof key === 'string' ? key.trim() : '' };
+      })
+    : undefined;
+  return { ...(props as Partial<PeopleConfig>), ...(excluded ? { excludedPersons: excluded as PeopleConfig['excludedPersons'] } : {}) };
+}
+
+/**
+ * The person keys a people section hides (1.181): `hiddenKeys`, and for type 'group' the stale
+ * `excludedPersons` too (`peopleHiddenKeys`, shared-models). The group's members are resolved once per
+ * group and shared by every section of that group, so the filter is per section.
  */
 export function peopleExcludedKeys(section: SectionDoc | undefined): string[] {
   if (section?.type !== 'people') return [];
-  const props = (section.properties ?? {}) as Record<string, unknown>;
-  if (props['type'] !== 'group' || !Array.isArray(props['excludedPersons'])) return [];
-  const keys = (props['excludedPersons'] as unknown[])
-    .map((p) => (p && typeof p === 'object' ? (p as { key?: unknown }).key : undefined))
-    .filter((k): k is string => typeof k === 'string' && !!k.trim())
-    .map((k) => k.trim());
-  return [...new Set(keys)];
+  return peopleHiddenKeys(peopleOverrideConfig((section.properties ?? {}) as Record<string, unknown>));
 }
 
 /**
