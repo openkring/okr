@@ -208,7 +208,6 @@ const MULTI_IMAGE_POSITIONS = ViewPositions.filter((p) => p.id === ViewPosition.
               />
             } @else if (!journalMode()) {
               <okr-error-note [errors]="errorsFor('action')" />
-              <okr-error-note [errors]="errorsFor('zoomFactor')" />
             }
     </ng-template>
 

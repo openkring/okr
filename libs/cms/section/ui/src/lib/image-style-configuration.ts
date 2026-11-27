@@ -1,10 +1,10 @@
-import { Component, computed, input, linkedSignal, model, Signal } from '@angular/core';
+import { Component, computed, input, linkedSignal, model, Signal, signal } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonNote, IonRow } from '@ionic/angular';
 
 import { ImageActions } from '@okr/shared-categories';
-import { CategoryOld, CategoryOldI18n, Checkbox, CheckboxI18n, ErrorNote, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
-import { SectionErrors, getFieldErrors } from '@okr/cms-section-util';
+import { CategoryOld, CategoryOldI18n, Checkbox, CheckboxI18n, ErrorNote, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { CUSTOM, DEFAULT_CROP_HEIGHT, IMAGE_STYLE_PRESETS, ImageDisplay, PresetField, SectionErrors, getFieldErrors, isFixedHeight, presetChoice } from '@okr/cms-section-util';
 import { CAPTION_ALIGNS, CAPTION_POSITIONS, CAPTION_STYLES, CaptionAlign, CaptionPosition, CaptionStyle, ImageActionType, ImageStyle, Slot } from '@okr/shared-models';
 
 interface ImageStyleConfigI18n {
@@ -18,26 +18,30 @@ interface ImageStyleConfigI18n {
   height_label:            Signal<string>;
   height_placeholder:      Signal<string>;
   height_helper:           Signal<string>;
-  sizes_label:             Signal<string>;
-  sizes_placeholder:       Signal<string>;
-  sizes_helper:            Signal<string>;
+  display_label:           Signal<string>;
+  display_helper:          Signal<string>;
+  display_whole:           Signal<string>;
+  display_crop:            Signal<string>;
+  style_custom:            Signal<string>;
+  width_full:              Signal<string>;
+  width_half:              Signal<string>;
+  width_fixed:             Signal<string>;
+  border_none:             Signal<string>;
+  border_thin:             Signal<string>;
+  border_medium:           Signal<string>;
+  borderRadius_square:     Signal<string>;
+  borderRadius_small:      Signal<string>;
+  borderRadius_medium:     Signal<string>;
   border_label:            Signal<string>;
   border_placeholder:      Signal<string>;
   border_helper:           Signal<string>;
   borderRadius_label:       Signal<string>;
   borderRadius_placeholder: Signal<string>;
   borderRadius_helper:      Signal<string>;
-  zoom_label:               Signal<string>;
-  zoom_placeholder:         Signal<string>;
-  zoom_helper:              Signal<string>;
   slot_label:               Signal<string>;
   action_label:             Signal<string>;
   isThumbnail_label:        Signal<string>;
   isThumbnail_helper:       Signal<string>;
-  fill_label:               Signal<string>;
-  fill_helper:              Signal<string>;
-  hasPriority_label:        Signal<string>;
-  hasPriority_helper:       Signal<string>;
   image_style_group_image:   Signal<string>;
   image_style_group_caption: Signal<string>;
   image_style_group_action:  Signal<string>;
@@ -68,7 +72,7 @@ interface ImageStyleConfigI18n {
 @Component({
   selector: 'okr-image-style',
   standalone: true,
-  imports: [NgTemplateOutlet, IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonGrid, IonNote, Checkbox, TextInput, StringSelect, CategoryOld, NumberInput,
+  imports: [NgTemplateOutlet, IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonGrid, IonNote, Checkbox, TextInput, StringSelect, CategoryOld,
     ErrorNote
   ],
   styles: [
@@ -101,33 +105,49 @@ interface ImageStyleConfigI18n {
     <ng-template #groups>
         <ion-grid>
           <ion-row>
-            @if(showImageGroup()) {
-            <ion-col size="12"><div class="group-title">{{ i18n().image_style_group_image() }}</div></ion-col>
-            <ion-col size="12" size-md="6">
-              <okr-text-input [i18n]="widthI18n()" [value]="width()" (valueChange)="onFieldChange('width', $event)" [readOnly]="readOnly()" />
-              <okr-error-note [errors]="errorsFor('width')" />
-            </ion-col>
-            <ion-col size="12" size-md="6">
-              <okr-text-input [i18n]="heightI18n()" [value]="height()" (valueChange)="onFieldChange('height', $event)" [readOnly]="readOnly()" />
-              <okr-error-note [errors]="errorsFor('height')" />
-            </ion-col>
-            <ion-col size="12" size-md="6">
-              <okr-checkbox [i18n]="fillI18n()" [checked]="fill()" (checkedChange)="onFieldChange('fill', $event)" [readOnly]="readOnly()" [showHelper]="true" />
-              <okr-error-note [errors]="errorsFor('fill')" />
-            </ion-col>
-            @if(showAdvanced()) {
+            <!-- the image settings are advanced ones: the defaults (whole image, full width, thin frame) fit nearly every case.
+                 With essentials, Darstellung and Eckenradius always show; a hidden field with an error shows too. -->
+            @if(showImageGroup() && (showAdvanced() || essentials())) {
+            @if(showGroupTitles()) { <ion-col size="12"><div class="group-title">{{ i18n().image_style_group_image() }}</div></ion-col> }
+            @if(shows('height', true)) {
               <ion-col size="12" size-md="6">
-                <okr-text-input [i18n]="borderI18n()" [value]="border()" (valueChange)="onFieldChange('border', $event)" [readOnly]="readOnly()" [showHelper]="true" />
+                <okr-string-select [i18n]="displayI18n()" [selectedString]="display()" (selectedStringChange)="onDisplayChange($event)" [readOnly]="readOnly()" [stringList]="displays" [labels]="displayLabels()" />
+              </ion-col>
+              @if(display() === 'crop') {
+                <ion-col size="12" size-md="6">
+                  <okr-text-input [i18n]="heightI18n()" [value]="height()" (valueChange)="onFieldChange('height', $event)" [readOnly]="readOnly()" [showHelper]="true" />
+                  <okr-error-note [errors]="errorsFor('height')" />
+                </ion-col>
+              }
+            }
+            @if(shows('width')) {
+              <ion-col size="12" size-md="6">
+                <okr-string-select [i18n]="widthPresetI18n()" [selectedString]="choice('width')" (selectedStringChange)="onPresetChange('width', $event)" [readOnly]="readOnly()" [stringList]="presetList('width')" [labels]="widthLabels()" />
+                @if(choice('width') === custom) {
+                  <okr-text-input [i18n]="widthI18n()" [value]="width()" (valueChange)="onFieldChange('width', $event)" [readOnly]="readOnly()" [showHelper]="true" />
+                }
+                <okr-error-note [errors]="errorsFor('width')" />
+              </ion-col>
+            }
+            @if(shows('border')) {
+              <ion-col size="12" size-md="6">
+                <okr-string-select [i18n]="borderPresetI18n()" [selectedString]="choice('border')" (selectedStringChange)="onPresetChange('border', $event)" [readOnly]="readOnly()" [stringList]="presetList('border')" [labels]="borderLabels()" />
+                @if(choice('border') === custom) {
+                  <okr-text-input [i18n]="borderI18n()" [value]="border()" (valueChange)="onFieldChange('border', $event)" [readOnly]="readOnly()" [showHelper]="true" />
+                }
                 <okr-error-note [errors]="errorsFor('border')" />
               </ion-col>
+            }
+            @if(shows('borderRadius', true)) {
               <ion-col size="12" size-md="6">
-                <okr-text-input [i18n]="borderRadiusI18n()" [value]="borderRadius()" (valueChange)="onFieldChange('borderRadius', $event)" [readOnly]="readOnly()" [showHelper]="true" />
+                <okr-string-select [i18n]="borderRadiusPresetI18n()" [selectedString]="choice('borderRadius')" (selectedStringChange)="onPresetChange('borderRadius', $event)" [readOnly]="readOnly()" [stringList]="presetList('borderRadius')" [labels]="borderRadiusLabels()" />
+                @if(choice('borderRadius') === custom) {
+                  <okr-text-input [i18n]="borderRadiusI18n()" [value]="borderRadius()" (valueChange)="onFieldChange('borderRadius', $event)" [readOnly]="readOnly()" [showHelper]="true" />
+                }
                 <okr-error-note [errors]="errorsFor('borderRadius')" />
               </ion-col>
-              <ion-col size="12" size-md="6">
-                <okr-checkbox [i18n]="hasPriorityI18n()" [checked]="hasPriority()" (checkedChange)="onFieldChange('hasPriority', $event)" [readOnly]="readOnly()" [showHelper]="true" />
-                <okr-error-note [errors]="errorsFor('hasPriority')" />
-              </ion-col>
+            }
+            @if(shows('isThumbnail') || shows('slot')) {
               <ion-col size="12" size-md="6">
                 <okr-checkbox [i18n]="isThumbnailI18n()" [checked]="isThumbnail()" (checkedChange)="onFieldChange('isThumbnail', $event)" [readOnly]="readOnly()" />
                 <okr-error-note [errors]="errorsFor('isThumbnail')" />
@@ -138,11 +158,8 @@ interface ImageStyleConfigI18n {
                   <okr-error-note [errors]="errorsFor('slot')" />
                 </ion-col>
               }
-              <!-- technical settings for responsive loading and imgix; rarely needed -->
-              <ion-col size="12" size-md="6">
-                <okr-text-input [i18n]="sizesI18n()" [value]="sizes()" (valueChange)="onFieldChange('sizes', $event)" [readOnly]="readOnly()" [showHelper]="true" />
-                <okr-error-note [errors]="errorsFor('sizes')" />
-              </ion-col>
+            }
+            @if(shows('imgIxParams')) {
               <ion-col size="12">
                 <okr-text-input [i18n]="imgIxParamsI18n()" [value]="imgIxParams()" (valueChange)="onFieldChange('imgIxParams', $event)" [readOnly]="readOnly()" [showHelper]="true" />
                 <okr-error-note [errors]="errorsFor('imgIxParams')" />
@@ -150,7 +167,7 @@ interface ImageStyleConfigI18n {
             }
             }
             @if(showCaption()) {
-            <ion-col size="12"><div class="group-title">{{ i18n().image_style_group_caption() }}</div></ion-col>
+            @if(showGroupTitles()) { <ion-col size="12"><div class="group-title">{{ i18n().image_style_group_caption() }}</div></ion-col> }
             <ion-col size="12" size-md="6">
               <okr-string-select [i18n]="captionPositionI18n()" [selectedString]="captionPosition()" (selectedStringChange)="onFieldChange('captionPosition', $event)" [readOnly]="readOnly()" [stringList]="captionPositions" [labels]="captionPositionLabels()" />
             </ion-col>
@@ -167,17 +184,11 @@ interface ImageStyleConfigI18n {
             }
             }
             @if(showAction() && showAdvanced()) {
-              <ion-col size="12"><div class="group-title">{{ i18n().image_style_group_action() }}</div></ion-col>
+              @if(showGroupTitles()) { <ion-col size="12"><div class="group-title">{{ i18n().image_style_group_action() }}</div></ion-col> }
               <ion-col size="12" size-md="6">
                 <okr-category-old [i18n]="imageActionI18n()" [value]="action()" (valueChange)="onFieldChange('action', $event)" [readOnly]="readOnly()" [categories]="imageActions" />
                 <okr-error-note [errors]="errorsFor('action')" />
               </ion-col>
-              @if(action() === imageActionZoom) {
-                <ion-col size="12" size-md="6">
-                  <okr-number-input [i18n]="zoomFactorI18n()" [value]="zoomFactor()" (valueChange)="onFieldChange('zoomFactor', $event)" [readOnly]="readOnly()" [showHelper]="true" />
-                  <okr-error-note [errors]="errorsFor('zoomFactor')" />
-                </ion-col>
-              }
             }
           </ion-row>
         </ion-grid>
@@ -204,28 +215,33 @@ export class ImageStyleConfiguration {
   public readonly showAction = input(true);
   /** inside a host card: no own card, title and intro */
   public readonly embedded = input(false);
+  /** true: Darstellung and Eckenradius of the image group show without showAdvanced (the article's image block) */
+  public readonly essentials = input(false);
+  /** false: the host card already names the group */
+  public readonly showGroupTitles = input(true);
 
   // fields
   protected imgIxParams = linkedSignal(() => this.formData().imgIxParams ?? '');
   protected width = linkedSignal(() => this.formData().width ?? '100%');
   protected height = linkedSignal(() => this.formData().height ?? 'auto');
-  protected sizes = linkedSignal(() => this.formData().sizes ?? '(max-width: 1240px) 50vw, 300px');
   protected border = linkedSignal(() => this.formData().border ?? '1px solid');
   protected borderRadius = linkedSignal(() => this.formData().borderRadius ?? '4px');
   protected isThumbnail = linkedSignal(() => this.formData().isThumbnail ?? false);
   protected slot = linkedSignal(() => this.formData().slot ?? 'none');
-  protected fill = linkedSignal(() => this.formData().fill ?? false);
-  protected hasPriority = linkedSignal(() => this.formData().hasPriority ?? false);
   protected captionPosition = linkedSignal<CaptionPosition>(() => this.formData().captionPosition ?? 'none');
   protected captionSize = linkedSignal(() => this.formData().captionSize ?? '0.8rem');
   protected captionStyle = linkedSignal<CaptionStyle>(() => this.formData().captionStyle ?? 'italic');
   protected captionAlign = linkedSignal<CaptionAlign>(() => this.formData().captionAlign ?? 'left');
   protected action = linkedSignal(() => this.formData().action ?? ImageActionType.OpenSlider);
-  protected zoomFactor = linkedSignal(() => this.formData().zoomFactor ?? 2);
+  /** a real height is a crop; 'auto' (or nothing) is the whole image */
+  protected display = computed<ImageDisplay>(() => isFixedHeight(this.height()) ? 'crop' : 'whole');
+  /** fields whose «Eigener Wert» was picked while the stored value still equals a preset */
+  private readonly customChosen = signal<ReadonlySet<PresetField>>(new Set());
 
   // passing constants to template
   protected imageActions = ImageActions;
-  protected imageActionZoom = ImageActionType.Zoom;
+  protected readonly custom = CUSTOM;
+  protected readonly displays: ImageDisplay[] = ['whole', 'crop'];
   protected stringList = ['start', 'end', 'icon-only'];
   protected captionPositions = CAPTION_POSITIONS;
   protected captionStyles = CAPTION_STYLES;
@@ -261,15 +277,14 @@ export class ImageStyleConfiguration {
       } as TextInputI18n)
   );
 
-  protected sizesI18n = computed(
-    () =>
-      ({
-        name: 'sizes',
-        label: this.i18n().sizes_label(),
-        placeholder: this.i18n().sizes_placeholder(),
-        helper: this.i18n().sizes_helper(),
-      } as TextInputI18n)
-  );
+  protected displayI18n = computed(() => ({ name: 'display', label: this.i18n().display_label(), helper: this.i18n().display_helper() } as StringSelectI18n));
+  protected displayLabels = computed(() => [this.i18n().display_whole(), this.i18n().display_crop()]);
+  protected widthPresetI18n = computed(() => ({ name: 'widthPreset', label: this.i18n().width_label() } as StringSelectI18n));
+  protected widthLabels = computed(() => [this.i18n().width_full(), this.i18n().width_half(), this.i18n().width_fixed(), this.i18n().style_custom()]);
+  protected borderPresetI18n = computed(() => ({ name: 'borderPreset', label: this.i18n().border_label() } as StringSelectI18n));
+  protected borderLabels = computed(() => [this.i18n().border_none(), this.i18n().border_thin(), this.i18n().border_medium(), this.i18n().style_custom()]);
+  protected borderRadiusPresetI18n = computed(() => ({ name: 'borderRadiusPreset', label: this.i18n().borderRadius_label() } as StringSelectI18n));
+  protected borderRadiusLabels = computed(() => [this.i18n().borderRadius_square(), this.i18n().borderRadius_small(), this.i18n().borderRadius_medium(), this.i18n().style_custom()]);
 
   protected borderI18n = computed(
     () =>
@@ -282,7 +297,6 @@ export class ImageStyleConfiguration {
   );
 
   protected borderRadiusI18n = computed(() =>({name: 'borderRadius', label: this.i18n().borderRadius_label(), placeholder: this.i18n().borderRadius_placeholder(), helper: this.i18n().borderRadius_helper()} as TextInputI18n));
-  protected zoomFactorI18n = computed(() => ({ name: 'zoomFactor', label: this.i18n().zoom_label(), placeholder: this.i18n().zoom_placeholder(), helper: this.i18n().zoom_helper() } as NumberInputI18n));
   protected slotI18n = computed(() => ({ name: 'slot', label: this.i18n().slot_label() } as StringSelectI18n));
   protected imageActionI18n = computed(() => ({ name: 'imageAction', label: this.i18n().action_label() } as CategoryOldI18n));
 
@@ -294,26 +308,6 @@ export class ImageStyleConfiguration {
         helper: this.i18n().isThumbnail_helper(),
       } as CheckboxI18n)
   );
-
-  protected fillI18n = computed(
-    () =>
-      ({
-        name: 'fill',
-        label: this.i18n().fill_label(),
-        helper: this.i18n().fill_helper(),
-      } as CheckboxI18n)
-  );
-
-  protected hasPriorityI18n = computed(
-    () =>
-      ({
-        name: 'hasPriority',
-        label: this.i18n().hasPriority_label(),
-        helper: this.i18n().hasPriority_helper(),
-      } as CheckboxI18n)
-  );
-
-
 
   protected captionPositionI18n = computed(() => ({ name: 'captionPosition', label: this.i18n().captionPosition_label(), helper: this.i18n().captionPosition_helper() } as StringSelectI18n));
   protected captionPositionLabels = computed(() => [
@@ -335,7 +329,37 @@ export class ImageStyleConfiguration {
     this.formData.update(vm => ({ ...vm, [fieldName]: fieldValue }));
   }
 
-/** messages of a single field, for the inline <okr-error-note> */
+  /** the presets of a field, followed by «Eigener Wert» */
+  protected presetList(field: PresetField): string[] {
+    return [...IMAGE_STYLE_PRESETS[field], CUSTOM];
+  }
+
+  /** the preset the stored value matches, else «Eigener Wert» */
+  protected choice(field: PresetField): string {
+    const value = String(this.formData()[field] ?? '');
+    return this.customChosen().has(field) ? CUSTOM : presetChoice(field, value);
+  }
+
+  protected onPresetChange(field: PresetField, choice: string): void {
+    const chosen = new Set(this.customChosen());
+    if (choice === CUSTOM) chosen.add(field);
+    else chosen.delete(field);
+    this.customChosen.set(chosen);
+    if (choice !== CUSTOM && choice !== this.formData()[field]) this.onFieldChange(field, choice);
+  }
+
+  /** a crop starts at 300px; the whole image is height 'auto' */
+  protected onDisplayChange(display: string): void {
+    if (display === this.display()) return;
+    this.onFieldChange('height', display === 'crop' ? DEFAULT_CROP_HEIGHT : 'auto');
+  }
+
+  /** a field of the image group: advanced, or an essential one, or one that holds an error (it must never be hidden then) */
+  protected shows(field: string, essential = false): boolean {
+    return this.showAdvanced() || (essential && this.essentials()) || this.errorsFor(field).length > 0;
+  }
+
+  /** messages of a single field, for the inline <okr-error-note> */
   protected errorsFor(field: string): string[] {
     return getFieldErrors(this.errors(), field);
   }

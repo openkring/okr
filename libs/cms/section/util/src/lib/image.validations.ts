@@ -1,7 +1,7 @@
 import { omitWhen } from 'vest';
 
 import { ImageActionType, ImageConfig, ImageStyle, ImageType } from '@okr/shared-models';
-import { booleanValidations, categoryValidations, imageUrlValidations, numberValidations, stringValidations } from '@okr/shared-util-core';
+import { booleanValidations, categoryValidations, imageUrlValidations, stringValidations } from '@okr/shared-util-core';
 
 /**
  * Validates one ImageConfig. `prefix` is the field-name prefix the form binds to, e.g.
@@ -26,15 +26,11 @@ export function imageStyleValidations(imageStyle: ImageStyle | undefined, prefix
   stringValidations(`${prefix}imgIxParams`, imageStyle?.imgIxParams);
   stringValidations(`${prefix}width`, imageStyle?.width);
   stringValidations(`${prefix}height`, imageStyle?.height);
-  stringValidations(`${prefix}sizes`, imageStyle?.sizes);
   stringValidations(`${prefix}border`, imageStyle?.border);
   stringValidations(`${prefix}borderRadius`, imageStyle?.borderRadius);
   booleanValidations(`${prefix}isThumbnail`, imageStyle?.isThumbnail);
   stringValidations(`${prefix}slot`, imageStyle?.slot);   // tbd: validate against Slot enum
-  booleanValidations(`${prefix}fill`, imageStyle?.fill);
-  booleanValidations(`${prefix}hasPriority`, imageStyle?.hasPriority);
   categoryValidations(`${prefix}action`, imageStyle?.action, ImageActionType);
-  numberValidations(`${prefix}zoomFactor`, imageStyle?.zoomFactor, true, 0, 10);
 }
 
 /**

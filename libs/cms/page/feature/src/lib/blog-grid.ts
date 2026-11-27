@@ -34,10 +34,10 @@ import { SectionDispatcher } from '@okr/cms-section-feature';
         <div class="grid-item" [id]="section.okey" (click)="sectionClick.emit(section.okey)">
           @if (editMode()) {
             <div class="section-wrapper editable">
-              <okr-section-dispatcher [section]="section" [currentUser]="currentUser()" [editMode]="editMode()" />
+              <okr-section-dispatcher [isFirst]="$first" [section]="section" [currentUser]="currentUser()" [editMode]="editMode()" />
             </div>
           } @else {
-            <okr-section-dispatcher [section]="section" [currentUser]="currentUser()" [editMode]="editMode()" />
+            <okr-section-dispatcher [isFirst]="$first" [section]="section" [currentUser]="currentUser()" [editMode]="editMode()" />
           }
         </div>
       }

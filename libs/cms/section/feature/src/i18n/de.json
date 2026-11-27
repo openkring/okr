@@ -1113,35 +1113,38 @@
         "label": "Breite",
         "placeholder": "100%",
         "helper": "Die Breite des Bildes, z. B. 100%, 300px oder 50vw. Eine reine Zahl gilt als Pixel.",
-        "error": "Gib eine Breite wie 100%, 300px oder auto ein."
+        "error": "Gib eine Breite wie 100%, 300px oder auto ein.",
+        "full": "Volle Breite (100 %)",
+        "half": "Halbe Breite (50 %)",
+        "fixed": "Fest 300 px"
       },
       "height": {
         "label": "Höhe",
-        "placeholder": "auto",
-        "helper": "Die Höhe des Bildes, z. B. auto, 300px oder 50vh. Eine reine Zahl gilt als Pixel.",
+        "placeholder": "300px",
+        "helper": "Die Höhe des Ausschnitts, z. B. 300px oder 50vh. Das Bild füllt sie und wird dafür zugeschnitten. Eine reine Zahl gilt als Pixel.",
         "error": "Gib eine Höhe wie auto, 300px oder 50vh ein."
       },
-      "sizes": {
-        "label": "Bild Grössen",
-        "placeholder": "(max-width: 768px) 100vw, 50vw",
-        "helper": "HTML sizes Attribut (mit Komma getrennte Werte) definiert die Bildauflösungen für responsive Bilder.",
-        "error": "Die Grössen müssen durch Kommas getrennte Wörter sein."
+      "display": {
+        "label": "Darstellung",
+        "helper": "Ganzes Bild in seinen eigenen Proportionen, oder ein Ausschnitt in fester Höhe, den das Bild ausfüllt.",
+        "whole": "Ganzes Bild",
+        "crop": "Ausschnitt mit fester Höhe"
       },
       "border": {
         "label": "Rahmen",
         "placeholder": "1px solid",
-        "helper": "Der Rahmen um das Bild: Dicke, Linienart und optional Farbe, z. B. 1px solid oder 2px solid #ccc. Leer lassen für keinen Rahmen."
+        "helper": "Der Rahmen um das Bild: Dicke, Linienart und optional Farbe, z. B. 1px solid oder 2px solid #ccc. Leer lassen für keinen Rahmen.",
+        "none": "Kein Rahmen",
+        "thin": "Dünn (1 px)",
+        "medium": "Mittel (2 px)"
       },
       "borderRadius": {
         "label": "Eckenradius",
         "placeholder": "4px",
-        "helper": "Wie stark die Ecken abgerundet sind, z. B. 4px. 0 ergibt eckige Ecken."
-      },
-      "zoom": {
-        "label": "Zoom-Faktor",
-        "placeholder": "n",
-        "helper": "Der Zoomfaktor wird verwendet, um die Darstellung zu vergrössern oder zu verkleinern, default = 2x.",
-        "error": "Der Zoomfaktor muss eine Ganzzahl aus lauter Ziffern sein."
+        "helper": "Wie stark die Ecken abgerundet sind, z. B. 4px. 0 ergibt eckige Ecken.",
+        "square": "Eckig",
+        "small": "Leicht gerundet (4 px)",
+        "medium": "Gerundet (8 px)"
       },
       "slot": {
         "label": "Slot",
@@ -1155,14 +1158,6 @@
       "isThumbnail": {
         "label": "Vorschaubild",
         "helper": "Das Bild wird als Thumbnail angezeigt."
-      },
-      "fill": {
-        "label": "Bild zuschneiden",
-        "helper": "Das Bild füllt einen festen Rahmen in der eingestellten Höhe und wird dafür zugeschnitten, z. B. für gleich hohe Bilder. Braucht eine Höhe wie 300px; bei auto wird das ganze Bild gezeigt. Aus: das ganze Bild in seinen eigenen Proportionen."
-      },
-      "hasPriority": {
-        "label": "Priorität",
-        "helper": "Lädt das Bild vor allen anderen. Schalte das nur beim ersten Bild ein, das sofort sichtbar ist – sonst wird die Seite langsamer."
       },
       "captionPosition": {
         "label": "Position der Caption",
@@ -1198,7 +1193,11 @@
         "image": "Bild",
         "caption": "Caption",
         "action": "Aktion"
-      }
+      },
+      "custom": "Eigener Wert"
+    },
+    "replace": {
+      "label": "Bild ersetzen"
     }
   },
   "images": {

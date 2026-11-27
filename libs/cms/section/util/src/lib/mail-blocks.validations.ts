@@ -43,9 +43,9 @@ function checkPicture(field: string, image: unknown): void {
   }
 }
 
-/** What a click does and how far it zooms are no settings of a mail: stored ones are ignored, so they are no error either. */
+/** What a click does is no setting of a mail: a stored one is ignored, so it is no error either. */
 function checkMailImageStyle(field: string, style: unknown): void {
-  checkImageStyle(field, isObject(style) ? Object.fromEntries(Object.entries(style).filter(([name]) => name !== 'action' && name !== 'zoomFactor')) : style);
+  checkImageStyle(field, isObject(style) ? Object.fromEntries(Object.entries(style).filter(([name]) => name !== 'action')) : style);
 }
 
 function checkContent(type: MailBlockType, block: Loose, f: (name: string) => string): void {

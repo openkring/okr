@@ -53,6 +53,7 @@ export * from './lib/image-view.modal';
 export * from './lib/pinch-zoom';
 export * from './lib/image-slider.modal';
 export * from './lib/img';
+export * from './lib/image-priority';
 export * from './lib/label';
 export * from './lib/label-select.modal';
 export * from './lib/list-filter';

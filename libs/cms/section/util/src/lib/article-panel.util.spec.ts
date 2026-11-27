@@ -246,9 +246,6 @@ describe('what the panel shows', () => {
   const gal = (more: object) => ({ id: 'b', type: 'gallery', images: [ok, ok], ...more });
 
   it.each([
-    ['zoom factor, its field is drawn', pic({ action: ImageActionType.Zoom, zoomFactor: 99 }), []],
-    ['zoom factor under another action', pic({ action: ImageActionType.None, zoomFactor: 99 }), ['zoomFactor']],
-    ['cleared zoom factor', pic({ zoomFactor: null }), ['zoomFactor']],
     ['slot, its field is drawn', pic({ isThumbnail: true, slot: 5 }), []],
     ['slot without thumbnail', pic({ slot: 5 }), ['slot']],
     ['width', pic({ width: 5 }), []],
@@ -257,7 +254,6 @@ describe('what the panel shows', () => {
     ['alt text and link', pic({}, { ...ok, altText: 5, actionUrl: 'javascript:x' } as unknown as ImageConfig), []],
     ['no picture', pic({}, image('')), []],
     ['no image at all', { id: 'b', type: 'image' }, []],
-    ['gallery: zoom factor under another action', gal({ imageStyle: { zoomFactor: 99 } }), ['zoomFactor']],
     ['gallery: style without pictures', gal({ images: [], imageStyle: { width: 5 } }), ['width']],
     ['gallery: slideshow drawn', gal({ slideshow: { effect: 'fade', autoplay: true, interval: 99, duration: 1 } }), []],
     ['gallery: slideshow of another layout', gal({ layout: 'pair', slideshow: { effect: 'fade', autoplay: true, interval: 99, duration: 1 } }), ['slideshow.interval']],

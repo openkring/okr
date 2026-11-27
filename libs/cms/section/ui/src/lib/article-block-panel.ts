@@ -1,4 +1,4 @@
-import { Component, computed, DestroyRef, inject, input, output } from '@angular/core';
+import { Component, computed, DestroyRef, inject, input, output, signal } from '@angular/core';
 import {
   IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonList, IonNote,
   IonRadio, IonRadioGroup, IonRange, IonRow, IonSegment, IonSegmentButton, ModalController
@@ -9,13 +9,14 @@ import {
   MailBlock, SectionCta, SpaceSize, UserModel
 } from '@okr/shared-models';
 import { URL_LENGTH } from '@okr/shared-constants';
+import { UploadService } from '@okr/avatar-data-access';
 import { I18nService } from '@okr/shared-i18n';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { Checkbox, CheckboxI18n, ErrorNote, NumberInput, NumberInputI18n, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { compactImageStyle, fill, MAX_MAIL_EVENTS, resolveImageStyle } from '@okr/shared-util-core';
 import {
   ARTICLE_BLOCK_ICONS, ARTICLE_PROFILE, ArticleEditorI18n, ArticleUpload, BLOCK_ALIGNS, blockTypeLabel, COLUMN_PRESETS,
-  drawableImages, EditorProfile, galleryErrors, getFieldErrors, IMAGE_CAPTION_LENGTH, ImageUploadTarget, isEventsShown, isMailCaptionHidden, isPictureMissing, MAIL_CAPTION_POSITIONS, MAIL_IMAGE_WIDTHS,
+  drawableImages, EditorProfile, galleryErrors, getFieldErrors, IMAGE_CAPTION_LENGTH, IMAGE_CREDIT_LENGTH, ImageUploadTarget, isEventsShown, isMailCaptionHidden, isPictureMissing, MAIL_CAPTION_POSITIONS, MAIL_IMAGE_WIDTHS,
   MAIL_TEXT_PICTURE_MESSAGE, mailImageWidth, mailStyleCaptionPosition, mailToneOf, resizeColumn, restErrors, SectionErrors, setColumnCount, setColumnSizes, shownBlockFields, SPACE_SIZES, withMailLinks
 } from '@okr/cms-section-util';
 
@@ -24,6 +25,7 @@ import { ArticleImagesConfiguration } from './article-images-configuration';
 import { ARTICLE_PANEL_STYLES } from './article-panel.styles';
 import { CtaConfiguration } from './cta-configuration';
 import { ImagesConfiguration } from './images-configuration';
+import { ImageStyleConfiguration } from './image-style-configuration';
 
 const filled = (value: unknown): boolean => typeof value === 'string' && value.trim() !== '';
 
@@ -35,7 +37,7 @@ const filled = (value: unknown): boolean => typeof value === 'string' && value.t
   selector: 'okr-article-block-panel',
   standalone: true,
   imports: [
-    SvgIconPipe, Checkbox, ErrorNote, NumberInput, StringSelect, TextInput, ImagesConfiguration, ArticleImagesConfiguration, CtaConfiguration,
+    SvgIconPipe, Checkbox, ErrorNote, NumberInput, StringSelect, TextInput, ImagesConfiguration, ImageStyleConfiguration, ArticleImagesConfiguration, CtaConfiguration,
     IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonList, IonNote,
     IonRadio, IonRadioGroup, IonRange, IonRow, IonSegment, IonSegmentButton,
   ],
@@ -54,6 +56,7 @@ const filled = (value: unknown): boolean => typeof value === 'string' && value.t
     .swatch.secondary { background: color-mix(in srgb, var(--ion-color-secondary) 30%, transparent); }
     .swatch.tertiary { background: color-mix(in srgb, var(--ion-color-tertiary) 30%, transparent); }
     .swatch.neutral { background: var(--ion-color-light); }
+    .panel-head .hidden-toggle { margin-inline-start: auto; }
   `],
   template: `
     <!-- a new block gets new fields: none of them keeps what was opened or typed for the one before -->
@@ -61,6 +64,12 @@ const filled = (value: unknown): boolean => typeof value === 'string' && value.t
       <div class="panel-head">
         @if (icon(); as icon) { <ion-icon src="{{ icon | svgIcon }}" aria-hidden="true" /> }
         <h2>{{ typeLabel() }}</h2>
+        @if (hasHiddenFields()) {
+          <!-- the fields that normally keep their default -->
+          <ion-button class="hidden-toggle" fill="clear" size="small" [attr.aria-label]="i18n().form_advanced_label()" [attr.aria-pressed]="showHidden()" (click)="showHidden.set(!showHidden())">
+            <ion-icon slot="icon-only" src="{{ (showHidden() ? 'toggle' : 'toggle-off') | svgIcon }}" />
+          </ion-button>
+        }
       </div>
       @if (outdatedText(); as text) { <ion-note class="note outdated">{{ text }}</ion-note> }
 
@@ -83,7 +92,7 @@ const filled = (value: unknown): boolean => typeof value === 'string' && value.t
         @case ('image') {
           <ion-card>
             <ion-card-content class="ion-no-padding">
-              <okr-images-config [images]="images()" (imagesChange)="setImage($event)" [multiple]="false" [embedded]="true" [uniqueNames]="true" [showType]="!onlyLinks()"
+              <okr-images-config variant="single" [prefillAltText]="onlyLinks()" [images]="images()" (imagesChange)="setImage($event)" [multiple]="false" [embedded]="true" [uniqueNames]="true" [showType]="!onlyLinks()"
                 [uploads]="uploads()" [uploadTarget]="uploadTarget()" [emptyText]="i18n().article_editor_image_empty()"
                 [storagePath]="storagePath()" [currentUser]="currentUser()" [readOnly]="false" [i18n]="i18n()" [errors]="imageListErrors()" />
               <div class="actions">
@@ -95,7 +104,8 @@ const filled = (value: unknown): boolean => typeof value === 'string' && value.t
               @if (pictureMissing()) { <ion-note class="note" color="danger">{{ i18n().article_editor_image_missing() }}</ion-note> }
             </ion-card-content>
           </ion-card>
-          @if (!pictureMissing()) {
+          @if (!pictureMissing() && onlyLinks()) {
+            <!-- a mail: caption, alt text, link and width -->
             <ion-card>
               <ion-card-content class="ion-no-padding">
                 <ion-grid>
@@ -105,12 +115,10 @@ const filled = (value: unknown): boolean => typeof value === 'string' && value.t
                       <okr-error-note [errors]="errorsFor('image.overlay')" />
                       @if (captionHidden()) { <ion-note class="note">{{ i18n().article_editor_image_captionHidden() }}</ion-note> }
                     </ion-col>
-                    @if (onlyLinks()) {
-                      <ion-col size="12">
-                        <okr-string-select [i18n]="captionPositionI18n()" [selectedString]="captionPosition()" (selectedStringChange)="setCaptionPosition($event)"
-                          [stringList]="captionPositions" [labels]="captionPositionLabels()" [readOnly]="false" />
-                      </ion-col>
-                    }
+                    <ion-col size="12">
+                      <okr-string-select [i18n]="captionPositionI18n()" [selectedString]="captionPosition()" (selectedStringChange)="setCaptionPosition($event)"
+                        [stringList]="captionPositions" [labels]="captionPositionLabels()" [readOnly]="false" />
+                    </ion-col>
                     <ion-col size="12">
                       <okr-text-input [i18n]="altTextI18n()" [value]="image().altText ?? ''" (valueChange)="patchImage({ altText: $event })" [readOnly]="false" />
                       <okr-error-note [errors]="errorsFor('image.altText')" />
@@ -118,16 +126,56 @@ const filled = (value: unknown): boolean => typeof value === 'string' && value.t
                     <ion-col size="12">
                       <okr-text-input [i18n]="linkI18n()" [value]="image().actionUrl ?? ''" (valueChange)="patchImage({ actionUrl: $event })" [maxLength]="urlLength" [showHelper]="true" inputMode="url" [readOnly]="false" />
                       <okr-error-note [errors]="errorsFor('image.actionUrl')" />
-                      @if (linkNote(); as note) { <ion-note class="note">{{ note }}</ion-note> }
                     </ion-col>
-                    @if (onlyLinks()) {
-                      <ion-col size="12">
-                        <okr-string-select [i18n]="widthI18n()" [selectedString]="width()" (selectedStringChange)="setWidth($event)" [stringList]="widths()" [readOnly]="false" />
-                        <okr-error-note [errors]="errorsFor('imageStyle.width')" />
-                      </ion-col>
-                    }
+                    <ion-col size="12">
+                      <okr-string-select [i18n]="widthI18n()" [selectedString]="width()" (selectedStringChange)="setWidth($event)" [stringList]="widths()" [readOnly]="false" />
+                      <okr-error-note [errors]="errorsFor('imageStyle.width')" />
+                    </ion-col>
                   </ion-row>
                 </ion-grid>
+              </ion-card-content>
+            </ion-card>
+          }
+          @if (!pictureMissing() && !onlyLinks()) {
+            <!-- Caption: the text and how it shows; the alt text keeps its default (section title, then file name) unless the hidden fields show -->
+            <ion-card>
+              <ion-card-header><ion-card-title>{{ i18n().image_style_group_caption() }}</ion-card-title></ion-card-header>
+              <ion-card-content class="ion-no-padding">
+                <ion-grid>
+                  <ion-row>
+                    <ion-col size="12">
+                      <okr-text-input [i18n]="captionI18n()" [value]="image().overlay ?? ''" (valueChange)="patchImage({ overlay: $event })" [maxLength]="captionLength" [readOnly]="false" />
+                      <okr-error-note [errors]="errorsFor('image.overlay')" />
+                      @if (captionHidden()) { <ion-note class="note">{{ i18n().article_editor_image_captionHidden() }}</ion-note> }
+                    </ion-col>
+                    <ion-col size="12">
+                      <okr-text-input [i18n]="creditI18n()" [value]="image().credit ?? ''" (valueChange)="patchImage({ credit: $event })" [maxLength]="creditLength" [readOnly]="false" />
+                      <okr-error-note [errors]="errorsFor('image.credit')" />
+                      <ion-button size="small" fill="clear" [disabled]="readingCredit()" (click)="readCreditFromFile()">{{ i18n().image_edit_credit_read() }}</ion-button>
+                      @if (creditWasEmpty() === block().id) { <ion-note class="note">{{ i18n().image_edit_credit_read_empty() }}</ion-note> }
+                    </ion-col>
+                  </ion-row>
+                </ion-grid>
+                <okr-image-style [formData]="imageStyle()" (formDataChange)="setImageStyle($event)" [embedded]="true" [showGroupTitles]="false"
+                  [showImageGroup]="false" [showCaption]="true" [showAction]="false" [readOnly]="false" [i18n]="i18n()" [errors]="errors()" />
+                @if (showHidden() || errorsFor('image.altText').length > 0) {
+                  <ion-grid>
+                    <ion-row>
+                      <ion-col size="12">
+                        <okr-text-input [i18n]="altTextI18n()" [value]="image().altText ?? ''" (valueChange)="patchImage({ altText: $event })" [readOnly]="false" />
+                        <okr-error-note [errors]="errorsFor('image.altText')" />
+                      </ion-col>
+                    </ion-row>
+                  </ion-grid>
+                }
+              </ion-card-content>
+            </ion-card>
+            <!-- Darstellung: Darstellung and Eckenradius; width, frame, thumbnail and imgix only with the hidden fields -->
+            <ion-card>
+              <ion-card-header><ion-card-title>{{ i18n().display_label() }}</ion-card-title></ion-card-header>
+              <ion-card-content class="ion-no-padding">
+                <okr-image-style [formData]="imageStyle()" (formDataChange)="setImageStyle($event)" [embedded]="true" [showGroupTitles]="false"
+                  [showImageGroup]="true" [essentials]="true" [showAdvanced]="showHidden()" [showCaption]="false" [showAction]="false" [readOnly]="false" [i18n]="i18n()" [errors]="errors()" />
               </ion-card-content>
             </ion-card>
           }
@@ -144,9 +192,23 @@ const filled = (value: unknown): boolean => typeof value === 'string' && value.t
             </ion-card>
           }
           @if (!pictureMissing() && !onlyLinks()) {
-            <okr-article-images-config mode="appearance" [showPlacement]="false" [title]="i18n().article_editor_panel_look()"
-              [images]="images()" [imageStyle]="imageStyle()" (imageStyleChange)="setImageStyle($event)"
-              [storagePath]="storagePath()" [currentUser]="currentUser()" [readOnly]="false" [i18n]="i18n()" [errors]="errors()" />
+            <!-- Aktion: what a click on the picture does, and the link it follows -->
+            <ion-card>
+              <ion-card-header><ion-card-title>{{ i18n().image_style_group_action() }}</ion-card-title></ion-card-header>
+              <ion-card-content class="ion-no-padding">
+                <okr-image-style [formData]="imageStyle()" (formDataChange)="setImageStyle($event)" [embedded]="true" [showGroupTitles]="false"
+                  [showImageGroup]="false" [showCaption]="false" [showAction]="true" [showAdvanced]="true" [readOnly]="false" [i18n]="i18n()" [errors]="errors()" />
+                <ion-grid>
+                  <ion-row>
+                    <ion-col size="12">
+                      <okr-text-input [i18n]="linkI18n()" [value]="image().actionUrl ?? ''" (valueChange)="patchImage({ actionUrl: $event })" [maxLength]="urlLength" [showHelper]="true" inputMode="url" [readOnly]="false" />
+                      <okr-error-note [errors]="errorsFor('image.actionUrl')" />
+                      @if (linkNote(); as note) { <ion-note class="note">{{ note }}</ion-note> }
+                    </ion-col>
+                  </ion-row>
+                </ion-grid>
+              </ion-card-content>
+            </ion-card>
           }
         }
 
@@ -303,6 +365,7 @@ const filled = (value: unknown): boolean => typeof value === 'string' && value.t
 export class ArticleBlockPanel {
   private readonly modalController = inject(ModalController);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly uploadService = inject(UploadService);
   private readonly actionI18n = inject(I18nService).translateAll({ followLink: '@shared/categories.imageAction.followlink.label' });
 
   // inputs
@@ -336,6 +399,7 @@ export class ArticleBlockPanel {
   protected readonly spaceSizes = SPACE_SIZES;
   protected readonly counts = [2, 3] as const;
   protected readonly captionLength = IMAGE_CAPTION_LENGTH;
+  protected readonly creditLength = IMAGE_CREDIT_LENGTH;
   protected readonly urlLength = URL_LENGTH;
   protected readonly captionPositions = [...MAIL_CAPTION_POSITIONS] as string[];
   protected readonly maxEventsMax = MAX_MAIL_EVENTS;
@@ -376,6 +440,12 @@ export class ArticleBlockPanel {
     const own = new Set(this.images().map((image) => image?.url));
     return this.articleImages().filter((image) => !own.has(image.url));
   });
+  /** the hidden fields of the image block (width, frame, thumbnail, imgix, alt text): they keep their default until shown */
+  protected readonly showHidden = signal(false);
+  /** «Aus Datei lesen» of the credit: running, and the id of the block whose file had no credit */
+  protected readonly readingCredit = signal(false);
+  protected readonly creditWasEmpty = signal<string | undefined>(undefined);
+  protected readonly hasHiddenFields = computed(() => this.block().type === 'image' && !this.onlyLinks() && !this.pictureMissing());
   protected readonly imageStyle = computed<ImageStyle>(() => {
     const block = this.block();
     const style = block.type === 'image' || block.type === 'gallery' ? block.imageStyle : undefined;
@@ -412,6 +482,9 @@ export class ArticleBlockPanel {
   });
   protected readonly captionI18n = computed<TextInputI18n>(() => ({
     name: 'imageOverlay', label: this.i18n().image_edit_overlay_label(), placeholder: this.i18n().image_edit_overlay_placeholder(), helper: '',
+  }));
+  protected readonly creditI18n = computed<TextInputI18n>(() => ({
+    name: 'imageCredit', label: this.i18n().image_edit_credit_label(), placeholder: this.i18n().image_edit_credit_placeholder(), helper: this.i18n().image_edit_credit_helper(),
   }));
   protected readonly altTextI18n = computed<TextInputI18n>(() => ({
     name: 'imageAltText', label: this.i18n().altText_label(), placeholder: this.i18n().altText_placeholder(), helper: this.i18n().altText_helper(),
@@ -478,7 +551,7 @@ export class ArticleBlockPanel {
   // errors
   /** under the list stands what has no field of its own: a missing picture has a note, alt text and link have fields once there is one */
   protected readonly imageListErrors = computed<SectionErrors>(() => {
-    const own = this.pictureMissing() ? ['images[0].url'] : ['images[0].altText', 'images[0].actionUrl'];
+    const own = this.pictureMissing() ? ['images[0].url'] : ['images[0].altText', 'images[0].actionUrl', 'images[0].credit'];
     return Object.fromEntries(Object.entries(this.errors()).filter(([field]) => !own.includes(field)));
   });
   /** a picture in a text that a mail cannot show has its own words; any other error of the html is a missing German text */
@@ -538,6 +611,23 @@ export class ArticleBlockPanel {
   private patchStyle(changes: Partial<ImageStyle>): void {
     const block = this.block();
     if (block.type === 'image' || block.type === 'gallery') this.setImageStyle({ ...resolveImageStyle(block.imageStyle), ...changes });
+  }
+
+  /** reads the credit from the file's IPTC/EXIF metadata; the panel may show another block when it arrives */
+  protected async readCreditFromFile(): Promise<void> {
+    const { id } = this.block();
+    const url = this.image().url;
+    if (!url) return;
+    this.readingCredit.set(true);
+    this.creditWasEmpty.set(undefined);
+    try {
+      const credit = await this.uploadService.readImageCredit(url);
+      if (this.destroyRef.destroyed || this.block().id !== id) return;
+      if (credit) this.patchImage({ credit });
+      else this.creditWasEmpty.set(id);
+    } finally {
+      this.readingCredit.set(false);
+    }
   }
 
   /** «Aus diesem Artikel»: a copy of the picture with all its texts */

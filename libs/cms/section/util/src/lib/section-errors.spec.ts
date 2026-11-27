@@ -121,7 +121,7 @@ describe('tiles and call-to-action error fields (1.151)', () => {
   });
 
   it('shows the layout and the image action of an article inline without the advanced toggle (Layout segment)', () => {
-    const errors = { imageLayout: ['invalidValue'], action: ['invalidValue'], zoomFactor: ['invalidValue'] };
+    const errors = { imageLayout: ['invalidValue'], action: ['invalidValue'] };
     expect(getRemainingErrors(errors, getInlineErrorFields('article'))).toEqual([]);
   });
 
@@ -191,7 +191,7 @@ describe('getErrorSegments (segmented cards, 1.154)', () => {
     const errors = { width: ['notString'], action: ['invalidValue'], 'images[2].url': ['required'] };
     expect(getErrorSegments(errors, ARTICLE_IMAGES_SEGMENT_FIELDS, all)).toEqual(['select', 'layout', 'styles']);
     expect(getErrorSegments({ imageLayout: ['invalidValue'] }, ARTICLE_IMAGES_SEGMENT_FIELDS, all)).toEqual(['layout']);
-    expect(getErrorSegments({ zoomFactor: ['invalidValue'] }, ARTICLE_IMAGES_SEGMENT_FIELDS, all)).toEqual(['layout']);
+    expect(getErrorSegments({ action: ['invalidValue'] }, ARTICLE_IMAGES_SEGMENT_FIELDS, all)).toEqual(['layout']);
   });
 
   it('leaves out segments that are not offered and errors of other fields', () => {

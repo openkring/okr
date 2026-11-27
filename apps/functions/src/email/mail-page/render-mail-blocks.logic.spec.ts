@@ -788,11 +788,13 @@ describe('noticeBlocks', () => {
 
   it('a picture keeps only known style keys with known values', async () => {
     const good = {
-      imgIxParams: 'sat=-100&blur=20', width: '50%', height: '300px', sizes: '(max-width: 1240px) 50vw, 300px', border: '2px solid #ccc', borderRadius: '4px', isThumbnail: false, slot: 'none',
-      fill: true, hasPriority: false, action: 4, zoomFactor: 3, showTitle: false, showSource: true, captionPosition: 'bottom', captionSize: '0.8rem', captionStyle: 'italic', captionAlign: 'center',
+      imgIxParams: 'sat=-100&blur=20', width: '50%', height: '300px', border: '2px solid #ccc', borderRadius: '4px', isThumbnail: false, slot: 'none',
+      action: 4, captionPosition: 'bottom', captionSize: '0.8rem', captionStyle: 'italic', captionAlign: 'center',
     };
     const styleOf = async (style: Record<string, unknown>) => (await notice([image('i', 'tenant/x/a.jpg', {}, style)]) as Extract<ArticleBlock, { type: 'image' }>[])[0].imageStyle;
     expect(await styleOf(good)).toEqual(good);
+    // the fields retired on 2026-11-27 are no longer kept
+    expect(await styleOf({ ...good, sizes: '50vw', fill: true, hasPriority: false, zoomFactor: 3, showTitle: false, showSource: true })).toEqual(good);
     expect(await styleOf({ border: '1px solid', width: 'auto' })).toEqual({ border: '1px solid', width: 'auto' });
     expect(await styleOf({
       imgIxParams: 'a=1"><script>', width: '1px;background:url(x)', height: 'expression(1)', sizes: 'url(x);', border: '1px solid red;x', borderRadius: 'url(x)', isThumbnail: 'yes', slot: 'x',

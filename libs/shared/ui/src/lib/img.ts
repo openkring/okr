@@ -1,5 +1,5 @@
 import { IMAGE_LOADER, ImageLoaderConfig, NgOptimizedImage, NgStyle } from '@angular/common';
-import { Component, computed, ElementRef, inject, input, output, resource, viewChild } from '@angular/core';
+import { Component, computed, DestroyRef, effect, ElementRef, inject, input, output, resource, signal, viewChild } from '@angular/core';
 import { IonThumbnail, ModalController, ToastController } from '@ionic/angular';
 import { Browser } from '@capacitor/browser';
 
@@ -9,6 +9,7 @@ import { appendImgixParams, buildImageCaption, getCaptionCss, getCaptionLuminanc
 import { downloadToBrowser } from '@okr/shared-util-angular';
 
 import { ImageBadge } from './image-badge';
+import { IMAGE_PRIORITY } from './image-priority';
 import { findImageIndex, showImageSlider, showZoomedImage } from './ui.util';
 
 /**
@@ -58,6 +59,9 @@ Text boxes are generated as (transparent) png image and loaded as watermark.
 See <a href="https://sandbox.imgix.com/view?url=https://assets.imgix.net/~text?fm%3Dpng%26txt-size%3D36%26w%3D600%26txt-font%3DAvenir%2BNext%2BCondensed%2CBold%26txt%3DThe%2Bquick%2Bbrown%2Bfox%2Bjumps%2Bover%2Bthe%2Blazy%2Bdog.%2BThe%2Bfive%2Bboxing%2Bwizards%2Bjump%2Bquickly.%26txt-pad%3D30%26bg%3D3D4C5F%26txt-color%3Dfff&_gl=1*17rwjsw*_gcl_au*OTQyNjY2MDEuMTcwOTE1MzgwNA..">sandbox</a> for examples.
  * txt, text, txt-align, txt-font, txt-color
  */
+
+/** srcset widths of the plain img; up to 2560 so a ~1200 px wide image stays sharp on a 2× display */
+const PLAIN_SRCSET_WIDTHS = [320, 640, 960, 1280, 1920, 2560];
 
 @Component({
   selector: 'okr-img',
@@ -156,32 +160,21 @@ See <a href="https://sandbox.imgix.com/view?url=https://assets.imgix.net/~text?f
                 (click)="onImageClicked()"
               />
             }
-            @else if(useFill()) {
-              <img
-                [ngSrc]="imgixUrl()"
-                [ngSrcset]="srcset()"
-                [sizes]="sizes()"
-                [priority]="hasPriority()"
-                fill
-                [alt]="altText()"
-                (click)="onImageClicked()"
-              />
-            }
             @else {
-              <!-- the whole image at its own proportions: a plain img (NgOptimizedImage needs fixed
-                   width/height attributes, which a '100%' / 'auto' style does not have), with the same
-                   imgix srcset the loader would build -->
-              <img
+              <!-- a plain img with an imgix srcset, whole or (crop) covering a box of a fixed height. Not
+                   NgOptimizedImage: its sizes may not change after the first render, and the measured width
+                   below has to replace the first guess. -->
+              <img #plainImg
                 [src]="imgixUrl()"
                 [srcset]="plainSrcset()"
-                [sizes]="sizes()"
-                [attr.width]="numericWidth() ?? null"
-                [attr.height]="numericHeight() ?? null"
-                [attr.loading]="hasPriority() ? 'eager' : 'lazy'"
-                [attr.fetchpriority]="hasPriority() ? 'high' : null"
+                [sizes]="renderedSizes()"
+                [attr.width]="useFill() ? null : numericWidth() ?? null"
+                [attr.height]="useFill() ? null : numericHeight() ?? null"
+                [attr.loading]="hasPriority ? 'eager' : 'lazy'"
+                [attr.fetchpriority]="hasPriority ? 'high' : null"
                 decoding="async"
                 [alt]="altText()"
-                [ngStyle]="imageStyles()"
+                [ngStyle]="useFill() ? coverStyles : imageStyles()"
                 (click)="onImageClicked()"
               />
             }
@@ -217,6 +210,11 @@ export class Img {
   // Optional sibling images (e.g. the enclosing carousel/slider). When set, zooming this image
   // opens the full-screen viewer with prev/next navigation across the whole gallery.
   public gallery = input<ImageConfig[]>([]);
+  /**
+   * How a fixed height is used: 'auto' (default) crops the image to cover the box, 'contain' shows it whole and
+   * letterboxed inside it (the carousel). Render-only: editors choose only between the whole image and a crop.
+   */
+  public fit = input<'auto' | 'contain'>('auto');
   /** caption texts used when the image has neither an Untertitel nor a Quelle, in order (e.g. section subtitle, title) */
   public captionFallbacks = input<(string | undefined)[]>([]);
 
@@ -227,17 +225,44 @@ export class Img {
   public clicked = output<ImageConfig>();
 
   protected imageContainer = viewChild('.image-container', { read: ElementRef });
+  private readonly plainImg = viewChild<ElementRef<HTMLImageElement>>('plainImg');
+
+  /**
+   * The widest CSS width the plain img has actually been laid out at (never shrinks).
+   * The configured `sizes` is only a guess about the layout — the default
+   * '(max-width: 1240px) 50vw, 300px' claims 300 px on a wide window, while an article image is
+   * drawn ~1000 px wide, so a 2× display got a 640 px rendition upscaled (blurry; resizing the
+   * window below 1240 px switched to 50vw and loaded a sharper one). Once the real width is known
+   * it replaces `sizes`; the browser then fetches the matching srcset candidate and keeps showing
+   * the smaller one it already has until the larger one has loaded.
+   */
+  private readonly measuredWidth = signal<number | undefined>(undefined);
+  protected readonly renderedSizes = computed(() => {
+    const width = this.measuredWidth();
+    return width ? `${width}px` : this.sizes();
+  });
 
   // fields
   // by default, image is 100% of screen width on devices under 768px wide, and 50% on bigger screens
   // alternatively when excluding the menu: calc(100vw - 128px)
   protected url = computed(() => this.image().url ?? '');
-  protected altText = computed(() => this.image().altText ?? 'Image');
-  protected sizes = computed(() => this.imageStyle()?.sizes ?? '(max-width: 768px) 100vw, 50vw');
+  /**
+   * Without an alt text of its own: the section title (the last caption fallback, they come as [subtitle, title]),
+   * then the label, then the file name.
+   */
+  protected altText = computed(() => {
+    const image = this.image();
+    const own = image.altText?.trim();
+    if (own) return own;
+    const title = this.captionFallbacks().filter((text): text is string => !!text?.trim()).at(-1);
+    return title ?? (image.label || decodeURIComponent((image.url ?? '').split('?')[0].split('/').pop() ?? '') || 'Image');
+  });
+  /** the first guess until the rendered width is measured: full width on phones, half on bigger screens */
+  protected sizes = computed(() => '(max-width: 768px) 100vw, 50vw');
   protected isThumbnail = computed(() => this.imageStyle()?.isThumbnail ?? false);
   protected slot = computed(() => this.imageStyle()?.slot ?? 'start');
-  protected fill = computed(() => this.imageStyle()?.fill ?? false);
-  protected hasPriority = computed(() => this.imageStyle()?.hasPriority ?? false);
+  /** the first image of a page's first section loads first (see ImagePriority); claimed once, at creation */
+  protected readonly hasPriority = inject(IMAGE_PRIORITY, { optional: true })?.claim() ?? false;
   protected actionType = computed(() => this.imageStyle()?.action ?? 'none');
   protected actionUrl = computed(() => this.image()?.actionUrl ?? '');
   // absolute http(s) and local files (capacitor://, file:, blob:, data:) are shown as is, never via imgix
@@ -245,7 +270,6 @@ export class Img {
   // thumbnails keep their file-type icon and imgix sizing for http(s) — only local files (capacitor://, file:,
   // blob:, data:) are shown as they are
   protected isLocalImage = computed(() => isDirectImageUrl(this.url()) && !/^https?:/i.test(this.url()));
-  protected srcset = computed(() => this.generateSrcset());
   // title/credit caption, rendered as an overlay element on top of the image
   // the caption (Untertitel): the image's own, else its Quelle, else the section's fallbacks;
   // undefined when it is switched off (captionPosition 'none', the default) or there is no text
@@ -276,12 +300,24 @@ export class Img {
   protected captionTone = computed(() =>
     getCaptionTone(this.captionLuminance.hasValue() ? this.captionLuminance.value() : undefined));
 
-  protected generateSrcset(): string {
-    // ngSrcset must be width descriptors only; IMAGE_LOADER appends &w= to imgixUrl() (the ngSrc).
-    return '320w, 640w, 960w, 1280w, 1920w';
+    constructor() {
+    const destroyRef = inject(DestroyRef);
+    let observer: ResizeObserver | undefined;
+    destroyRef.onDestroy(() => observer?.disconnect());
+    effect(() => {
+      const img = this.plainImg()?.nativeElement;
+      observer?.disconnect();
+      observer = undefined;
+      if (!img || typeof ResizeObserver === 'undefined') return;
+      observer = new ResizeObserver(entries => {
+        const width = Math.ceil(entries[entries.length - 1].contentRect.width);
+        if (width > (this.measuredWidth() ?? 0)) this.measuredWidth.set(width);
+      });
+      observer.observe(img);
+    });
   }
 
-    // using imgix to generate srcset based on width and height
+  // using imgix to generate srcset based on width and height
   protected style = computed(() => {
     return {
       '--size': this.imageStyle()?.width ?? '150px',
@@ -317,18 +353,20 @@ export class Img {
     };
   });
 
-  /** fill = a fixed, cropped box; it needs a real height, so with height 'auto' the whole image is shown instead */
+  /** a real height (not 'auto') means a fixed box the image covers, cropped — unless the host asks for a letterbox */
   protected useFill = computed(() => {
     const h = this.height()?.trim();
-    return this.fill() && !!h && h !== 'auto';
+    return this.fit() !== 'contain' && !!h && h !== 'auto';
   });
+  /** the img in a fixed box: it covers the container, which carries height and frame */
+  protected readonly coverStyles = { position: 'absolute', inset: '0', width: '100%', height: '100%', 'object-fit': 'cover', display: 'block' };
 
   /** the imgix srcset NgOptimizedImage's loader would build, for the plain img */
   protected plainSrcset = computed(() => {
     const url = this.imgixUrl();
     if (!url) return '';
     const separator = url.includes('?') ? '&' : '?';
-    return [320, 640, 960, 1280, 1920].map(w => `${url}${separator}w=${w} ${w}w`).join(', ');
+    return PLAIN_SRCSET_WIDTHS.map(w => `${url}${separator}w=${w} ${w}w`).join(', ');
   });
 
   // fill mode requires the container to have position:relative and an explicit height.
@@ -338,7 +376,7 @@ export class Img {
     if (!this.useFill()) return {};
     // in fill mode the img is absolutely positioned, so the frame goes on the container (clipped)
     const frame = { ...this.frame(), 'overflow': 'hidden', 'box-sizing': 'border-box' };
-    return { 'height': toCssLength(this.height()) ?? '400px', ...frame };
+    return { 'position': 'relative', 'width': '100%', 'height': toCssLength(this.height()) ?? '400px', ...frame };
   });
 
   /** border + corner radius from the image style (applied to the img, or to the container in fill mode) */

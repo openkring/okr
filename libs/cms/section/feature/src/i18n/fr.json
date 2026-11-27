@@ -1113,35 +1113,38 @@
         "label": "Largeur",
         "placeholder": "100%",
         "helper": "La largeur de l’image, p. ex. 100%, 300px ou 50vw. Un nombre seul compte en pixels.",
-        "error": "Saisis une largeur comme 100%, 300px ou auto."
+        "error": "Saisis une largeur comme 100%, 300px ou auto.",
+        "full": "Pleine largeur (100 %)",
+        "half": "Demi-largeur (50 %)",
+        "fixed": "Fixe 300 px"
       },
       "height": {
         "label": "Hauteur",
-        "placeholder": "auto",
-        "helper": "La hauteur de l’image, p. ex. auto, 300px ou 50vh. Un nombre seul compte en pixels.",
+        "placeholder": "300px",
+        "helper": "La hauteur du cadrage, p. ex. 300px ou 50vh. L'image la remplit et est recadrée pour cela. Un nombre seul compte en pixels.",
         "error": "Saisis une hauteur comme auto, 300px ou 50vh."
       },
-      "sizes": {
-        "label": "Tailles d'image",
-        "placeholder": "(max-width: 768px) 100vw, 50vw",
-        "helper": "L'attribut HTML sizes (valeurs séparées par des virgules) définit les résolutions d'image pour les images responsives.",
-        "error": "Les tailles doivent être des mots séparés par des virgules."
+      "display": {
+        "label": "Affichage",
+        "helper": "L'image entière dans ses propres proportions, ou un cadrage de hauteur fixe que l'image remplit.",
+        "whole": "Image entière",
+        "crop": "Cadrage de hauteur fixe"
       },
       "border": {
         "label": "Bordure",
         "placeholder": "1px solid",
-        "helper": "Le cadre autour de l’image : épaisseur, type de trait et éventuellement couleur, p. ex. 1px solid ou 2px solid #ccc. Laisse vide pour aucun cadre."
+        "helper": "Le cadre autour de l’image : épaisseur, type de trait et éventuellement couleur, p. ex. 1px solid ou 2px solid #ccc. Laisse vide pour aucun cadre.",
+        "none": "Pas de bordure",
+        "thin": "Fine (1 px)",
+        "medium": "Moyenne (2 px)"
       },
       "borderRadius": {
         "label": "Rayon des coins",
         "placeholder": "4px",
-        "helper": "L’arrondi des coins, p. ex. 4px. 0 donne des coins carrés."
-      },
-      "zoom": {
-        "label": "Facteur de zoom",
-        "placeholder": "n",
-        "helper": "Le facteur de zoom est utilisé pour agrandir ou réduire l'affichage, par défaut = 2x.",
-        "error": "Le facteur de zoom doit être un nombre entier composé uniquement de chiffres."
+        "helper": "L’arrondi des coins, p. ex. 4px. 0 donne des coins carrés.",
+        "square": "Angles droits",
+        "small": "Légèrement arrondi (4 px)",
+        "medium": "Arrondi (8 px)"
       },
       "slot": {
         "label": "Slot",
@@ -1155,14 +1158,6 @@
       "isThumbnail": {
         "label": "Vignette",
         "helper": "L'image est affichée comme vignette."
-      },
-      "fill": {
-        "label": "Recadrer",
-        "helper": "L’image remplit un cadre fixe de la hauteur choisie et est recadrée pour cela, p. ex. pour des images de même hauteur. Il faut une hauteur comme 300px ; avec auto, l’image entière est affichée. Désactivé : l’image entière dans ses propres proportions."
-      },
-      "hasPriority": {
-        "label": "Priorité",
-        "helper": "Charge l’image avant toutes les autres. Active-le seulement pour la première image visible tout de suite, sinon la page devient plus lente."
       },
       "captionPosition": {
         "label": "Position de la légende",
@@ -1198,7 +1193,11 @@
         "image": "Image",
         "caption": "Légende",
         "action": "Action"
-      }
+      },
+      "custom": "Valeur personnalisée"
+    },
+    "replace": {
+      "label": "Remplacer l'image"
     }
   },
   "images": {

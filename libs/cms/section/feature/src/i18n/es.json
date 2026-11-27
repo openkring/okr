@@ -1113,35 +1113,38 @@
         "label": "Anchura",
         "placeholder": "100%",
         "helper": "El ancho de la imagen, p. ej. 100%, 300px o 50vw. Un número solo cuenta como píxeles.",
-        "error": "Introduce un ancho como 100%, 300px o auto."
+        "error": "Introduce un ancho como 100%, 300px o auto.",
+        "full": "Ancho completo (100 %)",
+        "half": "Medio ancho (50 %)",
+        "fixed": "Fijo 300 px"
       },
       "height": {
         "label": "Altura",
-        "placeholder": "auto",
-        "helper": "La altura de la imagen, p. ej. auto, 300px o 50vh. Un número solo cuenta como píxeles.",
+        "placeholder": "300px",
+        "helper": "La altura del recorte, p. ej. 300px o 50vh. La imagen la rellena y se recorta para ello. Un número solo cuenta como píxeles.",
         "error": "Introduce una altura como auto, 300px o 50vh."
       },
-      "sizes": {
-        "label": "Tamaños de imagen",
-        "placeholder": "(max-width: 768px) 100vw, 50vw",
-        "helper": "El atributo HTML sizes (valores separados por comas) define las resoluciones de imagen para imágenes responsivas.",
-        "error": "Los tamaños deben ser palabras separadas por comas."
+      "display": {
+        "label": "Visualización",
+        "helper": "La imagen entera en sus propias proporciones, o un recorte de altura fija que la imagen rellena.",
+        "whole": "Imagen entera",
+        "crop": "Recorte de altura fija"
       },
       "border": {
         "label": "Borde",
         "placeholder": "1px solid",
-        "helper": "El marco alrededor de la imagen: grosor, tipo de línea y opcionalmente color, p. ej. 1px solid o 2px solid #ccc. Déjalo vacío para no tener marco."
+        "helper": "El marco alrededor de la imagen: grosor, tipo de línea y opcionalmente color, p. ej. 1px solid o 2px solid #ccc. Déjalo vacío para no tener marco.",
+        "none": "Sin borde",
+        "thin": "Fino (1 px)",
+        "medium": "Medio (2 px)"
       },
       "borderRadius": {
         "label": "Radio de las esquinas",
         "placeholder": "4px",
-        "helper": "Cuánto se redondean las esquinas, p. ej. 4px. 0 da esquinas rectas."
-      },
-      "zoom": {
-        "label": "Factor de zoom",
-        "placeholder": "n",
-        "helper": "El factor de zoom se utiliza para ampliar o reducir la visualización, por defecto = 2x.",
-        "error": "El factor de zoom debe ser un número entero compuesto únicamente de cifras."
+        "helper": "Cuánto se redondean las esquinas, p. ej. 4px. 0 da esquinas rectas.",
+        "square": "Esquinas rectas",
+        "small": "Ligeramente redondeado (4 px)",
+        "medium": "Redondeado (8 px)"
       },
       "slot": {
         "label": "Slot",
@@ -1155,14 +1158,6 @@
       "isThumbnail": {
         "label": "Miniatura",
         "helper": "La imagen se muestra como miniatura."
-      },
-      "fill": {
-        "label": "Recortar",
-        "helper": "La imagen llena un marco fijo de la altura indicada y se recorta para ello, p. ej. para imágenes de la misma altura. Necesita una altura como 300px; con auto se muestra la imagen entera. Desactivado: la imagen entera en sus propias proporciones."
-      },
-      "hasPriority": {
-        "label": "Prioridad",
-        "helper": "Carga la imagen antes que todas las demás. Actívalo solo para la primera imagen visible de inmediato; si no, la página se vuelve más lenta."
       },
       "captionPosition": {
         "label": "Posición del pie de foto",
@@ -1198,7 +1193,11 @@
         "image": "Imagen",
         "caption": "Pie de foto",
         "action": "Acción"
-      }
+      },
+      "custom": "Valor propio"
+    },
+    "replace": {
+      "label": "Reemplazar imagen"
     }
   },
   "images": {

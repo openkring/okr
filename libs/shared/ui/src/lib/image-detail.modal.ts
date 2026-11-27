@@ -2,11 +2,16 @@ import { Component, OnInit, computed, inject, input, signal } from '@angular/cor
 import { IonCol, IonContent, IonGrid, IonRow, IonSpinner, ModalController } from '@ionic/angular';
 import { getDownloadURL, getMetadata, ref } from 'firebase/storage';
 
-import { ENV, STORAGE } from '@okr/shared-config';
+import { firstValueFrom } from 'rxjs';
+
+import { ENV, STORAGE, UPLOADED_BY_METADATA_KEY } from '@okr/shared-config';
+import { FirestoreService } from '@okr/shared-data-access';
+import { UserCollection, UserModel } from '@okr/shared-models';
 import { fileSizeUnit, toStoragePath } from '@okr/shared-util-core';
 import { I18nService } from '@okr/shared-i18n';
 import { dismissOverlay } from '@okr/shared-util-angular';
 
+import { AvatarUser } from './avatar-user';
 import { ButtonCopy } from './button-copy';
 import { Header } from './header';
 
@@ -15,6 +20,8 @@ export interface ImageDetailRow {
   value: string;
   /** shows a copy button after the value */
   copyable?: boolean;
+  /** shows this user's avatar and name instead of the value (the uploader) */
+  user?: UserModel;
 }
 
 /**
@@ -29,7 +36,7 @@ export interface ImageDetailRow {
   imports: [
     Header, IonSpinner,
     IonContent, IonGrid, IonRow, IonCol,
-    ButtonCopy,
+    ButtonCopy, AvatarUser,
   ],
   styles: [`
     :host { border: 1px solid var(--ion-color-medium); border-radius: inherit; }
@@ -39,6 +46,9 @@ export interface ImageDetailRow {
     .value { word-break: break-all; display: flex; align-items: flex-start; gap: 0.5rem; }
     .value span { flex: 1; }
     .value okr-button-copy { flex: none; cursor: pointer; }
+    .uploader { display: flex; align-items: center; gap: 0.5rem; }
+    .uploader okr-avatar-user { display: flex; align-items: center; gap: 0.5rem; }
+    .uploader okr-avatar-user ::ng-deep ion-avatar { width: 32px; height: 32px; padding: 0; margin: 0; }
     .section-title { margin: 1.25rem 0 0.5rem; font-weight: 600; color: var(--ion-color-medium); }
     .hint { color: var(--ion-color-medium); font-style: italic; }
   `],
@@ -47,7 +57,7 @@ export interface ImageDetailRow {
     <ion-content class="ion-padding">
       <div class="preview">
         @if (downloadUrl(); as url) {
-          <img [src]="url" [alt]="fileName()" />
+          <img [src]="url" [alt]="fileName()" (load)="onPreviewLoad($event)" />
         } @else if (loading()) {
           <ion-spinner name="dots" />
         } @else {
@@ -59,12 +69,18 @@ export interface ImageDetailRow {
         @for (row of rows(); track row.label) {
           <ion-row>
             <ion-col size="4"><strong>{{ row.label }}</strong></ion-col>
-            <ion-col size="8" class="value">
-              <span>{{ row.value || '—' }}</span>
-              @if (row.copyable && row.value) {
-                <okr-button-copy [value]="row.value" [i18n]="{}" />
-              }
-            </ion-col>
+            @if (row.user) {
+              <ion-col size="8" class="uploader">
+                <okr-avatar-user [currentUser]="row.user" [showName]="true" />
+              </ion-col>
+            } @else {
+              <ion-col size="8" class="value">
+                <span>{{ row.value || '—' }}</span>
+                @if (row.copyable && row.value) {
+                  <okr-button-copy [value]="row.value" [i18n]="{}" />
+                }
+              </ion-col>
+            }
           </ion-row>
         }
       </ion-grid>
@@ -90,6 +106,7 @@ export interface ImageDetailRow {
 export class ImageDetailModal implements OnInit {
   private readonly modalController = inject(ModalController);
   private readonly storage = inject(STORAGE);
+  private readonly firestoreService = inject(FirestoreService);
   private readonly imgixBaseUrl = inject(ENV).services.imgixBaseUrl;
 
   /** Full storage path of the image, e.g. tenant/<tid>/section/<key>/file.jpg */
@@ -104,6 +121,7 @@ export class ImageDetailModal implements OnInit {
     title: '@shared/ui.image.title', close: '@shared/ui.close', name: '@shared/ui.image.name',
     path: '@shared/ui.image.path', mime: '@shared/ui.image.mime', size: '@shared/ui.image.size',
     created: '@shared/ui.image.created', modified: '@shared/ui.image.modified',
+    uploadedBy: '@shared/ui.image.uploadedBy', resolution: '@shared/ui.image.resolution',
     md5: '@shared/ui.image.md5', downloadUrl: '@shared/ui.image.downloadUrl',
     noExif: '@shared/ui.image.noExif', exifError: '@shared/ui.image.exifError',
     loadError: '@shared/ui.image.loadError',
@@ -116,7 +134,17 @@ export class ImageDetailModal implements OnInit {
   protected readonly downloadUrl = signal<string | undefined>(undefined);
   /** true until the storage lookup has finished — success or failure; never leaves a spinner behind */
   protected readonly loading = signal(true);
-  protected readonly rows = signal<ImageDetailRow[]>([]);
+  /** the storage rows; the resolution joins them once the preview (the original) has loaded */
+  private readonly storageRows = signal<ImageDetailRow[]>([]);
+  private readonly resolution = signal('');
+  protected readonly rows = computed<ImageDetailRow[]>(() => {
+    const rows = this.storageRows();
+    const resolution = this.resolution();
+    if (!resolution) return rows;
+    const at = rows.findIndex((row) => row.label === this.i18n.size());
+    const row = { label: this.i18n.resolution(), value: resolution };
+    return at < 0 ? [...rows, row] : [...rows.slice(0, at + 1), row, ...rows.slice(at + 1)];
+  });
   protected readonly exifLoading = signal(true);
   protected readonly exifRows = signal<ImageDetailRow[]>([]);
   /** Empty until an EXIF read actually fails; the template falls back to the generic no-EXIF hint. */
@@ -138,9 +166,10 @@ export class ImageDetailModal implements OnInit {
       if (!storagePath) throw new Error(`ImageDetailModal: not a storage path: ${fullPath}`);
       const sref = ref(this.storage, storagePath);
       const [metadata, downloadUrl] = await Promise.all([getMetadata(sref), getDownloadURL(sref)]);
+      const uploader = await this.readUploader(metadata.customMetadata?.[UPLOADED_BY_METADATA_KEY]);
       url = downloadUrl;
       this.downloadUrl.set(downloadUrl);
-      this.rows.set([
+      this.storageRows.set([
         ...this.extraRows(),
         { label: this.i18n.name(),        value: this.fileName(), copyable: true },
         { label: this.i18n.path(),        value: storagePath, copyable: true },
@@ -148,6 +177,7 @@ export class ImageDetailModal implements OnInit {
         { label: this.i18n.size(),        value: fileSizeUnit(metadata.size) },
         { label: this.i18n.created(),     value: this.formatIso(metadata.timeCreated) },
         { label: this.i18n.modified(),    value: this.formatIso(metadata.updated) },
+        ...(uploader ? [{ label: this.i18n.uploadedBy(), value: '', user: uploader }] : []),
         { label: this.i18n.md5(),         value: metadata.md5Hash ?? '', copyable: true },
         { label: this.i18n.downloadUrl(), value: downloadUrl, copyable: true },
       ]);
@@ -158,7 +188,7 @@ export class ImageDetailModal implements OnInit {
         url = fullPath;
         this.downloadUrl.set(fullPath);
       }
-      this.rows.set([...this.extraRows(), { label: this.i18n.path(), value: fullPath, copyable: true }]);
+      this.storageRows.set([...this.extraRows(), { label: this.i18n.path(), value: fullPath, copyable: true }]);
     } finally {
       this.loading.set(false);
     }
@@ -177,6 +207,25 @@ export class ImageDetailModal implements OnInit {
     } finally {
       this.exifLoading.set(false);
     }
+  }
+
+  /**
+   * The user who uploaded the file. Only uploads since 2026-11-27 carry the uid; an older file, a
+   * deleted account or a users doc this caller may not read simply shows no uploader row.
+   */
+  private async readUploader(uid: string | undefined): Promise<UserModel | undefined> {
+    if (!uid) return undefined;
+    try {
+      return await firstValueFrom(this.firestoreService.readModel<UserModel>(UserCollection, uid));
+    } catch {
+      return undefined;
+    }
+  }
+
+  /** the preview shows the original, so its natural size is the resolution of the file */
+  protected onPreviewLoad(event: Event): void {
+    const img = event.target as HTMLImageElement;
+    if (img.naturalWidth > 0) this.resolution.set(`${img.naturalWidth} × ${img.naturalHeight} px`);
   }
 
   private toExifRows(exif: Record<string, unknown>): ImageDetailRow[] {

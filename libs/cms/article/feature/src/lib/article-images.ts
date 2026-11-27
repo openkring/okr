@@ -111,13 +111,12 @@ export class ArticleImages {
 
   protected tiles = computed(() => imageLayoutTiles(this.layout(), this.images().length).tiles);
 
-  // every image covers its cell: fill mode with a 100 % high box (the cell), so the image is cropped, not
+  // every image covers its cell: a 100 % high box (the cell), so the image is cropped, not
   // stretched; border, radius, caption and action come from the article's style
   protected tileStyle = computed((): ImageStyle => ({
     ...this.imageStyle(),
     width: '100%',
     height: '100%',
-    fill: true,
   }));
 
   // stacked: the whole image at its natural aspect over the full width; caption and border from the article's style
@@ -125,7 +124,6 @@ export class ArticleImages {
     ...this.imageStyle(),
     width: '100%',
     height: 'auto',
-    fill: false,
   }));
 
   // side-by-side: the whole image at its natural aspect, the caption always below and centred
@@ -133,7 +131,6 @@ export class ArticleImages {
     ...this.imageStyle(),
     width: '100%',
     height: 'auto',
-    fill: false,
     captionPosition: 'bottom',
     captionAlign: 'center',
   }));

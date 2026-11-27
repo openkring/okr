@@ -1,4 +1,4 @@
-import { ImageActionType, SLIDESHOW_EFFECTS, articleBlocksOf, blockImages, type ArticleBlock, type ArticleColumn, type ArticleSection, type ImageConfig, type MailBlock, type MailBlockType, type SectionModel } from '@okr/shared-models';
+import { SLIDESHOW_EFFECTS, articleBlocksOf, blockImages, type ArticleBlock, type ArticleColumn, type ArticleSection, type ImageConfig, type MailBlock, type MailBlockType, type SectionModel } from '@okr/shared-models';
 import { resolveImageStyle, sanitizeFileName, suffixFileName } from '@okr/shared-util-core';
 
 import { hasImageUrl, isObject, type Loose } from './article-block.util';
@@ -156,7 +156,7 @@ export function resizeColumn(sizes: number[], index: number, size: number): numb
 /** The fields of the panel one types into. Everything else is chosen: each choice is a step of its own. */
 const TYPED_FIELDS: readonly string[] = [
   'title', 'subTitle', 'intro', 'name', 'notes', 'background', 'label', 'url', 'altText', 'overlay', 'actionUrl', 'credit',
-  'width', 'height', 'sizes', 'border', 'borderRadius', 'imgIxParams', 'captionSize', 'interval', 'duration', 'zoomFactor', 'maxEvents',
+  'width', 'height', 'border', 'borderRadius', 'imgIxParams', 'captionSize', 'interval', 'duration', 'maxEvents',
 ];
 
 function leaves(value: unknown, path: string, out: Map<string, unknown>): Map<string, unknown> {
@@ -182,8 +182,8 @@ export function typingPath(before: unknown, after: unknown, profile: EditorProfi
 // ------------------------------------------------------- errors and translations -------------------------------------------------------
 
 /**
- * The error names that the panel of this block shows at a field **as it is drawn now** (see `restErrors`): okr-image-style draws the zoom
- * factor only for that action and the slot only for a thumbnail, the look card needs a picture, the times of a slideshow need a
+ * The error names that the panel of this block shows at a field **as it is drawn now** (see `restErrors`): okr-image-style draws the slot
+ * only for a thumbnail, the look card needs a picture, the times of a slideshow need a
  * running one. A picture of a mail has no look card, only its width. Names as `blockErrors` and `galleryErrors` give them.
  */
 export function shownBlockFields(block: MailBlock, profile: EditorProfile = ARTICLE_PROFILE, inColumn = false): string[] {
@@ -217,8 +217,7 @@ export function isEventsShown(profile: EditorProfile, inColumn: boolean): boolea
 
 function shownStyleFields(stored: unknown): string[] {
   const style = resolveImageStyle(isObject(stored) ? stored : undefined);
-  const fields = ['action', ...ARTICLE_IMAGES_SEGMENT_FIELDS.styles.filter((field) => field !== 'slot' || style.isThumbnail),
-    ...(style.action === ImageActionType.Zoom ? ['zoomFactor'] : [])];
+  const fields = ['action', ...ARTICLE_IMAGES_SEGMENT_FIELDS.styles.filter((field) => field !== 'slot' || style.isThumbnail)];
   return fields.flatMap((field) => [field, `imageStyle.${field}`]);
 }
 

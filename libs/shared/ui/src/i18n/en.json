@@ -136,11 +136,13 @@
     "size": "Size",
     "created": "Created",
     "modified": "Modified",
+    "uploadedBy": "Uploaded by",
     "md5": "MD5 (Base64)",
     "downloadUrl": "Download URL",
     "noExif": "No EXIF data available.",
     "exifError": "EXIF data could not be read.",
-    "loadError": "The image could not be loaded."
+    "loadError": "The image could not be loaded.",
+    "resolution": "Resolution"
   },
   "close": "Close",
   "withTime": "with time",

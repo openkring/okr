@@ -37,25 +37,28 @@ export interface ImageConfig {
 export interface ImageStyle {
     imgIxParams: string; // extra imgix query parameters (e.g. 'sat=-100&blur=20'), appended after the generated ones
     width: string; // css length of the image width, e.g. 100%, 300px, 50vw, auto; default is 100%
-    height: string; // css length of the image height, e.g. auto, 300px, 50vh; a plain number counts as px; default is auto
-    sizes: string; // the sizes attribute for the img tag, default is '(max-width: 1240px) 50vw, 300px'
+    /**
+     * 'auto' (default): the whole image at its own proportions. A css length (300px, 50vh; a plain number counts as px):
+     * a box of that height which the image covers, cropped (2026-11-27: replaced the separate `fill` flag).
+     */
+    height: string;
     border: string; // css border around the image, e.g. '1px solid' or '2px solid #ccc'; default is '1px solid'
     borderRadius: string; // css corner radius, e.g. '4px'; a plain number counts as px; default is '4px'
     isThumbnail: boolean; // if true, images are displayed as a thumbnail, default: false
     slot: Slot; // default is none
-    fill: boolean; // if true (and height is a real size), the image covers a fixed box of that height and is cropped; otherwise the whole image is shown at its own proportions. default is false
-    hasPriority: boolean; // if true, the image is loaded first (only for the first, immediately visible image), default is false
-    action: ImageActionType; // the action to perform when clicking on the image, default is ImageAction.None
-    zoomFactor: number; // the zoom factor when using the zoom action, default is 2
-    /** @deprecated no longer read (2026-11-09): the caption follows a fixed rule, see buildImageCaption */
-    showTitle?: boolean;
-    /** @deprecated no longer read (2026-11-09): the caption follows a fixed rule, see buildImageCaption */
-    showSource?: boolean;
+    action: ImageActionType; // the action to perform when clicking on the image, default is ImageAction.OpenSlider
     captionPosition?: CaptionPosition; // where the caption is shown, default: 'none'
     captionSize?: string; // css font-size of the caption, default: '0.8rem'
     captionStyle?: CaptionStyle; // font style of the caption, default: 'italic'
     captionAlign?: CaptionAlign; // horizontal alignment of the caption, default: 'left'
 }
+
+/**
+ * Fields an ImageStyle used to have and no code reads any more (removed 2026-11-27): `sizes` (the rendered width is measured),
+ * `fill` (a fixed height now means a cropped box), `hasPriority` (the first image of a page's first section loads first),
+ * `zoomFactor` (never read), `showTitle` / `showSource` (unread since 2026-11-09). A backfill deletes them from stored styles.
+ */
+export const REMOVED_IMAGE_STYLE_FIELDS = ['sizes', 'fill', 'hasPriority', 'zoomFactor', 'showTitle', 'showSource'] as const;
 
 export interface BackgroundStyle {
   'background-image': string;

@@ -54,6 +54,7 @@ export * from './lib/video-editor-i18n';
 export * from './lib/section-i18n';
 export * from './lib/image-slots';
 export * from './lib/image.validations';
+export * from './lib/image-style-presets.util';
 export * from './lib/image-style-defaults.util';
 export * from './lib/image-edit.validations';
 export * from './lib/orgchart-cycle.util';

@@ -1,6 +1,7 @@
 import { activeFirebaseApp } from './firebase-app';
 import { Inject, InjectionToken } from "@angular/core";
 import { OkrEnvironment, ENV } from "./env";
+import { getAuth } from "firebase/auth";
 import { connectStorageEmulator, FirebaseStorage, getStorage, ref, uploadBytesResumable, UploadTask } from "firebase/storage";
 
 export const STORAGE_EMULATOR_PORT = 9199;
@@ -23,7 +24,21 @@ export const PRIVATE_BUCKET_URL = BUCKET_URLS.private;
 export function uploadToFirebaseStorage(path: string, file: File, bucket: StorageBucket = 'default'): UploadTask {
   const _storage = getBkStorage(bucket);
   const _ref = ref(_storage, path);
-  return uploadBytesResumable(_ref, file);
+  const uploadedBy = currentAuthUid();
+  // who uploaded the file (Firebase Auth uid = users/{uid}), shown in the image detail view;
+  // the content type is still taken from the file when the metadata does not name one
+  return uploadBytesResumable(_ref, file, uploadedBy ? { customMetadata: { [UPLOADED_BY_METADATA_KEY]: uploadedBy } } : undefined);
+}
+
+/** Storage custom metadata key holding the Firebase Auth uid of the uploader (set since 2026-11-27). */
+export const UPLOADED_BY_METADATA_KEY = 'uploadedBy';
+
+function currentAuthUid(): string | undefined {
+  try {
+    return getAuth(activeFirebaseApp()).currentUser?.uid;
+  } catch {
+    return undefined;
+  }
 }
 
 // all apps are using the same storage bucket from bkaiser-org.appspot.com

@@ -137,9 +137,9 @@ describe('articleSectionValidations with blocks', () => {
 
 describe('articleSectionValidations image style names', () => {
   it('keeps the flat field names for the article image style', () => {
-    const model = { ...ARTICLE_SECTION_SHAPE, properties: { ...ARTICLE_SECTION_SHAPE.properties, imageStyle: { zoomFactor: 99 } } } as unknown as ArticleSection;
+    const model = { ...ARTICLE_SECTION_SHAPE, properties: { ...ARTICLE_SECTION_SHAPE.properties, imageStyle: { border: 99 } } } as unknown as ArticleSection;
     const r = articleSectionValidations(model);
-    expect(r.hasErrors('zoomFactor')).toBe(true);
-    expect(r.hasErrors('imageStyle.zoomFactor')).toBe(false);
+    expect(r.hasErrors('border')).toBe(true);
+    expect(r.hasErrors('imageStyle.border')).toBe(false);
   });
 });

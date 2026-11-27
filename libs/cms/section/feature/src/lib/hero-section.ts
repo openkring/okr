@@ -64,7 +64,7 @@ import { Img, Spinner } from '@okr/shared-ui';
             @if (hasLogo()) {
               <ion-row>
                 <ion-col>
-                  <okr-img class="logo" [image]="logoImage()" [imageStyle]="logoStyle()" />
+                  <okr-img class="logo" [image]="logoImage()" [imageStyle]="logoStyle()" fit="contain" />
                 </ion-col>
               </ion-row>
             }
@@ -116,9 +116,7 @@ export class HeroSectionComponent {
 
   // derived values
   protected heroImage = computed(() => this.section()?.properties.hero ?? IMAGE_CONFIG_SHAPE);
-  // tbd on heroImage: hasPriority=true, ImageAction.None, isThumbnail=false, fill=true, altText='hero image'
   protected logoImage = computed(() => this.section()?.properties.logo ?? IMAGE_CONFIG_SHAPE);
-  // tbd on logoImage: hasPriority=false, ImageAction.None, isThumbnail=false, fill=true, altText='logo image'
   /** the stored image style: its imgix parameters go to the cover, width, border and radius to the logo */
   protected imageStyle = computed(() => this.section()?.properties.imageStyle ?? IMAGE_STYLE_SHAPE);
   protected logoStyle = computed(() => heroLogoStyle(this.imageStyle()));

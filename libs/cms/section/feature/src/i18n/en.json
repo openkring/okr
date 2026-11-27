@@ -1113,35 +1113,38 @@
         "label": "Width",
         "placeholder": "100%",
         "helper": "The width of the image, e.g. 100%, 300px or 50vw. A plain number counts as pixels.",
-        "error": "Enter a width like 100%, 300px or auto."
+        "error": "Enter a width like 100%, 300px or auto.",
+        "full": "Full width (100 %)",
+        "half": "Half width (50 %)",
+        "fixed": "Fixed 300 px"
       },
       "height": {
         "label": "Height",
-        "placeholder": "auto",
-        "helper": "The height of the image, e.g. auto, 300px or 50vh. A plain number counts as pixels.",
+        "placeholder": "300px",
+        "helper": "The height of the crop, e.g. 300px or 50vh. The image fills it and is cropped to fit. A plain number counts as pixels.",
         "error": "Enter a height like auto, 300px or 50vh."
       },
-      "sizes": {
-        "label": "Image sizes",
-        "placeholder": "(max-width: 768px) 100vw, 50vw",
-        "helper": "HTML sizes attribute (comma-separated values) defines the image resolutions for responsive images.",
-        "error": "The sizes must be comma-separated words."
+      "display": {
+        "label": "Display",
+        "helper": "The whole image at its own proportions, or a crop of a fixed height that the image fills.",
+        "whole": "Whole image",
+        "crop": "Crop with a fixed height"
       },
       "border": {
         "label": "Border",
         "placeholder": "1px solid",
-        "helper": "The frame around the image: thickness, line style and optionally a colour, e.g. 1px solid or 2px solid #ccc. Leave empty for no frame."
+        "helper": "The frame around the image: thickness, line style and optionally a colour, e.g. 1px solid or 2px solid #ccc. Leave empty for no frame.",
+        "none": "No border",
+        "thin": "Thin (1 px)",
+        "medium": "Medium (2 px)"
       },
       "borderRadius": {
         "label": "Corner radius",
         "placeholder": "4px",
-        "helper": "How rounded the corners are, e.g. 4px. 0 gives square corners."
-      },
-      "zoom": {
-        "label": "Zoom factor",
-        "placeholder": "n",
-        "helper": "The zoom factor is used to enlarge or reduce the display, default = 2x.",
-        "error": "The zoom factor must be a whole number of digits."
+        "helper": "How rounded the corners are, e.g. 4px. 0 gives square corners.",
+        "square": "Square",
+        "small": "Slightly rounded (4 px)",
+        "medium": "Rounded (8 px)"
       },
       "slot": {
         "label": "Slot",
@@ -1155,14 +1158,6 @@
       "isThumbnail": {
         "label": "Thumbnail",
         "helper": "The image is displayed as a thumbnail."
-      },
-      "fill": {
-        "label": "Crop to fit",
-        "helper": "The image fills a fixed frame of the set height and is cropped to do so, e.g. for images of equal height. Needs a height like 300px; with auto the whole image is shown. Off: the whole image at its own proportions."
-      },
-      "hasPriority": {
-        "label": "Priority",
-        "helper": "Loads the image before all others. Only turn this on for the first image that is visible right away, otherwise the page gets slower."
       },
       "captionPosition": {
         "label": "Caption position",
@@ -1198,7 +1193,11 @@
         "image": "Image",
         "caption": "Caption",
         "action": "Action"
-      }
+      },
+      "custom": "Custom value"
+    },
+    "replace": {
+      "label": "Replace image"
     }
   },
   "images": {

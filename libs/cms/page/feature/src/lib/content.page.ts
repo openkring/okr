@@ -203,10 +203,10 @@ import { scrollToFragment } from './fragment-scroll';
                   >
                     @if(editMode()) {
                       <div class="section-wrapper editable state-{{ section.state }}">
-                        <okr-section-dispatcher [section]="section" [currentUser]="store.currentUser()" [editMode]="editMode()" [pageLocationKey]="page()?.locationKey ?? ''" />
+                        <okr-section-dispatcher [isFirst]="$first" [section]="section" [currentUser]="store.currentUser()" [editMode]="editMode()" [pageLocationKey]="page()?.locationKey ?? ''" />
                       </div>  
                     } @else {
-                      <okr-section-dispatcher [section]="section" [currentUser]="store.currentUser()" [editMode]="editMode()" [pageLocationKey]="page()?.locationKey ?? ''" />
+                      <okr-section-dispatcher [isFirst]="$first" [section]="section" [currentUser]="store.currentUser()" [editMode]="editMode()" [pageLocationKey]="page()?.locationKey ?? ''" />
                     }
                   </ion-col>
                 }
@@ -223,7 +223,7 @@ import { scrollToFragment } from './fragment-scroll';
           <div class="print-content" #printContent>
             @for(section of visibleSections(); track section.okey) {
               <div [id]="section.okey" class="section-cell" [style]="widthStyle(section)">
-                <okr-section-dispatcher [section]="section" [currentUser]="store.currentUser()" [editMode]="editMode()" [pageLocationKey]="page()?.locationKey ?? ''" />
+                <okr-section-dispatcher [isFirst]="$first" [section]="section" [currentUser]="store.currentUser()" [editMode]="editMode()" [pageLocationKey]="page()?.locationKey ?? ''" />
               </div>
             }
           </div>

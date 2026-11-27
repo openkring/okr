@@ -2,7 +2,7 @@ import { Component, computed, inject, input, viewChild } from '@angular/core';
 import { IonItem, IonLabel } from '@ionic/angular';
 
 import { RoleName, SectionModel, UserModel } from '@okr/shared-models';
-import { ButtonCopyI18n, DeferError, Spinner } from '@okr/shared-ui';
+import { ButtonCopyI18n, DeferError, IMAGE_PRIORITY, ImagePriority, Spinner } from '@okr/shared-ui';
 import { hasRole } from '@okr/shared-util-core';
 
 import { AccordionSectionComponent } from './accordion-section';
@@ -59,7 +59,11 @@ import { SectionStore } from './section.store';
 @Component({
   selector: 'okr-section-dispatcher',
   standalone: true,
-  providers: [SectionStore],
+  providers: [
+    SectionStore,
+    // the first image of the page's first section loads first (see ImagePriority)
+    { provide: IMAGE_PRIORITY, useFactory: () => { const dispatcher = inject(SectionDispatcher); return new ImagePriority(() => dispatcher.isFirst()); } },
+  ],
   imports: [
     // Eagerly loaded — lightweight sections, needed immediately
     AccordionSectionComponent,
@@ -297,6 +301,8 @@ export class SectionDispatcher {
    * that cannot host a weather section need not pass anything.
    */
   public pageLocationKey = input('');
+  /** true for the first section of a page: its first image is loaded before all others */
+  public isFirst = input(false);
 
   /**
    * The rendered album section, if this dispatcher renders one. Exposed so the hosting page can

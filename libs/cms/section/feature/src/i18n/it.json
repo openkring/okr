@@ -1113,35 +1113,38 @@
         "label": "Larghezza",
         "placeholder": "100%",
         "helper": "La larghezza dell’immagine, p. es. 100%, 300px o 50vw. Un numero da solo vale come pixel.",
-        "error": "Inserisci una larghezza come 100%, 300px o auto."
+        "error": "Inserisci una larghezza come 100%, 300px o auto.",
+        "full": "Larghezza piena (100 %)",
+        "half": "Metà larghezza (50 %)",
+        "fixed": "Fissa 300 px"
       },
       "height": {
         "label": "Altezza",
-        "placeholder": "auto",
-        "helper": "L’altezza dell’immagine, p. es. auto, 300px o 50vh. Un numero da solo vale come pixel.",
+        "placeholder": "300px",
+        "helper": "L'altezza del ritaglio, p. es. 300px o 50vh. L'immagine la riempie e viene ritagliata. Un numero semplice vale come pixel.",
         "error": "Inserisci un’altezza come auto, 300px o 50vh."
       },
-      "sizes": {
-        "label": "Dimensioni immagine",
-        "placeholder": "(max-width: 768px) 100vw, 50vw",
-        "helper": "L'attributo HTML sizes (valori separati da virgole) definisce le risoluzioni dell'immagine per immagini responsive.",
-        "error": "Le dimensioni devono essere parole separate da virgole."
+      "display": {
+        "label": "Visualizzazione",
+        "helper": "L'immagine intera nelle sue proporzioni, oppure un ritaglio ad altezza fissa che l'immagine riempie.",
+        "whole": "Immagine intera",
+        "crop": "Ritaglio ad altezza fissa"
       },
       "border": {
         "label": "Bordo",
         "placeholder": "1px solid",
-        "helper": "La cornice attorno all’immagine: spessore, tipo di linea ed eventualmente colore, p. es. 1px solid o 2px solid #ccc. Lascia vuoto per nessuna cornice."
+        "helper": "La cornice attorno all’immagine: spessore, tipo di linea ed eventualmente colore, p. es. 1px solid o 2px solid #ccc. Lascia vuoto per nessuna cornice.",
+        "none": "Nessun bordo",
+        "thin": "Sottile (1 px)",
+        "medium": "Medio (2 px)"
       },
       "borderRadius": {
         "label": "Raggio degli angoli",
         "placeholder": "4px",
-        "helper": "Quanto sono arrotondati gli angoli, p. es. 4px. 0 dà angoli squadrati."
-      },
-      "zoom": {
-        "label": "Fattore di zoom",
-        "placeholder": "n",
-        "helper": "Il fattore di zoom viene utilizzato per ingrandire o ridurre la visualizzazione, predefinito = 2x.",
-        "error": "Il fattore di zoom deve essere un numero intero composto solo da cifre."
+        "helper": "Quanto sono arrotondati gli angoli, p. es. 4px. 0 dà angoli squadrati.",
+        "square": "Angoli retti",
+        "small": "Leggermente arrotondato (4 px)",
+        "medium": "Arrotondato (8 px)"
       },
       "slot": {
         "label": "Slot",
@@ -1155,14 +1158,6 @@
       "isThumbnail": {
         "label": "Anteprima",
         "helper": "L'immagine viene visualizzata come anteprima."
-      },
-      "fill": {
-        "label": "Ritaglia",
-        "helper": "L’immagine riempie una cornice fissa dell’altezza impostata e viene ritagliata per questo, p. es. per immagini della stessa altezza. Serve un’altezza come 300px; con auto viene mostrata l’immagine intera. Disattivato: l’immagine intera nelle sue proporzioni."
-      },
-      "hasPriority": {
-        "label": "Priorità",
-        "helper": "Carica l’immagine prima di tutte le altre. Attivalo solo per la prima immagine visibile subito, altrimenti la pagina diventa più lenta."
       },
       "captionPosition": {
         "label": "Posizione della didascalia",
@@ -1198,7 +1193,11 @@
         "image": "Immagine",
         "caption": "Didascalia",
         "action": "Azione"
-      }
+      },
+      "custom": "Valore personalizzato"
+    },
+    "replace": {
+      "label": "Sostituisci immagine"
     }
   },
   "images": {

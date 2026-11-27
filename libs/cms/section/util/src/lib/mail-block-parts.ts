@@ -142,8 +142,8 @@ export function mailImage(value: unknown, style: unknown): ImageConfig {
   };
 }
 
-/** Not in a mail: zoom, and the two fields that nothing reads any more. The action is set by the link alone. */
-const DROPPED_STYLES = ['action', 'zoomFactor', 'showTitle', 'showSource'];
+/** Not in a mail: the action, which the link alone sets. */
+const DROPPED_STYLES = ['action'];
 
 /** The style of a picture without zoom and actions; a caption over the picture stands below it, as the mail draws it. */
 export function mailImageStyle(value: unknown): { imageStyle?: Partial<ImageStyle> } {

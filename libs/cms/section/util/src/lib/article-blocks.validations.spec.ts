@@ -141,18 +141,18 @@ describe('article blocks validations', () => {
   });
 
   it('validates the image style of image and gallery blocks, also in columns', () => {
-    const bad = { zoomFactor: 99 };
-    expect(run([{ ...imageBlock('i'), imageStyle: bad }]).hasErrors('blocks.i.imageStyle.zoomFactor')).toBe(true);
-    expect(run([{ id: 'g', type: 'gallery', images: [image], imageStyle: bad }]).hasErrors('blocks.g.imageStyle.zoomFactor')).toBe(true);
-    expect(run([columns([col(6, [{ ...imageBlock('ci'), imageStyle: bad }]), col(6)])]).hasErrors('blocks.ci.imageStyle.zoomFactor')).toBe(true);
+    const bad = { border: 99 };
+    expect(run([{ ...imageBlock('i'), imageStyle: bad }]).hasErrors('blocks.i.imageStyle.border')).toBe(true);
+    expect(run([{ id: 'g', type: 'gallery', images: [image], imageStyle: bad }]).hasErrors('blocks.g.imageStyle.border')).toBe(true);
+    expect(run([columns([col(6, [{ ...imageBlock('ci'), imageStyle: bad }]), col(6)])]).hasErrors('blocks.ci.imageStyle.border')).toBe(true);
     // flat names stay free of block errors
-    expect(run([{ ...imageBlock('i'), imageStyle: bad }]).hasErrors('zoomFactor')).toBe(false);
+    expect(run([{ ...imageBlock('i'), imageStyle: bad }]).hasErrors('border')).toBe(false);
   });
 
   it('flags a non-object image style and accepts a valid partial one', () => {
     expect(run([{ ...imageBlock('i'), imageStyle: 'x' }]).hasErrors('blocks.i.imageStyle')).toBe(true);
     expect(run([{ ...imageBlock('i'), imageStyle: null }]).hasErrors('blocks.i.imageStyle')).toBe(true);
-    expect(run([{ ...imageBlock('i'), imageStyle: { zoomFactor: 2 } }]).getErrors()).toEqual({});
+    expect(run([{ ...imageBlock('i'), imageStyle: { border: '2px solid' } }]).getErrors()).toEqual({});
     expect(run([imageBlock('i')]).getErrors()).toEqual({});
   });
 

@@ -332,8 +332,6 @@ export class SliderSectionComponent implements AfterViewInit, OnDestroy {
       ...this.imageStyle(),
       width: String(w),
       height: '100%',
-      fill: true,
-      sizes: '100vw',
     };
   });
 }

@@ -136,11 +136,13 @@
     "size": "Tamaño",
     "created": "Creado",
     "modified": "Modificado",
+    "uploadedBy": "Subido por",
     "md5": "MD5 (Base64)",
     "downloadUrl": "URL de descarga",
     "noExif": "No hay datos EXIF disponibles.",
     "exifError": "No se pudieron leer los datos EXIF.",
-    "loadError": "No se pudo cargar la imagen."
+    "loadError": "No se pudo cargar la imagen.",
+    "resolution": "Resolución"
   },
   "close": "Cerrar",
   "withTime": "con hora",

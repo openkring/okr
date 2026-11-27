@@ -28,7 +28,7 @@ describe('getSectionIntro', () => {
 describe('hero image styles', () => {
   it('strips frame and action from the background and appends the extra imgix parameters', () => {
     const style = heroBackgroundStyle({ ...IMAGE_STYLE_SHAPE, imgIxParams: 'sat=-30' }, 'crop=top');
-    expect(style).toMatchObject({ imgIxParams: 'sat=-30&crop=top', border: 'none', borderRadius: '0', hasPriority: true, action: ImageActionType.None, captionPosition: 'none' });
+    expect(style).toMatchObject({ imgIxParams: 'sat=-30&crop=top', border: 'none', borderRadius: '0', action: ImageActionType.None, captionPosition: 'none' });
   });
 
   it('keeps the logo frame but never makes it clickable', () => {

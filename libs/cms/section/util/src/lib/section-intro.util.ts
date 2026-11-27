@@ -27,7 +27,7 @@ export function getSectionIntro(section: IntroSource | undefined): SectionIntro 
 }
 
 /**
- * The hero background fills its container: no frame, no caption and no click action, loaded first. Of the stored
+ * The hero background fills its container: no frame, no caption and no click action (a first section loads it first). Of the stored
  * image style only the extra imgix parameters reach it (the rest of the style belongs to the logo).
  */
 export function heroBackgroundStyle(style: ImageStyle, extraImgIxParams = ''): ImageStyle {
@@ -36,12 +36,9 @@ export function heroBackgroundStyle(style: ImageStyle, extraImgIxParams = ''): I
     imgIxParams: [style.imgIxParams, extraImgIxParams].filter(Boolean).join('&'),
     width: '100%',
     height: 'auto',
-    sizes: '100vw',
     border: 'none',
     borderRadius: '0',
     isThumbnail: false,
-    fill: false,
-    hasPriority: true,
     action: ImageActionType.None,
     captionPosition: 'none',
   };
@@ -49,5 +46,5 @@ export function heroBackgroundStyle(style: ImageStyle, extraImgIxParams = ''): I
 
 /** The logo over the hero: width, border and corner radius from the stored style; never clickable, no caption. */
 export function heroLogoStyle(style: ImageStyle): ImageStyle {
-  return { ...style, isThumbnail: false, fill: false, action: ImageActionType.None, captionPosition: 'none' };
+  return { ...style, isThumbnail: false, action: ImageActionType.None, captionPosition: 'none' };
 }

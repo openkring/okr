@@ -375,9 +375,9 @@ const isEnum = (values: Record<string, string | number>): Check => (value) => ty
 
 /** The style of a picture that a Mitteilung keeps; the app writes some of it into css. */
 const STYLE_CHECKS: Record<keyof ImageStyle, Check> = {
-  imgIxParams: matches(/^[\w.,:&=%~-]*$/), width: matches(LENGTH), height: matches(LENGTH), sizes: matches(/^[\w\s.,%:()-]*$/),
-  border: matches(BORDER), borderRadius: matches(LENGTH), isThumbnail: isBoolean, slot: isOneOf(['start', 'end', 'icon-only', 'none']), fill: isBoolean,
-  hasPriority: isBoolean, action: isEnum(ImageActionType), zoomFactor: isBetween(1, 20), showTitle: isBoolean, showSource: isBoolean,
+  imgIxParams: matches(/^[\w.,:&=%~-]*$/), width: matches(LENGTH), height: matches(LENGTH),
+  border: matches(BORDER), borderRadius: matches(LENGTH), isThumbnail: isBoolean, slot: isOneOf(['start', 'end', 'icon-only', 'none']),
+  action: isEnum(ImageActionType),
   captionPosition: isOneOf(CAPTION_POSITIONS), captionSize: matches(LENGTH), captionStyle: isOneOf(CAPTION_STYLES), captionAlign: isOneOf(CAPTION_ALIGNS),
 };
 /** The ranges of the slideshow are those of the editor (cms-section-util, which functions cannot import). */

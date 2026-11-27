@@ -35,10 +35,10 @@ import { SectionDispatcher } from '@okr/cms-section-feature';
       <div class="hero" [id]="hero.okey" (click)="sectionClick.emit(hero.okey)">
         @if (editMode()) {
           <div class="section-wrapper editable">
-            <okr-section-dispatcher [section]="hero" [currentUser]="currentUser()" [editMode]="editMode()" />
+            <okr-section-dispatcher [isFirst]="true" [section]="hero" [currentUser]="currentUser()" [editMode]="editMode()" />
           </div>
         } @else {
-          <okr-section-dispatcher [section]="hero" [currentUser]="currentUser()" [editMode]="editMode()" />
+          <okr-section-dispatcher [isFirst]="true" [section]="hero" [currentUser]="currentUser()" [editMode]="editMode()" />
         }
       </div>
     }

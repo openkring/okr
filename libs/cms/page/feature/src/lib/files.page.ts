@@ -155,10 +155,10 @@ import { PageStore } from './page.store';
                   >
                     @if(editMode()) {
                       <div class="section-wrapper" [class.editable]="editMode()">
-                        <okr-section-dispatcher [section]="section" [currentUser]="store.currentUser()" [editMode]="editMode()" />
+                        <okr-section-dispatcher [isFirst]="$first" [section]="section" [currentUser]="store.currentUser()" [editMode]="editMode()" />
                       </div>  
                     } @else {
-                      <okr-section-dispatcher [section]="section" [currentUser]="store.currentUser()" [editMode]="editMode()" />
+                      <okr-section-dispatcher [isFirst]="$first" [section]="section" [currentUser]="store.currentUser()" [editMode]="editMode()" />
                     }
                   </ion-col>
                 }
@@ -174,7 +174,7 @@ import { PageStore } from './page.store';
         } @else {
           <div class="print-content" #printContent>
             @for(section of sections(); track section.okey) {
-              <okr-section-dispatcher [section]="section" [currentUser]="store.currentUser()" [editMode]="editMode()" />
+              <okr-section-dispatcher [isFirst]="$first" [section]="section" [currentUser]="store.currentUser()" [editMode]="editMode()" />
             } 
           </div>
         }

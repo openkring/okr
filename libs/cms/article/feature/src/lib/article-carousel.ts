@@ -87,7 +87,7 @@ import { badgeFor, Img } from '@okr/shared-ui';
       <div class="carousel" #carousel (scroll)="onCarouselScroll()">
         @for(slide of loopSlides(); track $index) {
           <div class="carousel-slide" [class.clone]="slide.clone" [style.height]="previewHeight()" [attr.aria-hidden]="slide.clone ? 'true' : null">
-            <okr-img [captionFallbacks]="captionFallbacks()" [image]="slide.image" [imageStyle]="carouselImageStyle()" [editMode]="editMode() || inert()" [gallery]="images()" [zoomTitle]="zoomTitle()" [badge]="badgeOf(slide.image.label)" [emitClicks]="emitImageClicks()" (clicked)="imageSelected.emit($event)" />
+            <okr-img [captionFallbacks]="captionFallbacks()" [image]="slide.image" [imageStyle]="carouselImageStyle()" fit="contain" [editMode]="editMode() || inert()" [gallery]="images()" [zoomTitle]="zoomTitle()" [badge]="badgeOf(slide.image.label)" [emitClicks]="emitImageClicks()" (clicked)="imageSelected.emit($event)" />
           </div>
         }
       </div>
@@ -131,7 +131,6 @@ export class ArticleCarousel {
     ...this.imageStyle(),
     width: '100%',
     height: this.previewHeight() ?? '50dvh',
-    fill: false,
     border: '',
     borderRadius: '',
   }));

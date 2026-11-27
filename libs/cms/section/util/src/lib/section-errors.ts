@@ -13,8 +13,8 @@ export interface SectionErrorEntry {
 
 /** Field names of ImageStyle, validated flat (without a prefix) by imageStyleValidations. */
 const IMAGE_STYLE_FIELDS = [
-  'imgIxParams', 'width', 'height', 'sizes', 'border', 'borderRadius',
-  'isThumbnail', 'slot', 'fill', 'hasPriority', 'action', 'zoomFactor'
+  'imgIxParams', 'width', 'height', 'border', 'borderRadius',
+  'isThumbnail', 'slot', 'action'
 ];
 
 /** Marks the `images[0].url`-style keys produced by imageConfigValidations. */
@@ -56,7 +56,7 @@ export function getInlineErrorFields(type: SectionType, showAdvanced = false): s
     case 'article':
       // the «Bilder» card (spec 1.154 §5): the layout and the action group are in its Layout segment (always),
       // the rest of the image style in its Styles segment (advanced only)
-      fields.push(IMAGES_PREFIX, 'cta.label', 'cta.url', 'imageLayout', 'action', 'zoomFactor', 'background', 'textColor');
+      fields.push(IMAGES_PREFIX, 'cta.label', 'cta.url', 'imageLayout', 'action', 'background', 'textColor');
       if (showAdvanced) fields.push(...IMAGE_STYLE_FIELDS);
       break;
     case 'button':
@@ -136,8 +136,8 @@ export type SegmentErrorFields<S extends string> = Record<S, string[]>;
 /** The article's «Bilder» card (spec 1.154 §5). */
 export const ARTICLE_IMAGES_SEGMENT_FIELDS: SegmentErrorFields<'select' | 'layout' | 'styles'> = {
   select: [IMAGES_PREFIX],
-  layout: ['imageLayout', 'action', 'zoomFactor', 'slideshow.effect', 'slideshow.interval', 'slideshow.duration'],
-  styles: IMAGE_STYLE_FIELDS.filter((field) => field !== 'action' && field !== 'zoomFactor'),
+  layout: ['imageLayout', 'action', 'slideshow.effect', 'slideshow.interval', 'slideshow.duration'],
+  styles: IMAGE_STYLE_FIELDS.filter((field) => field !== 'action'),
 };
 
 /**
@@ -231,7 +231,7 @@ export function getJournalInlineErrorFields(type: SectionType): string[] {
     case 'hero':
       return ['overlay.darkening', 'overlay.label', 'overlay.color', 'overlay.position', 'overlay.fontSize', 'height', 'focus'];
     case 'article':
-      // the «Bilder» card shows the photos and the layout; no Styles, so width, height and fill fall back (decision 8)
+      // the «Bilder» card shows the photos and the layout; no Styles, so width and height fall back (decision 8)
       return ['title', IMAGES_PREFIX, 'imageLayout'];
     case 'album':
       return ['title', IMAGES_PREFIX];

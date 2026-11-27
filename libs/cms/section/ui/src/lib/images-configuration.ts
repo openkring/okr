@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, model } from '@angular/core';
+import { Component, computed, inject, input, model, resource } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import {
   ActionSheetController, ActionSheetOptions,
@@ -7,14 +7,14 @@ import {
   ItemReorderEventDetail, ModalController, ToastController
 } from '@ionic/angular';
 
-import { getDownloadURL, ref } from 'firebase/storage';
+import { getDownloadURL, getMetadata, ref } from 'firebase/storage';
 
 import { ENV, STORAGE } from '@okr/shared-config';
 import { IMAGE_MIMETYPES } from '@okr/shared-constants';
 import { ImageConfig, ImageType, UserModel } from '@okr/shared-models';
 import { ErrorNote, ImageDetailModal, UploadEntry, ImgDirective } from '@okr/shared-ui';
 import { createActionSheetButton, createActionSheetOptions, downloadToBrowser } from '@okr/shared-util-angular';
-import { IMGIX_THUMBNAIL_PARAMS, sanitizeFileName } from '@okr/shared-util-core';
+import { fileSizeUnit, IMGIX_THUMBNAIL_PARAMS, sanitizeFileName, toStoragePath } from '@okr/shared-util-core';
 import { UploadService } from '@okr/avatar-data-access';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { getImageErrors, ImageDetails, ImageUploadTarget, SECTION_IMAGE_PICKER, SectionErrors, SectionI18n, SectionImagePicker, uniqueFileName } from '@okr/cms-section-util';
@@ -38,6 +38,7 @@ import { ImageEditModal } from './image-edit.modal';
     .image-meta { font-size: 0.8rem; color: var(--ion-color-medium); }
     ion-thumbnail { --size: 44px; --border-radius: 4px; margin-inline-end: 8px; }
     .embedded-actions { display: flex; justify-content: flex-end; }
+    .single-name { word-break: break-all; }
   `],
   template: `
     @if(embedded()) {
@@ -45,8 +46,8 @@ import { ImageEditModal } from './image-edit.modal';
       @if(!readOnly() && canAdd() && !atMax()) {
         <div class="embedded-actions">
           <ion-buttons>
-            <ion-button (click)="addImages()" [attr.aria-label]="i18n().image_add_label()">
-              <ion-icon slot="icon-only" src="{{'add-circle' | svgIcon }}" />
+            <ion-button (click)="addImages()" [attr.aria-label]="replaces() ? i18n().image_replace_label() : i18n().image_add_label()">
+              <ion-icon slot="icon-only" src="{{ (replaces() ? 'repeat' : 'add-circle') | svgIcon }}" />
             </ion-button>
           </ion-buttons>
         </div>
@@ -59,8 +60,8 @@ import { ImageEditModal } from './image-edit.modal';
             <ion-card-title>{{ title() || i18n().image_edit_title_modal() }}</ion-card-title>
             @if(!readOnly() && canAdd() && !atMax()) {
               <ion-buttons>
-                <ion-button (click)="addImages()">
-                  <ion-icon slot="icon-only" src="{{'add-circle' | svgIcon }}" />
+                <ion-button (click)="addImages()" [attr.aria-label]="replaces() ? i18n().image_replace_label() : i18n().image_add_label()">
+                  <ion-icon slot="icon-only" src="{{ (replaces() ? 'repeat' : 'add-circle') | svgIcon }}" />
                 </ion-button>
               </ion-buttons>
             }
@@ -78,6 +79,31 @@ import { ImageEditModal } from './image-edit.modal';
             <ion-item>
               <ion-label color="medium">{{ emptyText() || i18n().image_empty() }}</ion-label>
             </ion-item>
+          } @else if (variant() === 'single') {
+            <!-- one image: no sorting and no action sheet; a click shows its details, the buttons download or remove it -->
+            @for(img of images().slice(0, 1); track img.url) {
+              <ion-item [button]="!picker" [detail]="false" (click)="openDetail(img)">
+                <ion-thumbnail slot="start">
+                  <img okrImg [src]="thumbnailUrl(img)" [alt]="img.altText || img.label" />
+                </ion-thumbnail>
+                <ion-label>
+                  <p>{{ fileInfo() }}</p>
+                  <p class="image-meta single-name">{{ fileName(img) }}</p>
+                </ion-label>
+                @if(!readOnly()) {
+                  <ion-buttons slot="end">
+                    @if(!picker) {
+                      <ion-button (click)="$event.stopPropagation(); downloadImage(img)" [attr.aria-label]="i18n().image_download()">
+                        <ion-icon slot="icon-only" src="{{'download' | svgIcon }}" />
+                      </ion-button>
+                    }
+                    <ion-button color="danger" (click)="$event.stopPropagation(); images.set([])" [attr.aria-label]="i18n().image_delete()">
+                      <ion-icon slot="icon-only" src="{{'trash' | svgIcon }}" />
+                    </ion-button>
+                  </ion-buttons>
+                }
+              </ion-item>
+            }
           } @else {
             <!-- Casting $event to $any is a temporary fix for https://github.com/ionic-team/ionic-framework/issues/24245 -->
             <ion-reorder-group [disabled]="readOnly()" (ionItemReorder)="reorder($any($event))">
@@ -157,14 +183,45 @@ export class ImagesConfiguration {
    * upload starts, so it gets them even if this component shows another block or is gone by then.
    */
   public readonly uploadTarget = input<ImageUploadTarget | undefined>();
+  /** 'single': the one image of a block, with its file type, size and name, a download and a delete button; a click shows its details */
+  public readonly variant = input<'list' | 'single'>('list');
+  /** false: an upload leaves the alt text empty, so the page falls back to the section title (then the file name) */
+  public readonly prefillAltText = input(true);
 
   // computed
   protected readonly imageErrors = computed(() => getImageErrors(this.errors()));
   protected readonly canAdd = computed(() => !!this.picker || (!this.requirePicker() && this.uploads()));
   protected readonly atMax = computed(() => { const max = this.max(); return max !== undefined && this.images().length >= max; });
+  /** the add button of a single image that is there replaces it */
+  protected readonly replaces = computed(() => !this.multiple() && this.images().length > 0);
+
+  /** of the single image: file type and size from the storage metadata */
+  private readonly metadata = resource({
+    params: () => {
+      if (this.variant() !== 'single' || this.picker) return undefined;
+      const path = toStoragePath(this.images()[0]?.url ?? '', this.imgixBaseUrl);
+      return path ? { path } : undefined;
+    },
+    loader: async ({ params }) => getMetadata(ref(this.storage, params.path)),
+  });
+  protected readonly fileInfo = computed(() => {
+    if (this.metadata.error()) return '';
+    const metadata = this.metadata.value();
+    if (!metadata) return '…';
+    return [metadata.contentType, fileSizeUnit(metadata.size)].filter(Boolean).join(' · ');
+  });
 
   // constants
   private imgixBaseUrl = this.env.services.imgixBaseUrl;
+
+  protected fileName(img: ImageConfig): string {
+    const path = decodeURIComponent((img.url ?? '').split('?')[0]);
+    return path.split('/').pop() || img.label || '';
+  }
+
+  protected async openDetail(img: ImageConfig): Promise<void> {
+    if (!this.picker) await this.showImageDetail(img);
+  }
 
   protected typeName(type: ImageType): string {
     return ImageType[type] ?? 'Image';
@@ -222,7 +279,7 @@ export class ImagesConfiguration {
       type: ImageType.Image,
       url: pathOf(f),
       actionUrl: '',
-      altText: f.name.replace(/\.[^.]+$/, ''),
+      altText: this.prefillAltText() ? f.name.replace(/\.[^.]+$/, '') : '',
       overlay: '',
     }));
 
@@ -328,7 +385,7 @@ export class ImagesConfiguration {
     await modal.onWillDismiss();
   }
 
-  private async downloadImage(img: ImageConfig): Promise<void> {
+  protected async downloadImage(img: ImageConfig): Promise<void> {
     // img.url is normally a relative storage path; resolve it to a download URL.
     const url = img.url.startsWith('http') ? img.url : await getDownloadURL(ref(this.storage, img.url));
     await downloadToBrowser(this.toastController, url);
