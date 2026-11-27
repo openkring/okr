@@ -1,4 +1,4 @@
-import { Component, computed, DOCUMENT, inject, input, output, PLATFORM_ID, Signal } from '@angular/core';
+import { Component, computed, DOCUMENT, inject, input, output, PLATFORM_ID, Signal, TemplateRef } from '@angular/core';
 import { isPlatformBrowser, NgTemplateOutlet } from '@angular/common';
 import { IonCard, IonCol, IonGrid, IonRow } from '@ionic/angular';
 
@@ -41,6 +41,7 @@ interface PersonView {
     IonGrid, IonRow, IonCol, IonCard,
     ImgDirective
   ],
+  host: { '(keydown.escape)': 'onEscape()' },
   styles: [`
     :host { display: block; }
     .empty { padding: 8px 16px; }
@@ -69,6 +70,10 @@ interface PersonView {
     .function { font-size: 0.9em; }
     .email { font-size: 0.85em; word-break: break-all; }
     .email a { color: inherit; }
+    /* canvas hooks: only when [selectable] */
+    .person.selectable { position: relative; }
+    .person.hidden { opacity: 0.4; }
+    .person.selected { outline: 2px solid var(--ion-color-primary); outline-offset: 2px; }
     a.person-link { display: block; color: inherit; text-decoration: none; }
   `],
   template: `
@@ -112,7 +117,7 @@ interface PersonView {
 
     <ng-template #personTpl let-item>
       @if(item.mailto) {
-        <a class="person-link" [href]="'mailto:' + item.mailto" [attr.aria-label]="(item.name ? item.name + ', ' : '') + item.mailto" (click)="onLinkClick($event)">
+        <a class="person-link" [href]="'mailto:' + item.mailto" [attr.aria-label]="(item.name ? item.name + ', ' : '') + item.mailto" [attr.tabindex]="selectable() ? -1 : null" (click)="onLinkClick($event)">
           <ng-container [ngTemplateOutlet]="bodyTpl" [ngTemplateOutletContext]="{ $implicit: item }" />
         </a>
       } @else {
@@ -121,7 +126,11 @@ interface PersonView {
     </ng-template>
 
     <ng-template #bodyTpl let-item>
-      <div class="person" [class]="'person pos-' + posClass()" [style.--info-bg]="infoBg" [style.--info-fg]="infoFg" (click)="onPersonClick(item)">
+      <div class="person" [class]="'person pos-' + posClass()" [style.--info-bg]="infoBg" [style.--info-fg]="infoFg"
+        [class.selectable]="selectable()" [class.hidden]="selectable() && isHidden(item)" [class.selected]="selectable() && isSelected(item)"
+        [attr.tabindex]="selectable() ? 0 : null" [attr.role]="selectable() ? 'button' : null"
+        [attr.aria-label]="selectable() ? (item.name || item.alt) : null" [attr.aria-pressed]="selectable() ? isSelected(item) : null"
+        (click)="onPersonClick(item)" (keydown.enter)="onSelectKey($event, item)" (keydown.space)="onSelectKey($event, item)">
         <div class="img-wrap" [style.width.px]="sizePx()" [style.height.px]="sizePx()"
           [style.border-radius]="radius()" [style.background-color]="item.bgColor">
           <img okrImg [src]="item.url" [alt]="item.alt" [width]="sizePx()" [height]="sizePx()" loading="lazy" />
@@ -136,6 +145,9 @@ interface PersonView {
             <ng-container [ngTemplateOutlet]="infoTpl" [ngTemplateOutletContext]="{ $implicit: item }" />
           </div>
         }
+        @if(selectable() && isSelected(item) && frame(); as frameTpl) {
+          <ng-container [ngTemplateOutlet]="frameTpl" [ngTemplateOutletContext]="{ $implicit: item.person }" />
+        }
       </div>
     </ng-template>
 
@@ -147,7 +159,7 @@ interface PersonView {
         @if(item.mailto) {
           <div class="email">{{ item.email }}</div>
         } @else {
-          <div class="email"><a [href]="'mailto:' + item.email" (click)="$event.stopPropagation()">{{ item.email }}</a></div>
+          <div class="email"><a [href]="'mailto:' + item.email" (click)="onEmailClick($event)">{{ item.email }}</a></div>
         }
       }
     </ng-template>
@@ -171,6 +183,14 @@ export class PersonsWidget {
   public readonly i18n = input.required<PersonsWidgetI18n>();
 
   public personClicked = output<AvatarInfo>();
+
+  /** canvas hooks for the editor; off by default, readers are unchanged */
+  public selectable = input(false);
+  public selectedKey = input<string | undefined>();
+  public hiddenKeys = input<readonly string[]>([]);
+  /** drawn inside the selected person (positioned by the caller's CSS) */
+  public frame = input<TemplateRef<{ $implicit: AvatarInfo }>>();
+  public personSelected = output<string | undefined>();
 
   protected readonly config = this.avatarConfig;
   protected readonly count = computed(() => this.persons().length);
@@ -229,13 +249,44 @@ export class PersonsWidget {
 
   /** a card that is a mailto link opens the mail program instead of the person */
   protected onPersonClick(item: PersonView): void {
+    if (this.selectable()) {
+      this.personSelected.emit(item.person.key);
+      return;
+    }
     if (item.mailto) return;
     this.showPerson(item.person);
   }
 
   /** in edit mode the card stays put, so the section can be configured without opening mails */
   protected onLinkClick(event: Event): void {
-    if (this.editMode()) event.preventDefault();
+    if (this.editMode() || this.selectable()) event.preventDefault();
+  }
+
+  /** a mail address inside a card: selecting wins over opening the mail program */
+  protected onEmailClick(event: Event): void {
+    if (this.selectable()) {
+      event.preventDefault();
+      return;
+    }
+    event.stopPropagation();
+  }
+
+  protected isSelected(item: PersonView): boolean {
+    return this.selectedKey() === item.person.key;
+  }
+
+  protected isHidden(item: PersonView): boolean {
+    return this.hiddenKeys().includes(item.person.key);
+  }
+
+  protected onSelectKey(event: Event, item: PersonView): void {
+    if (!this.selectable()) return;
+    event.preventDefault();
+    this.personSelected.emit(item.person.key);
+  }
+
+  protected onEscape(): void {
+    if (this.selectable()) this.personSelected.emit(undefined);
   }
 
   public showPerson(person: AvatarInfo): void {
