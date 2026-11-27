@@ -1547,7 +1547,8 @@
       "save": {
         "running": "Saving the people …",
         "failed": "Saving did not work. Your changes are still here.",
-        "trial": "Trial view: nothing was saved."
+        "trial": "Trial view: nothing was saved.",
+        "empty": "No people were found. So that hidden and reordered people are not lost, nothing was saved."
       }
     }
   },

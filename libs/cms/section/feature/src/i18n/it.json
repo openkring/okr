@@ -1531,7 +1531,7 @@
         "group": "Gruppo",
         "responsibility": "Cariche"
       },
-      "hiddenCount": "{count} nascosta/e",
+      "hiddenCount": "Nascoste: {count}",
       "showAll": "Mostra di nuovo tutte",
       "look": {
         "title": "Aspetto"
@@ -1547,7 +1547,8 @@
       "save": {
         "running": "Salvataggio delle persone …",
         "failed": "Il salvataggio non è riuscito. Le tue modifiche sono ancora qui.",
-        "trial": "Vista di prova: non è stato salvato nulla."
+        "trial": "Vista di prova: non è stato salvato nulla.",
+        "empty": "Non è stata trovata nessuna persona. Perché le persone nascoste e ordinate non vadano perse, non è stato salvato nulla."
       }
     }
   },

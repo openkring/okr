@@ -1531,7 +1531,7 @@
         "group": "Grupo",
         "responsibility": "Cargos"
       },
-      "hiddenCount": "{count} oculta(s)",
+      "hiddenCount": "Ocultas: {count}",
       "showAll": "Volver a mostrar a todas",
       "look": {
         "title": "Aspecto"
@@ -1547,7 +1547,8 @@
       "save": {
         "running": "Guardando las personas …",
         "failed": "No se ha podido guardar. Tus cambios siguen aquí.",
-        "trial": "Vista de prueba: no se ha guardado nada."
+        "trial": "Vista de prueba: no se ha guardado nada.",
+        "empty": "No se ha encontrado ninguna persona. Para que no se pierdan las personas ocultas y ordenadas, no se ha guardado nada."
       }
     }
   },

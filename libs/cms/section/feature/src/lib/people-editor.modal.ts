@@ -300,6 +300,14 @@ export class PeopleEditorModal {
     const canvas = this.canvas();
     if (!canvas) return;
     const state = this.history().present;
+    // a source read as empty (a failed or empty read) would drop every override: refused, the editor stays open
+    const props = state.section.properties;
+    const hasOverrides = peopleHiddenKeys(props).length > 0 || (Array.isArray(props.orderKeys) && props.orderKeys.length > 0);
+    if (props.type !== 'persons' && canvas.personKeys().length === 0 && hasOverrides) {
+      console.warn('PeopleEditorModal: the source has no persons, the overrides are kept and nothing is written');
+      void showToast(this.toastController, this.i18n.people_editor_save_empty());
+      return;
+    }
     this.saving.set(true);
     let key: string | undefined;
     try {

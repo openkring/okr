@@ -224,8 +224,13 @@ export class PersonsWidget {
     const functions = this.functions();
     const imageKeys = this.imageKeys();
     const orgColorHex = this.orgColorHex();
-    return this.persons().map((person, index) => {
-      const bgColor = getPeopleBgColor(look, index, orgColorHex);
+    // the colour index counts visible persons only, so that they alternate as the readers draw them (hidden ones are
+    // not drawn there); a hidden person in the editor takes the colour of the next visible one
+    const hidden = new Set(this.hiddenKeys());
+    let visibleIndex = 0;
+    return this.persons().map((person) => {
+      const bgColor = getPeopleBgColor(look, visibleIndex, orgColorHex);
+      if (!hidden.has(person.key)) visibleIndex++;
       const key = imageKeys[person.key] ?? `${person.modelType}.${person.key}`;
       return {
         person,

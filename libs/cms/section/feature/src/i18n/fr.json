@@ -1531,7 +1531,7 @@
         "group": "Groupe",
         "responsibility": "Mandats"
       },
-      "hiddenCount": "{count} masquée(s)",
+      "hiddenCount": "Masquées : {count}",
       "showAll": "Tout afficher à nouveau",
       "look": {
         "title": "Apparence"
@@ -1547,7 +1547,8 @@
       "save": {
         "running": "Enregistrement des personnes …",
         "failed": "L’enregistrement n’a pas fonctionné. Tes modifications sont toujours là.",
-        "trial": "Vue d’essai : rien n’a été enregistré."
+        "trial": "Vue d’essai : rien n’a été enregistré.",
+        "empty": "Aucune personne n'a été trouvée. Pour que les personnes masquées et triées ne soient pas perdues, rien n'a été enregistré."
       }
     }
   },

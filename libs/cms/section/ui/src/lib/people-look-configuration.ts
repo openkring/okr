@@ -30,7 +30,7 @@ import { getFieldAndItemErrors, normalizeAvatarConfig, peopleField, SectionError
       <ion-row>
         <ion-col size="12" size-md="6">
           <ion-label class="look-label">{{ i18n().people_look_size_label() }}</ion-label>
-          <ion-segment [value]="look().size" [disabled]="readOnly()" (ionChange)="onSize($event.detail.value)">
+          <ion-segment [value]="look().size" [attr.aria-label]="i18n().people_look_size_label()" [disabled]="readOnly()" (ionChange)="onSize($event.detail.value)">
             @for (value of sizes; track value) {
               <ion-segment-button [value]="value"><ion-label>{{ sizeLabels()[value] }}</ion-label></ion-segment-button>
             }
@@ -39,7 +39,7 @@ import { getFieldAndItemErrors, normalizeAvatarConfig, peopleField, SectionError
         </ion-col>
         <ion-col size="12" size-md="6">
           <ion-label class="look-label">{{ i18n().people_look_shape_label() }}</ion-label>
-          <ion-segment [value]="look().shape" [disabled]="readOnly()" (ionChange)="onShape($event.detail.value)">
+          <ion-segment [value]="look().shape" [attr.aria-label]="i18n().people_look_shape_label()" [disabled]="readOnly()" (ionChange)="onShape($event.detail.value)">
             @for (value of shapes; track value) {
               <ion-segment-button [value]="value"><ion-label>{{ shapeLabels()[value] }}</ion-label></ion-segment-button>
             }
@@ -48,7 +48,7 @@ import { getFieldAndItemErrors, normalizeAvatarConfig, peopleField, SectionError
         </ion-col>
         <ion-col size="12" size-md="6">
           <ion-label class="look-label">{{ i18n().people_look_fill_label() }}</ion-label>
-          <ion-segment [value]="look().fill" [disabled]="readOnly()" (ionChange)="onFill($event.detail.value)">
+          <ion-segment [value]="look().fill" [attr.aria-label]="i18n().people_look_fill_label()" [disabled]="readOnly()" (ionChange)="onFill($event.detail.value)">
             @for (value of fills; track value) {
               <ion-segment-button [value]="value"><ion-label>{{ fillLabels()[value] }}</ion-label></ion-segment-button>
             }
@@ -57,7 +57,7 @@ import { getFieldAndItemErrors, normalizeAvatarConfig, peopleField, SectionError
         </ion-col>
         <ion-col size="12" size-md="6">
           <ion-label class="look-label">{{ i18n().people_look_textPosition_label() }}</ion-label>
-          <ion-segment [value]="look().textPosition" [disabled]="readOnly()" (ionChange)="onTextPosition($event.detail.value)">
+          <ion-segment [value]="look().textPosition" [attr.aria-label]="i18n().people_look_textPosition_label()" [disabled]="readOnly()" (ionChange)="onTextPosition($event.detail.value)">
             @for (value of textPositions; track value) {
               <ion-segment-button [value]="value"><ion-label>{{ textPositionLabels()[value] }}</ion-label></ion-segment-button>
             }

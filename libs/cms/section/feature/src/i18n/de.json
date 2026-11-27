@@ -1547,7 +1547,8 @@
       "save": {
         "running": "Die Personen werden gespeichert …",
         "failed": "Speichern hat nicht geklappt. Deine Änderungen sind noch da.",
-        "trial": "Testansicht: es wurde nichts gespeichert."
+        "trial": "Testansicht: es wurde nichts gespeichert.",
+        "empty": "Es wurden keine Personen gefunden. Damit ausgeblendete und sortierte Personen nicht verloren gehen, wurde nichts gespeichert."
       }
     }
   },

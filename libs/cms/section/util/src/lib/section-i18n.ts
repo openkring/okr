@@ -870,6 +870,7 @@ export const SECTION_I18N_KEYS = {
   people_editor_save_running:               PFX + 'people.editor.save.running',
   people_editor_save_failed:                PFX + 'people.editor.save.failed',
   people_editor_save_trial:                 PFX + 'people.editor.save.trial',
+  people_editor_save_empty:                 PFX + 'people.editor.save.empty',
 
   // rag
   rag_placeholder:                          PFX + 'rag.placeholder',
