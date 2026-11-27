@@ -13,6 +13,7 @@ import { AvatarService } from '@okr/avatar-data-access';
 import { I18nService } from '@okr/shared-i18n';
 
 import { DateFormat, getTodayStr } from '@okr/shared-util-core';
+import { resourceParams } from '@okr/shared-util-angular';
 import {
   getPeopleResponsibilityIds, getPeopleResponsibilityParentKey, getResponsibilityKeysUnderParent, mergeResponsibilityKeys,
   normalizeAvatarConfig, SECTION_I18N_KEYS, SectionI18n,
@@ -40,23 +41,24 @@ export const PeopleSectionStore = signalStore(
     // gate on currentUser: memberships/responsibilities require an authenticated tenant user (tenantRead).
     // Firing before auth is restored (notably mobile Safari) yields "Missing or insufficient permissions".
     groupMembersResource: rxResource({
-      params: () => ({ groupId: store.section()?.properties.groupId ?? '', currentUser: store.appStore.currentUser() }),
+      // primitives compared by value: an edit of the section that keeps the group never reads again (the editor's canvas)
+      params: resourceParams(() => ({ groupId: store.section()?.properties.groupId ?? '', hasUser: !!store.appStore.currentUser() })),
       stream: ({ params }) => {
-        if (!params.currentUser) return of([]);
+        if (!params.hasUser) return of([]);
         return store.membershipService.listMembersOfOrg(params.groupId, 'group');
       },
     }),
     // the chosen responsibilities in their order (a legacy single responsibilityId is a list of one), then
     // the active ones under responsibilityParentKey. The ids are joined into one string so that an equal
-    // list does not re-read (params are compared by reference).
+    // list does not re-read (compared by value, see resourceParams).
     responsibilitiesResource: rxResource({
-      params: () => ({
+      params: resourceParams(() => ({
         ids: getPeopleResponsibilityIds(store.section()?.properties).join(','),
         parentKey: getPeopleResponsibilityParentKey(store.section()?.properties),
-        currentUser: store.appStore.currentUser(),
-      }),
+        hasUser: !!store.appStore.currentUser(),
+      })),
       stream: ({ params }) => {
-        if (!params.currentUser || (!params.ids && !params.parentKey)) return of([] as ResponsibilityModel[]);
+        if (!params.hasUser || (!params.ids && !params.parentKey)) return of([] as ResponsibilityModel[]);
         const chosen$ = params.ids
           ? combineLatest(params.ids.split(',').map(id => store.responsibilityService.read(id)))
           : of([] as (ResponsibilityModel | undefined)[]);

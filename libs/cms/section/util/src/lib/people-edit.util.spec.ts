@@ -117,6 +117,11 @@ describe('people edit operations', () => {
       const g = base({ type: 'group' });
       expect(movePeoplePerson(g, ['c', 'a', 'b'], 'a', -1).orderKeys).toEqual(['a', 'c', 'b']);
     });
+    it('drops orderKeys when the new order is the natural one', () => {
+      const g = base({ type: 'group', orderKeys: ['b', 'a', 'c'] });
+      expect(movePeoplePerson(g, ['b', 'a', 'c'], 'a', -1, ['a', 'b', 'c'])).not.toHaveProperty('orderKeys');
+      expect(movePeoplePerson(g, ['b', 'a', 'c'], 'c', -1, ['a', 'b', 'c']).orderKeys).toEqual(['b', 'c', 'a']);
+    });
     it('ignores an unknown key', () => {
       expect(movePeoplePerson(persons, ['a', 'b', 'c'], 'z', 1)).toEqual(persons);
     });

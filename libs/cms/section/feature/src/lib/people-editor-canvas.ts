@@ -117,6 +117,8 @@ export class PeopleEditorCanvas {
   /** every person of the source in the drawn order, the hidden ones included */
   public readonly persons = computed<AvatarInfo[]>(() => this.store.allPersons());
   public readonly personKeys = computed(() => this.persons().map((person) => person.key));
+  /** the source's own order, before any override: a move back to it stores no `orderKeys` */
+  public readonly naturalKeys = computed(() => this.store.sourcePersons().map((person) => person.key));
   /** person key → function shown with the person (responsibilities) */
   public readonly functions = computed(() => this.store.functions());
   /** while the source is read: before, `personKeys` is not complete */
@@ -147,7 +149,7 @@ export class PeopleEditorCanvas {
 
   protected move(key: string, delta: -1 | 1, event?: Event): void {
     event?.stopPropagation();
-    const next = movePeoplePerson(this.config(), this.personKeys(), key, delta);
+    const next = movePeoplePerson(this.config(), this.personKeys(), key, delta, this.naturalKeys());
     if (next.persons !== this.config().persons || next.orderKeys !== this.config().orderKeys) this.configChange.emit(next);
   }
 
@@ -170,7 +172,8 @@ export class PeopleEditorCanvas {
   /** Alt+↑/↓ moves the selected person; Esc deselects it (the widget tells that) and does not close the editor. */
   protected onKeydown(event: KeyboardEvent): void {
     const key = this.selectedKey();
-    if (key === undefined) return;
+    // a key that undo or another source left behind selects nobody: Esc closes as usual
+    if (key === undefined || !this.personKeys().includes(key)) return;
     if (event.key === 'Escape') {
       // the widget deselects too when the focus is in it; a second «nothing» changes nothing
       event.stopPropagation();

@@ -103,6 +103,17 @@ describe('isPeopleSectionChanged', () => {
     expect(isPeopleSectionChanged(opened, { ...moved, properties: movePeoplePerson(moved.properties, ['b', 'a'], 'a', -1) })).toBe(false);
   });
 
+  it('a move there and back of a group member is no change', () => {
+    const opened = openPeopleSection(stored({ type: 'group', persons: [], groupId: 'g', avatar: legacyAvatar({}) }));
+    const natural = ['a', 'b', 'c'];
+    const moved = { ...opened, properties: movePeoplePerson(opened.properties, natural, 'b', 1, natural) };
+    expect(moved.properties.orderKeys).toEqual(['a', 'c', 'b']);
+    expect(isPeopleSectionChanged(opened, moved)).toBe(true);
+    const back = { ...moved, properties: movePeoplePerson(moved.properties, ['a', 'c', 'b'], 'b', -1, natural) };
+    expect(back.properties).not.toHaveProperty('orderKeys');
+    expect(isPeopleSectionChanged(opened, back)).toBe(false);
+  });
+
   it('a look written in full is no change when it draws the same', () => {
     const opened = openPeopleSection(stored(STYLED[0].config));
     const same = { ...opened, properties: setPeopleLook(opened.properties, { size: 'M' }) };
@@ -140,6 +151,13 @@ describe('preparePeopleForSave', () => {
     const saved = preparePeopleForSave(section, ['a', 'b']).properties;
     expect(saved.hiddenKeys).toEqual(['a']);
     expect(saved.orderKeys).toEqual(['b', 'a']);
+  });
+
+  it('drops an orderKeys equal to the natural order', () => {
+    const section = openPeopleSection(stored({ type: 'group', persons: [], groupId: 'g', orderKeys: ['a', 'b'] }));
+    expect(preparePeopleForSave(section, ['a', 'b', 'c'], ['a', 'b', 'c']).properties).not.toHaveProperty('orderKeys');
+    expect(preparePeopleForSave(section, ['a', 'b', 'c'], ['b', 'a', 'c']).properties.orderKeys).toEqual(['a', 'b']);
+    expect(preparePeopleForSave(section, ['a', 'b', 'c']).properties.orderKeys).toEqual(['a', 'b']);
   });
 
   it('drops the fields of other sources', () => {

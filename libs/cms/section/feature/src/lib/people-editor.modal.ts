@@ -308,7 +308,7 @@ export class PeopleEditorModal {
         void showToast(this.toastController, this.i18n.people_editor_save_failed());
         return;
       }
-      const prepared = preparePeopleForSave(state.section, canvas.personKeys());
+      const prepared = preparePeopleForSave(state.section, canvas.personKeys(), canvas.naturalKeys());
       if (!prepared.tenants?.length) prepared.tenants = [this.appStore.tenantId()];
       // the service shows its own message, also when it fails (then undefined)
       key = this.isCreate && this.isNew()
@@ -324,9 +324,28 @@ export class PeopleEditorModal {
     if (!key) return;
     this.isCreate = false;
     this.onSaved()(key);
-    this.baseline.set(state.section);
+    this.baseline.set(this.adoptKey(key, state.section));
     // changed meanwhile, or at work in a picker: stays open, with the banner if there is something to save
     if (!this.changed() && this.isOnTop()) await this.close(key);
+  }
+
+  /**
+   * A section of another tenant is saved as this tenant's copy `<key>_<tenantId>` (`SectionService.update` forks it): from then on the
+   * editor works on the copy, in every step of its history, so that a later save updates it instead of forking again.
+   * @returns `saved` with that key
+   */
+  private adoptKey(key: string, saved: PeopleSection): PeopleSection {
+    if (saved.okey === key) return saved;
+    const tenants = [this.appStore.tenantId()];
+    const adopted = new Map<PeopleSection, PeopleSection>();
+    const adopt = (section: PeopleSection): PeopleSection => {
+      let copy = adopted.get(section);
+      if (!copy) adopted.set(section, copy = { ...section, okey: key, tenants });
+      return copy;
+    };
+    const step = (state: PeopleEditorState): PeopleEditorState => ({ ...state, section: adopt(state.section) });
+    this.history.update((history) => ({ ...history, past: history.past.map(step), present: step(history.present), future: history.future.map(step) }));
+    return adopt(saved);
   }
 
   // ------------------------------------------------------- closing -------------------------------------------------------

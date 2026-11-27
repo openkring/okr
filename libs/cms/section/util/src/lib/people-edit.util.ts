@@ -98,8 +98,12 @@ export function showAllPeople(config: PeopleConfig): PeopleConfig {
   return out;
 }
 
-/** Moves `key` by `delta` within `shownKeys` (the drawn order, hidden ones included). Out of range: no change. */
-export function movePeoplePerson(config: PeopleConfig, shownKeys: readonly string[], key: string, delta: -1 | 1): PeopleConfig {
+/**
+ * Moves `key` by `delta` within `shownKeys` (the drawn order, hidden ones included). Out of range: no change.
+ * @param naturalKeys the source's own order (group `sortOrder`, responsibilities): a new order equal to it stores no `orderKeys`, so
+ *        that a later reorder of the source still reaches this section
+ */
+export function movePeoplePerson(config: PeopleConfig, shownKeys: readonly string[], key: string, delta: -1 | 1, naturalKeys?: readonly string[]): PeopleConfig {
   const from = shownKeys.indexOf(key);
   const to = from + delta;
   if (from < 0 || to < 0 || to >= shownKeys.length) return { ...config };
@@ -112,7 +116,16 @@ export function movePeoplePerson(config: PeopleConfig, shownKeys: readonly strin
     };
     return { ...config, persons: [...config.persons].sort((a, b) => rank(a.key) - rank(b.key)) };
   }
+  if (naturalKeys && isSameOrder(order, naturalKeys)) {
+    const out = { ...config };
+    delete out.orderKeys;
+    return out;
+  }
   return { ...config, orderKeys: order };
+}
+
+function isSameOrder(a: readonly string[], b: readonly string[]): boolean {
+  return a.length === b.length && a.every((k, i) => k === b[i]);
 }
 
 /** Writes the changed of size, shape, fill, textPosition and grayscale into `avatar`, keeping its other fields. */

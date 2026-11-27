@@ -1,4 +1,4 @@
-import { cleanPeopleConfig, isSameValue, PEOPLE_SECTION_SHAPE, type AvatarInfo, type PeopleConfig, type PeopleSection } from '@okr/shared-models';
+import { applyPeopleOverrides, cleanPeopleConfig, isSameValue, PEOPLE_SECTION_SHAPE, type AvatarInfo, type PeopleConfig, type PeopleSection } from '@okr/shared-models';
 
 import { normalizeAvatarConfig } from './people-section.util';
 
@@ -84,9 +84,16 @@ export function isPeopleSectionChanged(opened: PeopleSection, now: PeopleSection
  * and the overrides without keys that no longer occur.
  * @param shownKeys every person the source gives now, the hidden ones included (the store's `allPersons`). Only complete once the
  *        source is loaded: before, every override would be dropped
+ * @param naturalKeys the source's own order (the store's `sourcePersons`); an `orderKeys` that draws it is dropped
  */
-export function preparePeopleForSave(section: PeopleSection, shownKeys: readonly string[]): PeopleSection {
-  return { ...section, properties: cleaned(section.properties, shownKeys) };
+export function preparePeopleForSave(section: PeopleSection, shownKeys: readonly string[], naturalKeys?: readonly string[]): PeopleSection {
+  const properties = cleaned(section.properties, shownKeys);
+  if (naturalKeys && properties.orderKeys) {
+    // an order that draws the source's own order pins nothing: dropped, so a later reorder of the source reaches this section
+    const drawn = applyPeopleOverrides(naturalKeys.map((key) => ({ key })), { ...properties, hiddenKeys: [] }).map((p) => p.key);
+    if (drawn.length === naturalKeys.length && drawn.every((key, i) => key === naturalKeys[i])) delete properties.orderKeys;
+  }
+  return { ...section, properties };
 }
 
 // ------------------------------------------------------- typing -------------------------------------------------------
