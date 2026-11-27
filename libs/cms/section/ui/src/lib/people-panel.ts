@@ -39,8 +39,9 @@ type MoreField = 'altText' | 'linkedSection' | 'title';
 
 /**
  * The side panel of the people block editor (spec 1.181 §7.4). With a person selected: its name, function, where it comes from and
- * what can be done with it. Without: who sees the section and its texts (`okr-section-config`), «Wer wird gezeigt», «Aussehen», «Mehr»,
- * tags and notes. Every change sets `section` once; nothing is set on init. Picking is left to the editor (`pick`).
+ * what can be done with it. Without: who sees the section, how wide it is and where the intro stands (`okr-section-config`), «Wer wird
+ * gezeigt», «Aussehen», «Mehr», tags and notes. Title, subtitle and intro are typed in the canvas; their errors stand at the top.
+ * Every change sets `section` once; nothing is set on init. Picking is left to the editor (`pick`).
  */
 @Component({
   selector: 'okr-people-panel',
@@ -99,10 +100,12 @@ type MoreField = 'altText' | 'linkedSection' | 'title';
     } @else {
       <!-- an error that no field below shows, so that a missing save banner is never unexplained -->
       @for (error of rest(); track error.field) { <okr-error-note [errors]="error.messages" /> }
+      <!-- title, subtitle and intro are typed in the canvas: their errors stand here -->
+      <okr-error-note [errors]="errorsFor('title')" />
+      <okr-error-note [errors]="errorsFor('subTitle')" />
+      <okr-error-note [errors]="errorsFor('intro')" />
 
       <okr-section-config part="appearance" [headerTitle]="t.article_editor_article_settings()" [formData]="section()" (formDataChange)="set($event)"
-        [currentUser]="currentUser()" [roles]="roles()" [states]="states()" [showAdvanced]="true" [readOnly]="false" [i18n]="t" [errors]="fieldErrors()" />
-      <okr-section-config part="content" [formData]="section()" (formDataChange)="set($event)"
         [currentUser]="currentUser()" [roles]="roles()" [states]="states()" [showAdvanced]="true" [readOnly]="false" [i18n]="t" [errors]="fieldErrors()" />
 
       <ion-card>
@@ -266,7 +269,7 @@ export class PeoplePanel {
 
   // errors: every one stands in exactly one place
   private readonly shown = computed(() => [
-    'name', 'title', 'subTitle', 'intro', 'avatar.', 'hiddenKeys', 'orderKeys', 'persons[',
+    'name', 'title', 'subTitle', 'intro', 'introPosition', 'avatar.', 'hiddenKeys', 'orderKeys', 'persons[',
     ...(this.hasRole('privileged') ? ['tags'] : []), ...(this.hasRole('admin') ? ['notes'] : []),
   ]);
   protected readonly fieldErrors = computed(() => pickErrors(this.errors(), this.shown()));

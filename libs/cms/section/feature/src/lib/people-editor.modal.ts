@@ -1,7 +1,7 @@
 import { Component, DestroyRef, computed, inject, input, linkedSignal, signal, untracked, viewChild, type Signal } from '@angular/core';
 import { AlertController, IonButton, IonContent, IonIcon, IonLabel, IonModalToken, IonSegment, IonSegmentButton, IonSpinner, ToastController } from '@ionic/angular';
 
-import { deviceFor, historyKey, isTypedInto, topOverlay } from '@okr/cms-article-feature';
+import { deviceFor, historyKey, isTypedInto, topOverlay, type ArticleHeaderChange } from '@okr/cms-article-feature';
 import { PeopleEditorGate, SectionService } from '@okr/cms-section-data-access';
 import { PeoplePanel, type PeoplePanelPerson, type PeoplePanelPick } from '@okr/cms-section-ui';
 import {
@@ -92,7 +92,7 @@ const CLOSE_AGAIN_MS = 300;
         </div>
         <div class="work">
           <okr-people-editor-canvas class="canvas" [section]="current()" [selectedKey]="selectedKey()" [device]="device()" [i18n]="t"
-            (selectPerson)="select($event)" (configChange)="onCanvasChange($event)" (add)="pickInto('person')" />
+            (selectPerson)="select($event)" (configChange)="onCanvasChange($event)" (headerChange)="onHeaderChange($event)" (add)="pickInto('person')" />
           <div class="panel">
             <okr-people-panel [section]="current()" (sectionChange)="onSectionChange($event)" [selected]="selectedPerson()" [hiddenCount]="hiddenCount()"
               [groupName]="groupName()" [roles]="roles()" [states]="states()" [currentUser]="currentUser()" [allTags]="allTags()" [i18n]="t" [errors]="errors()"
@@ -207,6 +207,11 @@ export class PeopleEditorModal {
   /** From the panel; a run of typing in one field is one step. */
   protected onSectionChange(section: PeopleSection): void {
     this.apply(section, peopleTypingTag(this.current(), section));
+  }
+
+  /** From the canvas: title, subtitle or intro typed in place; a run of typing in one of them is one step. */
+  protected onHeaderChange(change: ArticleHeaderChange): void {
+    this.onSectionChange({ ...this.current(), [change.field]: change.value });
   }
 
   /** From the canvas: move, hide, show, remove. */

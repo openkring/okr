@@ -1,11 +1,12 @@
 import { Component, computed, effect, inject, input, output } from '@angular/core';
 import { IonButton, IonIcon } from '@ionic/angular';
 
+import { ArticleHeaderEdit, type ArticleHeaderChange } from '@okr/cms-article-feature';
+
 import { PersonsWidget } from '@okr/cms-section-ui';
 import { ARTICLE_PROFILE, hidePeoplePerson, movePeoplePerson, removePeoplePerson, showPeoplePerson, type ArticleEditorI18n, type ArticlePreviewDevice } from '@okr/cms-section-util';
 import type { AvatarInfo, PeopleConfig, PeopleSection } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { OptionalCardHeader } from '@okr/shared-ui';
 import { fill, getAvatarName } from '@okr/shared-util-core';
 
 import { PeopleSectionStore } from './people-section.store';
@@ -14,6 +15,7 @@ import { PeopleSectionStore } from './people-section.store';
  * The canvas of the people block editor (spec 1.181 §7.3): the section drawn by the reader's own `okr-persons-widget`, from the edited
  * (unsaved) section, with every person a block that can be selected. The selected one gets a frame: ↑ ↓, «Ausblenden» / «Wieder zeigen»
  * and, for hand-picked people, «Entfernen». Hidden people stay in place, faded. Alt+↑/↓ moves the selected person, Esc deselects.
+ * Title, subtitle and intro are typed in place, as in the article editor (`okr-article-header-edit`).
  * Moving is by the arrows only: the widget draws the persons itself, so a cdk drag handle in the frame would find no cdkDrag to belong to.
  *
  * It holds its own `PeopleSectionStore`; what the editor needs of it is public below. Only reachable through the lazily loaded editor.
@@ -21,7 +23,7 @@ import { PeopleSectionStore } from './people-section.store';
 @Component({
   selector: 'okr-people-editor-canvas',
   standalone: true,
-  imports: [OptionalCardHeader, PersonsWidget, SvgIconPipe, IonButton, IonIcon],
+  imports: [ArticleHeaderEdit, PersonsWidget, SvgIconPipe, IonButton, IonIcon],
   providers: [PeopleSectionStore],
   host: { '(keydown)': 'onKeydown($event)' },
   styles: [`
@@ -39,7 +41,10 @@ import { PeopleSectionStore } from './people-section.store';
     @let t = i18n();
     @let s = section();
     <div class="stage" [class.auto]="device() === 'auto'" [style.max-width.px]="width()">
-      <okr-optional-card-header [intro]="s.intro" [introPosition]="s.introPosition" [title]="s.title" [subTitle]="s.subTitle" />
+      <!-- typed in place; an empty one shows its name, readers do not see it -->
+      <okr-article-header-edit [title]="s.title ?? ''" [subTitle]="s.subTitle ?? ''" [intro]="s.intro ?? ''" [introPosition]="s.introPosition ?? 'below'"
+        [titlePlaceholder]="t.article_editor_canvas_titlePlaceholder()" [subTitlePlaceholder]="t.article_editor_canvas_subTitlePlaceholder()"
+        [introPlaceholder]="t.article_editor_canvas_introPlaceholder()" (focusin)="selectPerson.emit(undefined)" (headerChange)="headerChange.emit($event)" />
       @if (listName(); as name) { <div class="list-name">{{ name }}</div> }
       @if (persons().length === 0 && !loading()) {
         <div class="empty">
@@ -110,6 +115,8 @@ export class PeopleEditorCanvas {
   public readonly selectPerson = output<string | undefined>();
   /** a change made in the canvas (move, hide, show, remove) */
   public readonly configChange = output<PeopleConfig>();
+  /** title, subtitle or intro typed in the canvas */
+  public readonly headerChange = output<ArticleHeaderChange>();
   /** «+»: add a hand-picked person */
   public readonly add = output<void>();
 
@@ -171,6 +178,8 @@ export class PeopleEditorCanvas {
 
   /** Alt+↑/↓ moves the selected person; Esc deselects it (the widget tells that) and does not close the editor. */
   protected onKeydown(event: KeyboardEvent): void {
+    // keys typed into the title, subtitle or intro belong to the text
+    if ((event.target as Element | null)?.closest?.('[data-canvas-tool]')) return;
     const key = this.selectedKey();
     // a key that undo or another source left behind selects nobody: Esc closes as usual
     if (key === undefined || !this.personKeys().includes(key)) return;
