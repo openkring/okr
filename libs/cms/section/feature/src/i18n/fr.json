@@ -1962,6 +1962,34 @@
     "contact": {
       "label": "Contact",
       "description": "Organisation et personne de contact avec carte et formulaire"
+    },
+    "news": {
+      "label": "Actualités",
+      "description": "Les derniers articles du blog, avec un lien vers toutes les actualités"
+    },
+    "member-age": {
+      "label": "Pyramide des âges",
+      "description": "L'âge des membres, en graphique par année de naissance"
+    },
+    "member-cat": {
+      "label": "Catégories de membres",
+      "description": "La répartition des membres par catégorie, en graphique"
+    },
+    "toc": {
+      "label": "Table des matières",
+      "description": "Liste les sections de cette page ; un clic mène à la section choisie"
+    },
+    "tasks": {
+      "label": "Tâches",
+      "description": "Tes tâches ouvertes, que tu peux terminer ou modifier directement ici"
+    },
+    "messages": {
+      "label": "Messages",
+      "description": "Tes salons de chat, avec le nombre de messages non lus"
+    },
+    "trip-stats": {
+      "label": "Statistiques des sorties",
+      "description": "Le nombre de sorties effectuées, p. ex. par bateau ou par personne"
     }
   },
   "message_center": {

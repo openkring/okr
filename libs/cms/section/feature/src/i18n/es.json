@@ -1962,6 +1962,34 @@
     "contact": {
       "label": "Contacto",
       "description": "Organización y persona de contacto con mapa y formulario"
+    },
+    "news": {
+      "label": "Novedades",
+      "description": "Los últimos artículos del blog, con un enlace a todas las novedades"
+    },
+    "member-age": {
+      "label": "Estructura de edades",
+      "description": "La edad de los socios, en un gráfico por año de nacimiento"
+    },
+    "member-cat": {
+      "label": "Categorías de socios",
+      "description": "Cómo se reparten los socios entre las categorías, en un gráfico"
+    },
+    "toc": {
+      "label": "Índice",
+      "description": "Enumera las secciones de esta página; un clic lleva a la sección elegida"
+    },
+    "tasks": {
+      "label": "Tareas",
+      "description": "Tus tareas pendientes, que puedes completar o cambiar aquí mismo"
+    },
+    "messages": {
+      "label": "Mensajes",
+      "description": "Tus salas de chat, con el número de mensajes sin leer"
+    },
+    "trip-stats": {
+      "label": "Estadísticas de salidas",
+      "description": "Cuántas salidas se hicieron, p. ej. por barco o por persona"
     }
   },
   "message_center": {

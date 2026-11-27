@@ -1962,6 +1962,34 @@
     "contact": {
       "label": "Contact",
       "description": "Organization and contact person with map and contact form"
+    },
+    "news": {
+      "label": "News",
+      "description": "The latest blog articles, with a link to all news"
+    },
+    "member-age": {
+      "label": "Age structure",
+      "description": "How old the members are, as a chart by year of birth"
+    },
+    "member-cat": {
+      "label": "Member categories",
+      "description": "How the members are spread across the categories, as a chart"
+    },
+    "toc": {
+      "label": "Table of contents",
+      "description": "Lists the sections of this page; a click jumps to the chosen section"
+    },
+    "tasks": {
+      "label": "Tasks",
+      "description": "Your open tasks, which you can complete or change right here"
+    },
+    "messages": {
+      "label": "Messages",
+      "description": "Your chat rooms, with the number of unread messages"
+    },
+    "trip-stats": {
+      "label": "Trip statistics",
+      "description": "How many trips were made, e.g. per boat or per person"
     }
   },
   "message_center": {

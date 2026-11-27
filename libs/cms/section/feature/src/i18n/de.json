@@ -1962,6 +1962,34 @@
     "contact": {
       "label": "Kontakt",
       "description": "Organisation und Kontaktperson mit Karte und Kontakt-Formular"
+    },
+    "news": {
+      "label": "Neuigkeiten",
+      "description": "Die neusten Artikel aus dem Blog, mit Link zu allen Neuigkeiten"
+    },
+    "member-age": {
+      "label": "Altersstruktur",
+      "description": "Wie alt die Mitglieder sind, als Diagramm nach Jahrgang"
+    },
+    "member-cat": {
+      "label": "Mitgliederkategorien",
+      "description": "Wie sich die Mitglieder auf die Kategorien verteilen, als Diagramm"
+    },
+    "toc": {
+      "label": "Inhaltsverzeichnis",
+      "description": "Listet die Sektionen dieser Seite auf; ein Klick springt zur gewählten Sektion"
+    },
+    "tasks": {
+      "label": "Aufgaben",
+      "description": "Deine offenen Aufgaben, die du gleich hier erledigen oder ändern kannst"
+    },
+    "messages": {
+      "label": "Nachrichten",
+      "description": "Deine Chat-Räume, mit der Zahl der ungelesenen Nachrichten"
+    },
+    "trip-stats": {
+      "label": "Fahrtenstatistik",
+      "description": "Wie viele Fahrten gemacht wurden, z.B. pro Boot oder pro Person"
     }
   },
   "message_center": {
