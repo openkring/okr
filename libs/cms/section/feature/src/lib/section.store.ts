@@ -9,7 +9,7 @@ import { Geolocation, Position } from '@capacitor/geolocation';
 import { catchError, firstValueFrom, of } from 'rxjs';
 
 import { AppStore, withErrorState } from '@okr/shared-feature';
-import { ArticleSection, ButtonAction, ButtonSection, CategoryItemModel, CategoryListModel, EmailLayoutChoice, IMAGE_CONFIG_SHAPE, ImageActionType, ImageConfig, SectionModel, SectionType, WebsiteCollection, WebsiteModel, articleBlocksOf, withClassicFields } from '@okr/shared-models';
+import { ArticleSection, ButtonAction, ButtonSection, CategoryItemModel, CategoryListModel, EmailLayoutChoice, IMAGE_CONFIG_SHAPE, ImageActionType, ImageConfig, PeopleSection, SectionModel, SectionType, WebsiteCollection, WebsiteModel, articleBlocksOf, withClassicFields } from '@okr/shared-models';
 import { getSystemQuery, chipMatches, generateRandomString, debugData, debugItemLoaded, debugMessage, fill, nameMatches, sanitizeFileName, chatBlockedAlertMessage, isChatBlockedError, EMERGENCY_GROUP_KEY } from '@okr/shared-util-core';
 import { DEFAULT_MIMETYPES, IMAGE_MIMETYPES } from '@okr/shared-constants';
 import { confirm, downloadTextFile, exportCsv, getExportFileName, lazyService, showToast, resourceParams, notify } from '@okr/shared-util-angular';
@@ -17,11 +17,12 @@ import { FirestoreService, ChatStatusService } from '@okr/shared-data-access';
 import { I18nService } from '@okr/shared-i18n';
 
 import { UploadService } from '@okr/avatar-data-access';
-import { ArticleBlocksGate, SectionService } from '@okr/cms-section-data-access';
-import { asEditedSection, createSection, narrowSection, newArticleFrom, SECTION_I18N_KEYS, usesArticleEditor } from '@okr/cms-section-util';
+import { ArticleBlocksGate, PeopleEditorGate, SectionService } from '@okr/cms-section-data-access';
+import { asEditedSection, createSection, narrowSection, newArticleFrom, SECTION_I18N_KEYS, usesArticleEditor, usesPeopleEditor } from '@okr/cms-section-util';
 import { allowedSectionTypesForPage } from '@okr/cms-website-render';
 
 import { openArticleEditor, type OpenedArticleEditor } from './article-editor.loader';
+import { openPeopleEditor } from './people-editor.loader';
 import { activeFirebaseApp } from '@okr/shared-config';
 
 export type Coordinates = {
@@ -55,6 +56,7 @@ export const _SectionStore = signalStore(
   withProps(() => ({
     sectionService: inject(SectionService),
     articleBlocksGate: inject(ArticleBlocksGate),
+    peopleEditorGate: inject(PeopleEditorGate),
     uploadService: inject(UploadService),
     // Lazy: a static import here would drag matrix-js-sdk before the LCP (spec 1.49, F1).
     chatService: lazyService(inject(Injector), () =>
@@ -238,12 +240,19 @@ export const _SectionStore = signalStore(
         let editor: OpenedArticleEditor | undefined;
         try {
           if (section.type === 'article' && !readOnly) await store.articleBlocksGate.load();
+          if (section.type === 'people' && !readOnly) await store.peopleEditorGate.load();
           // the article editor saves by itself (spec 1.175 §7.1)
           if (usesArticleEditor(section, readOnly, store.articleBlocksGate.open())) {
             const isNew = !section.okey;
             const article = isNew ? newArticleFrom(section, store.tenantId(), generateRandomString(20)) : section as ArticleSection;
             const host = { modalController: store.modalController, toastController: store.toastController, errorHandler: store.errorHandler, openFailed: store.i18n.article_openFailed };
             editor = await openArticleEditor(host, article, { isNew, currentUser: store.currentUser(), roles, states, tagModel: 'section' });
+          } else if (usesPeopleEditor(section, readOnly, store.peopleEditorGate.open())) {
+            // like a new article, a new people section gets its key now (spec 1.181 §7.1)
+            const isNew = !section.okey;
+            const people = (isNew ? { ...section, okey: generateRandomString(20) } : section) as PeopleSection;
+            const host = { modalController: store.modalController, toastController: store.toastController, errorHandler: store.errorHandler, openFailed: store.i18n.article_openFailed };
+            editor = await openPeopleEditor(host, people, { isNew, currentUser: store.currentUser(), roles, states, tagModel: 'section' });
           } else {
             const { SectionEditModal } = await import('./section-edit.modal');
             modal = await store.modalController.create({

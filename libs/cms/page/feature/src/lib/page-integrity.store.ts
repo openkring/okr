@@ -20,9 +20,9 @@ import { extractDateFromFileName, extractTagsFromStoragePath, extractTitleFromFi
 import { MenuService } from '@okr/cms-menu-data-access';
 import { MenuModal } from '@okr/cms-menu-feature';
 import { PageService } from '@okr/cms-page-data-access';
-import { ArticleBlocksGate, SectionService } from '@okr/cms-section-data-access';
-import { loadSectionEditModal, openArticleEditor, type ArticleEditorHost, type OpenedArticleEditor } from '@okr/cms-section-feature';
-import { SECTION_I18N_KEYS, asEditedSection, isImageLinked, newArticleFrom, usesArticleEditor } from '@okr/cms-section-util';
+import { ArticleBlocksGate, PeopleEditorGate, SectionService } from '@okr/cms-section-data-access';
+import { loadSectionEditModal, openArticleEditor, openPeopleEditor, type ArticleEditorHost, type OpenedArticleEditor } from '@okr/cms-section-feature';
+import { SECTION_I18N_KEYS, asEditedSection, isImageLinked, newArticleFrom, usesArticleEditor, usesPeopleEditor } from '@okr/cms-section-util';
 
 import { PAGE_I18N_KEYS } from '@okr/cms-page-util';
 
@@ -94,6 +94,7 @@ export const PageIntegrityStore = signalStore(
     firestoreService: inject(FirestoreService),
     sectionService: inject(SectionService),
     articleBlocksGate: inject(ArticleBlocksGate),
+    peopleEditorGate: inject(PeopleEditorGate),
     documentService: inject(DocumentService),
     menuService: inject(MenuService),
     pageService: inject(PageService),
@@ -204,10 +205,14 @@ export const PageIntegrityStore = signalStore(
         let editor: OpenedArticleEditor | undefined;
         try {
           if (section.type === 'article') await store.articleBlocksGate.load();
+          if (section.type === 'people') await store.peopleEditorGate.load();
           // the article editor saves by itself (spec 1.175 §7.1)
           if (usesArticleEditor(section, false, store.articleBlocksGate.open())) {
             const options = { isNew: false, currentUser, roles, states, tagModel: 'section_default' };
             editor = await openArticleEditor(articleEditorHost, section as ArticleSection, options);
+          } else if (usesPeopleEditor(section, false, store.peopleEditorGate.open())) {
+            const options = { isNew: false, currentUser, roles, states, tagModel: 'section_default' };
+            editor = await openPeopleEditor(articleEditorHost, section as PeopleSection, options);
           } else {
             modal = await store.modalController.create({
               component: await loadSectionEditModal(),
