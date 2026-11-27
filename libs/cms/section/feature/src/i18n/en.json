@@ -176,7 +176,7 @@
       "remove": "Remove"
     },
     "look": {
-      "title": "Emphasis"
+      "title": "Appearance"
     },
     "blocks": {
       "readonly": "This article is made of blocks. You can edit its text, images and buttons in a newer version of the app."
@@ -199,7 +199,8 @@
         "add": "Add {block}",
         "hint": "Click a block to add it at the end, or drag it into place.",
         "hintTap": "Tap a block to add it at the end.",
-        "full": "An article can have at most {max} blocks."
+        "full": "An article can have at most {max} blocks.",
+        "metaToggle": "Show tags and notes"
       },
       "panel": {
         "label": "Settings for: {block}",
@@ -272,11 +273,6 @@
           "title": "Teaser image",
           "empty": "No teaser image yet",
           "helper": "The teaser image appears in lists and previews, not in the article. Without one, the first image of the article is used."
-        },
-        "date": {
-          "label": "Date",
-          "placeholder": "DD.MM.YYYY",
-          "helper": "News are sorted by this date."
         }
       },
       "error": {
@@ -1649,7 +1645,9 @@
         "below": "As an introduction below the title",
         "helper": "Above the title the intro is a small line; below it, a short paragraph."
       },
-      "titleCard": "Section title"
+      "titleCard": "Section title",
+      "sectionCard": "Section",
+      "publicationCard": "Publication"
     }
   },
   "slider": {

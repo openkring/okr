@@ -106,10 +106,11 @@ import { ImageEditModal } from './image-edit.modal';
             }
           } @else {
             <!-- Casting $event to $any is a temporary fix for https://github.com/ionic-team/ionic-framework/issues/24245 -->
-            <ion-reorder-group [disabled]="readOnly()" (ionItemReorder)="reorder($any($event))">
+            <ion-reorder-group [disabled]="readOnly() || !multiple()" (ionItemReorder)="reorder($any($event))">
               @for(img of images(); track $index) {
                 <ion-item (click)="showActions(img, $index)" [button]="!readOnly()">
-                  @if(!readOnly()) {
+                  <!-- a single picture (e.g. the teaser picture) has nothing to reorder -->
+                  @if(!readOnly() && multiple()) {
                     <ion-reorder slot="start" />
                   }
                   <ion-thumbnail slot="start">

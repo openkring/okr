@@ -1,8 +1,9 @@
 import { Component, computed, DestroyRef, inject, input, model, output } from '@angular/core';
-import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonItem, IonLabel, IonList, IonNote, ModalController } from '@ionic/angular';
+import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonIcon, IonItem, IonLabel, IonList, IonNote, ModalController } from '@ionic/angular';
 
 import { ArticleConfig, ArticleSection, CategoryListModel, ImageConfig, isSameValue, RoleName, SectionModel, UserModel } from '@okr/shared-models';
-import { Chips, DateInput, DateInputI18n, ErrorNote, TextareaInput, TextareaInputI18n } from '@okr/shared-ui';
+import { SvgIconPipe } from '@okr/shared-pipes';
+import { Chips, ErrorNote, TextareaInput, TextareaInputI18n } from '@okr/shared-ui';
 import { fill, hasRole } from '@okr/shared-util-core';
 import { ArticleEditorI18n, ArticleUpload, coverErrors, drawableImages, getFieldErrors, ImageUploadTarget, pickErrors, restErrors, SectionErrors, shownArticleFields } from '@okr/cms-section-util';
 
@@ -13,8 +14,9 @@ import { SectionConfiguration } from './section-configuration';
 
 /**
  * The settings of the article itself (spec 1.175 §7.3), shown while no block is selected. In the tab «Blöcke» (`part` 'blocks'), below
- * the library: tags and notes. In the tab «Artikel» ('article'): who sees it, its width, name and key, its look («Hervorhebung»),
- * teaser picture and date. 'all' shows both. Title, subtitle and intro are typed in the article itself; their errors stand at the top
+ * the library: tags and notes, while `showMeta`. In the tab «Artikel» ('article'): «Sektion» (type
+ * and key behind the toggle, name), «Publikation», «Darstellung» and, behind the toggle, the teaser picture. The date is not edited
+ * here: it is stamped on creation and shown only on news pages (`articleSubTitleLine`). 'all' shows both. Title, subtitle and intro are typed in the article itself; their errors stand at the top
  * of both tabs. Every change sets `section` once; nothing is set on init.
  * Uploaded pictures go to `onUpload` instead, because they may arrive when a block is selected.
  */
@@ -22,12 +24,13 @@ import { SectionConfiguration } from './section-configuration';
   selector: 'okr-article-panel',
   standalone: true,
   imports: [
-    Chips, DateInput, ErrorNote, TextareaInput, ImagesConfiguration, SectionConfiguration,
-    IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonItem, IonLabel, IonList, IonNote,
+    Chips, ErrorNote, TextareaInput, ImagesConfiguration, SectionConfiguration, SvgIconPipe,
+    IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonIcon, IonItem, IonLabel, IonList, IonNote,
   ],
   host: { role: 'region', '[attr.aria-label]': 'i18n().article_editor_article_title()' },
   styles: [ARTICLE_PANEL_STYLES, `
     .error-card { border: 1px solid var(--ion-color-danger); }
+    .panel-head .details-toggle { margin-inline-start: auto; }
   `],
   template: `
     @if (errorBlocks().length > 0) {
@@ -50,13 +53,21 @@ import { SectionConfiguration } from './section-configuration';
     <okr-error-note [errors]="errorsFor('intro')" />
 
     @if (part() !== 'blocks') {
-      <div class="panel-head"><h2>{{ i18n().article_editor_article_title() }}</h2></div>
+      <div class="panel-head">
+        <h2>{{ i18n().article_editor_article_title() }}</h2>
+        <!-- type and key of the section, and the teaser picture -->
+        <ion-button class="details-toggle" fill="clear" size="small" [title]="i18n().form_advanced_label()" [attr.aria-label]="i18n().form_advanced_label()"
+          [attr.aria-pressed]="showDetails()" (click)="showDetails.set(!showDetails())">
+          <ion-icon slot="icon-only" src="{{ (showDetails() ? 'toggle' : 'toggle-off') | svgIcon }}" aria-hidden="true" />
+        </ion-button>
+      </div>
       @for (note of outdatedNotes(); track note) { <ion-note class="note outdated">{{ note }}</ion-note> }
 
-      <!-- «Einstellungen» (who sees it, width, name) and «Hervorhebung» (emphasis, background, intro position) -->
-      <okr-section-config part="appearance" [headerTitle]="i18n().article_editor_article_settings()" [formData]="section()" (formDataChange)="set($event)"
+      <!-- «Sektion» (type, key, name), «Publikation» (who sees it) and «Darstellung» (width, background, text colour, intro position) -->
+      <okr-section-config part="appearance" [showIds]="showDetails()" [headerTitle]="i18n().article_editor_article_settings()" [formData]="section()" (formDataChange)="set($event)"
         [currentUser]="currentUser()" [roles]="roles()" [states]="states()" [showAdvanced]="true" [readOnly]="false" [i18n]="i18n()" [errors]="fieldErrors()" />
 
+      @if (showDetails() || hasCoverErrors()) {
       <ion-card>
         <ion-card-header><ion-card-title>{{ i18n().article_editor_article_cover_title() }}</ion-card-title></ion-card-header>
         <ion-card-content class="ion-no-padding">
@@ -72,20 +83,16 @@ import { SectionConfiguration } from './section-configuration';
           <ion-note class="note">{{ i18n().article_editor_article_cover_helper() }}</ion-note>
         </ion-card-content>
       </ion-card>
-
-      <ion-card>
-        <ion-card-content class="ion-no-padding">
-          <okr-date-input [i18n]="dateI18n()" [storeDate]="date()" (storeDateChange)="setDate($event)" [readOnly]="false" />
-        </ion-card-content>
-      </ion-card>
+      }
     }
 
     @if (part() !== 'article') {
-      @if (hasRole('privileged')) {
+      <!-- hidden unless the toggle beside «Blöcke» shows them, or they hold an error -->
+      @if (hasRole('privileged') && (showMeta() || errorsFor('tags').length > 0)) {
         <okr-chips chipName="tag" [storedChips]="section().tags ?? ''" (storedChipsChange)="setField('tags', $event)" [allChips]="allTags()" [readOnly]="false" />
         <okr-error-note [errors]="errorsFor('tags')" />
       }
-      @if (hasRole('admin')) {
+      @if (hasRole('admin') && (showMeta() || errorsFor('notes').length > 0)) {
         <okr-textarea-input variant="card" [i18n]="notesI18n()" [value]="section().notes ?? ''" (valueChange)="setField('notes', $event)" [errors]="errorsFor('notes')" [readOnly]="false" />
       }
     }
@@ -117,6 +124,10 @@ export class ArticlePanel {
   public readonly i18n = input.required<ArticleEditorI18n>();
   /** which tab of the editor's panel: 'blocks' (tags, notes), 'article' (settings, look, teaser picture, date) or both */
   public readonly part = input<'blocks' | 'article' | 'all'>('all');
+  /** tags and notes are shown (the toggle beside «Blöcke»); with an error they are shown anyway */
+  public readonly showMeta = input(false);
+  /** the toggle beside «Artikel»: type and key of the section, and the teaser picture (with an error it is shown anyway) */
+  public readonly showDetails = model(false);
 
   // outputs
   public readonly selectBlock = output<string>();
@@ -125,17 +136,11 @@ export class ArticlePanel {
   protected readonly covers = computed<ImageConfig[]>(() => drawableImages([this.section().properties?.cover]));
   protected readonly choices = computed(() => this.articleImages().filter((image) => image.url !== this.covers()[0]?.url));
   protected readonly coverErrors = computed(() => coverErrors(this.errors()));
+  protected readonly hasCoverErrors = computed(() => Object.values(this.coverErrors()).some((messages) => messages.length > 0));
   protected readonly uploadTarget = computed<ImageUploadTarget>(() => {
     const send = this.onUpload();
     return { added: (images) => send({ kind: 'images', place: 'cover', images }), details: (details) => send({ kind: 'details', details }) };
   });
-
-  // date
-  protected readonly date = computed(() => this.section().properties?.datePublished ?? '');
-  protected readonly dateI18n = computed<DateInputI18n>(() => ({
-    name: 'datePublished', label: this.i18n().article_editor_article_date_label(),
-    placeholder: this.i18n().article_editor_article_date_placeholder(), helper: this.i18n().article_editor_article_date_helper(),
-  }));
 
   protected readonly notesI18n = computed(() => ({ name: 'notes', label: this.i18n().notes_label(), placeholder: this.i18n().notes_placeholder() } as TextareaInputI18n));
   private readonly shown = computed(() => shownArticleFields(this.section(), { admin: this.hasRole('admin'), privileged: this.hasRole('privileged') }));
@@ -161,7 +166,7 @@ export class ArticlePanel {
   }
 
   /** Sets a property, or removes it. */
-  private setProperty<K extends 'cover' | 'datePublished'>(key: K, value: ArticleConfig[K]): void {
+  private setProperty<K extends 'cover'>(key: K, value: ArticleConfig[K]): void {
     const properties = { ...this.section().properties };
     if (value === undefined) delete properties[key];
     else properties[key] = value;
@@ -170,10 +175,6 @@ export class ArticlePanel {
 
   protected setCover(cover: ImageConfig | undefined): void {
     this.setProperty('cover', cover);
-  }
-
-  protected setDate(date: string): void {
-    this.setProperty('datePublished', date === '' ? undefined : date);
   }
 
   protected async pick(): Promise<void> {

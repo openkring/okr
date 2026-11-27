@@ -9,7 +9,7 @@ import {
 } from '@okr/cms-section-util';
 import type { ImageConfig, MailBlock, MailBlockType, UserModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
-import type { MailEventLine } from '@okr/shared-util-core';
+import { hasRole, type MailEventLine } from '@okr/shared-util-core';
 
 import { ArticleCanvas, type CanvasCaret } from './article-canvas';
 import type { ArticleHeaderChange } from './article-header-edit';
@@ -34,8 +34,9 @@ export type ArticlePanelPart = ArticlePanelTab | 'all';
  * - `errors` are those of the one suite it runs, as `getErrors()` gives them (`blocks.<id>.<field>`).
  * - `onUpload` is a stable function, not an output: an upload may end when the surface is gone, and an output of it tells nothing then.
  *   The host puts the upload into the history: `surface.change(go) || history.update(go)` with `go = (history) => uploadInto(history, upload)`.
- * - What the panel shows while no block is selected stands in `<ng-template #nothingSelected let-part>`; it is created anew each time. An article's
- *   panel has two tabs: «Blöcke» (the library, then the template with `part` 'blocks') and «Artikel» (the template with `part` 'article').
+ * - What the panel shows while no block is selected stands in `<ng-template #nothingSelected let-part let-meta="meta" let-details="details">`; it is created anew each time. An article's
+ *   panel has two tabs: «Blöcke» (the library, then the template with `part` 'blocks'; `meta` says whether
+ *   the toggle beside «Blöcke» shows tags and notes; `details` is the signal of the toggle beside «Artikel») and «Artikel» (the template with `part` 'article').
  *   A mail's panel has none: the library, then the template with `part` 'all'.
  *   `[barEnd]` stands at the end of the toolbar row, `[belowBar]` between it and the canvas.
  * - Texts come as for an article; a mail's own are put in their place (`editorTexts`).
@@ -108,15 +109,16 @@ export type ArticlePanelPart = ArticlePanelTab | 'all';
           @if (tab() === 'blocks') {
             <ng-container [ngTemplateOutlet]="library" />
           }
-          @if (nothingSelected(); as template) { <ng-container [ngTemplateOutlet]="template" [ngTemplateOutletContext]="{ $implicit: tab() }" /> }
+          @if (nothingSelected(); as template) { <ng-container [ngTemplateOutlet]="template" [ngTemplateOutletContext]="{ $implicit: tab(), meta: metaShown(), details: detailsShown }" /> }
         } @else {
           <ng-container [ngTemplateOutlet]="library" />
-          @if (nothingSelected(); as template) { <ng-container [ngTemplateOutlet]="template" [ngTemplateOutletContext]="{ $implicit: 'all' }" /> }
+          @if (nothingSelected(); as template) { <ng-container [ngTemplateOutlet]="template" [ngTemplateOutletContext]="{ $implicit: 'all', meta: metaShown(), details: detailsShown }" /> }
         }
       </div>
     </div>
     <ng-template #library>
-      <okr-article-block-library [allowed]="profile().types" [disabled]="!canAdd()" [dragEnabled]="!phone()" [dropLists]="canvas().dropLists()" [i18n]="texts()" (add)="add($event)" />
+      <okr-article-block-library [allowed]="profile().types" [disabled]="!canAdd()" [dragEnabled]="!phone()" [dropLists]="canvas().dropLists()" [i18n]="texts()" (add)="add($event)"
+        [metaToggle]="hasMeta()" [(metaShown)]="metaShown" />
     </ng-template>
   `,
 })
@@ -182,6 +184,11 @@ export class ArticleEditorSurface {
   /** an article's panel while no block is selected: its blocks (library, tags, notes) or the article itself (settings, look, teaser) */
   protected readonly hasTabs = computed(() => this.profile().kind === 'article' && !!this.nothingSelected());
   protected readonly tab = signal<ArticlePanelTab>('blocks');
+  /** an article's tags and notes, below the library: only for those who may edit them; hidden until the toggle in «Blöcke» shows them */
+  protected readonly hasMeta = computed(() => this.hasTabs() && hasRole('privileged', this.currentUser()));
+  protected readonly metaShown = signal(false);
+  /** the toggle beside «Artikel» (type, key, teaser picture); kept here, so that it outlives a change of tab */
+  protected readonly detailsShown = signal(false);
   protected readonly phone = mediaSignal('(width < 768px)');
   protected readonly device = computed(() => deviceFor(this.chosenDevice(), this.phone(), this.profile()));
 

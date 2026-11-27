@@ -29,6 +29,7 @@ export const ARTICLE_EDITOR_I18N_KEYS = {
   article_editor_library_hint:                  PFX + 'article.editor.library.hint',
   article_editor_library_hintTap:               PFX + 'article.editor.library.hintTap',
   article_editor_library_full:                  PFX + 'article.editor.library.full',
+  article_editor_library_metaToggle:            PFX + 'article.editor.library.metaToggle',
   // the panel of a block
   article_editor_panel_label:                   PFX + 'article.editor.panel.label',
   article_editor_panel_nothing:                 PFX + 'article.editor.panel.nothing',
@@ -81,9 +82,6 @@ export const ARTICLE_EDITOR_I18N_KEYS = {
   article_editor_article_cover_title:           PFX + 'article.editor.article.cover.title',
   article_editor_article_cover_empty:           PFX + 'article.editor.article.cover.empty',
   article_editor_article_cover_helper:          PFX + 'article.editor.article.cover.helper',
-  article_editor_article_date_label:            PFX + 'article.editor.article.date.label',
-  article_editor_article_date_placeholder:      PFX + 'article.editor.article.date.placeholder',
-  article_editor_article_date_helper:           PFX + 'article.editor.article.date.helper',
   // errors and translations
   article_editor_error_title:                   PFX + 'article.editor.error.title',
   article_editor_error_mark:                    PFX + 'article.editor.error.mark',

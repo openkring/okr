@@ -176,7 +176,7 @@
       "remove": "Entfernen"
     },
     "look": {
-      "title": "Hervorhebung"
+      "title": "Darstellung"
     },
     "blocks": {
       "readonly": "Dieser Artikel besteht aus Blöcken. Text, Bilder und Buttons kannst du erst in einer neueren Version der App bearbeiten."
@@ -199,7 +199,8 @@
         "add": "{block} hinzufügen",
         "hint": "Klicke auf einen Block, um ihn am Ende einzufügen, oder ziehe ihn an seinen Platz.",
         "hintTap": "Tippe auf einen Block, um ihn am Ende einzufügen.",
-        "full": "Ein Artikel kann höchstens {max} Blöcke haben."
+        "full": "Ein Artikel kann höchstens {max} Blöcke haben.",
+        "metaToggle": "Tags und Notizen zeigen"
       },
       "panel": {
         "label": "Einstellungen zu: {block}",
@@ -272,11 +273,6 @@
           "title": "Teaserbild",
           "empty": "Noch kein Teaserbild",
           "helper": "Das Teaserbild erscheint in Listen und Vorschauen, nicht im Artikel. Ohne Teaserbild wird das erste Bild des Artikels genommen."
-        },
-        "date": {
-          "label": "Datum",
-          "placeholder": "TT.MM.JJJJ",
-          "helper": "Nach diesem Datum werden News sortiert."
         }
       },
       "error": {
@@ -1649,7 +1645,9 @@
         "below": "Als Einleitung unter dem Titel",
         "helper": "Als Überzeile steht das Intro klein über dem Titel, als Einleitung als kurzer Absatz darunter."
       },
-      "titleCard": "Sektions-Titel"
+      "titleCard": "Sektions-Titel",
+      "sectionCard": "Sektion",
+      "publicationCard": "Publikation"
     }
   },
   "slider": {

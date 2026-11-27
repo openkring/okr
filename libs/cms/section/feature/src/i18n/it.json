@@ -176,7 +176,7 @@
       "remove": "Rimuovi"
     },
     "look": {
-      "title": "Evidenza"
+      "title": "Aspetto"
     },
     "blocks": {
       "readonly": "Questo articolo è composto da blocchi. Potrai modificare testo, immagini e pulsanti in una versione più recente dell’app."
@@ -199,7 +199,8 @@
         "add": "Aggiungi: {block}",
         "hint": "Fai clic su un blocco per aggiungerlo alla fine, oppure trascinalo al suo posto.",
         "hintTap": "Tocca un blocco per aggiungerlo alla fine.",
-        "full": "Un articolo può avere al massimo {max} blocchi."
+        "full": "Un articolo può avere al massimo {max} blocchi.",
+        "metaToggle": "Mostra tag e note"
       },
       "panel": {
         "label": "Impostazioni: {block}",
@@ -272,11 +273,6 @@
           "title": "Immagine di anteprima",
           "empty": "Ancora nessuna immagine di anteprima",
           "helper": "L’immagine di anteprima appare negli elenchi e nelle anteprime, non nell’articolo. Senza, viene usata la prima immagine dell’articolo."
-        },
-        "date": {
-          "label": "Data",
-          "placeholder": "GG.MM.AAAA",
-          "helper": "Le notizie sono ordinate in base a questa data."
         }
       },
       "error": {
@@ -1649,7 +1645,9 @@
         "below": "Come introduzione sotto il titolo",
         "helper": "Come occhiello l’intro appare piccola sopra il titolo; come introduzione, un breve paragrafo sotto."
       },
-      "titleCard": "Titolo della sezione"
+      "titleCard": "Titolo della sezione",
+      "sectionCard": "Sezione",
+      "publicationCard": "Pubblicazione"
     }
   },
   "slider": {

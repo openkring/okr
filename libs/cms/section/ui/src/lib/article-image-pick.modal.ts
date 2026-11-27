@@ -1,4 +1,4 @@
-import { Component, inject, input } from '@angular/core';
+import { Component, computed, inject, input } from '@angular/core';
 import { IonContent, IonNote, ModalController } from '@ionic/angular';
 
 import { ENV } from '@okr/shared-config';
@@ -17,7 +17,9 @@ import { ArticleEditorI18n } from '@okr/cms-section-util';
   standalone: true,
   imports: [Header, ImgDirective, IonContent, IonNote],
   styles: [`
-    .choices { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 12px; padding: 16px; }
+    /* modal-fit takes the width of this grid: up to four columns of 120px, no wider than the screen */
+    .choices { display: grid; grid-template-columns: repeat(var(--columns), 120px); gap: 12px; padding: 16px; max-width: 100%; box-sizing: border-box; }
+    @media (width < 768px) { .choices { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); } }
     .pick { display: block; width: 100%; padding: 0; border: 1px solid var(--ion-color-light-shade); border-radius: 6px; overflow: hidden; background: transparent; color: inherit; font: inherit; text-align: start; cursor: pointer; }
     .pick:focus-visible { outline: 2px solid var(--ion-color-primary); outline-offset: 2px; }
     .pick img { display: block; width: 100%; aspect-ratio: 1; object-fit: cover; background: var(--ion-color-light); }
@@ -30,7 +32,7 @@ import { ArticleEditorI18n } from '@okr/cms-section-util';
       @if (images().length === 0) {
         <div class="empty"><ion-note>{{ i18n().article_editor_image_pickEmpty() }}</ion-note></div>
       } @else {
-        <div class="choices">
+        <div class="choices" [style.--columns]="columns()">
           @for (image of images(); track image.url) {
             <button type="button" class="pick" [attr.aria-label]="pickLabel(image, $index)" (click)="select(image)">
               <img okrImg [src]="thumbnailUrl(image)" alt="" />
@@ -50,6 +52,8 @@ export class ArticleImagePickModal {
   public readonly images = input.required<ImageConfig[]>();
   public readonly i18n = input.required<ArticleEditorI18n>();
 
+  protected readonly columns = computed(() => Math.min(Math.max(this.images().length, 1), 4));
+
   protected nameOf(image: ImageConfig, index: number): string {
     return image.altText || image.label || fill(this.i18n().article_editor_image_unnamed(), { n: index + 1 });
   }
@@ -67,9 +71,10 @@ export class ArticleImagePickModal {
   }
 }
 
-/** Opens the picker; the chosen picture, or undefined. */
+/** Opens the picker; the chosen picture, or undefined. With a single picture there is nothing to choose: it is taken without a dialog. */
 export async function pickArticleImage(modalController: ModalController, images: ImageConfig[], i18n: ArticleEditorI18n): Promise<ImageConfig | undefined> {
-  const modal = await modalController.create({ component: ArticleImagePickModal, componentProps: { images, i18n } });
+  if (images.length === 1) return { ...images[0] };
+  const modal = await modalController.create({ component: ArticleImagePickModal, cssClass: 'modal-fit', componentProps: { images, i18n } });
   await modal.present();
   const { data, role } = await modal.onWillDismiss<ImageConfig>();
   return role === 'confirm' ? data : undefined;

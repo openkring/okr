@@ -1,10 +1,11 @@
 import { Component, computed, input, linkedSignal, model, signal } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
-import { IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonItem, IonLabel, IonNote, IonRow, IonSelect, IonSelectOption } from '@ionic/angular';
+import { IonButton, IonCard, IonIcon, IonCardContent, IonCardHeader, IonCardTitle, IonCol, IonGrid, IonItem, IonLabel, IonNote, IonRow, IonSelect, IonSelectOption } from '@ionic/angular';
 
 import { ARTICLE_TEXT_COLORS, ArticleConfig, ArticleTextColor, CategoryListModel, RoleName, SECTION_INTRO_POSITIONS, SectionIntroPosition, SectionModel, UserModel } from '@okr/shared-models';
 import { ButtonCopy, ButtonCopyI18n, CategorySelect, Color, ErrorNote, TextareaInput, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { coerceBoolean, hasRole } from '@okr/shared-util-core';
+import { SvgIconPipe } from '@okr/shared-pipes';
 import { COMMENT_LENGTH, LONG_NAME_LENGTH, NAME_LENGTH } from '@okr/shared-constants';
 import { SectionAddChip, SectionAddChips } from './section-add-chips';
 import { articleUses, getFieldErrors, parseSectionWidths, SECTION_SCREENS, SectionErrors, SectionI18n, SectionScreen, sectionWidthChoices, setSectionWidth } from '@okr/cms-section-util';
@@ -13,8 +14,8 @@ export const PFX = '@cms/section/feature.';
 
 /**
  * Which part of the base settings to render (spec 1.171): 'all' for every section type but the article;
- * the article form splits them into its «Inhalt» tab (title, subtitle, intro) and its «Darstellung» tab
- * (visibility, width, name, emphasis, background, intro position).
+ * the panel of a graphical editor renders 'appearance' as three cards: «Sektion» (type, key, name), «Publikation» (role, state)
+ * and «Darstellung» (width; an article's background and text colour; where the intro stands). 'content': title, subtitle, intro.
  */
 export type SectionConfigPart = 'all' | 'content' | 'appearance';
 
@@ -33,7 +34,7 @@ const EMPHASES: ArticleEmphasis[] = ['none', 'banner'];
   standalone: true,
   imports: [
     IonButton, IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonGrid, IonLabel, IonItem, IonSelect, IonSelectOption, IonNote,
-    TextInput, TextareaInput, CategorySelect, ButtonCopy, Color, NgTemplateOutlet,
+    IonIcon, SvgIconPipe, TextInput, TextareaInput, CategorySelect, ButtonCopy, Color, NgTemplateOutlet,
     ErrorNote, SectionAddChips
   ],
   styles: [`
@@ -41,79 +42,132 @@ const EMPHASES: ArticleEmphasis[] = ['none', 'banner'];
     .background okr-color { flex: 1; min-width: 0; }
   `],
   template: `
-    <!-- what the section is and who sees it: at the top, apart from its content (the article: in «Darstellung») -->
-    @if (!journalMode() && part() !== 'content') {
+    <!-- what the section is and who sees it: at the top, apart from its content -->
+    @if (!journalMode() && part() === 'all') {
       <ion-card>
         <ion-card-header>
           <ion-card-title>{{ headerTitle() }}</ion-card-title>
         </ion-card-header>
         <ion-card-content>
           <ion-grid>
-            @if (hasRole('admin')) {
-              <ion-row>
-                <ion-col size="12" size-md="6">
-                  <ion-item lines="none">
-                    <ion-label>{{ i18n().default_type() }}: {{ type() }}</ion-label>
-                  </ion-item>
-                </ion-col>
-                @if(okey(); as okey) {
-                  <ion-col size="12" size-md="6">
-                    <ion-item lines="none">
-                      <ion-label>{{ i18n().default_id() }}: {{ okey }}</ion-label>
-                      <okr-button-copy [i18n]="buttonCopyI18n()" [value]="okey" />
-                    </ion-item>
-                  </ion-col>
-                }
-              </ion-row>
-            }
-            <ion-row>
-              <ion-col size="6">
-                <ion-item lines="none">
-                  <ion-label>{{ i18n().form_roleNeeded() }}</ion-label>
-                </ion-item>
-              </ion-col>
-              <ion-col size="6">
-                <okr-cat-select [category]="roles()!" [selectedItemName]="roleNeeded()" (selectedItemNameChange)="onFieldChange('roleNeeded', $event)" [withAll]="false" [readOnly]="isReadOnly()" />
-              </ion-col>
-              <ion-col size="6">
-                <ion-item lines="none">
-                  <ion-label>{{ i18n().form_state() }}</ion-label>
-                </ion-item>
-              </ion-col>
-              <ion-col size="6">
-                <okr-cat-select [category]="states()!" [selectedItemName]="state()" (selectedItemNameChange)="onFieldChange('state', $event)" [withAll]="false" [readOnly]="isReadOnly()" />
-              </ion-col>
-            </ion-row>
-            <!-- how wide the section is on the page, per screen size (colSize); narrower neighbours stand side by side -->
-            <ion-row>
-              @for (screen of screens; track screen) {
-                <ion-col size="12" size-md="4">
-                  <ion-select [label]="widthLabels()[screen]" labelPlacement="stacked" interface="popover"
-                              [value]="widths()[screen]" [disabled]="isReadOnly()"
-                              (ionChange)="onWidthChange(screen, $event.detail.value)">
-                    @for (w of widthChoices()[screen]; track w) {
-                      <ion-select-option [value]="w">{{ widthLabel(w) }}</ion-select-option>
-                    }
-                  </ion-select>
-                </ion-col>
-              }
-              <ion-col size="12">
-                <ion-note>{{ i18n().section_config_width_helper() }}</ion-note>
-              </ion-col>
-            </ion-row>
-            <!-- the article: its technical name sits with the other settings of «Darstellung» (spec 1.171) -->
-            @if (part() === 'appearance') {
-              <ion-row>
-                <ion-col size="12">
-                  <okr-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" [maxLength]="nameMaxLength" [readOnly]="isReadOnly()" />
-                  <okr-error-note [errors]="errorsFor('name')" />
-                </ion-col>
-              </ion-row>
-            }
+            @if (hasRole('admin')) { <ion-row><ng-container [ngTemplateOutlet]="ids" /></ion-row> }
+            <ion-row><ng-container [ngTemplateOutlet]="publication" /></ion-row>
+            <ion-row><ng-container [ngTemplateOutlet]="widthCols" /></ion-row>
           </ion-grid>
         </ion-card-content>
       </ion-card>
     }
+
+    <!-- the panel of a graphical editor (spec 1.171): «Sektion», «Publikation», «Darstellung» -->
+    @if (part() === 'appearance') {
+      <ion-card>
+        <ion-card-header><ion-card-title>{{ i18n().section_config_sectionCard() }}</ion-card-title></ion-card-header>
+        <ion-card-content>
+          <ion-grid>
+            @if (showIds() && hasRole('admin')) { <ion-row><ng-container [ngTemplateOutlet]="ids" /></ion-row> }
+            <ion-row>
+              <ion-col size="12">
+                <okr-text-input [i18n]="nameI18n()" [value]="name()" (valueChange)="onFieldChange('name', $event)" [maxLength]="nameMaxLength" [readOnly]="isReadOnly()" />
+                <okr-error-note [errors]="errorsFor('name')" />
+              </ion-col>
+            </ion-row>
+          </ion-grid>
+        </ion-card-content>
+      </ion-card>
+
+      <ion-card>
+        <ion-card-header><ion-card-title>{{ i18n().section_config_publicationCard() }}</ion-card-title></ion-card-header>
+        <ion-card-content>
+          <ion-grid><ion-row><ng-container [ngTemplateOutlet]="publication" /></ion-row></ion-grid>
+        </ion-card-content>
+      </ion-card>
+
+      <!-- width; an article also its background and text colour; any section where its intro stands, once it has one -->
+      <ion-card>
+        <ion-card-header><ion-card-title>{{ i18n().article_look_title() }}</ion-card-title></ion-card-header>
+        <ion-card-content>
+          <ion-grid>
+            <ion-row><ng-container [ngTemplateOutlet]="widthCols" /></ion-row>
+            <ion-row>
+              @if (isArticle()) { <ng-container [ngTemplateOutlet]="look" /> }
+              @if (hasIntro()) {
+                <ion-col size="12" size-md="6">
+                  <ion-select [label]="i18n().section_config_introPosition_label()" labelPlacement="stacked"
+                              [value]="introPosition()" [disabled]="isReadOnly()"
+                              (ionChange)="onFieldChange('introPosition', $event.detail.value)">
+                    @for (p of introPositions; track p) {
+                      <ion-select-option [value]="p">{{ introPositionLabels()[p] }}</ion-select-option>
+                    }
+                  </ion-select>
+                  <ion-note>{{ i18n().section_config_introPosition_helper() }}</ion-note>
+                </ion-col>
+              }
+              <ion-col size="12">
+                <okr-error-note [errors]="errorsFor('introPosition')" />
+              </ion-col>
+            </ion-row>
+          </ion-grid>
+          @if (isArticle() && !showBackground()) {
+            <okr-section-add-chips [chips]="backgroundChip()" [label]="i18n().article_add_label()" [readOnly]="isReadOnly()" (add)="onAdd($event)" />
+          }
+        </ion-card-content>
+      </ion-card>
+    }
+
+    <!-- type and key, for admins -->
+    <ng-template #ids>
+      <ion-col size="12" size-md="6">
+        <ion-item lines="none">
+          <ion-label>{{ i18n().default_type() }}: {{ type() }}</ion-label>
+        </ion-item>
+      </ion-col>
+      @if(okey(); as okey) {
+        <ion-col size="12" size-md="6">
+          <ion-item lines="none">
+            <ion-label>{{ i18n().default_id() }}: {{ okey }}</ion-label>
+            <okr-button-copy [i18n]="buttonCopyI18n()" [value]="okey" />
+          </ion-item>
+        </ion-col>
+      }
+    </ng-template>
+
+    <!-- who sees it -->
+    <ng-template #publication>
+      <ion-col size="6">
+        <ion-item lines="none">
+          <ion-label>{{ i18n().form_roleNeeded() }}</ion-label>
+        </ion-item>
+      </ion-col>
+      <ion-col size="6">
+        <okr-cat-select [category]="roles()!" [selectedItemName]="roleNeeded()" (selectedItemNameChange)="onFieldChange('roleNeeded', $event)" [withAll]="false" [readOnly]="isReadOnly()" />
+      </ion-col>
+      <ion-col size="6">
+        <ion-item lines="none">
+          <ion-label>{{ i18n().form_state() }}</ion-label>
+        </ion-item>
+      </ion-col>
+      <ion-col size="6">
+        <okr-cat-select [category]="states()!" [selectedItemName]="state()" (selectedItemNameChange)="onFieldChange('state', $event)" [withAll]="false" [readOnly]="isReadOnly()" />
+      </ion-col>
+    </ng-template>
+
+    <!-- how wide the section is on the page, per screen size (colSize); narrower neighbours stand side by side -->
+    <ng-template #widthCols>
+      @for (screen of screens; track screen) {
+        <ion-col size="12" size-md="4">
+          <ion-select [label]="widthLabels()[screen]" labelPlacement="stacked" interface="popover"
+                      [value]="widths()[screen]" [disabled]="isReadOnly()"
+                      (ionChange)="onWidthChange(screen, $event.detail.value)">
+            @for (w of widthChoices()[screen]; track w) {
+              <ion-select-option [value]="w">{{ widthLabel(w) }}</ion-select-option>
+            }
+          </ion-select>
+        </ion-col>
+      }
+      <ion-col size="12">
+        <ion-note>{{ i18n().section_config_width_helper() }}</ion-note>
+      </ion-col>
+    </ng-template>
 
     @if (part() !== 'appearance') {
     <ion-card>
@@ -182,43 +236,10 @@ const EMPHASES: ArticleEmphasis[] = ['none', 'banner'];
     </ion-card>
     }
 
-    <!-- «Darstellung» of an article: emphasis, background, text colour and where the intro stands (spec 1.171 §4.3);
-         of any other section typed in a graphical editor (the button): where the intro stands, once it has one -->
-    @if (part() === 'appearance' && (isArticle() || hasIntro() || errorsFor('introPosition').length > 0)) {
-      <ion-card>
-        <ion-card-header>
-          <ion-card-title>{{ i18n().article_look_title() }}</ion-card-title>
-        </ion-card-header>
-        <ion-card-content>
-          <ion-grid>
-            <ion-row>
-              @if (isArticle()) { <ng-container [ngTemplateOutlet]="look" /> }
-              @if (hasIntro()) {
-                <ion-col size="12" size-md="6">
-                  <ion-select [label]="i18n().section_config_introPosition_label()" labelPlacement="stacked"
-                              [value]="introPosition()" [disabled]="isReadOnly()"
-                              (ionChange)="onFieldChange('introPosition', $event.detail.value)">
-                    @for (p of introPositions; track p) {
-                      <ion-select-option [value]="p">{{ introPositionLabels()[p] }}</ion-select-option>
-                    }
-                  </ion-select>
-                  <ion-note>{{ i18n().section_config_introPosition_helper() }}</ion-note>
-                </ion-col>
-              }
-              <ion-col size="12">
-                <okr-error-note [errors]="errorsFor('introPosition')" />
-              </ion-col>
-            </ion-row>
-          </ion-grid>
-          @if (isArticle() && !showBackground()) {
-            <okr-section-add-chips [chips]="backgroundChip()" [label]="i18n().article_add_label()" [readOnly]="isReadOnly()" (add)="onAdd($event)" />
-          }
-        </ion-card-content>
-      </ion-card>
-    }
-
     <!-- the look of an article: in the title card ('all') or in the «Darstellung» card ('appearance') -->
     <ng-template #look>
+              <!-- «als farbiges Band» is replaced by an own background colour: offered only to switch a stored one off -->
+              @if (emphasis() === 'banner') {
               <ion-col size="12" [sizeMd]="showAdvanced() && hasIntro() && part() === 'all' ? '6' : '12'">
                 <ion-select [label]="i18n().emphasis_label()" labelPlacement="stacked"
                             [value]="emphasis()" [disabled]="isReadOnly()"
@@ -229,15 +250,18 @@ const EMPHASES: ArticleEmphasis[] = ['none', 'banner'];
                 </ion-select>
                 <ion-note>{{ i18n().emphasis_helper() }}</ion-note>
               </ion-col>
+              }
               <!-- an own background colour (e.g. the KISS band of la21staefa) and the text colour on it;
                    in «Darstellung» offered as a «+» chip until used -->
               @if (showBackground()) {
-                <ion-col size="12" [sizeMd]="hasBackground() ? '6' : '12'">
-                  <!-- the colour selector; «Entfernen» leaves the article without an own background -->
+                <ion-col size="12" [sizeMd]="hasBackground() && part() === 'all' ? '6' : '12'">
+                  <!-- the colour selector; the cross leaves the article without an own background -->
                   <div class="background">
                     <okr-color [hexColor]="background()" (hexColorChange)="onBackgroundPicked($event)" [label]="i18n().emphasis_background_label()" [readOnly]="isReadOnly()" />
                     @if (hasBackground() && !isReadOnly()) {
-                      <ion-button fill="clear" size="small" (click)="removeBackground()">{{ i18n().article_add_remove() }}</ion-button>
+                      <ion-button fill="clear" size="small" [title]="i18n().article_add_remove()" [attr.aria-label]="i18n().article_add_remove()" (click)="removeBackground()">
+                        <ion-icon slot="icon-only" src="{{ 'cancel-circle' | svgIcon }}" aria-hidden="true" />
+                      </ion-button>
                     }
                   </div>
                   <ion-note>{{ i18n().emphasis_background_helper() }}</ion-note>
@@ -280,6 +304,8 @@ export class SectionConfiguration {
   public readonly journalMode = input(false);
   /** which part to render; the article form renders 'content' and 'appearance' in its two tabs (spec 1.171) */
   public readonly part = input<SectionConfigPart>('all');
+  /** 'appearance': type and key in «Sektion» (admins only); the article editor hides them behind its toggle */
+  public readonly showIds = input(true);
   public readonly i18n = input.required<SectionI18n>();
 
   // fields

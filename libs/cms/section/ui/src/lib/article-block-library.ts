@@ -1,6 +1,6 @@
-import { Component, computed, input, output } from '@angular/core';
+import { Component, computed, input, model, output } from '@angular/core';
 import { CdkDrag, CdkDragPlaceholder, CdkDragPreview, CdkDropList } from '@angular/cdk/drag-drop';
-import { IonIcon, IonNote } from '@ionic/angular';
+import { IonButton, IonIcon, IonNote } from '@ionic/angular';
 
 import { ARTICLE_BLOCK_TYPES, MAIL_BLOCK_TYPES, MailBlockType } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
@@ -19,9 +19,10 @@ export interface NewBlockDrag { newType: MailBlockType }
 @Component({
   selector: 'okr-article-block-library',
   standalone: true,
-  imports: [CdkDrag, CdkDragPlaceholder, CdkDragPreview, CdkDropList, IonIcon, IonNote, SvgIconPipe],
+  imports: [CdkDrag, CdkDragPlaceholder, CdkDragPreview, CdkDropList, IonButton, IonIcon, IonNote, SvgIconPipe],
   host: { role: 'region', '[attr.aria-label]': 'i18n().article_editor_library_title()' },
   styles: [ARTICLE_PANEL_STYLES, `
+    .panel-head .meta-toggle { margin-inline-start: auto; }
     .entries { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 8px; padding: 8px 16px; }
     /* keeps its place while its entry is dragged over the article */
     .cell { min-height: 72px; }
@@ -36,7 +37,16 @@ export interface NewBlockDrag { newType: MailBlockType }
     .place { box-sizing: border-box; width: 100%; height: 40px; border: 2px dashed var(--ion-color-primary); border-radius: 8px; }
   `],
   template: `
-    <div class="panel-head"><h2>{{ i18n().article_editor_library_title() }}</h2></div>
+    <div class="panel-head">
+      <h2>{{ i18n().article_editor_library_title() }}</h2>
+      @if (metaToggle()) {
+        <!-- tags and notes of the article, shown below the library -->
+        <ion-button class="meta-toggle" fill="clear" size="small" [title]="i18n().article_editor_library_metaToggle()" [attr.aria-label]="i18n().article_editor_library_metaToggle()"
+          [attr.aria-pressed]="metaShown()" (click)="metaShown.set(!metaShown())">
+          <ion-icon slot="icon-only" src="{{ (metaShown() ? 'toggle' : 'toggle-off') | svgIcon }}" aria-hidden="true" />
+        </ion-button>
+      }
+    </div>
     <ion-note class="note">{{ hint() }}</ion-note>
     <div class="entries" cdkDropList [cdkDropListSortingDisabled]="true" [cdkDropListEnterPredicate]="nothingEnters" [cdkDropListConnectedTo]="dropLists()" [cdkDropListDisabled]="!canDrag()">
       @for (type of types(); track type) {
@@ -63,6 +73,10 @@ export class ArticleBlockLibrary {
   /** the drop lists of the canvas (or their ids), the inner ones first; not needed inside a `cdkDropListGroup` */
   public readonly dropLists = input<(CdkDropList | string)[]>([]);
   public readonly i18n = input.required<ArticleEditorI18n>();
+  /** shows the toggle beside the title: the host has tags and notes below the library */
+  public readonly metaToggle = input(false);
+  /** the toggle: tags and notes are shown */
+  public readonly metaShown = model(false);
 
   // outputs
   public readonly add = output<MailBlockType>();

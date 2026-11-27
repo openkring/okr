@@ -176,7 +176,7 @@
       "remove": "Retirer"
     },
     "look": {
-      "title": "Mise en avant"
+      "title": "Présentation"
     },
     "blocks": {
       "readonly": "Cet article est composé de blocs. Tu pourras modifier le texte, les images et les boutons dans une version plus récente de l’app."
@@ -199,7 +199,8 @@
         "add": "Ajouter : {block}",
         "hint": "Clique sur un bloc pour l’ajouter à la fin, ou glisse-le à sa place.",
         "hintTap": "Touche un bloc pour l’ajouter à la fin.",
-        "full": "Un article peut contenir au maximum {max} blocs."
+        "full": "Un article peut contenir au maximum {max} blocs.",
+        "metaToggle": "Afficher les tags et les notes"
       },
       "panel": {
         "label": "Réglages : {block}",
@@ -272,11 +273,6 @@
           "title": "Image d’aperçu",
           "empty": "Pas encore d’image d’aperçu",
           "helper": "L’image d’aperçu apparaît dans les listes et les aperçus, pas dans l’article. Sans elle, la première image de l’article est utilisée."
-        },
-        "date": {
-          "label": "Date",
-          "placeholder": "JJ.MM.AAAA",
-          "helper": "Les actualités sont triées selon cette date."
         }
       },
       "error": {
@@ -1649,7 +1645,9 @@
         "below": "Comme introduction sous le titre",
         "helper": "En surtitre, l’intro apparaît en petit au-dessus du titre ; en introduction, comme un court paragraphe en dessous."
       },
-      "titleCard": "Titre de la section"
+      "titleCard": "Titre de la section",
+      "sectionCard": "Section",
+      "publicationCard": "Publication"
     }
   },
   "slider": {

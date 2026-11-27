@@ -1220,6 +1220,8 @@ export const SECTION_I18N_KEYS = {
   section_config_intro_helper:              PFX + 'section.config.intro.helper',
   section_config_introPosition_label:       PFX + 'section.config.introPosition.label',
   section_config_titleCard:                 PFX + 'section.config.titleCard',
+  section_config_sectionCard:               PFX + 'section.config.sectionCard',
+  section_config_publicationCard:           PFX + 'section.config.publicationCard',
   section_config_introPosition_above:       PFX + 'section.config.introPosition.above',
   section_config_introPosition_below:       PFX + 'section.config.introPosition.below',
   section_config_introPosition_helper:      PFX + 'section.config.introPosition.helper',
