@@ -1,13 +1,13 @@
 import { Component, computed, effect, inject, input, model, output, signal } from '@angular/core';
 import { form } from '@angular/forms/signals';
 
-import { AccordionConfig, AccordionSection, ColorIonic, ConnectionsConfig, ConnectionsSection, DeparturesConfig, DeparturesSection, EnergyConfig, EnergySection, CounterConfig, CounterSection, ContactConfig, ContactSection, FooterConfig, FooterSection, FORM_SECTION_CONFIG_SHAPE, FormSection, FormSectionConfig, AlbumConfig, AlbumSection, SectionFeedback, ArticleSection, ArticleSlideshow, AvatarInfo, ButtonActionConfig, ButtonSection, ButtonStyle, CalendarSection, CategoryListModel, ChartSection, ChatConfig, ChatSection, EDITOR_CONFIG_SHAPE, MemberAgeSection, MemberCatConfig, MemberCatSection, RagConfig, RagSection, EditorConfig, CourseConfig, CourseSection, EventsConfig, EventsSection, HeroConfig, HeroSection, IconConfig, IframeConfig, IframeSection, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, ImageConfig, ImageStyle, InvitationsConfig, InvitationsSection, JournalTrackConfig, JournalTrackSection, MapConfig, MapSection, PeopleConfig, PeopleSection, ResponsibilityConfig, ResponsibilitySection, RoleName, SankeyConfig, SankeySection, SpiderConfig, SpiderSection, TocConfig, TocSection, TestimonialConfig, TestimonialSection, TilesConfig, TilesSection, NewsConfig, NewsSection, SectionCta, TimelineConfig, TimelineSection, AdventConfig, AdventSection, SectionModel, SectionModelName, SliderSection, TableGrid, TableSection, TableStyle, TrackerConfig, TrackerSection, UserModel, VideoConfig, VideoSection, WeatherConfig, WeatherSection, articleBlocksOf } from '@okr/shared-models';
+import { AccordionConfig, AccordionSection, ColorIonic, ConnectionsConfig, ConnectionsSection, DeparturesConfig, DeparturesSection, EnergyConfig, EnergySection, CounterConfig, CounterSection, ContactConfig, ContactSection, FooterConfig, FooterSection, FORM_SECTION_CONFIG_SHAPE, FormSection, FormSectionConfig, AlbumConfig, AlbumSection, SectionFeedback, ArticleSection, ArticleSlideshow, AvatarInfo, ButtonActionConfig, ButtonSection, ButtonStyle, CalendarSection, CategoryListModel, ChartSection, ChatConfig, ChatSection, EDITOR_CONFIG_SHAPE, MemberAgeSection, MemberCatConfig, MemberCatSection, RagConfig, RagSection, EditorConfig, CourseConfig, CourseSection, EventsConfig, EventsSection, HeroConfig, HeroSection, IconConfig, IframeConfig, IframeSection, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, ImageConfig, ImageStyle, InvitationsConfig, InvitationsSection, JournalTrackConfig, JournalTrackSection, MapConfig, MapSection, PeopleConfig, peopleHiddenKeys, PeopleSection, ResponsibilityConfig, ResponsibilitySection, RoleName, SankeyConfig, SankeySection, SpiderConfig, SpiderSection, TocConfig, TocSection, TestimonialConfig, TestimonialSection, TilesConfig, TilesSection, NewsConfig, NewsSection, SectionCta, TimelineConfig, TimelineSection, AdventConfig, AdventSection, SectionModel, SectionModelName, SliderSection, TableGrid, TableSection, TableStyle, TrackerConfig, TrackerSection, UserModel, VideoConfig, VideoSection, WeatherConfig, WeatherSection, articleBlocksOf } from '@okr/shared-models';
 import { Chips, ErrorNote, TextareaInput, TextareaInputI18n } from '@okr/shared-ui';
 import { coerceBoolean, debugFormModel, hasRole, resolveImageStyle } from '@okr/shared-util-core';
 import { DEFAULT_LABEL, DEFAULT_NOTES, DEFAULT_TAGS } from '@okr/shared-constants';
 import { MODEL_SELECTOR, validateVestTree, vestErrors } from '@okr/shared-util-angular';
 import { IonItem, IonLabel, IonNote, IonSegment, IonSegmentButton, IonToggle } from '@ionic/angular';
-import { ARTICLE_TAB_FIELDS, ChartOption, ContactDetails, getErrorSegments, getPeopleResponsibilityIds, getInlineErrorFields, getJournalInlineErrorFields, getRemainingErrors, isJournalModeField, JOURNAL_VIDEO_CLIPS_MAX, SectionErrors, SectionI18n, validateSection } from '@okr/cms-section-util';
+import { addPeoplePerson, addPeopleResponsibility, hidePeoplePerson, setPeopleGroup, setPeopleResponsibilityParent, ARTICLE_TAB_FIELDS, ChartOption, ContactDetails, getErrorSegments, getInlineErrorFields, getJournalInlineErrorFields, getRemainingErrors, isJournalModeField, JOURNAL_VIDEO_CLIPS_MAX, SectionErrors, SectionI18n, validateSection } from '@okr/cms-section-util';
 import { FormI18n } from '@okr/forms-util';
 
 import { SectionConfigPart, SectionConfiguration } from './section-configuration';
@@ -1784,39 +1784,26 @@ export class SectionForm {
   /************************************** select person *********************************************** */
   public async selectPerson(): Promise<void> {
     const avatar = await this.modelSelectService.selectPersonAvatar('', DEFAULT_LABEL);
-    if (avatar) {
-      const currentConfig = this.peopleConfig();
-      // a person shown twice would break the widget's per-person tracking
-      if ((currentConfig?.persons ?? []).some(p => p.key === avatar.key)) return;
-      this.onPeopleConfigChange({
-        ...currentConfig,
-        persons: [...(currentConfig?.persons ?? []), avatar] } as PeopleConfig
-      );
-    }
+    const current = this.peopleConfig();
+    if (avatar && current) this.onPeopleConfigChange(addPeoplePerson(current, avatar));
   }
 
   public async selectGroup(): Promise<void> {
     const group = await this.modelSelectService.selectGroup();
-    if (group) {
-      const current = this.peopleConfig();
-      const next = { ...current, groupId: group.okey } as PeopleConfig;
-      // hidden members belong to the previous group
-      if (current?.groupId !== group.okey) delete next.excludedPersons;
-      this.onPeopleConfigChange(next);
-    }
+    const current = this.peopleConfig();
+    if (group && current) this.onPeopleConfigChange(setPeopleGroup(current, group.okey));
   }
 
   /** a member of the section's group that the section should not show (picker limited to that group) */
   public async selectExcludedPerson(): Promise<void> {
     const current = this.peopleConfig();
     const groupKey = current?.groupId ?? '';
-    if (!groupKey) return;
-    const excluded = current?.excludedPersons ?? [];
+    if (!current || !groupKey) return;
     const avatar = await this.modelSelectService.selectPersonAvatar('', DEFAULT_LABEL, false, false, {
-      groupKey, showGroupSelect: false, excludeKeys: excluded.map(p => p.key),
+      groupKey, showGroupSelect: false, excludeKeys: peopleHiddenKeys(current),
     });
-    if (!avatar?.key || excluded.some(p => p.key === avatar.key)) return;
-    this.onPeopleConfigChange({ ...current, excludedPersons: [...excluded, avatar] } as PeopleConfig);
+    if (!avatar?.key) return;
+    this.onPeopleConfigChange(hidePeoplePerson(current, avatar.key));
   }
 
   /** the responsibility that gets a task for every answer to a form section */
@@ -1830,22 +1817,15 @@ export class SectionForm {
 
   public async selectResponsibility(): Promise<void> {
     const responsibility = await this.modelSelectService.selectResponsibility();
-    if (!responsibility) return;
     const current = this.peopleConfig();
-    const ids = getPeopleResponsibilityIds(current);
-    if (ids.includes(responsibility.okey)) return;
-    // writes the list; a legacy single responsibilityId is folded into it and dropped
-    const next = { ...current, responsibilityIds: [...ids, responsibility.okey] } as PeopleConfig;
-    delete next.responsibilityId;
-    this.onPeopleConfigChange(next);
+    if (responsibility && current) this.onPeopleConfigChange(addPeopleResponsibility(current, responsibility.okey));
   }
 
   /** the group whose active responsibilities are shown after the chosen ones (its name is kept for the chip) */
   public async selectResponsibilityParent(): Promise<void> {
     const group = await this.modelSelectService.selectGroup();
-    if (!group?.okey) return;
-    this.onPeopleConfigChange({
-      ...this.peopleConfig(), responsibilityParentKey: `group.${group.okey}`, responsibilityParentName: group.name,
-    } as PeopleConfig);
+    const current = this.peopleConfig();
+    if (!group?.okey || !current) return;
+    this.onPeopleConfigChange(setPeopleResponsibilityParent(current, `group.${group.okey}`, group.name));
   }
 }

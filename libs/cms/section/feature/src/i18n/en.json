@@ -1431,11 +1431,6 @@
       "placeholder": "Section ID",
       "helper": "The linked section shows more information about the selected element in a modal."
     },
-    "color": {
-      "label": "Color",
-      "select": "Color selection",
-      "helper": "Background color behind the name and details of each person."
-    },
     "nameDisplay": {
       "label": "Name display",
       "helper": "Determines how a person’s name is shown. With “none” no name is shown."
@@ -1449,9 +1444,7 @@
     },
     "segment": {
       "content": "Content",
-      "view": "Layout",
-      "image": "Image",
-      "info": "Details"
+      "look": "Look"
     },
     "typeHelper": "Where the persons come from: selected persons, the members of a group or the persons responsible for one or more roles.",
     "typeOption": {
@@ -1464,64 +1457,6 @@
       "placeholder": "Avatar of @NAME@",
       "helper": "This text is added to every person’s picture as alternative text. It is a description that helps visually impaired users understand the content of the website. @NAME@ is replaced by the person’s name."
     },
-    "view": {
-      "label": "Type",
-      "helper": "Cards are as large as their content. The grid spreads the people over equally wide columns. The slider shows them in 1 to 4 rows to browse through.",
-      "card": "Cards",
-      "grid": "Grid",
-      "slider": "Slider"
-    },
-    "perRow": {
-      "label": "People per row",
-      "placeholder": "5",
-      "helper": "How many people are visible at once in the slider (3 to 10)."
-    },
-    "sliderRows": {
-      "label": "Number of rows",
-      "placeholder": "1",
-      "helper": "Into how many slider rows the people are split (1 to 4)."
-    },
-    "imgWidth": {
-      "label": "Image width (px)",
-      "placeholder": "120",
-      "helper": "Width of each person’s picture in pixels."
-    },
-    "imgHeight": {
-      "label": "Image height (px)",
-      "placeholder": "120",
-      "helper": "Height of each person’s picture in pixels."
-    },
-    "imgRadius": {
-      "label": "Corner radius",
-      "placeholder": "50%",
-      "helper": "Rounding of the picture corners in pixels, e.g. 8. With 50% the picture becomes round."
-    },
-    "facePad": {
-      "label": "Space around the face",
-      "placeholder": "0",
-      "helper": "Crops the picture to the face: 1 is tight, 2 leaves plenty of space. With 0 the picture is only centred on the face."
-    },
-    "background": {
-      "label": "Background",
-      "helper": "Cutting out removes the background of the photo; it can then be filled with a color. Cutting out is charged by the image service (once per picture).",
-      "original": "Original photo",
-      "removed": "Cut out, no background",
-      "orgColor": "Cut out, club color",
-      "colors": "Cut out, own colors"
-    },
-    "bgOrgColor": {
-      "label": "Club color",
-      "helper": "Which of your club's colours fills the background. «Alternating» switches between primary and secondary colour from person to person.",
-      "primary": "Main color",
-      "secondary": "Second color",
-      "alternating": "Alternating"
-    },
-    "bgColors": {
-      "label": "Background colors",
-      "helper": "1 to 4 colors. They alternate from person to person.",
-      "add": "Add color",
-      "color": "Color"
-    },
     "grayscale": {
       "label": "Black and white",
       "helper": "Shows the portraits in black and white. For the original photo this applies to the whole picture; for cut-out portraits only to the person – the background keeps its colour."
@@ -1533,19 +1468,35 @@
       "email": "Show email",
       "emailLink": "Link email only"
     },
-    "infoPosition": {
-      "label": "Position of the details",
-      "helper": "Where the name and details sit relative to the picture.",
-      "overlayTop": "On the picture, top",
-      "overlayBottom": "On the picture, bottom",
-      "above": "Above the picture",
-      "below": "Below the picture",
-      "left": "Left of the picture",
-      "right": "Right of the picture"
-    },
     "width": {
       "label": "Same width as the articles",
       "helper": "On the website, the list of people is then exactly as wide as the text of the articles. Unticked, it uses the full page width."
+    },
+    "look": {
+      "size": {
+        "label": "Size",
+        "S": "Small",
+        "M": "Medium",
+        "L": "Large"
+      },
+      "shape": {
+        "label": "Shape",
+        "round": "Round",
+        "rounded": "Rounded",
+        "square": "Square"
+      },
+      "fill": {
+        "label": "Background",
+        "original": "Original",
+        "primary": "Club colour",
+        "alternating": "Alternating"
+      },
+      "textPosition": {
+        "label": "Text",
+        "below": "Below the photo",
+        "right": "To the right",
+        "overlay": "On the photo"
+      }
     }
   },
   "rag": {

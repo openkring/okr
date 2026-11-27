@@ -1431,11 +1431,6 @@
       "placeholder": "Sektions-ID",
       "helper": "Die verknüpfte Sektion zeigt in einem Modal mehr Information zum ausgewählten Element."
     },
-    "color": {
-      "label": "Farbe",
-      "select": "Farbwahl",
-      "helper": "Hintergrundfarbe hinter Name und Angaben jeder Person."
-    },
     "nameDisplay": {
       "label": "Namensdarstellung",
       "helper": "Bestimmt, wie der Name einer Person angezeigt wird. Mit «keine» wird kein Name angezeigt."
@@ -1449,9 +1444,7 @@
     },
     "segment": {
       "content": "Inhalt",
-      "view": "Darstellung",
-      "image": "Bild",
-      "info": "Angaben"
+      "look": "Aussehen"
     },
     "typeHelper": "Woher die Personen kommen: ausgewählte Personen, die Mitglieder einer Gruppe oder die Verantwortlichen eines oder mehrerer Ämter.",
     "typeOption": {
@@ -1464,64 +1457,6 @@
       "placeholder": "Avatar von @NAME@",
       "helper": "Dieser Text wird jedem Personenbild als Alternativtext hinzugefügt. Es ist eine Beschreibung, die sehbehinderten Anwendern hilft, den Inhalt der Website zu verstehen. @NAME@ wird durch den Namen der Person ersetzt."
     },
-    "view": {
-      "label": "Art",
-      "helper": "Karten sind so gross wie ihr Inhalt. Das Raster verteilt die Personen auf gleich breite Spalten. Der Slider zeigt sie in 1 bis 4 Zeilen zum Durchblättern.",
-      "card": "Karten",
-      "grid": "Raster",
-      "slider": "Slider"
-    },
-    "perRow": {
-      "label": "Personen pro Zeile",
-      "placeholder": "5",
-      "helper": "Wie viele Personen im Slider gleichzeitig sichtbar sind (3 bis 10)."
-    },
-    "sliderRows": {
-      "label": "Anzahl Zeilen",
-      "placeholder": "1",
-      "helper": "Auf wie viele Slider-Zeilen die Personen verteilt werden (1 bis 4)."
-    },
-    "imgWidth": {
-      "label": "Bildbreite (px)",
-      "placeholder": "120",
-      "helper": "Breite jedes Personenbilds in Pixel."
-    },
-    "imgHeight": {
-      "label": "Bildhöhe (px)",
-      "placeholder": "120",
-      "helper": "Höhe jedes Personenbilds in Pixel."
-    },
-    "imgRadius": {
-      "label": "Eckenradius",
-      "placeholder": "50%",
-      "helper": "Rundung der Bildecken in Pixel, z.B. 8. Mit 50% wird das Bild rund."
-    },
-    "facePad": {
-      "label": "Rand ums Gesicht",
-      "placeholder": "0",
-      "helper": "Schneidet das Bild auf das Gesicht zu: 1 ist eng, 2 lässt viel Rand. Mit 0 wird das Bild nur aufs Gesicht ausgerichtet."
-    },
-    "background": {
-      "label": "Hintergrund",
-      "helper": "Freistellen entfernt den Hintergrund des Fotos; danach kann er mit einer Farbe gefüllt werden. Das Freistellen ist beim Bilddienst kostenpflichtig (einmal pro Bild).",
-      "original": "Originalfoto",
-      "removed": "Freigestellt, ohne Hintergrund",
-      "orgColor": "Freigestellt, Vereinsfarbe",
-      "colors": "Freigestellt, eigene Farben"
-    },
-    "bgOrgColor": {
-      "label": "Vereinsfarbe",
-      "helper": "Welche Farbe deines Vereins den Hintergrund füllt. «Alternierend» wechselt von Person zu Person zwischen Haupt- und Zweitfarbe.",
-      "primary": "Hauptfarbe",
-      "secondary": "Zweitfarbe",
-      "alternating": "Alternierend"
-    },
-    "bgColors": {
-      "label": "Hintergrundfarben",
-      "helper": "1 bis 4 Farben. Sie wechseln sich von Person zu Person ab.",
-      "add": "Farbe hinzufügen",
-      "color": "Farbe"
-    },
     "grayscale": {
       "label": "Schwarz-weiss",
       "helper": "Zeigt die Personenbilder in Schwarz-weiss. Beim Originalfoto gilt das fürs ganze Bild, bei freigestellten Bildern nur für die Person – der Hintergrund behält seine Farbe."
@@ -1533,19 +1468,35 @@
       "email": "E-Mail anzeigen",
       "emailLink": "E-Mail nur linken"
     },
-    "infoPosition": {
-      "label": "Position der Angaben",
-      "helper": "Wo Name und Angaben im Verhältnis zum Bild stehen.",
-      "overlayTop": "Auf dem Bild, oben",
-      "overlayBottom": "Auf dem Bild, unten",
-      "above": "Über dem Bild",
-      "below": "Unter dem Bild",
-      "left": "Links vom Bild",
-      "right": "Rechts vom Bild"
-    },
     "width": {
       "label": "Breite wie die Artikel",
       "helper": "Auf der Website steht die Personenliste dann genau so breit wie der Text der Artikel. Ohne Häkchen nutzt sie die ganze Seitenbreite."
+    },
+    "look": {
+      "size": {
+        "label": "Grösse",
+        "S": "Klein",
+        "M": "Mittel",
+        "L": "Gross"
+      },
+      "shape": {
+        "label": "Form",
+        "round": "Rund",
+        "rounded": "Abgerundet",
+        "square": "Eckig"
+      },
+      "fill": {
+        "label": "Hintergrund",
+        "original": "Original",
+        "primary": "Vereinsfarbe",
+        "alternating": "Abwechselnd"
+      },
+      "textPosition": {
+        "label": "Text",
+        "below": "Unter dem Bild",
+        "right": "Rechts",
+        "overlay": "Auf dem Bild"
+      }
     }
   },
   "rag": {

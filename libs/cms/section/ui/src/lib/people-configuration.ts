@@ -3,36 +3,33 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { map, of } from 'rxjs';
 import { IonBadge, IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonChip, IonCol, IonGrid, IonIcon, IonItem, IonLabel, IonNote, IonRow, IonSegment, IonSegmentButton } from '@ionic/angular';
 
-import { ColorsIonic, PeopleNameDisplays } from '@okr/shared-categories';
 import {
-  AvatarConfig, AvatarInfo, PEOPLE_BACKGROUNDS, PEOPLE_INFO_POSITIONS, PEOPLE_INFOS, PEOPLE_ORG_COLORS, PEOPLE_VIEWS,
-  PeopleConfig, UserModel
+  AvatarConfig, AvatarInfo, PeopleConfig, peopleHiddenKeys, UserModel
 } from '@okr/shared-models';
-import {
-  CategoryOld, CategoryOldI18n, Checkbox, CheckboxGroup, CheckboxGroupI18n, CheckboxI18n, Color, ErrorNote, NumberInput, NumberInputI18n,
-  StringSelect, StringSelectI18n, TextInput, TextInputI18n
-} from '@okr/shared-ui';
+import { ErrorNote, StringSelect, StringSelectI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { coerceBoolean, fill, getAvatarName } from '@okr/shared-util-core';
 import { SvgIconPipe } from '@okr/shared-pipes';
 
 import { ResponsibilityService } from '@okr/relationship-responsibility-data-access';
-import { getFieldAndItemErrors, getPeopleResponsibilityIds, getPeopleResponsibilityParentKey, normalizeAvatarConfig, peopleField, PEOPLE_MAX_BG_COLORS, SectionErrors, SectionI18n } from '@okr/cms-section-util';
+import {
+  clearPeopleResponsibilityParent, getFieldAndItemErrors, getPeopleResponsibilityIds, getPeopleResponsibilityParentKey, normalizeAvatarConfig,
+  peopleField, removePeoplePerson, removePeopleResponsibility, SectionErrors, SectionI18n, setPeopleSource, showPeoplePerson
+} from '@okr/cms-section-util';
 
-type PeopleSegment = 'content' | 'view' | 'image' | 'info';
-const PEOPLE_SEGMENTS: PeopleSegment[] = ['content', 'view', 'image', 'info'];
+import { PeopleLookConfig } from './people-look-configuration';
+
+type PeopleSegment = 'content' | 'look';
+const PEOPLE_SEGMENTS: PeopleSegment[] = ['content', 'look'];
 
 /** Which segment renders which `avatar.*` field — an error in a hidden segment badges its button. */
 const SEGMENT_FIELDS: Record<PeopleSegment, (keyof AvatarConfig)[]> = {
-  content: ['title', 'linkedSection'],
-  view: ['view', 'perRow', 'sliderRows', 'color', 'width'],
-  image: ['imgWidth', 'imgHeight', 'imgRadius', 'facePad', 'background', 'bgOrgColor', 'bgColors', 'grayscale', 'altText'],
-  info: ['nameDisplay', 'info', 'infoPosition'],
+  content: ['title', 'linkedSection', 'altText'],
+  look: ['size', 'shape', 'fill', 'textPosition', 'grayscale', 'nameDisplay', 'info', 'width'],
 };
 
 /**
- * Configuration of a people section, grouped into four segments:
- * Inhalt (who is shown), Darstellung (card / grid / slider), Bild (size, crop, background) and
- * Angaben (name, function, email and where they sit). Part of section.form — the parent owns
+ * Configuration of a people section, grouped into two segments:
+ * Inhalt (who is shown, title, linked section, alt text) and Aussehen (`okr-people-look-config`). Part of section.form — the parent owns
  * validation and saving; this component only edits `properties` and shows the `avatar.*` errors.
  */
 @Component({
@@ -42,14 +39,12 @@ const SEGMENT_FIELDS: Record<PeopleSegment, (keyof AvatarConfig)[]> = {
     SvgIconPipe,
     IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonGrid, IonButton, IonIcon,
     IonSegment, IonSegmentButton, IonLabel, IonBadge, IonItem, IonChip, IonNote,
-    CategoryOld, StringSelect, Checkbox, CheckboxGroup, TextInput, NumberInput, Color, ErrorNote
+    StringSelect, TextInput, ErrorNote, PeopleLookConfig
   ],
   styles: [`
     @media (width <= 600px) { ion-card { margin: 5px;} }
     ion-segment { margin-bottom: 8px; }
     ion-segment-button ion-badge { margin-left: 4px; }
-    .bg-color { display: flex; align-items: center; }
-    .bg-color okr-color { flex: 1; }
     .chips { display: flex; flex-wrap: wrap; align-items: center; }
   `],
   template: `
@@ -97,21 +92,21 @@ const SEGMENT_FIELDS: Record<PeopleSegment, (keyof AvatarConfig)[]> = {
                               {{ i18n().select_exclude_member() }}
                             </ion-button>
                           }
-                          @for(person of excludedPersons(); track person.key) {
+                          @for(key of hiddenKeys(); track key) {
                             <ion-chip color="medium">
                               @if(isReadOnly()) {
-                                <ion-label>{{ personName(person) }}</ion-label>
+                                <ion-label>{{ hiddenName(key) }}</ion-label>
                               } @else {
-                                <ion-button fill="clear" (click)="onExcludedRemove(person.key)">
+                                <ion-button fill="clear" (click)="onHiddenRemove(key)">
                                   <ion-icon slot="start" src="{{ 'cancel' | svgIcon }}" />
-                                  <ion-label>{{ personName(person) }}</ion-label>
+                                  <ion-label>{{ hiddenName(key) }}</ion-label>
                                 </ion-button>
                               }
                             </ion-chip>
                           }
                         </div>
                       </ion-item>
-                      @if(excludedPersons().length > 0) {
+                      @if(hiddenKeys().length > 0) {
                         <ion-item lines="none"><ion-note>{{ i18n().select_excluded_hint() }}</ion-note></ion-item>
                       }
                     </ion-col>
@@ -125,12 +120,12 @@ const SEGMENT_FIELDS: Record<PeopleSegment, (keyof AvatarConfig)[]> = {
                               <ion-icon slot="icon-only" src="{{ 'add-circle' | svgIcon }}" />
                             </ion-button>
                           }
-                          @for(person of persons(); track $index) {
+                          @for(person of persons(); track person.key) {
                             <ion-chip color="primary">
                               @if(isReadOnly()) {
                                 <ion-label>{{ personName(person) }}</ion-label>
                               } @else {
-                                <ion-button fill="clear" (click)="onPersonRemove($index)">
+                                <ion-button fill="clear" (click)="onPersonRemove(person.key)">
                                   <ion-icon slot="start" src="{{ 'cancel' | svgIcon }}" />
                                   <ion-label>{{ personName(person) }}</ion-label>
                                 </ion-button>
@@ -194,94 +189,6 @@ const SEGMENT_FIELDS: Record<PeopleSegment, (keyof AvatarConfig)[]> = {
                     <okr-text-input [i18n]="linkedSectionI18n()" [value]="config().linkedSection" (valueChange)="onFieldChange('linkedSection', $event)" [readOnly]="isReadOnly()" [showHelper]="true" />
                     <okr-error-note [errors]="errorsFor('linkedSection')" />
                   </ion-col>
-                </ion-row>
-              }
-
-              @case('view') {
-                <ion-row>
-                  <ion-col size="12" size-md="6">
-                    <okr-string-select [i18n]="viewI18n()" [selectedString]="config().view" (selectedStringChange)="onFieldChange('view', $event)"
-                      [readOnly]="isReadOnly()" [stringList]="views" [labels]="viewLabels()" />
-                    <okr-error-note [errors]="errorsFor('view')" />
-                  </ion-col>
-                  <ion-col size="12" size-md="6">
-                    <okr-category-old [i18n]="colorI18n()" [value]="config().color" (valueChange)="onFieldChange('color', $event)" [readOnly]="isReadOnly()" [categories]="colors" />
-                    <okr-error-note [errors]="errorsFor('color')" />
-                  </ion-col>
-                  <ion-col size="12">
-                    <okr-checkbox [i18n]="widthI18n()" [checked]="config().width === 'article'" (checkedChange)="onFieldChange('width', $event ? 'article' : 'full')" [readOnly]="isReadOnly()" />
-                    <okr-error-note [errors]="errorsFor('width')" />
-                  </ion-col>
-                  @if(config().view === 'slider') {
-                    <ion-col size="12" size-md="6">
-                      <okr-number-input [i18n]="perRowI18n()" [value]="config().perRow" (valueChange)="onFieldChange('perRow', $event)"
-                        [integer]="true" [min]="3" [max]="10" [showHelper]="true" [readOnly]="isReadOnly()" />
-                      <okr-error-note [errors]="errorsFor('perRow')" />
-                    </ion-col>
-                    <ion-col size="12" size-md="6">
-                      <okr-number-input [i18n]="sliderRowsI18n()" [value]="config().sliderRows" (valueChange)="onFieldChange('sliderRows', $event)"
-                        [integer]="true" [min]="1" [max]="4" [showHelper]="true" [readOnly]="isReadOnly()" />
-                      <okr-error-note [errors]="errorsFor('sliderRows')" />
-                    </ion-col>
-                  }
-                </ion-row>
-              }
-
-              @case('image') {
-                <ion-row>
-                  <ion-col size="6" size-md="3">
-                    <okr-number-input [i18n]="imgWidthI18n()" [value]="config().imgWidth" (valueChange)="onFieldChange('imgWidth', $event)"
-                      [integer]="true" [min]="16" [max]="1000" [showHelper]="true" [readOnly]="isReadOnly()" />
-                    <okr-error-note [errors]="errorsFor('imgWidth')" />
-                  </ion-col>
-                  <ion-col size="6" size-md="3">
-                    <okr-number-input [i18n]="imgHeightI18n()" [value]="config().imgHeight" (valueChange)="onFieldChange('imgHeight', $event)"
-                      [integer]="true" [min]="16" [max]="1000" [showHelper]="true" [readOnly]="isReadOnly()" />
-                    <okr-error-note [errors]="errorsFor('imgHeight')" />
-                  </ion-col>
-                  <ion-col size="6" size-md="3">
-                    <okr-text-input [i18n]="imgRadiusI18n()" [value]="config().imgRadius" (valueChange)="onFieldChange('imgRadius', $event)" [showHelper]="true" [readOnly]="isReadOnly()" />
-                    <okr-error-note [errors]="errorsFor('imgRadius')" />
-                  </ion-col>
-                  <ion-col size="6" size-md="3">
-                    <okr-number-input [i18n]="facePadI18n()" [value]="config().facePad" (valueChange)="onFieldChange('facePad', $event)"
-                      [min]="0" [max]="2" [showHelper]="true" [readOnly]="isReadOnly()" />
-                    <okr-error-note [errors]="errorsFor('facePad')" />
-                  </ion-col>
-                  <ion-col size="12" size-md="6">
-                    <okr-string-select [i18n]="backgroundI18n()" [selectedString]="config().background" (selectedStringChange)="onFieldChange('background', $event)"
-                      [readOnly]="isReadOnly()" [stringList]="backgrounds" [labels]="backgroundLabels()" />
-                    <okr-error-note [errors]="errorsFor('background')" />
-                  </ion-col>
-                  <ion-col size="12" size-md="6">
-                    @if(config().background === 'orgColor') {
-                      <okr-string-select [i18n]="bgOrgColorI18n()" [selectedString]="config().bgOrgColor" (selectedStringChange)="onFieldChange('bgOrgColor', $event)"
-                        [readOnly]="isReadOnly()" [stringList]="orgColors" [labels]="orgColorLabels()" />
-                      <okr-error-note [errors]="errorsFor('bgOrgColor')" />
-                    }
-                    @if(config().background === 'colors') {
-                      <ion-label class="ion-padding-start">{{ i18n().people_bgColors_label() }}</ion-label>
-                      @for(hex of config().bgColors; track $index) {
-                        <div class="bg-color">
-                          <okr-color [label]="i18n().people_bgColors_color() + ' ' + ($index + 1)" [hexColor]="hex" (hexColorChange)="onBgColorChange($index, $event)" [readOnly]="isReadOnly()" />
-                          <ion-button fill="clear" color="danger" [disabled]="isReadOnly()" (click)="onBgColorRemove($index)">
-                            <ion-icon slot="icon-only" src="{{ 'trash' | svgIcon }}" />
-                          </ion-button>
-                        </div>
-                      }
-                      @if(config().bgColors.length < maxBgColors) {
-                        <ion-button fill="clear" [disabled]="isReadOnly()" (click)="onBgColorAdd()">
-                          <ion-icon slot="start" src="{{ 'add-circle' | svgIcon }}" />
-                          {{ i18n().people_bgColors_add() }}
-                        </ion-button>
-                      }
-                      <okr-error-note [errors]="errorsFor('bgColors')" />
-                    }
-                  </ion-col>
-                  <ion-col size="12" size-md="6">
-                    <okr-checkbox [i18n]="grayscaleI18n()" [checked]="config().grayscale" (checkedChange)="onFieldChange('grayscale', $event)" [readOnly]="isReadOnly()" />
-                    <okr-error-note [errors]="errorsFor('grayscale')" />
-                  </ion-col>
                   <ion-col size="12">
                     <okr-text-input [i18n]="altTextI18n()" [value]="config().altText" (valueChange)="onFieldChange('altText', $event)" [readOnly]="isReadOnly()" [showHelper]="true" />
                     <okr-error-note [errors]="errorsFor('altText')" />
@@ -289,23 +196,8 @@ const SEGMENT_FIELDS: Record<PeopleSegment, (keyof AvatarConfig)[]> = {
                 </ion-row>
               }
 
-              @case('info') {
-                <ion-row>
-                  <ion-col size="12" size-md="6">
-                    <okr-category-old [i18n]="nameDisplayI18n()" [value]="config().nameDisplay" (valueChange)="onFieldChange('nameDisplay', $event)" [readOnly]="isReadOnly()" [categories]="nameDisplays" />
-                    <okr-error-note [errors]="errorsFor('nameDisplay')" />
-                  </ion-col>
-                  <ion-col size="12" size-md="6">
-                    <okr-string-select [i18n]="infoPositionI18n()" [selectedString]="config().infoPosition" (selectedStringChange)="onFieldChange('infoPosition', $event)"
-                      [readOnly]="isReadOnly()" [stringList]="infoPositions" [labels]="infoPositionLabels()" />
-                    <okr-error-note [errors]="errorsFor('infoPosition')" />
-                  </ion-col>
-                  <ion-col size="12">
-                    <okr-checkbox-group [i18n]="infoI18n()" [stringList]="infos" [labels]="infoLabels()"
-                      [selectedStrings]="config().info" (selectedStringsChange)="onFieldChange('info', $event)" [readOnly]="isReadOnly()" />
-                    <okr-error-note [errors]="errorsFor('info')" />
-                  </ion-col>
-                </ion-row>
+              @case('look') {
+                <okr-people-look-config [config]="formData()" (configChange)="formData.set($event)" [readOnly]="isReadOnly()" [i18n]="i18n()" [errors]="errors()" />
               }
             }
           </ion-grid>
@@ -338,8 +230,8 @@ export class PeopleConfiguration {
   protected readonly config = computed(() => normalizeAvatarConfig(this.formData()?.avatar));
   protected readonly persons = computed(() => this.formData()?.persons ?? []);
   protected readonly groupId = computed(() => this.formData()?.groupId ?? '');
-  /** members of the group this section hides (type 'group' only) */
-  protected readonly excludedPersons = computed(() => this.formData()?.excludedPersons ?? []);
+  /** keys of the persons this section hides, whatever the source */
+  protected readonly hiddenKeys = computed(() => peopleHiddenKeys(this.formData()));
   /** the chosen responsibilities; a legacy single `responsibilityId` is read as a list of one */
   protected readonly responsibilityIds = computed(() => getPeopleResponsibilityIds(this.formData()));
   /** the group whose active responsibilities follow the chosen ones ('group.<okey>'), or '' */
@@ -351,15 +243,7 @@ export class PeopleConfiguration {
 
   // passing constants to template
   protected readonly segments = PEOPLE_SEGMENTS;
-  protected readonly nameDisplays = PeopleNameDisplays;
-  protected readonly colors = ColorsIonic;
   protected readonly peopleTypes = ['persons', 'group', 'responsibility'];
-  protected readonly views = PEOPLE_VIEWS;
-  protected readonly backgrounds = PEOPLE_BACKGROUNDS;
-  protected readonly orgColors = PEOPLE_ORG_COLORS;
-  protected readonly infos = PEOPLE_INFOS;
-  protected readonly infoPositions = PEOPLE_INFO_POSITIONS;
-  protected readonly maxBgColors = PEOPLE_MAX_BG_COLORS;
 
   /** responsibility okey → name, to label the chips (only loaded while the type is responsibility) */
   private readonly responsibilityNamesResource = rxResource({
@@ -374,7 +258,7 @@ export class PeopleConfiguration {
 
   /** number of `avatar.*` errors per segment, so an error in a hidden segment stays visible */
   protected readonly segmentErrorCount = computed(() => {
-    const counts = { content: 0, view: 0, image: 0, info: 0 } as Record<PeopleSegment, number>;
+    const counts = { content: 0, look: 0 } as Record<PeopleSegment, number>;
     for (const seg of PEOPLE_SEGMENTS) {
       counts[seg] = SEGMENT_FIELDS[seg].reduce((sum, field) => sum + this.errorsFor(field).length, 0);
     }
@@ -385,25 +269,6 @@ export class PeopleConfiguration {
   protected readonly peopleTypeLabels = computed(() => [
     this.i18n().people_type_persons(), this.i18n().people_type_group(), this.i18n().people_type_responsibility()
   ]);
-  protected readonly viewLabels = computed(() => [
-    this.i18n().people_view_card(), this.i18n().people_view_grid(), this.i18n().people_view_slider()
-  ]);
-  protected readonly backgroundLabels = computed(() => [
-    this.i18n().people_background_original(), this.i18n().people_background_removed(),
-    this.i18n().people_background_orgColor(), this.i18n().people_background_colors()
-  ]);
-  protected readonly orgColorLabels = computed(() => [
-    this.i18n().people_bgOrgColor_primary(), this.i18n().people_bgOrgColor_secondary(), this.i18n().people_bgOrgColor_alternating()
-  ]);
-  protected readonly infoLabels = computed(() => [
-    this.i18n().people_info_function(), this.i18n().people_info_email(), this.i18n().people_info_emailLink()
-  ]);
-  protected readonly infoPositionLabels = computed(() => [
-    this.i18n().people_infoPosition_overlayTop(), this.i18n().people_infoPosition_overlayBottom(),
-    this.i18n().people_infoPosition_above(), this.i18n().people_infoPosition_below(),
-    this.i18n().people_infoPosition_left(), this.i18n().people_infoPosition_right()
-  ]);
-
   // field i18n
   protected readonly peopleTypeI18n = computed(() => ({ name: 'peopleType', label: this.i18n().people_type(), helper: this.i18n().people_type_helper() } as StringSelectI18n));
   protected readonly titleI18n = computed(() => ({
@@ -412,37 +277,14 @@ export class PeopleConfiguration {
   protected readonly linkedSectionI18n = computed(() => ({
     name: 'linkedSection', label: this.i18n().people_linkedSection_label(), placeholder: this.i18n().people_linkedSection_placeholder(), helper: this.i18n().people_linkedSection_helper(),
   } as TextInputI18n));
-  protected readonly viewI18n = computed(() => ({ name: 'view', label: this.i18n().people_view_label(), helper: this.i18n().people_view_helper() } as StringSelectI18n));
-  protected readonly colorI18n = computed(() => ({ name: 'color', label: this.i18n().people_color_label(), helper: this.i18n().people_color_helper() } as CategoryOldI18n));
-  protected readonly perRowI18n = computed(() => this.numberI18n('perRow', this.i18n().people_perRow_label(), this.i18n().people_perRow_placeholder(), this.i18n().people_perRow_helper()));
-  protected readonly sliderRowsI18n = computed(() => this.numberI18n('sliderRows', this.i18n().people_sliderRows_label(), this.i18n().people_sliderRows_placeholder(), this.i18n().people_sliderRows_helper()));
-  protected readonly imgWidthI18n = computed(() => this.numberI18n('imgWidth', this.i18n().people_imgWidth_label(), this.i18n().people_imgWidth_placeholder(), this.i18n().people_imgWidth_helper()));
-  protected readonly imgHeightI18n = computed(() => this.numberI18n('imgHeight', this.i18n().people_imgHeight_label(), this.i18n().people_imgHeight_placeholder(), this.i18n().people_imgHeight_helper()));
-  protected readonly facePadI18n = computed(() => this.numberI18n('facePad', this.i18n().people_facePad_label(), this.i18n().people_facePad_placeholder(), this.i18n().people_facePad_helper()));
-  protected readonly imgRadiusI18n = computed(() => ({
-    name: 'imgRadius', label: this.i18n().people_imgRadius_label(), placeholder: this.i18n().people_imgRadius_placeholder(), helper: this.i18n().people_imgRadius_helper(),
-  } as TextInputI18n));
-  protected readonly backgroundI18n = computed(() => ({ name: 'background', label: this.i18n().people_background_label(), helper: this.i18n().people_background_helper() } as StringSelectI18n));
-  protected readonly bgOrgColorI18n = computed(() => ({ name: 'bgOrgColor', label: this.i18n().people_bgOrgColor_label(), helper: this.i18n().people_bgOrgColor_helper() } as StringSelectI18n));
-  protected readonly widthI18n = computed(() => ({ name: 'width', label: this.i18n().people_width_label(), helper: this.i18n().people_width_helper() } as CheckboxI18n));
-  protected readonly grayscaleI18n = computed(() => ({ name: 'grayscale', label: this.i18n().people_grayscale_label(), helper: this.i18n().people_grayscale_helper() } as CheckboxI18n));
   protected readonly altTextI18n = computed(() => ({
     name: 'altText', label: this.i18n().people_altText_label(), placeholder: this.i18n().people_altText_placeholder(), helper: this.i18n().people_altText_helper(),
   } as TextInputI18n));
-  protected readonly nameDisplayI18n = computed(() => ({ name: 'nameDisplay', label: this.i18n().people_nameDisplay_label(), helper: this.i18n().people_nameDisplay_helper() } as CategoryOldI18n));
-  protected readonly infoI18n = computed(() => ({ name: 'info', label: this.i18n().people_info_label(), helper: this.i18n().people_info_helper() } as CheckboxGroupI18n));
-  protected readonly infoPositionI18n = computed(() => ({ name: 'infoPosition', label: this.i18n().people_infoPosition_label(), helper: this.i18n().people_infoPosition_helper() } as StringSelectI18n));
-
-  private numberI18n(name: string, label: string, placeholder: string, helper: string): NumberInputI18n {
-    return { name, label, placeholder, helper };
-  }
 
   protected segmentLabel(seg: PeopleSegment): string {
     switch (seg) {
       case 'content': return this.i18n().people_segment_content();
-      case 'view': return this.i18n().people_segment_view();
-      case 'image': return this.i18n().people_segment_image();
-      case 'info': return this.i18n().people_segment_info();
+      case 'look': return this.i18n().people_segment_look();
     }
   }
 
@@ -463,30 +305,26 @@ export class PeopleConfiguration {
     return this.responsibilityNamesResource.value()?.[id] || id;
   }
 
-  protected onExcludedRemove(key: string): void {
-    this.formData.update(vm => ({ ...vm, excludedPersons: (vm.excludedPersons ?? []).filter(p => p.key !== key) }));
+  /** a hidden person is shown again; the name comes from the stale `excludedPersons` entry, else the key itself */
+  protected hiddenName(key: string): string {
+    const person = this.formData()?.excludedPersons?.find(p => p?.key === key);
+    return person ? getAvatarName(person) : key;
   }
 
-  protected onPersonRemove(index: number): void {
-    this.formData.update(vm => ({ ...vm, persons: (vm.persons ?? []).filter((_, i) => i !== index) }));
+  protected onHiddenRemove(key: string): void {
+    this.formData.update(vm => showPeoplePerson(vm, key));
   }
 
-  /** writes the list and drops the legacy single key, so a legacy section is saved in the new shape */
+  protected onPersonRemove(key: string): void {
+    this.formData.update(vm => removePeoplePerson(vm, key));
+  }
+
   protected onResponsibilityRemove(id: string): void {
-    this.formData.update(vm => {
-      const next: PeopleConfig = { ...vm, responsibilityIds: getPeopleResponsibilityIds(vm).filter(r => r !== id) };
-      delete next.responsibilityId;
-      return next;
-    });
+    this.formData.update(vm => removePeopleResponsibility(vm, id));
   }
 
   protected onResponsibilityParentRemove(): void {
-    this.formData.update(vm => {
-      const next: PeopleConfig = { ...vm };
-      delete next.responsibilityParentKey;
-      delete next.responsibilityParentName;
-      return next;
-    });
+    this.formData.update(vm => clearPeopleResponsibilityParent(vm));
   }
 
   /**
@@ -502,22 +340,7 @@ export class PeopleConfiguration {
     });
   }
 
-  protected onBgColorChange(index: number, hex: string): void {
-    const bgColors = [...this.config().bgColors];
-    bgColors[index] = hex;
-    this.onFieldChange('bgColors', bgColors);
-  }
-
-  protected onBgColorAdd(): void {
-    if (this.config().bgColors.length >= PEOPLE_MAX_BG_COLORS) return;
-    this.onFieldChange('bgColors', [...this.config().bgColors, '#e0e0e0']);
-  }
-
-  protected onBgColorRemove(index: number): void {
-    this.onFieldChange('bgColors', this.config().bgColors.filter((_, i) => i !== index));
-  }
-
   protected onTypeChange(type: string): void {
-    this.formData.update(vm => ({ ...vm, type: type as PeopleConfig['type'] }));
+    this.formData.update(vm => setPeopleSource(vm, type as PeopleConfig['type']));
   }
 }

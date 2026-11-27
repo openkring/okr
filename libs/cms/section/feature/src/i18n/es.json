@@ -1431,11 +1431,6 @@
       "placeholder": "ID de sección",
       "helper": "La sección vinculada muestra en una ventana modal más información sobre el elemento seleccionado."
     },
-    "color": {
-      "label": "Color",
-      "select": "Selección de color",
-      "helper": "Color de fondo detrás del nombre y los datos de cada persona."
-    },
     "nameDisplay": {
       "label": "Presentación del nombre",
       "helper": "Determina cómo se muestra el nombre de una persona. Con «ninguno» no se muestra ningún nombre."
@@ -1449,9 +1444,7 @@
     },
     "segment": {
       "content": "Contenido",
-      "view": "Presentación",
-      "image": "Imagen",
-      "info": "Datos"
+      "look": "Aspecto"
     },
     "typeHelper": "De dónde vienen las personas: personas elegidas, los miembros de un grupo o los responsables de uno o varios cargos.",
     "typeOption": {
@@ -1464,64 +1457,6 @@
       "placeholder": "Avatar de @NAME@",
       "helper": "Este texto se añade a cada foto como texto alternativo. Es una descripción que ayuda a las personas con discapacidad visual a entender el contenido del sitio. @NAME@ se sustituye por el nombre de la persona."
     },
-    "view": {
-      "label": "Tipo",
-      "helper": "Las tarjetas son tan grandes como su contenido. La cuadrícula reparte a las personas en columnas de igual ancho. El slider las muestra en 1 a 4 filas para desplazarse.",
-      "card": "Tarjetas",
-      "grid": "Cuadrícula",
-      "slider": "Slider"
-    },
-    "perRow": {
-      "label": "Personas por fila",
-      "placeholder": "5",
-      "helper": "Cuántas personas se ven a la vez en el slider (de 3 a 10)."
-    },
-    "sliderRows": {
-      "label": "Número de filas",
-      "placeholder": "1",
-      "helper": "En cuántas filas del slider se reparten las personas (de 1 a 4)."
-    },
-    "imgWidth": {
-      "label": "Ancho de la imagen (px)",
-      "placeholder": "120",
-      "helper": "Ancho de cada foto en píxeles."
-    },
-    "imgHeight": {
-      "label": "Alto de la imagen (px)",
-      "placeholder": "120",
-      "helper": "Alto de cada foto en píxeles."
-    },
-    "imgRadius": {
-      "label": "Radio de las esquinas",
-      "placeholder": "50%",
-      "helper": "Redondeo de las esquinas en píxeles, p. ej. 8. Con 50% la imagen queda redonda."
-    },
-    "facePad": {
-      "label": "Margen alrededor de la cara",
-      "placeholder": "0",
-      "helper": "Recorta la imagen a la cara: 1 es ajustado, 2 deja mucho margen. Con 0 la imagen solo se centra en la cara."
-    },
-    "background": {
-      "label": "Fondo",
-      "helper": "Recortar quita el fondo de la foto; después se puede rellenar con un color. El recorte tiene un coste en el servicio de imágenes (una vez por imagen).",
-      "original": "Foto original",
-      "removed": "Recortada, sin fondo",
-      "orgColor": "Recortada, color del club",
-      "colors": "Recortada, colores propios"
-    },
-    "bgOrgColor": {
-      "label": "Color del club",
-      "helper": "Qué color de tu club llena el fondo. «Alternando» cambia de persona a persona entre el color principal y el secundario.",
-      "primary": "Color principal",
-      "secondary": "Color secundario",
-      "alternating": "Alternando"
-    },
-    "bgColors": {
-      "label": "Colores de fondo",
-      "helper": "De 1 a 4 colores. Se alternan de una persona a otra.",
-      "add": "Añadir color",
-      "color": "Color"
-    },
     "grayscale": {
       "label": "Blanco y negro",
       "helper": "Muestra los retratos en blanco y negro. En la foto original afecta a toda la imagen; en los retratos recortados solo a la persona: el fondo conserva su color."
@@ -1533,19 +1468,35 @@
       "email": "Mostrar correo",
       "emailLink": "Solo enlazar correo"
     },
-    "infoPosition": {
-      "label": "Posición de los datos",
-      "helper": "Dónde están el nombre y los datos respecto a la imagen.",
-      "overlayTop": "Sobre la imagen, arriba",
-      "overlayBottom": "Sobre la imagen, abajo",
-      "above": "Encima de la imagen",
-      "below": "Debajo de la imagen",
-      "left": "A la izquierda de la imagen",
-      "right": "A la derecha de la imagen"
-    },
     "width": {
       "label": "Mismo ancho que los artículos",
       "helper": "En el sitio web, la lista de personas tiene entonces exactamente el ancho del texto de los artículos. Sin marcar, usa todo el ancho de la página."
+    },
+    "look": {
+      "size": {
+        "label": "Tamaño",
+        "S": "Pequeño",
+        "M": "Mediano",
+        "L": "Grande"
+      },
+      "shape": {
+        "label": "Forma",
+        "round": "Redonda",
+        "rounded": "Redondeada",
+        "square": "Cuadrada"
+      },
+      "fill": {
+        "label": "Fondo",
+        "original": "Original",
+        "primary": "Color del club",
+        "alternating": "Alterno"
+      },
+      "textPosition": {
+        "label": "Texto",
+        "below": "Debajo de la foto",
+        "right": "A la derecha",
+        "overlay": "Sobre la foto"
+      }
     }
   },
   "rag": {

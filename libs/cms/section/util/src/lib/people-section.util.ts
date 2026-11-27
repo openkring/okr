@@ -2,9 +2,6 @@ import { AVATAR_CONFIG_SHAPE, AvatarConfig, NameDisplay, PEOPLE_NAME_PLACEHOLDER
 
 /** A colour accepted for a portrait background: #rrggbb. */
 export const HEX_COLOR_REGEX = /^#[0-9a-fA-F]{6}$/;
-/** A border radius: a pixel value ('12', '12px') or a percentage ('50%' = circle). */
-export const IMG_RADIUS_REGEX = /^(\d{1,3}(px)?|\d{1,2}%)$/;
-export const PEOPLE_MAX_BG_COLORS = 4;
 
 /**
  * Fills the gaps of a stored people config with the defaults and maps the two retired flags

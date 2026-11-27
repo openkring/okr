@@ -1431,11 +1431,6 @@
       "placeholder": "ID de section",
       "helper": "La section liée affiche plus d'informations sur l'élément sélectionné dans une fenêtre modale."
     },
-    "color": {
-      "label": "Couleur",
-      "select": "Choix de couleur",
-      "helper": "Couleur de fond derrière le nom et les informations de chaque personne."
-    },
     "nameDisplay": {
       "label": "Affichage du nom",
       "helper": "Détermine comment le nom d’une personne est affiché. Avec « aucun », aucun nom n’est affiché."
@@ -1449,9 +1444,7 @@
     },
     "segment": {
       "content": "Contenu",
-      "view": "Présentation",
-      "image": "Image",
-      "info": "Informations"
+      "look": "Apparence"
     },
     "typeHelper": "D'où viennent les personnes : des personnes choisies, les membres d'un groupe ou les responsables d'une ou plusieurs fonctions.",
     "typeOption": {
@@ -1464,64 +1457,6 @@
       "placeholder": "Avatar de @NAME@",
       "helper": "Ce texte est ajouté à chaque photo de personne comme texte alternatif. C’est une description qui aide les personnes malvoyantes à comprendre le contenu du site. @NAME@ est remplacé par le nom de la personne."
     },
-    "view": {
-      "label": "Type",
-      "helper": "Les cartes ont la taille de leur contenu. La grille répartit les personnes sur des colonnes de même largeur. Le slider les montre sur 1 à 4 lignes à faire défiler.",
-      "card": "Cartes",
-      "grid": "Grille",
-      "slider": "Slider"
-    },
-    "perRow": {
-      "label": "Personnes par ligne",
-      "placeholder": "5",
-      "helper": "Combien de personnes sont visibles en même temps dans le slider (3 à 10)."
-    },
-    "sliderRows": {
-      "label": "Nombre de lignes",
-      "placeholder": "1",
-      "helper": "Sur combien de lignes de slider les personnes sont réparties (1 à 4)."
-    },
-    "imgWidth": {
-      "label": "Largeur de l’image (px)",
-      "placeholder": "120",
-      "helper": "Largeur de chaque photo en pixels."
-    },
-    "imgHeight": {
-      "label": "Hauteur de l’image (px)",
-      "placeholder": "120",
-      "helper": "Hauteur de chaque photo en pixels."
-    },
-    "imgRadius": {
-      "label": "Rayon des coins",
-      "placeholder": "50%",
-      "helper": "Arrondi des coins de l’image en pixels, p. ex. 8. Avec 50 %, l’image devient ronde."
-    },
-    "facePad": {
-      "label": "Marge autour du visage",
-      "placeholder": "0",
-      "helper": "Recadre l’image sur le visage : 1 est serré, 2 laisse beaucoup de marge. Avec 0, l’image est seulement centrée sur le visage."
-    },
-    "background": {
-      "label": "Arrière-plan",
-      "helper": "Le détourage retire l’arrière-plan de la photo ; il peut ensuite être rempli d’une couleur. Le détourage est payant auprès du service d’images (une fois par image).",
-      "original": "Photo originale",
-      "removed": "Détourée, sans arrière-plan",
-      "orgColor": "Détourée, couleur du club",
-      "colors": "Détourée, couleurs propres"
-    },
-    "bgOrgColor": {
-      "label": "Couleur du club",
-      "helper": "Quelle couleur de ton club remplit le fond. «En alternance» passe d'une personne à l'autre entre la couleur principale et la couleur secondaire.",
-      "primary": "Couleur principale",
-      "secondary": "Couleur secondaire",
-      "alternating": "En alternance"
-    },
-    "bgColors": {
-      "label": "Couleurs d’arrière-plan",
-      "helper": "1 à 4 couleurs. Elles alternent d’une personne à l’autre.",
-      "add": "Ajouter une couleur",
-      "color": "Couleur"
-    },
     "grayscale": {
       "label": "Noir et blanc",
       "helper": "Affiche les portraits en noir et blanc. Pour la photo originale, cela vaut pour toute l'image ; pour les portraits détourés, seulement pour la personne – le fond garde sa couleur."
@@ -1533,19 +1468,35 @@
       "email": "Afficher l'e-mail",
       "emailLink": "Lien e-mail seulement"
     },
-    "infoPosition": {
-      "label": "Position des informations",
-      "helper": "Où se trouvent le nom et les informations par rapport à l’image.",
-      "overlayTop": "Sur l’image, en haut",
-      "overlayBottom": "Sur l’image, en bas",
-      "above": "Au-dessus de l’image",
-      "below": "Sous l’image",
-      "left": "À gauche de l’image",
-      "right": "À droite de l’image"
-    },
     "width": {
       "label": "Même largeur que les articles",
       "helper": "Sur le site web, la liste des personnes a alors exactement la largeur du texte des articles. Sans coche, elle utilise toute la largeur de la page."
+    },
+    "look": {
+      "size": {
+        "label": "Taille",
+        "S": "Petite",
+        "M": "Moyenne",
+        "L": "Grande"
+      },
+      "shape": {
+        "label": "Forme",
+        "round": "Ronde",
+        "rounded": "Arrondie",
+        "square": "Carrée"
+      },
+      "fill": {
+        "label": "Arrière-plan",
+        "original": "Original",
+        "primary": "Couleur du club",
+        "alternating": "En alternance"
+      },
+      "textPosition": {
+        "label": "Texte",
+        "below": "Sous la photo",
+        "right": "À droite",
+        "overlay": "Sur la photo"
+      }
     }
   },
   "rag": {
