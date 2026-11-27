@@ -1,3 +1,4 @@
+import { NameDisplay } from './enums/name-display.enum';
 import { resolvePeopleLook } from './people-look';
 import type { PeopleConfig } from './section.model';
 
@@ -52,6 +53,12 @@ export function cleanPeopleConfig(config: PeopleConfig, shownKeys: readonly stri
   const shown = new Set(shownKeys);
   const out: PeopleConfig = { ...config };
   const avatar: Record<string, unknown> = { ...config.avatar };
+  // the retired flags are folded as normalizeAvatarConfig reads them, before they are dropped: the drawing stays the same
+  if (config.avatar) {
+    const { showName, showLabel, nameDisplay, info } = config.avatar;
+    if ((nameDisplay === undefined || nameDisplay === null) && showName === false) avatar['nameDisplay'] = NameDisplay.None;
+    if (info === undefined || info === null) avatar['info'] = showLabel === true ? ['function'] : [];
+  }
   for (const f of OLD_LOOK_FIELDS) delete avatar[f];
   const look = resolvePeopleLook(config.avatar);
   avatar['size'] = look.size;

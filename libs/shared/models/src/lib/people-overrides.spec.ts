@@ -61,3 +61,23 @@ describe('cleanPeopleConfig', () => {
     expect(input.excludedPersons).toBeDefined();
   });
 });
+
+describe('cleanPeopleConfig: retired flags', () => {
+  const run = (avatar: object) => cleanPeopleConfig({ type: 'group', persons: [], avatar } as unknown as PeopleConfig, []).avatar as unknown as Record<string, unknown>;
+  it('folds showName false and showLabel true before dropping them', () => {
+    const a = run({ showName: false, showLabel: true });
+    expect(a['nameDisplay']).toBe(4);
+    expect(a['info']).toEqual(['function']);
+    expect('showName' in a || 'showLabel' in a).toBe(false);
+  });
+  it('no label flag means no details', () => expect(run({ showName: true })['info']).toEqual([]));
+  it('a stored nameDisplay and info win', () => {
+    const a = run({ showName: false, showLabel: true, nameDisplay: 1, info: ['email'] });
+    expect(a['nameDisplay']).toBe(1);
+    expect(a['info']).toEqual(['email']);
+  });
+  it('no avatar stored: nothing is folded', () => {
+    const out = cleanPeopleConfig({ type: 'group', persons: [] } as unknown as PeopleConfig, []).avatar as unknown as Record<string, unknown>;
+    expect('info' in out).toBe(false);
+  });
+});

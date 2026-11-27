@@ -71,11 +71,11 @@ function keysOf(list: unknown): string[] {
 /** The new `properties` of a people section (before the comparison with the website). */
 function cleaned(props: Record<string, unknown>): Record<string, unknown> {
   const config = { ...props } as unknown as PeopleConfig;
-  // a legacy single responsibilityId is a list of one: fold it in before cleanPeopleConfig drops it
+  // a legacy single responsibilityId is read only while responsibilityIds is empty (both readers): fold it then,
+  // otherwise it is inert and dropped below
   if (config.type === 'responsibility' && typeof config.responsibilityId === 'string' && config.responsibilityId.trim() !== '') {
-    const ids = Array.isArray(config.responsibilityIds) ? config.responsibilityIds.filter((i) => typeof i === 'string') : [];
-    const legacy = config.responsibilityId.trim();
-    config.responsibilityIds = ids.length > 0 ? (ids.includes(legacy) ? ids : [legacy, ...ids]) : [legacy];
+    const ids = Array.isArray(config.responsibilityIds) ? config.responsibilityIds.filter((i) => typeof i === 'string' && i.trim() !== '') : [];
+    if (ids.length === 0) config.responsibilityIds = [config.responsibilityId.trim()];
   }
   // the migration has no resolved persons: no stale override key is dropped, nothing is lost
   const shown = [...new Set([...peopleHiddenKeys(config), ...keysOf(config.hiddenKeys), ...keysOf(config.excludedPersons), ...keysOf(config.orderKeys)])];
@@ -124,20 +124,25 @@ export function changedFields(before: Record<string, unknown>, after: Record<str
 
 // ------------------------------------------------- comparison of the website output ------------------------------------------------
 
-const stubPeople = (): { key: string; firstName: string; lastName: string; label: string; showImage: boolean; image: string; email: string }[] =>
-  ['a', 'b', 'c'].map((k) => ({ key: k, firstName: `F${k}`, lastName: `L${k}`, label: `Label ${k}`, showImage: true, image: `avatars/${k}.jpg`, email: `${k}@example.ch` }));
+const stubPeople = (seed: string, extraKeys: string[]): { key: string; firstName: string; lastName: string; label: string; showImage: boolean; image: string; email: string }[] =>
+  [...new Set([...['a', 'b', 'c'].map((k) => `${seed}-${k}`), ...extraKeys])].map((k) => ({
+    key: k, firstName: `F${k}`, lastName: `L${k}`, label: `Label ${k}`, showImage: true, image: `avatars/${k}.jpg`, email: `${k}@example.ch`,
+  }));
 
 /**
  * The mapped section before and after with the persons resolved the same (the same stub for the source before and after,
  * which differ only in the key of a folded legacy `responsibilityId`). The 4px → 5px radius is not drawn there.
  */
-function websiteDiffers(section: StoredPeopleSection, patch: Record<string, unknown>): boolean {
+export function websiteDiffers(section: StoredPeopleSection, patch: Record<string, unknown>): boolean {
   const make = (properties: unknown): SectionDoc => ({ type: 'people', name: section.name, properties } as unknown as SectionDoc);
   const [before, after] = [make(section.properties), make(patch)];
+  // different people per source key, plus the keys the section hides or orders: a changed source, hide or order shows up
+  const props = section.properties as Record<string, unknown>;
+  const extra = [...new Set([...keysOf(props['hiddenKeys']), ...keysOf(props['excludedPersons']), ...keysOf(props['orderKeys'])])];
   const people = new Map<string, ReturnType<typeof stubPeople>>();
   for (const doc of [before, after]) {
     const source = peopleSourceOf(doc);
-    if (source) people.set(peopleSourceKey(source), stubPeople());
+    if (source) people.set(peopleSourceKey(source), stubPeople(peopleSourceKey(source), extra));
   }
   try {
     return LANGS.some((lang) => {

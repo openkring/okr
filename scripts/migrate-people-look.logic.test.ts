@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import {
   applySkip, backupName, buildPlan, entriesOf, exitCodeOf, parseArgs, parsePlan, planDocument, planPeopleMigration, reportOf, skipSummary, summaryOf,
-  undoSkip, updateTimeOf, type StoredPeopleSection, type WriteEntry,
+  undoSkip, updateTimeOf, websiteDiffers, type StoredPeopleSection, type WriteEntry,
 } from './migrate-people-look.logic';
 
 const avatar = (more: object = {}): Record<string, unknown> => ({
@@ -93,13 +93,33 @@ test('Verantwortliche folds responsibilityId into responsibilityIds', () => {
   const plan = planPeopleMigration(SECTIONS['Verantwortliche'].section);
   assert.equal(plan.action === 'write' && JSON.stringify(plan.patch.responsibilityIds), '["memberAdmin"]');
 });
-test('a legacy responsibilityId is kept in front of the listed ones, once', () => {
+test('a legacy responsibilityId folds into an empty list; next to a listed one it is inert and dropped', () => {
   const p = (ids: string[]): unknown => {
     const plan = planPeopleMigration(section('x', { type: 'responsibility', responsibilityId: 'a', responsibilityIds: ids, persons: [], avatar: avatar() }));
-    return plan.action === 'write' ? plan.patch.responsibilityIds : plan;
+    return plan.action === 'write' ? [plan.patch.responsibilityIds, 'responsibilityId' in plan.patch] : plan;
   };
-  assert.deepEqual(p(['b', 'a']), ['b', 'a']);
-  assert.deepEqual(p(['b']), ['a', 'b']);
+  assert.deepEqual(p([]), [['a'], false]);
+  assert.deepEqual(p(['b', 'a']), [['b', 'a'], false]);
+  assert.deepEqual(p(['b']), [['b'], false]);
+});
+test('legacy showName/showLabel keep the same drawing', () => {
+  const s = section('L', { type: 'group', groupId: 'g', persons: [], avatar: { showName: false, showLabel: true, title: 'X' } });
+  const plan = planPeopleMigration(s);
+  assert.equal(plan.action, 'write');
+  if (plan.action !== 'write') return;
+  const av = plan.patch.avatar as unknown as Record<string, unknown>;
+  assert.equal(av['nameDisplay'], 4);
+  assert.deepEqual(av['info'], ['function']);
+  assert.equal('showName' in av || 'showLabel' in av, false);
+  assert.equal(av['title'], 'X');
+});
+test('websiteDiffers sees a changed source, a hide and an order', () => {
+  const base = { type: 'responsibility', responsibilityIds: ['a'], persons: [], avatar: avatar(), hiddenKeys: ['x'] };
+  const same = section('s', base);
+  assert.equal(websiteDiffers(same, base), false);
+  assert.equal(websiteDiffers(same, { ...base, responsibilityIds: ['a', 'b'] }), true);
+  assert.equal(websiteDiffers(same, { ...base, hiddenKeys: [] }), true);
+  assert.equal(websiteDiffers(section('o', { ...base, orderKeys: ['b', 'a'] }), { ...base, orderKeys: ['a', 'b'] }), true);
 });
 test('Vorstand drops persons, Bootshauskommission keeps them, groups keep groupId', () => {
   const v = planPeopleMigration(SECTIONS['Vorstand'].section);
