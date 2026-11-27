@@ -1,6 +1,6 @@
 import { lift, setBlockType, toggleMark, wrapIn } from 'prosemirror-commands';
 import { redo, undo } from 'prosemirror-history';
-import { MarkType, Node as PMNode, NodeType } from 'prosemirror-model';
+import { MarkType, Node as PMNode, NodeType, ResolvedPos } from 'prosemirror-model';
 import { liftListItem, sinkListItem, splitListItem, wrapInList } from 'prosemirror-schema-list';
 import { Command, EditorState, Selection, TextSelection, Transaction } from 'prosemirror-state';
 
@@ -38,9 +38,42 @@ export function activeColor(state: EditorState, name: ColorMarkName): string | n
 }
 
 export function activeLink(state: EditorState): string | null {
-  const { $from } = state.selection;
-  const mark = schema.marks['link'].isInSet($from.marks());
-  return mark ? (mark.attrs['href'] as string) : null;
+  return activeLinkInfo(state)?.href ?? null;
+}
+
+/** Where a link opens: `_blank` is a new window or tab, null the same one. */
+export type LinkTarget = '_blank' | null;
+
+/** The link the link dialog edits: the one around the cursor, or the one the selection lies in. */
+export interface LinkInfo {
+  href: string;
+  target: LinkTarget;
+  /** the linked text */
+  text: string;
+}
+
+export function activeLinkInfo(state: EditorState): LinkInfo | null {
+  const type = schema.marks['link'];
+  const range = linkRange(state);
+  if (!range) return null;
+  const mark = type.isInSet(state.doc.nodeAt(range.from)?.marks ?? []);
+  if (!mark) return null;
+  return {
+    href: mark.attrs['href'] as string,
+    target: mark.attrs['target'] === '_blank' ? '_blank' : null,
+    text: state.doc.textBetween(range.from, range.to),
+  };
+}
+
+/** The extent of the link the cursor sits in, or the selection lies in completely. */
+function linkRange(state: EditorState): { from: number; to: number } | null {
+  const type = schema.marks['link'];
+  const { from, to, empty, $from } = state.selection;
+  if (empty) return markRange(state, type);
+  if ($from.parent !== state.selection.$to.parent) return null;
+  // a selection starting at the link's first letter: the text right of `from` decides, not the one before
+  const range = markRangeAt($from, type, 'after');
+  return range && range.from <= from && to <= range.to ? range : null;
 }
 
 function parentBlock(state: EditorState): PMNode {
@@ -165,28 +198,38 @@ export function setColor(name: ColorMarkName, color: string | null): Command {
   };
 }
 
+export interface LinkOptions {
+  /** where the link opens; default a new window */
+  target?: LinkTarget;
+  /** the linked text; when it differs from the current one, it replaces it (with no selection, default the URL) */
+  text?: string;
+}
+
 /**
- * Sets or removes a link. With nothing selected, the URL is inserted as linked text; with a cursor inside
- * a link, the whole link is changed.
+ * Sets or removes a link. With nothing selected, the text (or the URL) is inserted as linked text; with a cursor inside
+ * a link, or a selection within one, the whole link is changed.
  */
-export function setLink(href: string | null): Command {
+export function setLink(href: string | null, options: LinkOptions = {}): Command {
   return (state, dispatch) => {
     const type = schema.marks['link'];
     let { from, to } = state.selection;
-    if (state.selection.empty) {
-      const range = markRange(state, type);
-      if (range) ({ from, to } = range);
-    }
+    const range = linkRange(state);
+    if (range) ({ from, to } = range);
+    if (from === to && !href) return false;
     if (!dispatch) return true;
     const tr = state.tr;
-    if (from === to) {
-      if (!href) return false;
-      tr.insertText(href, from).addMark(from, from + href.length, type.create({ href }));
-      tr.setSelection(TextSelection.create(tr.doc, from + href.length));
-    } else {
-      tr.removeMark(from, to, type);
-      if (href) tr.addMark(from, to, type.create({ href }));
+    const target = options.target === undefined ? '_blank' : options.target;
+    const text = options.text?.trim();
+    if (from === to || (href && text && text !== state.doc.textBetween(from, to))) {
+      // new text: it keeps the marks of its first letter (bold stays bold), the link is set anew
+      const label = text || href || '';
+      const marks = from === to ? state.selection.$from.marks() : (state.doc.nodeAt(from)?.marks ?? []);
+      tr.replaceWith(from, to, schema.text(label, type.removeFromSet(marks)));
+      to = from + label.length;
     }
+    tr.removeMark(from, to, type);
+    if (href) tr.addMark(from, to, type.create({ href, target }));
+    if (state.selection.empty || range) tr.setSelection(TextSelection.create(tr.doc, to));
     dispatch(tr.scrollIntoView());
     return true;
   };
@@ -197,12 +240,18 @@ export function setLink(href: string | null): Command {
  * bold spans several text nodes; adjacent nodes carrying the same mark count as one range.
  */
 function markRange(state: EditorState, type: MarkType): { from: number; to: number } | null {
-  const { $from } = state.selection;
-  const parent = $from.parent;
+  return markRangeAt(state.selection.$from, type, 'before');
+}
+
+/** `side`: at a boundary between two texts, which one counts (before: typing continues a link). */
+function markRangeAt($pos: ResolvedPos, type: MarkType, side: 'before' | 'after'): { from: number; to: number } | null {
+  const parent = $pos.parent;
   const children: { from: number; to: number; node: PMNode }[] = [];
   parent.forEach((node, offset) => children.push({ from: offset, to: offset + node.nodeSize, node }));
-  // the child the cursor touches; at a boundary prefer the one before (typing continues a link)
-  const index = children.findIndex((c) => c.from < $from.parentOffset && $from.parentOffset <= c.to);
+  const offset = $pos.parentOffset;
+  const index = side === 'before'
+    ? children.findIndex((c) => c.from < offset && offset <= c.to)
+    : children.findIndex((c) => c.from <= offset && offset < c.to);
   const mark = index >= 0 ? type.isInSet(children[index].node.marks) : undefined;
   if (!mark) return null;
   const sameMark = (i: number) => i >= 0 && i < children.length && mark.isInSet(children[i].node.marks);
@@ -210,7 +259,7 @@ function markRange(state: EditorState, type: MarkType): { from: number; to: numb
   let last = index;
   while (sameMark(first - 1)) first--;
   while (sameMark(last + 1)) last++;
-  return { from: $from.start() + children[first].from, to: $from.start() + children[last].to };
+  return { from: $pos.start() + children[first].from, to: $pos.start() + children[last].to };
 }
 
 // ---------------------------------------------------------------- task items (markdown `- [x]`)

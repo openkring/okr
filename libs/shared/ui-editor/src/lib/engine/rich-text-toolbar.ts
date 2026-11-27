@@ -1,5 +1,5 @@
-import { Component, computed, inject, input, Signal, signal, ViewEncapsulation } from '@angular/core';
-import { AlertController, IonButton, IonIcon, IonPopover, IonSelect, IonSelectOption, ToastController } from '@ionic/angular';
+import { Component, computed, inject, input, Signal, signal, viewChild, ViewEncapsulation } from '@angular/core';
+import { AlertController, IonButton, IonIcon, IonInput, IonPopover, IonSelect, IonSelectOption, IonToggle, ToastController } from '@ionic/angular';
 import { Command, EditorState } from 'prosemirror-state';
 
 import { SvgIconPipe } from '@okr/shared-pipes';
@@ -10,7 +10,7 @@ import type { RichTextFormat } from '../rich-text-format';
 import type { RichTextI18n } from '../rich-text-i18n';
 import type { RichTextFeature } from '../rich-text-inline';
 import {
-  activeAlign, activeBlockLevel, activeColor, activeLink, Align, BlockLevel, ColorMarkName, indent, insertImage, inTaskItem, isInside,
+  activeAlign, activeBlockLevel, activeColor, activeLinkInfo, Align, BlockLevel, ColorMarkName, indent, insertImage, inTaskItem, isInside,
   isMarkActive, MarkName, redo, setAlign, setBlockLevel, setColor, setLink, toggleBlockquote, toggleList, toggleMarkCommand,
   toggleTaskItem, undo,
 } from './rich-text.commands';
@@ -24,6 +24,17 @@ const PALETTE = [
 ];
 
 const LINK_REGEX = new RegExp(`^${EDITOR_LINK_PATTERN}$`, 'i');
+
+/** The fields of the link popover. */
+interface LinkDraft {
+  /** an existing link is edited (it can be removed) */
+  editing: boolean;
+  href: string;
+  text: string;
+  /** the text when the popover opened: only a changed text replaces the linked one */
+  originalText: string;
+  newWindow: boolean;
+}
 
 interface MarkButton { mark: MarkName; icon: string; label: keyof RichTextI18n; }
 /** The marks markdown can express (spec 1.170 §4.4). */
@@ -48,7 +59,7 @@ export interface RichTextToolbarEngine {
 @Component({
   selector: 'okr-rich-text-toolbar',
   standalone: true,
-  imports: [SvgIconPipe, IonButton, IonIcon, IonPopover, IonSelect, IonSelectOption],
+  imports: [SvgIconPipe, IonButton, IonIcon, IonInput, IonPopover, IonSelect, IonSelectOption, IonToggle],
   // the contents of the popover are drawn outside this element
   encapsulation: ViewEncapsulation.None,
   styles: [`
@@ -71,6 +82,12 @@ export interface RichTextToolbarEngine {
     .rte-swatch.selected { outline: 2px solid var(--ion-color-primary); outline-offset: 2px; }
     .rte-popover-actions { display: flex; justify-content: center; padding: 0 8px 8px; }
     .rte-align { display: flex; gap: 2px; padding: 6px; }
+    .rte-link-popover { --width: min(360px, calc(100vw - 32px)); }
+    .rte-link { display: flex; flex-direction: column; gap: 8px; padding: 12px 16px 8px; }
+    .rte-link h3 { margin: 0 0 4px; font-size: 16px; font-weight: 600; }
+    .rte-link ion-toggle { padding: 4px 0; }
+    .rte-link-actions { display: flex; align-items: center; gap: 4px; padding-top: 4px; }
+    .rte-link-actions .rte-grow { flex: 1 1 auto; }
   `],
   template: `
     <!-- mousedown is cancelled so a click never moves the focus (and the selection) out of the text -->
@@ -157,7 +174,7 @@ export interface RichTextToolbarEngine {
       }
 
       @if (shows().link) {
-        <ion-button type="button" fill="clear" size="small" [class.active]="!!linkHref()" (click)="editLink()"
+        <ion-button type="button" fill="clear" size="small" [class.active]="!!link()" (click)="openLink($event)"
           [attr.aria-label]="i18n().link()" [title]="i18n().link()">
           <ion-icon slot="icon-only" src="{{ 'link' | svgIcon }}" />
         </ion-button>
@@ -190,6 +207,38 @@ export interface RichTextToolbarEngine {
           <div class="rte-popover-actions">
             <ion-button type="button" fill="clear" size="small" (click)="engine().run(colorCmd(kind, null))">{{ i18n().noColor() }}</ion-button>
           </div>
+        }
+      </ng-template>
+    </ion-popover>
+
+    <!-- its own popover: a click into the fields must not close it -->
+    <ion-popover class="rte-link-popover" [isOpen]="linkDraft() !== null" [event]="linkEvent()" [dismissOnSelect]="false"
+      (didPresent)="focusLinkUrl()" (didDismiss)="closeLink()">
+      <ng-template>
+        @if (linkDraft(); as draft) {
+          <form class="rte-link" (submit)="$event.preventDefault(); confirmLink()">
+            <h3>{{ draft.editing ? i18n().linkEditHeader() : i18n().linkHeader() }}</h3>
+            <ion-input #linkUrl type="url" inputmode="url" fill="outline" labelPlacement="stacked" [label]="i18n().linkUrl()"
+              [placeholder]="i18n().linkPlaceholder()" [value]="draft.href" (ionInput)="patchLink({ href: $event.detail.value ?? '' })"
+              (keydown.enter)="$event.preventDefault(); confirmLink()" />
+            <ion-input type="text" fill="outline" labelPlacement="stacked" [label]="i18n().linkText()"
+              [placeholder]="i18n().linkTextPlaceholder()" [value]="draft.text" (ionInput)="patchLink({ text: $event.detail.value ?? '' })"
+              (keydown.enter)="$event.preventDefault(); confirmLink()" />
+            <!-- markdown cannot say where a link opens -->
+            @if (!isMarkdown()) {
+              <ion-toggle labelPlacement="end" justify="start" [checked]="draft.newWindow" (ionChange)="patchLink({ newWindow: $event.detail.checked })">
+                {{ i18n().linkNewWindow() }}
+              </ion-toggle>
+            }
+            <div class="rte-link-actions">
+              @if (draft.editing) {
+                <ion-button type="button" fill="clear" size="small" color="danger" (click)="removeLink()">{{ i18n().linkRemove() }}</ion-button>
+              }
+              <span class="rte-grow"></span>
+              <ion-button type="button" fill="clear" size="small" (click)="linkDraft.set(null)">{{ i18n().cancel() }}</ion-button>
+              <ion-button type="submit" fill="solid" size="small">{{ i18n().ok() }}</ion-button>
+            </div>
+          </form>
         }
       </ng-template>
     </ion-popover>
@@ -263,13 +312,19 @@ export class RichTextToolbar {
   protected readonly alignIcon = computed(() => `align-${this.align()}`);
   protected readonly textColor = computed(() => { const s = this.state(); return s ? activeColor(s, 'text_color') : null; });
   protected readonly backgroundColor = computed(() => { const s = this.state(); return s ? activeColor(s, 'text_background_color') : null; });
-  protected readonly linkHref = computed(() => { const s = this.state(); return s ? activeLink(s) : null; });
+  protected readonly link = computed(() => { const s = this.state(); return s ? activeLinkInfo(s) : null; });
   protected readonly inBulletList = computed(() => { const s = this.state(); return !!s && isInside(s, schema.nodes['bullet_list']); });
   protected readonly inOrderedList = computed(() => { const s = this.state(); return !!s && isInside(s, schema.nodes['ordered_list']); });
   protected readonly inBlockquote = computed(() => { const s = this.state(); return !!s && isInside(s, schema.nodes['blockquote']); });
   protected readonly inTask = computed(() => { const s = this.state(); return !!s && inTaskItem(s); });
 
   protected readonly popover = signal<PopoverKind | null>(null);
+  /** the link being inserted or edited, while its popover is open */
+  protected readonly linkDraft = signal<LinkDraft | null>(null);
+  protected readonly linkEvent = signal<Event | undefined>(undefined);
+  /** set by confirm/remove: closing the popover then does not hand the focus back (the command does) */
+  private linkApplied = false;
+  private readonly linkUrl = viewChild<IonInput>('linkUrl');
   protected readonly popoverEvent = signal<Event | undefined>(undefined);
   /** the colour popover that is open, if any */
   protected readonly colorKind = computed<ColorMarkName | null>(() => {
@@ -325,16 +380,66 @@ export class RichTextToolbar {
     return role === 'confirm' ? ((data?.values?.[0] as string | undefined) ?? '') : undefined;
   }
 
-  protected async editLink(): Promise<void> {
-    const i18n = this.i18n();
-    const href = await this.prompt(i18n.linkHeader(), i18n.linkPlaceholder(), this.linkHref() ?? '');
-    if (href === undefined) { this.engine().focus(); return; }           // cancelled
-    const value = href.trim();
-    if (value && !LINK_REGEX.test(value)) {
-      await showToast(this.toastController, i18n.linkInvalid());
+  /**
+   * Opens the link popover: for the link at the cursor (or the selection within one), or for a new link on the selection.
+   * The focus leaves the text first, otherwise the contenteditable keeps the keyboard and typing lands in the text;
+   * ProseMirror keeps the selection in its state, so the command still applies to it afterwards.
+   */
+  protected openLink(event: Event): void {
+    const state = this.state();
+    if (!state) return;
+    const current = this.link();
+    const { from, to } = state.selection;
+    this.engine().blur();
+    globalThis.getSelection?.()?.removeAllRanges();
+    this.linkApplied = false;
+    this.linkEvent.set(event);
+    this.linkDraft.set(current
+      ? { editing: true, href: current.href, text: current.text, originalText: current.text, newWindow: current.target === '_blank' }
+      : { editing: false, href: '', text: state.doc.textBetween(from, to), originalText: state.doc.textBetween(from, to), newWindow: true });
+  }
+
+  protected patchLink(patch: Partial<LinkDraft>): void {
+    this.linkDraft.update((draft) => (draft ? { ...draft, ...patch } : draft));
+  }
+
+  protected focusLinkUrl(): void {
+    // Ionic settles the popover's focus just after presenting; focusing earlier is undone
+    setTimeout(() => void this.linkUrl()?.setFocus(), 50);
+  }
+
+  protected async confirmLink(): Promise<void> {
+    const draft = this.linkDraft();
+    if (!draft) return;
+    const href = draft.href.trim();
+    if (!href) {                                                    // an empty address removes the link
+      if (draft.editing) this.removeLink(); else this.linkDraft.set(null);
       return;
     }
-    this.engine().run(setLink(value || null));
+    if (!LINK_REGEX.test(href)) {
+      await showToast(this.toastController, this.i18n().linkInvalid());
+      return;
+    }
+    const text = draft.text.trim();
+    this.linkApplied = true;
+    this.linkDraft.set(null);
+    this.engine().run(setLink(href, {
+      target: draft.newWindow || this.isMarkdown() ? '_blank' : null,
+      // unchanged text keeps its formatting (a partly bold link stays so)
+      text: text && text !== draft.originalText.trim() ? text : undefined,
+    }));
+  }
+
+  protected removeLink(): void {
+    this.linkApplied = true;
+    this.linkDraft.set(null);
+    this.engine().run(setLink(null));
+  }
+
+  protected closeLink(): void {
+    this.linkDraft.set(null);
+    if (!this.linkApplied) this.engine().focus();                  // cancelled
+    this.linkApplied = false;
   }
 
   protected async addImage(): Promise<void> {

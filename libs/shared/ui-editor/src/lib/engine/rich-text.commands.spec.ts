@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { Command, EditorState, NodeSelection, TextSelection } from 'prosemirror-state';
 
 import {
-  activeAlign, activeBlockLevel, activeColor, caretSelection, endsWithEmptyParagraph, indent, inTaskItem, isAtVeryStart, isMarkActive,
+  activeAlign, activeBlockLevel, activeColor, activeLinkInfo, caretSelection, endsWithEmptyParagraph, indent, inTaskItem, isAtVeryStart, isMarkActive,
   removeEmptyLastParagraph, setAlign, setBlockLevel, setColor, setLink, splitItem,
   toggleBlockquote, toggleChecked, toggleList, toggleMarkCommand, toggleTaskItem,
 } from './rich-text.commands';
@@ -71,6 +71,30 @@ describe('rich-text commands', () => {
   it('inserts the URL as linked text when nothing is selected', () => {
     const inserted = run(stateOf('<p></p>', 1), setLink('https://a.ch'));
     expect(html(inserted)).toBe('<p><a href="https://a.ch" target="_blank">https://a.ch</a></p>');
+  });
+
+  it('opens a link in the same window when asked, and reports where it opens', () => {
+    const same = run(stateOf('<p>Hallo Welt</p>', 1, 6), setLink('https://a.ch', { target: null }));
+    expect(html(same)).toBe('<p><a href="https://a.ch">Hallo</a> Welt</p>');
+    const inside = same.apply(same.tr.setSelection(TextSelection.create(same.doc, 3)));
+    expect(activeLinkInfo(inside)).toEqual({ href: 'https://a.ch', target: null, text: 'Hallo' });
+    expect(html(run(inside, setLink('https://a.ch', { target: '_blank' })))).toBe('<p><a href="https://a.ch" target="_blank">Hallo</a> Welt</p>');
+  });
+
+  it('finds the link when its text is selected, and changes or removes it', () => {
+    const linked = run(stateOf('<p>Hallo Welt</p>', 1, 6), setLink('https://a.ch'));
+    const selected = linked.apply(linked.tr.setSelection(TextSelection.create(linked.doc, 1, 6)));
+    expect(activeLinkInfo(selected)?.href).toBe('https://a.ch');
+    expect(html(run(selected, setLink(null)))).toBe('<p>Hallo Welt</p>');
+    const partly = linked.apply(linked.tr.setSelection(TextSelection.create(linked.doc, 2, 4)));
+    expect(html(run(partly, setLink('https://b.ch')))).toBe('<p><a href="https://b.ch" target="_blank">Hallo</a> Welt</p>');
+  });
+
+  it('replaces the linked text when it was changed, and inserts the given text', () => {
+    const linked = run(stateOf('<p>Hallo Welt</p>', 1, 6), setLink('https://a.ch'));
+    const inside = linked.apply(linked.tr.setSelection(TextSelection.create(linked.doc, 3)));
+    expect(html(run(inside, setLink('https://a.ch', { text: 'Servus' })))).toBe('<p><a href="https://a.ch" target="_blank">Servus</a> Welt</p>');
+    expect(html(run(stateOf('<p></p>', 1), setLink('https://a.ch', { text: 'Seite A' })))).toBe('<p><a href="https://a.ch" target="_blank">Seite A</a></p>');
   });
 
   it('wraps in a list, switches its type, and lifts out again', () => {
