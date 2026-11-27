@@ -14,10 +14,14 @@ describe('peopleSectionValidations', () => {
   });
 });
 
-describe('peopleSectionValidations – view options', () => {
+describe('peopleSectionValidations – look and overrides', () => {
   const withAvatar = (patch: Record<string, unknown>) => ({
     ...PEOPLE_SECTION_SHAPE,
     properties: { ...PEOPLE_SECTION_SHAPE.properties, avatar: { ...PEOPLE_SECTION_SHAPE.properties.avatar, ...patch } },
+  }) as unknown as PeopleSection;
+  const withProps = (patch: Record<string, unknown>) => ({
+    ...PEOPLE_SECTION_SHAPE,
+    properties: { ...PEOPLE_SECTION_SHAPE.properties, ...patch },
   }) as unknown as PeopleSection;
 
   it('accepts the defaults', () => {
@@ -25,34 +29,30 @@ describe('peopleSectionValidations – view options', () => {
   });
 
   it('accepts a legacy avatar config without the new fields', () => {
-    const legacy = { ...PEOPLE_SECTION_SHAPE, properties: { ...PEOPLE_SECTION_SHAPE.properties, avatar: { title: '', altText: 'avatar', showName: true, showLabel: false } } } as unknown as PeopleSection;
+    const legacy = { ...PEOPLE_SECTION_SHAPE, properties: { ...PEOPLE_SECTION_SHAPE.properties, avatar: { title: '', altText: 'avatar', showName: true, showLabel: false, imgWidth: 4, imgRadius: 'round' } } } as unknown as PeopleSection;
     expect(peopleSectionValidations(legacy).hasErrors()).toBe(false);
   });
 
-  it('flags out-of-range numbers', () => {
-    expect(peopleSectionValidations(withAvatar({ perRow: 2 })).hasErrors('avatar.perRow')).toBe(true);
-    expect(peopleSectionValidations(withAvatar({ sliderRows: 5 })).hasErrors('avatar.sliderRows')).toBe(true);
-    expect(peopleSectionValidations(withAvatar({ imgWidth: 4 })).hasErrors('avatar.imgWidth')).toBe(true);
-    expect(peopleSectionValidations(withAvatar({ facePad: 3 })).hasErrors('avatar.facePad')).toBe(true);
+  it('accepts valid look values', () => {
+    expect(peopleSectionValidations(withAvatar({ size: 'M', shape: 'rounded', fill: 'alternating', textPosition: 'overlay' })).hasErrors()).toBe(false);
   });
 
-  it('flags an invalid radius but accepts px and 50%', () => {
-    expect(peopleSectionValidations(withAvatar({ imgRadius: 'round' })).hasErrors('avatar.imgRadius')).toBe(true);
-    expect(peopleSectionValidations(withAvatar({ imgRadius: '8px' })).hasErrors('avatar.imgRadius')).toBe(false);
-    expect(peopleSectionValidations(withAvatar({ imgRadius: '50%' })).hasErrors('avatar.imgRadius')).toBe(false);
+  it('flags unknown look values', () => {
+    expect(peopleSectionValidations(withAvatar({ size: 'XL' })).hasErrors('avatar.size')).toBe(true);
+    expect(peopleSectionValidations(withAvatar({ shape: 'oval' })).hasErrors('avatar.shape')).toBe(true);
+    expect(peopleSectionValidations(withAvatar({ fill: 'colors' })).hasErrors('avatar.fill')).toBe(true);
+    expect(peopleSectionValidations(withAvatar({ textPosition: 'above' })).hasErrors('avatar.textPosition')).toBe(true);
   });
 
-  it('requires 1-4 valid colours for own colours', () => {
-    expect(peopleSectionValidations(withAvatar({ background: 'colors', bgColors: [] })).hasErrors('avatar.bgColors')).toBe(true);
-    expect(peopleSectionValidations(withAvatar({ background: 'colors', bgColors: ['#ff0000'] })).hasErrors('avatar.bgColors')).toBe(false);
-    expect(peopleSectionValidations(withAvatar({ bgColors: ['red'] })).hasErrors('avatar.bgColors')).toBe(true);
-    expect(peopleSectionValidations(withAvatar({ bgColors: ['#000000', '#000000', '#000000', '#000000', '#000000'] })).hasErrors('avatar.bgColors')).toBe(true);
+  it('flags hiddenKeys and orderKeys that are not string arrays', () => {
+    expect(peopleSectionValidations(withProps({ hiddenKeys: [42] })).hasErrors('hiddenKeys')).toBe(true);
+    expect(peopleSectionValidations(withProps({ orderKeys: 'a' })).hasErrors('orderKeys')).toBe(true);
+    expect(peopleSectionValidations(withProps({ hiddenKeys: ['a'], orderKeys: ['a'] })).hasErrors()).toBe(false);
   });
 
-  it('flags unknown options', () => {
-    expect(peopleSectionValidations(withAvatar({ view: 'carousel' })).hasErrors('avatar.view')).toBe(true);
-    expect(peopleSectionValidations(withAvatar({ infoPosition: 'middle' })).hasErrors('avatar.infoPosition')).toBe(true);
+  it('keeps the info, width and nameDisplay rules', () => {
     expect(peopleSectionValidations(withAvatar({ info: ['phone'] })).hasErrors('avatar.info[0]')).toBe(true);
+    expect(peopleSectionValidations(withAvatar({ width: 'wide' })).hasErrors('avatar.width')).toBe(true);
     expect(peopleSectionValidations(withAvatar({ nameDisplay: NameDisplay.None })).hasErrors('avatar.nameDisplay')).toBe(false);
   });
 });
