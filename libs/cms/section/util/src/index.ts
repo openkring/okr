@@ -101,3 +101,4 @@ export * from './lib/editor-profile';
 export * from './lib/mail-panel.util';
 export * from './lib/mail-editor';
 export * from './lib/people-editor-entry.util';
+export * from './lib/people-editor.util';
