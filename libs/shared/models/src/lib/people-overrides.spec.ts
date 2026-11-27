@@ -30,6 +30,13 @@ describe('applyPeopleOverrides', () => {
 });
 
 describe('peopleHiddenKeys', () => {
+  it('a malformed excludedPersons never throws', () => {
+    for (const excludedPersons of ['b', 3, { key: 'b' }, [null, 5, { key: 7 }, 'b']]) {
+      expect(peopleHiddenKeys({ type: 'group', excludedPersons } as unknown as PeopleConfig)).toEqual([]);
+    }
+    expect(peopleHiddenKeys({ type: 'group', excludedPersons: [null, { key: 'c' }] } as unknown as PeopleConfig)).toEqual(['c']);
+  });
+
   it('uses excludedPersons for group only', () => {
     const excludedPersons = [{ key: 'b' }] as PeopleConfig['excludedPersons'];
     expect(peopleHiddenKeys({ type: 'group', excludedPersons })).toEqual(['b']);

@@ -1,4 +1,4 @@
-import { peopleHiddenKeys, type PeopleConfig } from '@okr/shared-models';
+import type { PeopleConfig } from '@okr/shared-models';
 
 import type { SectionDoc } from './section-mapper';
 
@@ -56,16 +56,6 @@ export function peopleOverrideConfig(props: Record<string, unknown>): Partial<Pe
       })
     : undefined;
   return { ...(props as Partial<PeopleConfig>), ...(excluded ? { excludedPersons: excluded as PeopleConfig['excludedPersons'] } : {}) };
-}
-
-/**
- * The person keys a people section hides (1.181): `hiddenKeys`, and for type 'group' the stale
- * `excludedPersons` too (`peopleHiddenKeys`, shared-models). The group's members are resolved once per
- * group and shared by every section of that group, so the filter is per section.
- */
-export function peopleExcludedKeys(section: SectionDoc | undefined): string[] {
-  if (section?.type !== 'people') return [];
-  return peopleHiddenKeys(peopleOverrideConfig((section.properties ?? {}) as Record<string, unknown>));
 }
 
 /**

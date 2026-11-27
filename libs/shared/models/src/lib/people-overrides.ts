@@ -14,7 +14,9 @@ export function peopleHiddenKeys(config?: Partial<PeopleConfig>): string[] {
   if (!config) return [];
   const keys = validKeys(config.hiddenKeys);
   if (config.type === 'group') {
-    for (const k of validKeys((config.excludedPersons ?? []).map((p) => p?.key))) if (!keys.includes(k)) keys.push(k);
+    const excluded: unknown = config.excludedPersons;
+    const excludedKeys = Array.isArray(excluded) ? excluded.map((p: unknown) => (p && typeof p === 'object' ? (p as { key?: unknown }).key : undefined)) : [];
+    for (const k of validKeys(excludedKeys)) if (!keys.includes(k)) keys.push(k);
   }
   return keys;
 }

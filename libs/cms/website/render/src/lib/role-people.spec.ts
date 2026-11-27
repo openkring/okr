@@ -206,6 +206,34 @@ describe('mapSection people from roles', () => {
     }
   });
 
+  describe('overrides (1.181)', () => {
+    const mk = (key: string): PublicPerson => ({ key, firstName: key, lastName: '', label: '', showImage: false });
+    const holders = new Map([['responsibility.r1,r2', [mk('a'), mk('b'), mk('c'), mk('d')]]]);
+    const ids = { type: 'responsibility', responsibilityIds: ['r1', 'r2'] };
+
+    it('applies hiddenKeys and orderKeys of a role section', () => {
+      expect(persons(section({ ...ids, hiddenKeys: ['b'], orderKeys: ['d', 'a'] }), holders).map((p) => p.key)).toEqual(['d', 'a', 'c']);
+      expect(persons(section({ ...ids, orderKeys: ['c'] }), holders).map((p) => p.key)).toEqual(['c', 'a', 'b', 'd']);
+    });
+
+    it('ignores the stale excludedPersons of a role section (group only)', () => {
+      expect(persons(section({ ...ids, excludedPersons: [{ key: 'a' }] }), holders).map((p) => p.key)).toEqual(['a', 'b', 'c', 'd']);
+    });
+
+    it('a malformed hiddenKeys or orderKeys never throws and hides or orders nothing it cannot read', () => {
+      for (const hiddenKeys of ['b', 42, null, { b: true }, [1, null, { key: 'b' }, ''], [undefined]]) {
+        expect(() => persons(section({ ...ids, hiddenKeys }), holders)).not.toThrow();
+        expect(persons(section({ ...ids, hiddenKeys }), holders).map((p) => p.key)).toEqual(['a', 'b', 'c', 'd']);
+      }
+      expect(persons(section({ ...ids, hiddenKeys: [7, 'c', null] }), holders).map((p) => p.key)).toEqual(['a', 'b', 'd']);
+      for (const orderKeys of ['d', 3, null, [null, 5, {}]]) {
+        expect(persons(section({ ...ids, orderKeys }), holders).map((p) => p.key)).toEqual(['a', 'b', 'c', 'd']);
+      }
+      expect(() => persons(section({ type: 'group', groupId: 'x', excludedPersons: 'b', hiddenKeys: 'b' }), new Map())).not.toThrow();
+      expect(() => persons(section({ type: 'group', groupId: 'x', excludedPersons: [null, 3, { key: 5 }] }), new Map())).not.toThrow();
+    });
+  });
+
   it('never emits an address for a group, even one that slipped into the resolved list', () => {
     const leaked = new Map([['group.vorstand', [{ ...anna, email: 'anna.privat@example.org' }]]]);
     const out = persons(section({ type: 'group', groupId: 'vorstand', avatar: { info: ['email'] } }), leaked);
