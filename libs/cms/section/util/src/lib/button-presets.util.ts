@@ -202,3 +202,13 @@ export function withLegacyEmergency(section: ButtonSection): ButtonSection {
   const content = { ...section.content, position: ViewPosition.Top };
   return { ...section, content, properties: emergencyButtonConfig(section.properties) };
 }
+
+/**
+ * A button that raises the alarm always looks like the emergency button (red, round, about 2 cm, «Hilfe !», no icon), whatever its
+ * stored style says: a press sends name, phone number and location, so it must never look like a harmless button. Any other
+ * section comes back as it is.
+ */
+export function withFixedEmergencyLook(section: ButtonSection): ButtonSection {
+  if (section.properties?.action?.type !== ButtonAction.Emergency) return section;
+  return { ...section, properties: emergencyButtonConfig(section.properties) };
+}

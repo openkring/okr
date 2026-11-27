@@ -146,11 +146,14 @@ const RATIOS = [3, 4, 6] as const;
         @if (!preset()) { <ion-note class="note">{{ t.button_editor_look_own() }}</ion-note> }
         <okr-error-note [errors]="lookErrors()" />
 
-        <span class="field-label" style="margin-top: 14px">{{ t.button_editor_size_title() }}</span>
-        <ion-segment [value]="size() ?? ''" [disabled]="readOnly()" [attr.aria-label]="t.button_editor_size_title()" (ionChange)="setSize($event.detail.value)">
-          @for (s of sizes(); track s) { <ion-segment-button [value]="s"><ion-label>{{ sizeLabels()[s] }}</ion-label></ion-segment-button> }
-        </ion-segment>
-        @if (!size()) { <ion-note class="note">{{ t.button_editor_size_own() }}</ion-note> }
+        <!-- the emergency button has a fixed look (withFixedEmergencyLook): no size, no icon -->
+        @if (preset() !== 'emergency') {
+          <span class="field-label" style="margin-top: 14px">{{ t.button_editor_size_title() }}</span>
+          <ion-segment [value]="size() ?? ''" [disabled]="readOnly()" [attr.aria-label]="t.button_editor_size_title()" (ionChange)="setSize($event.detail.value)">
+            @for (s of sizes(); track s) { <ion-segment-button [value]="s"><ion-label>{{ sizeLabels()[s] }}</ion-label></ion-segment-button> }
+          </ion-segment>
+          @if (!size()) { <ion-note class="note">{{ t.button_editor_size_own() }}</ion-note> }
+        }
         <okr-error-note [errors]="sizeErrors()" />
 
         @if (preset() !== 'emergency') {

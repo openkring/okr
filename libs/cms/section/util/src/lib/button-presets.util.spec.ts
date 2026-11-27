@@ -4,7 +4,7 @@ import { BUTTON_SECTION_SHAPE, ButtonAction, ButtonConfig, ButtonSection, ColorI
 
 import {
   applyButtonAction, applyButtonPreset, applyButtonSize, applyIconPlacement, buttonConfigOf, buttonPresetOf, buttonSizeOf, buttonSizesFor,
-  EMERGENCY_BUTTON_DIAMETER, EMERGENCY_BUTTON_LABEL, emergencyButtonConfig, iconPlacementOf, isEmergencyButton, withLegacyEmergency,
+  EMERGENCY_BUTTON_DIAMETER, EMERGENCY_BUTTON_LABEL, emergencyButtonConfig, iconPlacementOf, isEmergencyButton, withFixedEmergencyLook, withLegacyEmergency,
 } from './button-presets.util';
 
 const config = (patch: Partial<ButtonConfig> = {}): ButtonConfig => buttonConfigOf({
@@ -138,5 +138,20 @@ describe('emergency of the time before ButtonAction.Emergency', () => {
     expect(withLegacyEmergency(patched)).toBe(patched);
     const other = { ...legacy, name: 'x' };
     expect(withLegacyEmergency(other)).toBe(other);
+  });
+});
+
+describe('withFixedEmergencyLook', () => {
+  it('draws an alarm button as the emergency button, whatever its stored style', () => {
+    const disguised = { ...BUTTON_SECTION_SHAPE, name: 'x', content: { htmlContent: '', colSize: 6, position: ViewPosition.None },
+      properties: config({ style: { ...config().style, label: 'Download', color: ColorIonic.Primary }, action: { type: ButtonAction.Emergency, url: '', altText: '' } }) } as ButtonSection;
+    const shown = withFixedEmergencyLook(disguised);
+    expect(shown.properties.style).toMatchObject({ label: EMERGENCY_BUTTON_LABEL, color: ColorIonic.Danger, shape: 'round' });
+    expect(shown.properties.icon.name).toBe('');
+  });
+
+  it('leaves any other button as it is', () => {
+    const other = { ...BUTTON_SECTION_SHAPE, properties: config() } as ButtonSection;
+    expect(withFixedEmergencyLook(other)).toBe(other);
   });
 });

@@ -9,7 +9,7 @@ import { ENV } from '@okr/shared-config';
 import { BUTTON_HEIGHT, BUTTON_WIDTH } from '@okr/shared-constants';
 import { ButtonAction, ButtonSection, ColorIonic } from '@okr/shared-models';
 import { showZoomedImage } from '@okr/shared-ui';
-import { DEFAULT_BUTTON_ICON_SIZE, toCssLength } from '@okr/cms-section-util';
+import { DEFAULT_BUTTON_ICON_SIZE, toCssLength, withFixedEmergencyLook } from '@okr/cms-section-util';
 import { TranslatePipe } from '@okr/shared-i18n';
 import { downloadToBrowser, navigateByUrl } from '@okr/shared-util-angular';
 import { getSvgIconUrl } from '@okr/shared-util-core';
@@ -60,7 +60,8 @@ export class ButtonWidget {
   protected readonly env = inject(ENV);
 
   // inputs
-  public section = input.required<ButtonSection>();
+  /** a button that raises the alarm is drawn as the emergency button, whatever its stored style (`withFixedEmergencyLook`) */
+  public section = input.required<ButtonSection, ButtonSection>({ transform: withFixedEmergencyLook });
   public editMode = input<boolean>(false);
   public readonly i18n = input.required<ButtonWidgetI18n>();
 
