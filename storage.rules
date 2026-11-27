@@ -112,6 +112,17 @@ service firebase.storage {
         || !request.resource.contentType.lower().matches('(text/html|application/xhtml[+]xml|(text|application)/xml)([;].*)?');
     }
 
+    // The uploader the app records in the custom metadata (`uploadedBy`, shown in «Bild Details»): when set, it must
+    // be the caller's own uid, so nobody can make a file look like someone else's upload. A value that stays as it
+    // was is fine, because a metadata update keeps the existing custom metadata. Only used on create/update, where
+    // request.resource is never null.
+    function uploaderOk() {
+      let uploadedBy = request.resource.metadata == null ? null : request.resource.metadata.get('uploadedBy', null);
+      return uploadedBy == null
+        || uploadedBy == request.auth.uid
+        || (resource != null && resource.metadata != null && resource.metadata.get('uploadedBy', null) == uploadedBy);
+    }
+
     // ---- tenant-scoped data (dominant prefix) ----
     // `sub != 'private'` carves the CF-only `private/` sub-prefix (see above) out of this
     // grant. This is NOT optional decoration: the "specific match wins" mental model does
@@ -133,7 +144,7 @@ service firebase.storage {
     // No other block grants this path: the album block below only matches `section` and `folder` under `.../album/`.
     match /tenant/{tenantId}/{sub}/{path=**} {
       allow read:           if inTenant(tenantId) && sub != 'private';
-      allow create, update: if inTenant(tenantId) && sub != 'private' && (sub != 'responsibility' || isPrivileged()) && (sub != 'app' || hasRole('admin')) && sizeOk() && contentTypeOk();
+      allow create, update: if inTenant(tenantId) && sub != 'private' && (sub != 'responsibility' || isPrivileged()) && (sub != 'app' || hasRole('admin')) && sizeOk() && contentTypeOk() && uploaderOk();
       allow delete:         if inTenant(tenantId) && sub != 'private' && (sub != 'responsibility' || isPrivileged()) && (sub != 'app' || hasRole('admin'));
     }
 
@@ -161,7 +172,7 @@ service firebase.storage {
       allow create, update: if inTenant(tenantId)
         && (modelType == 'section' || modelType == 'folder')
         && sub != 'renderings'
-        && isVideoUpload() && videoSizeOk() && contentTypeOk();
+        && isVideoUpload() && videoSizeOk() && contentTypeOk() && uploaderOk();
     }
 
     // ---- CF-only private data (D-P5-1): subject-access export ZIPs ----
@@ -179,7 +190,7 @@ service firebase.storage {
     // ---- esign (plural prefix) ----
     match /tenants/{tenantId}/{path=**} {
       allow read:           if inTenant(tenantId);
-      allow create, update: if inTenant(tenantId) && sizeOk() && contentTypeOk();
+      allow create, update: if inTenant(tenantId) && sizeOk() && contentTypeOk() && uploaderOk();
       allow delete:         if inTenant(tenantId);
     }
 
@@ -188,7 +199,7 @@ service firebase.storage {
     // tenants/, forms/, logo/ or generated-docs/ prefixes.
     match /{tenantId}/{modelType}/{key}/documents/{path=**} {
       allow read:           if inTenant(tenantId);
-      allow create, update: if inTenant(tenantId) && sizeOk() && contentTypeOk();
+      allow create, update: if inTenant(tenantId) && sizeOk() && contentTypeOk() && uploaderOk();
       allow delete:         if inTenant(tenantId);
     }
 
@@ -198,7 +209,7 @@ service firebase.storage {
     // Mutating existing form files / deletion is restricted to privileged users.
     match /forms/{formKey}/{path=**} {
       allow read:    if signedIn();
-      allow create:  if signedIn() && sizeOk() && contentTypeOk();
+      allow create:  if signedIn() && sizeOk() && contentTypeOk() && uploaderOk();
       allow update, delete: if isPrivileged();
     }
 
