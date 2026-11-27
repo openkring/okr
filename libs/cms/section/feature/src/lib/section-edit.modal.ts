@@ -19,6 +19,7 @@ import { SECTION_I18N_KEYS, SECTION_ICON_PICKER, SectionI18n, withImageStyleDefa
 import { ButtonEditor } from './button-editor';
 import { HeroEditor } from './hero-editor';
 import { IframeEditor } from './iframe-editor';
+import { MapEditor } from './map-editor';
 import { TableEditor } from './table-editor';
 import { VideoEditor } from './video-editor';
 import { CmsSectionIconPicker } from './section-icon-picker';
@@ -43,7 +44,7 @@ import { AppStore } from '@okr/shared-feature';
     selector: 'okr-section-edit-modal',
     standalone: true,
     imports: [
-      ButtonEditor, HeroEditor, TableEditor, ChangeConfirmation, Header, ErrorBanner, IframeEditor, SectionForm, VideoEditor,
+      ButtonEditor, HeroEditor, MapEditor, TableEditor, ChangeConfirmation, Header, ErrorBanner, IframeEditor, SectionForm, VideoEditor,
       IonContent
     ],
     providers: [SectionStore, { provide: SECTION_ICON_PICKER, useClass: CmsSectionIconPicker }],
@@ -55,7 +56,7 @@ import { AppStore } from '@okr/shared-feature';
       @if(store(); as store) {
         <okr-error-banner [message]="store.errorMessage()" (dismiss)="store.clearError()" />
       }
-      <ion-content class="ion-no-padding" [scrollY]="!isButtonEditor() && !isHeroEditor() && !isVideoEditor() && !isTableEditor() && !isIframeEditor()">
+      <ion-content class="ion-no-padding" [scrollY]="!isButtonEditor() && !isHeroEditor() && !isVideoEditor() && !isTableEditor() && !isIframeEditor() && !isMapEditor()">
         @if (isTableEditor()) {
           <!-- a table section is edited graphically too: cells typed in place, settings in the panel -->
           <okr-table-editor
@@ -115,6 +116,19 @@ import { AppStore } from '@okr/shared-feature';
             [allTags]="allTags()"
             (valid)="formValid.set($event)"
           />
+        } @else if (isMapEditor()) {
+          <!-- a map is edited graphically too: the map is framed on the canvas, its start, zoom and pins set in the panel -->
+          <okr-map-editor
+            [formData]="$any(formData())"
+            (formDataChange)="onFormDataChange($event)"
+            [currentUser]="currentUser()"
+            [roles]="roles()"
+            [states]="states()"
+            [allTags]="allTags()"
+            [locations]="mapLocations()"
+            [tenantId]="tenantId()"
+            (valid)="formValid.set($event)"
+          />
         } @else if(formData(); as formData) {
           <okr-section-form
             [i18n]="i18n()"
@@ -170,6 +184,8 @@ export class SectionEditModal {
   protected readonly isTableEditor = computed(() => this.section().type === 'table' && !this.isReadOnly() && !this.journalMode());
   /** an iframe section too */
   protected readonly isIframeEditor = computed(() => this.section().type === 'iframe' && !this.isReadOnly() && !this.journalMode());
+  /** a map that may be changed is edited in its graphical editor; read-only and in the journal (centred on the footprint) it shows the form */
+  protected readonly isMapEditor = computed(() => this.section().type === 'map' && !this.isReadOnly() && !this.journalMode());
   public roles = input.required<CategoryListModel>();
   public states = input.required<CategoryListModel>();
   public readOnly = input(true);
@@ -198,6 +214,8 @@ export class SectionEditModal {
   private locations = toSignal(toObservable(this.journalMode).pipe(
     switchMap((journal) => (journal ? of([] as LocationModel[]) : this.locationService.list())),
   ), { initialValue: [] as LocationModel[] });
+  /** the map editor: the club's location, the places a map starts at, its pins */
+  protected readonly mapLocations = computed(() => this.locations());
   protected weatherLocations = computed(() =>
     this.locations().map((l) => ({ okey: l.okey, name: l.name })));
   /** Municipalities offered by the energy configuration: `city` locations only (spec 2026-11-04 §6.2). */

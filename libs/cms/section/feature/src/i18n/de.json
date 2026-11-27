@@ -1263,14 +1263,74 @@
       "error": "Der Zoomfaktor muss eine Ganzzahl aus lauter Ziffern sein."
     },
     "center": {
-      "label": "Aktuellen Standort als Karten-Zentrum verwenden",
-      "helper": "Der aktuelle GPS-Standort deines Gerätes wird als Karten-Zentrum verwendet."
+      "label": "Ort des Vereins als Karten-Zentrum verwenden",
+      "helper": "Die Karte beginnt beim Ort des Vereins, nicht bei den Koordinaten unten."
     },
     "coordinates": {
       "label": "Koordinaten",
       "placeholder": "Breitengrad, Längengrad, Zoom",
       "helper": "Die Koordinaten eines Standorts. Format: [longitude,latitude,zoom]. z.B. 47.2266, 8.7334. Default Zoom ist 15.",
       "error": "Die Koordinaten müssen in folgendem Format angegeben werden: latitude, longitude, zoom. Als Beispiel: 47.2266, 8.7334, 15."
+    },
+    "editor": {
+      "panel": {
+        "section": "Abschnitt",
+        "map": "Karte",
+        "back": "Zurück zum Abschnitt",
+        "label": "Einstellungen",
+        "errors": "Diese Angaben fehlen noch oder stimmen nicht:"
+      },
+      "canvas": {
+        "hint": "Verschiebe und zoome die Karte, bis der Ausschnitt stimmt. Titel und Text tippst du direkt ein.",
+        "map": "Einstellungen der Karte zeigen"
+      },
+      "advanced": {
+        "show": "Koordinaten zeigen",
+        "hide": "Koordinaten ausblenden"
+      },
+      "start": {
+        "title": "Wo beginnt die Karte?",
+        "tenant": "Unser Standort",
+        "tenantHelper": "Der Ort des Vereins",
+        "place": "Ein Ort",
+        "placeHelper": "Aus den Orten wählen",
+        "view": "Dieser Ausschnitt",
+        "viewHelper": "So, wie du die Karte verschoben hast"
+      },
+      "search": "Ort suchen",
+      "searchEmpty": "Kein passender Ort.",
+      "zoom": {
+        "title": "Wie nah?",
+        "country": "Land",
+        "region": "Region",
+        "city": "Stadt",
+        "quarter": "Quartier",
+        "street": "Strasse",
+        "own": "Ein eigener Zoom ist gespeichert. Wähle einen, um ihn zu ersetzen."
+      },
+      "locate": {
+        "label": "«Mein Standort» anbieten",
+        "helper": "Wer die Karte anschaut, kann sie auf den eigenen Standort setzen."
+      },
+      "pins": {
+        "title": "Orte auf der Karte",
+        "helper": "Jeder Ort erscheint als Stecknadel.",
+        "empty": "Noch keine Orte.",
+        "add": "Ort hinzufügen",
+        "remove": "Entfernen",
+        "fields": "Was die Stecknadeln zeigen"
+      },
+      "pin": {
+        "name": "Name",
+        "address": "Adresse",
+        "what3words": "what3words",
+        "seaLevel": "Höhe über Meer",
+        "notes": "Notizen"
+      }
+    },
+    "reader": {
+      "locate": "Mein Standort",
+      "locateError": "Dein Standort ist nicht verfügbar. Erlaube den Zugriff auf den Standort in den Einstellungen deines Geräts."
     }
   },
   "member": {
@@ -2391,7 +2451,9 @@
     "aspectRatioInvalid": "Wähle ein Format aus.",
     "iframeRequired": "Füge den Link zur Seite ein.",
     "iframeHostNotAllowed": "Diese Seite kann die App nicht anzeigen. Erlaubt sind OpenStreetMap, YouTube und Vimeo.",
-    "iframeHeightInvalid": "Wähle eine der Höhen."
+    "iframeHeightInvalid": "Wähle eine der Höhen.",
+    "locationKeys": "Wähle die Orte aus der Liste aus.",
+    "pinFields": "Wähle aus, was die Stecknadeln zeigen."
   },
   "advent": {
     "label": "Adventskalender",

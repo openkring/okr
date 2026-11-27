@@ -1263,14 +1263,74 @@
       "error": "The zoom factor must be a whole number of digits."
     },
     "center": {
-      "label": "Use current location as map center",
-      "helper": "The current GPS location of your device is used as the map center."
+      "label": "Use the club's location as map center",
+      "helper": "The map starts at the club's location, not at the coordinates below."
     },
     "coordinates": {
       "label": "Coordinates",
       "placeholder": "Latitude, longitude, zoom",
       "helper": "The coordinates of a location. Format: [longitude,latitude,zoom]. e.g. 47.2266, 8.7334. Default zoom is 15.",
       "error": "The coordinates must be specified in the following format: latitude, longitude, zoom. For example: 47.2266, 8.7334, 15."
+    },
+    "editor": {
+      "panel": {
+        "section": "Section",
+        "map": "Map",
+        "back": "Back to the section",
+        "label": "Settings",
+        "errors": "These details are missing or not right yet:"
+      },
+      "canvas": {
+        "hint": "Move and zoom the map until the view is right. Type the title and text straight in.",
+        "map": "Show the map settings"
+      },
+      "advanced": {
+        "show": "Show coordinates",
+        "hide": "Hide coordinates"
+      },
+      "start": {
+        "title": "Where does the map start?",
+        "tenant": "Our location",
+        "tenantHelper": "The club's location",
+        "place": "A place",
+        "placeHelper": "Choose from the places",
+        "view": "This view",
+        "viewHelper": "As you moved the map"
+      },
+      "search": "Search places",
+      "searchEmpty": "No matching place.",
+      "zoom": {
+        "title": "How close?",
+        "country": "Country",
+        "region": "Region",
+        "city": "City",
+        "quarter": "Neighbourhood",
+        "street": "Street",
+        "own": "A zoom of its own is stored. Choose one to replace it."
+      },
+      "locate": {
+        "label": "Offer «My location»",
+        "helper": "Anyone looking at the map can move it to their own location."
+      },
+      "pins": {
+        "title": "Places on the map",
+        "helper": "Each place shows as a pin.",
+        "empty": "No places yet.",
+        "add": "Add place",
+        "remove": "Remove",
+        "fields": "What the pins show"
+      },
+      "pin": {
+        "name": "Name",
+        "address": "Address",
+        "what3words": "what3words",
+        "seaLevel": "Height above sea level",
+        "notes": "Notes"
+      }
+    },
+    "reader": {
+      "locate": "My location",
+      "locateError": "Your location isn't available. Allow location access in your device settings."
     }
   },
   "member": {
@@ -2391,7 +2451,9 @@
     "aspectRatioInvalid": "Choose a format.",
     "iframeRequired": "Paste the link to the page.",
     "iframeHostNotAllowed": "The app cannot show this page. OpenStreetMap, YouTube and Vimeo are allowed.",
-    "iframeHeightInvalid": "Choose one of the heights."
+    "iframeHeightInvalid": "Choose one of the heights.",
+    "locationKeys": "Choose the places from the list.",
+    "pinFields": "Choose what the pins show."
   },
   "advent": {
     "label": "Advent calendar",

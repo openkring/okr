@@ -793,7 +793,15 @@ export interface MapConfig {
   // centred on the footprint, so centerLatitude/centerLongitude/useCurrentLocationAsCenter are ignored there.
   layer?: string; // id of the journal base layer (journal-base-layer.util); absent = the journal's selected layer
   showRoute?: boolean; // also draw the journal route (photo positions in time order); absent = off
+  // map editor (2026-11-27); all optional, absent on maps stored before
+  showLocateButton?: boolean; // offer «Mein Standort» to the reader; absent = useCurrentLocationAsCenter (as before)
+  locationKeys?: string[]; // FK -> locations: shown as pins, in this order; absent = no pins
+  pinFields?: MapPinField[]; // what a pin says about its location, in this order; absent = ['name']
 }
+
+/** the location fields a map pin can show (`MapConfig.pinFields`) */
+export const MAP_PIN_FIELDS = ['name', 'address', 'what3words', 'seaLevel', 'notes'] as const;
+export type MapPinField = (typeof MAP_PIN_FIELDS)[number];
 
 // --------------------------------------- MESSAGES ----------------------------------------
 /**

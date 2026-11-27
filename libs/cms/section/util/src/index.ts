@@ -39,6 +39,8 @@ export * from './lib/iframe-section.validations';
 export * from './lib/iframe-source.util';
 export * from './lib/iframe-editor-i18n';
 export * from './lib/map-section.validations';
+export * from './lib/map-presets.util';
+export * from './lib/map-editor-i18n';
 export * from './lib/people-section.validations';
 export * from './lib/people-section.util';
 export * from './lib/slider-section.validations';

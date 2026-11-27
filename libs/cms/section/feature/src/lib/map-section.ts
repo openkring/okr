@@ -1,7 +1,11 @@
 
 import { AfterViewInit, CUSTOM_ELEMENTS_SCHEMA, Component, OnDestroy, PLATFORM_ID, computed, effect, inject, input, signal } from '@angular/core';
-import { IonCard, IonCardContent } from '@ionic/angular';
-import { firstValueFrom } from 'rxjs';
+import { IonButton, IonCard, IonCardContent, IonIcon } from '@ionic/angular';
+import { catchError, firstValueFrom, of } from 'rxjs';
+
+import { MAP_READER_I18N_KEYS, mapEffectiveZoom, mapPinsOf, mapShowsLocateButton, MapPin, MapReaderI18n, mapLocationKeysOf } from '@okr/cms-section-util';
+import { I18nService } from '@okr/shared-i18n';
+import { SvgIconPipe } from '@okr/shared-pipes';
 
 import { AppStore } from '@okr/shared-feature';
 import { LocationCollection, LocationModel, MAP_CONFIG_SHAPE, MapSection } from '@okr/shared-models';
@@ -49,6 +53,7 @@ if (typeof window !== 'undefined') {
   styles: [`
     ion-card-content { padding: 0px; }
     ion-card { padding: 0px; margin: 0px; border: 0px; box-shadow: none !important;}
+    .error-message { padding: 8px 16px; color: var(--ion-color-danger); font-size: 0.9rem; }
     .map-container {
       width: 100%;
       height: 400px;
@@ -62,7 +67,7 @@ if (typeof window !== 'undefined') {
     }
   `],
   imports: [
-    IonCard, IonCardContent, OptionalCardHeader
+    IonButton, IonCard, IonCardContent, IonIcon, OptionalCardHeader, SvgIconPipe
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
@@ -74,8 +79,10 @@ if (typeof window !== 'undefined') {
             {{ locationError() }}
           </div>
         }
-        @if(useCurrentLocation()) {
-          <ion-button (click)="triggerGeolocation()">Use My Location</ion-button>
+        @if(showLocateButton()) {
+          <ion-button size="small" fill="clear" (click)="triggerGeolocation()">
+            <ion-icon slot="start" src="{{ 'location' | svgIcon }}" aria-hidden="true" />{{ i18n.map_locate() }}
+          </ion-button>
         }
         <div class="map-container">
           <capacitor-google-map [id]="mapId" />
@@ -88,6 +95,7 @@ export class MapSectionComponent implements AfterViewInit, OnDestroy {
   private readonly appStore = inject(AppStore);
   private readonly firestoreService = inject(FirestoreService);
   private readonly platformId = inject(PLATFORM_ID);
+  protected readonly i18n = inject(I18nService).translateAll(MAP_READER_I18N_KEYS) as MapReaderI18n;
 
   // inputs
   public section = input.required<MapSection>();
@@ -99,16 +107,32 @@ export class MapSectionComponent implements AfterViewInit, OnDestroy {
   private readonly mapConfig = computed(() => this.section()?.properties ?? MAP_CONFIG_SHAPE);
   private readonly centerLatitude = computed(() => this.mapConfig().centerLatitude);
   private readonly centerLongitude = computed(() => this.mapConfig().centerLongitude);
-  private readonly zoom = computed(() => this.mapConfig().zoom);
+  private readonly zoom = computed(() => mapEffectiveZoom(this.mapConfig()));
   protected readonly title = computed(() => this.section()?.title);
   protected readonly subTitle = computed(() => this.section()?.subTitle);
   protected readonly useCurrentLocation = computed(() => this.mapConfig().useCurrentLocationAsCenter);
+  /** «Mein Standort»: its own setting, or (stored before the map editor) with the club's location as before */
+  protected readonly showLocateButton = computed(() => mapShowsLocateButton(this.mapConfig()));
+  /** the locations shown as pins; the key list is compared by value, so an unrelated change does not re-read them */
+  private readonly locationKeys = computed(() => mapLocationKeysOf(this.mapConfig()), { equal: (a, b) => a.join('|') === b.join('|') });
+  private readonly pinFields = computed(() => this.mapConfig().pinFields?.join('|') ?? '');
+  private readonly mapReady = signal(false);
+  private markerIds: string[] = [];
+  private pinRun = 0;
 
   private map: any; // GoogleMap instance - using any to avoid type issues with dynamic imports
   private resizeObserver: ResizeObserver | undefined;
 
   constructor() {
     this.mapId = `okr-map-${Math.random().toString(36).substring(2)}`; // Unique per instance
+
+    // pins: (re)drawn once the map is there and whenever the locations or their fields change
+    effect(() => {
+      const ready = this.mapReady();
+      const keys = this.locationKeys();
+      this.pinFields();
+      if (ready) void this.renderPins(keys);
+    });
     
     // Watch for editMode changes and update map configuration
     effect(() => {
@@ -165,10 +189,10 @@ export class MapSectionComponent implements AfterViewInit, OnDestroy {
       const position = await this.getCurrentPosition();
       await this.updateMapCenter(position.coords.latitude, position.coords.longitude);
     } catch (error: any) {
-      this.locationError.set('Location access denied. Please enable in Safari Settings > Privacy > Location Services.');
+      this.locationError.set(this.i18n.map_locate_error());
       console.error('MapSectionComponent: Failed to get current position:', error.message);
       const defaultPosition = await this.getDefaultPosition();
-      await this.updateMapCenter(defaultPosition.coords.latitude, defaultPosition.coords.longitude, defaultPosition.zoom);
+      await this.updateMapCenter(defaultPosition.coords.latitude, defaultPosition.coords.longitude);
     }
   }
 
@@ -193,13 +217,12 @@ export class MapSectionComponent implements AfterViewInit, OnDestroy {
 
     let centerLatitude = this.centerLatitude();
     let centerLongitude = this.centerLongitude();
-    let zoom = this.zoom();
+    const zoom = this.zoom();
 
     if (this.useCurrentLocation()) {
       const defaultPosition = await this.getDefaultPosition();
       centerLatitude = defaultPosition.coords.latitude;
       centerLongitude = defaultPosition.coords.longitude;
-      zoom = defaultPosition.zoom;
     }
 
     try {
@@ -216,6 +239,7 @@ export class MapSectionComponent implements AfterViewInit, OnDestroy {
       });
       debugMessage(`MapSectionComponent.loadMap: map ${this.mapId} initialized successfully.`);
       await this.map.setMapType(MapType.Satellite);
+      this.mapReady.set(true);
     } catch (error: any) {
       console.error(`MapSectionComponent.loadMap: failed to initialize map ${this.mapId}`, error);
       throw error;
@@ -319,6 +343,27 @@ export class MapSectionComponent implements AfterViewInit, OnDestroy {
       coords: { latitude: 0, longitude: 0 },
       zoom: 15
     };
+  }
+
+  /**
+   * Draws the pins of the map: the locations are read one by one (as the club's location is), so a reader needs no list right; one
+   * that is gone or not readable shows no pin. A newer run (changed pins) supersedes an older one that is still reading.
+   */
+  private async renderPins(keys: string[]): Promise<void> {
+    const run = ++this.pinRun;
+    const locations = await Promise.all(keys.map((key) => firstValueFrom(
+      this.firestoreService.readModel<LocationModel>(LocationCollection, key).pipe(catchError(() => of(undefined))),
+    )));
+    if (run !== this.pinRun || !this.map) return;
+    const pins: MapPin[] = mapPinsOf(this.mapConfig(), locations.filter((l): l is LocationModel => !!l));
+    try {
+      if (this.markerIds.length > 0) await this.map.removeMarkers(this.markerIds);
+      this.markerIds = pins.length > 0
+        ? await this.map.addMarkers(pins.map((pin) => ({ coordinate: { lat: pin.lat, lng: pin.lng }, title: pin.title, snippet: pin.snippet })))
+        : [];
+    } catch (error) {
+      console.error('MapSectionComponent.renderPins: failed to draw the pins', error);
+    }
   }
 
   public async addMarker(lat: number, lng: number): Promise<string> {

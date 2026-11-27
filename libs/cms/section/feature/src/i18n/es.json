@@ -1263,14 +1263,74 @@
       "error": "El factor de zoom debe ser un número entero compuesto únicamente de cifras."
     },
     "center": {
-      "label": "Usar la ubicación actual como centro del mapa",
-      "helper": "La ubicación GPS actual de su dispositivo se utiliza como centro del mapa."
+      "label": "Usar el lugar del club como centro del mapa",
+      "helper": "El mapa empieza en el lugar del club, no en las coordenadas de abajo."
     },
     "coordinates": {
       "label": "Coordenadas",
       "placeholder": "Latitud, longitud, zoom",
       "helper": "Las coordenadas de una ubicación. Formato: [longitude,latitude,zoom]. p. ej. 47.2266, 8.7334. El zoom predeterminado es 15.",
       "error": "Las coordenadas deben indicarse en el siguiente formato: latitude, longitude, zoom. Por ejemplo: 47.2266, 8.7334, 15."
+    },
+    "editor": {
+      "panel": {
+        "section": "Sección",
+        "map": "Mapa",
+        "back": "Volver a la sección",
+        "label": "Ajustes",
+        "errors": "Estos datos faltan o no son correctos todavía:"
+      },
+      "canvas": {
+        "hint": "Mueve y acerca el mapa hasta que la vista sea la correcta. Escribe el título y el texto directamente.",
+        "map": "Mostrar los ajustes del mapa"
+      },
+      "advanced": {
+        "show": "Mostrar coordenadas",
+        "hide": "Ocultar coordenadas"
+      },
+      "start": {
+        "title": "¿Dónde empieza el mapa?",
+        "tenant": "Nuestra ubicación",
+        "tenantHelper": "El lugar del club",
+        "place": "Un lugar",
+        "placeHelper": "Elegir entre los lugares",
+        "view": "Esta vista",
+        "viewHelper": "Como has movido el mapa"
+      },
+      "search": "Buscar lugar",
+      "searchEmpty": "Ningún lugar coincide.",
+      "zoom": {
+        "title": "¿Qué tan cerca?",
+        "country": "País",
+        "region": "Región",
+        "city": "Ciudad",
+        "quarter": "Barrio",
+        "street": "Calle",
+        "own": "Hay un zoom propio guardado. Elige uno para reemplazarlo."
+      },
+      "locate": {
+        "label": "Ofrecer «Mi ubicación»",
+        "helper": "Quien mire el mapa puede centrarlo en su propia ubicación."
+      },
+      "pins": {
+        "title": "Lugares en el mapa",
+        "helper": "Cada lugar aparece como un marcador.",
+        "empty": "Todavía no hay lugares.",
+        "add": "Añadir lugar",
+        "remove": "Quitar",
+        "fields": "Qué muestran los marcadores"
+      },
+      "pin": {
+        "name": "Nombre",
+        "address": "Dirección",
+        "what3words": "what3words",
+        "seaLevel": "Altitud",
+        "notes": "Notas"
+      }
+    },
+    "reader": {
+      "locate": "Mi ubicación",
+      "locateError": "Tu ubicación no está disponible. Permite el acceso a la ubicación en los ajustes de tu dispositivo."
     }
   },
   "member": {
@@ -2391,7 +2451,9 @@
     "aspectRatioInvalid": "Elige un formato.",
     "iframeRequired": "Pega el enlace a la página.",
     "iframeHostNotAllowed": "La app no puede mostrar esta página. Se permiten OpenStreetMap, YouTube y Vimeo.",
-    "iframeHeightInvalid": "Elige una de las alturas."
+    "iframeHeightInvalid": "Elige una de las alturas.",
+    "locationKeys": "Elige los lugares de la lista.",
+    "pinFields": "Elige qué muestran los marcadores."
   },
   "advent": {
     "label": "Calendario de Adviento",

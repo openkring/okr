@@ -62,7 +62,7 @@ Collection name: `sections`
 | `iframe` | `IframeConfig` | Embedded page on the embed allowlist (OpenStreetMap, YouTube, Vimeo); `height` S / M / L / full (absent = from a legacy `style`, else M) |
 | `invitations` | `InvitationsConfig` | Event invitations for the current user |
 | `links` | `LinksConfig` | Curated list of external links with logo/description |
-| `map` | `MapConfig` | Leaflet / Google Maps embed with configurable center/zoom |
+| `map` | `MapConfig` | Google map (satellite) with a start, a zoom, an optional «Mein Standort» button and pins of locations; edited in the map editor (see Map Editor) |
 | `messages` | `MessagesConfig` | Latest Matrix chat messages for the current user |
 | `news` | `NewsConfig` | Links to latest blog articles |
 | `orgchart` | `OrgchartConfig` | Interactive organization chart starting from a root group |
@@ -189,6 +189,19 @@ An iframe section that may be changed is edited graphically too: `SectionEditMod
 | `iframe-editor-i18n.ts` | util | `IFRAME_EDITOR_I18N_KEYS` (`iframe.editor.*`); the panel's own keys (`iframe.link.*`, `iframe.found.*`, `iframe.height.*`) are in `SECTION_I18N_KEYS` |
 
 The free CSS `style` is gone from `IframeConfig` (2026-11-27): the page fills the width without a border, its height is one of four choices. A section stored before has no `height`: its height is the choice nearest to its style's `height` / `min-height`. Saving it writes `height`; the old `style` field stays in Firestore (`updateModel` merges) but is no longer read. The website never published `style`. The app shows only pages on the embed allowlist (`getSafeEmbedUrl`, `frame-src` in `firebase.json`); the suite rejects any other host.
+
+## Map Editor
+
+A map section that may be changed is edited graphically too: `SectionEditModal` shows `MapEditor` (feature) when the section is a `map`, not read-only and not in the travel journal (there the map is centred on the footprint, so `okr-journal-map-config` stays). The modal passes its locations list (`mapLocations`); it keeps the change confirmation and the save.
+
+| Part | Where | What |
+| --- | --- | --- |
+| `map-editor.ts` | feature | Toolbar (devices, undo, redo), canvas, panel. Title, subtitle and intro are typed in place above the map. The canvas is an `okr-leaflet-map` (swisstopo) at the start and zoom readers get: moving it frames «Dieser Ausschnitt»; with any other start the centre is fixed (`fixedCenter`) and only the zoom is taken. A press on the map shows its settings; the toggle in the panel's title (`toggle` / `toggle-off`) shows the stored coordinates field by field (`okr-map-config`). Runs `mapSectionValidations` once; its own undo history |
+| `map-panel.ts` | ui | **Start**: «Unser Standort» (the location keyed by the tenant id), «Ein Ort» (searched from the locations), «Dieser Ausschnitt». **Zoom**: Land, Region, Stadt, Quartier, Strasse (8/10/13/15/17). **«Mein Standort» anbieten** (`showLocateButton`). **Pins**: locations added from a search and removed one by one (`locationKeys`), and what each pin says (`pinFields`: name, address, what3words, height, notes) |
+| `map-presets.util.ts` | util | Reads the start back from the stored fields (`mapStartOf`: a centre equal to a location's coordinates is «Ein Ort»), writes every choice to `MapConfig`, builds the pins (`mapPinsOf`: first non-empty field = title, the rest = text). `mapEffectiveZoom`: a map stored before the editor that starts at the club's location was always shown at 15; `mapEditableConfig` states that zoom and the button, so the first change in the editor writes them |
+| `map-editor-i18n.ts` | util | `MAP_EDITOR_I18N_KEYS` (`map.editor.*`), resolved with the section and article editor keys as `MapEditorI18n`; `MAP_READER_I18N_KEYS` (`map.reader.*`) for the reader's «Mein Standort» button and its error |
+
+`okr-map-section` reads each pin's location by key (`readModel`, the same `get` rule as the club's location), so visitors who are not signed in see no pins. A pin whose location is gone or has no coordinates is left out.
 
 ## Section Dispatcher
 

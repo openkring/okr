@@ -51,4 +51,29 @@ describe('mapSectionValidations', () => {
       expect(mapSectionValidations(journalMap({ zoom: 21 })).hasErrors('zoom')).toBe(true);
     });
   });
+
+  describe('map editor fields', () => {
+    const withProps = (properties: Record<string, unknown>) =>
+      ({ ...MAP_SECTION_SHAPE, properties: { ...MAP_SECTION_SHAPE.properties, ...properties } }) as unknown as MapSection;
+
+    it('accepts a map without the new fields', () => {
+      expect(mapSectionValidations(withProps({})).isValid()).toBe(true);
+    });
+
+    it('accepts pins, pin fields and the locate button', () => {
+      expect(mapSectionValidations(withProps({ showLocateButton: false, locationKeys: ['a', 'b'], pinFields: ['name', 'address'] })).isValid()).toBe(true);
+    });
+
+    it('flags a non-boolean locate button', () => {
+      expect(mapSectionValidations(withProps({ showLocateButton: 'yes' })).hasErrors('showLocateButton')).toBe(true);
+    });
+
+    it('flags an empty location key', () => {
+      expect(mapSectionValidations(withProps({ locationKeys: ['a', ''] })).hasErrors('locationKeys')).toBe(true);
+    });
+
+    it('flags an unknown pin field', () => {
+      expect(mapSectionValidations(withProps({ pinFields: ['name', 'phone'] })).hasErrors('pinFields')).toBe(true);
+    });
+  });
 });

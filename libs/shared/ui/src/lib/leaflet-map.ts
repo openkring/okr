@@ -80,11 +80,16 @@ export class LeafletMap {
   public pinIconUrl = input(''); // icon above an image pin's thumbnail (e.g. the 'location' svgIcon url)
   public draggable = input(false); // pins can be dragged (single pin: `pinMove`) and a map click reports `mapClick`
   public emptyView = input<(GeoCoordinates & { zoom: number }) | undefined>(undefined); // view while there is no pin
+  /** a view the caller controls (e.g. an editor): shown as given, pins are never fitted, and every pan/zoom reports `viewChange` */
+  public view = input<(GeoCoordinates & { zoom: number }) | undefined>(undefined);
+  /** with `view`: the centre stays where it is; the map only zooms (around its centre) */
+  public fixedCenter = input(false);
 
   // outputs
   public markerClick = output<MapMarker>();
   public pinMove = output<GeoCoordinates>(); // a single pin was dropped (6 decimals)
   public mapClick = output<GeoCoordinates>(); // the map was clicked while `draggable`
+  public viewChange = output<GeoCoordinates & { zoom: number }>(); // with `view`: the map was moved or zoomed (6 decimals)
 
   private leaflet?: typeof import('leaflet');
   private readonly map = signal<L.Map | undefined>(undefined);
@@ -123,6 +128,31 @@ export class LeafletMap {
       this.tileLayer = this.leaflet.tileLayer(source.url, { maxZoom: source.maxZoom, attribution: source.attribution }).addTo(map);
     });
 
+    // a controlled view: shown when it differs from the map's (its own moveend reports the same view back)
+    effect(() => {
+      const map = this.map();
+      const view = this.view();
+      if (!map || !view) return;
+      // a map without a view yet has no centre (getCenter throws)
+      if (!(map as unknown as { _loaded?: boolean })._loaded) { map.setView([view.lat, view.lng], view.zoom); return; }
+      const center = map.getCenter();
+      if (round6(center.lat) !== round6(view.lat) || round6(center.lng) !== round6(view.lng) || map.getZoom() !== view.zoom) {
+        map.setView([view.lat, view.lng], view.zoom);
+      }
+    });
+
+    // a fixed centre: no panning, zooming keeps the centre (Leaflet reads these options at every zoom)
+    effect(() => {
+      const map = this.map();
+      const fixed = this.fixedCenter();
+      if (!map) return;
+      if (fixed) map.dragging.disable(); else map.dragging.enable();
+      const zoomAround = fixed ? 'center' : true;
+      map.options.scrollWheelZoom = zoomAround;
+      map.options.touchZoom = zoomAround;
+      map.options.doubleClickZoom = zoomAround;
+    });
+
     // markers / route: re-render — read every signal before the early return
     effect(() => {
       const map = this.map();
@@ -151,6 +181,11 @@ export class LeafletMap {
     this.markerLayer = this.leaflet.layerGroup().addTo(map);
     map.on('click', (e: L.LeafletMouseEvent) => {
       if (this.draggable()) this.mapClick.emit({ lat: round6(e.latlng.lat), lng: round6(e.latlng.lng) });
+    });
+    map.on('moveend', () => {
+      if (!this.view()) return;
+      const center = map.getCenter();
+      this.viewChange.emit({ lat: round6(center.lat), lng: round6(center.lng), zoom: map.getZoom() });
     });
     this.map.set(map);
 
@@ -216,6 +251,7 @@ export class LeafletMap {
       L.polyline(routeLatLngs, { className: 'okr-route-line', weight: 3, opacity: 0.8 }).addTo(this.markerLayer);
     }
 
+    if (this.view()) return; // the caller's view, never a fit
     const key = `${zoom}|${markers.map(m => `${m.lat},${m.lng}`).join(';')}`;
     if (key === this.fittedKey) return;
     this.fittedKey = key;
