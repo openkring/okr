@@ -917,6 +917,58 @@
       "from": "Dégradé sans image : couleur à gauche",
       "to": "Dégradé sans image : couleur à droite",
       "helper": "Sans image de titre, le site affiche une bande claire dans ces deux couleurs. Avec une image, c’est l’image qui s’affiche."
+    },
+    "editor": {
+      "panel": {
+        "section": "Section",
+        "cover": "Image de couverture",
+        "logo": "Logo",
+        "back": "Retour à la section",
+        "label": "Réglages",
+        "errors": "Ces informations manquent encore ou ne sont pas correctes :"
+      },
+      "canvas": {
+        "hint": "Tape le titre, le sous-titre et l'intro directement dans le cadre de texte. Un clic sur l'image, le logo ou un bouton affiche ses réglages à droite.",
+        "cover": "Choisir l'image de couverture",
+        "logo": "Choisir le logo",
+        "addLogo": "Logo",
+        "buttonPlaceholder": "Libellé manquant"
+      },
+      "cover": {
+        "noImage": "Pas d'image de couverture"
+      },
+      "height": {
+        "own": "Hauteur personnalisée en pixels : choisis une taille pour la remplacer."
+      },
+      "gradient": {
+        "title": "Dégradé sans image"
+      },
+      "advanced": {
+        "title": "Avancé",
+        "helper": "Hauteur en pixels et autres paramètres d'image"
+      },
+      "logo": {
+        "size": {
+          "title": "Taille",
+          "s": "Petit",
+          "m": "Moyen",
+          "l": "Grand"
+        },
+        "shape": {
+          "title": "Forme",
+          "square": "Carré",
+          "rounded": "Arrondi",
+          "round": "Rond"
+        },
+        "own": "Largeur ou coins personnalisés : choisis une taille ou une forme pour les remplacer.",
+        "custom": {
+          "title": "Personnaliser",
+          "helper": "Régler la largeur, la bordure et les coins un par un"
+        }
+      },
+      "button": {
+        "forward": "Avancer"
+      }
     }
   },
   "icon": {

@@ -17,6 +17,7 @@ import { FORM_I18N_KEYS, FormI18n } from '@okr/forms-util';
 import { SECTION_I18N_KEYS, SECTION_ICON_PICKER, SectionI18n, withImageStyleDefaults, withLegacyEmergency } from '@okr/cms-section-util';
 
 import { ButtonEditor } from './button-editor';
+import { HeroEditor } from './hero-editor';
 import { CmsSectionIconPicker } from './section-icon-picker';
 
 import { SectionStore } from './section.store';
@@ -39,7 +40,7 @@ import { AppStore } from '@okr/shared-feature';
     selector: 'okr-section-edit-modal',
     standalone: true,
     imports: [
-      ButtonEditor, ChangeConfirmation, Header, ErrorBanner, SectionForm,
+      ButtonEditor, HeroEditor, ChangeConfirmation, Header, ErrorBanner, SectionForm,
       IonContent
     ],
     providers: [SectionStore, { provide: SECTION_ICON_PICKER, useClass: CmsSectionIconPicker }],
@@ -51,7 +52,7 @@ import { AppStore } from '@okr/shared-feature';
       @if(store(); as store) {
         <okr-error-banner [message]="store.errorMessage()" (dismiss)="store.clearError()" />
       }
-      <ion-content class="ion-no-padding" [scrollY]="!isButtonEditor()">
+      <ion-content class="ion-no-padding" [scrollY]="!isButtonEditor() && !isHeroEditor()">
         @if (isButtonEditor()) {
           <!-- a button section is edited graphically, as an article is: canvas and panel. Not re-mounted by «Abbrechen»: the reset is a step of its history -->
           <okr-button-editor
@@ -63,6 +64,18 @@ import { AppStore } from '@okr/shared-feature';
             [allTags]="allTags()"
             [contracts]="contracts()"
             [forms]="forms()"
+            (valid)="formValid.set($event)"
+          />
+        } @else if (isHeroEditor()) {
+          <!-- a hero is edited graphically too: cover, logo, buttons and text on the canvas, their settings in the panel -->
+          <okr-hero-editor
+            [formData]="$any(formData())"
+            (formDataChange)="onFormDataChange($event)"
+            [currentUser]="currentUser()"
+            [roles]="roles()"
+            [states]="states()"
+            [allTags]="allTags()"
+            [tenantId]="tenantId()"
             (valid)="formValid.set($event)"
           />
         } @else if(formData(); as formData) {
@@ -112,6 +125,8 @@ export class SectionEditModal {
   protected readonly allTags = computed(() => this.tagModel() ? this.appStore.getTags(this.tagModel()) : this.tags());
   /** a button section that may be changed is edited in its graphical editor; read-only and in the journal it shows the form */
   protected readonly isButtonEditor = computed(() => this.section().type === 'button' && !this.isReadOnly() && !this.journalMode());
+  /** a hero that may be changed is edited in its graphical editor; read-only and in the journal (overlay, cover from the footprint) it shows the form */
+  protected readonly isHeroEditor = computed(() => this.section().type === 'hero' && !this.isReadOnly() && !this.journalMode());
   public roles = input.required<CategoryListModel>();
   public states = input.required<CategoryListModel>();
   public readOnly = input(true);

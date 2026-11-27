@@ -917,6 +917,58 @@
       "from": "Sfumatura senza immagine: colore a sinistra",
       "to": "Sfumatura senza immagine: colore a destra",
       "helper": "Senza immagine di copertina il sito mostra una fascia chiara con questi due colori. Con un’immagine viene mostrata l’immagine."
+    },
+    "editor": {
+      "panel": {
+        "section": "Sezione",
+        "cover": "Immagine di copertina",
+        "logo": "Logo",
+        "back": "Torna alla sezione",
+        "label": "Impostazioni",
+        "errors": "Questi dati mancano ancora o non sono corretti:"
+      },
+      "canvas": {
+        "hint": "Scrivi titolo, sottotitolo e introduzione direttamente nel riquadro di testo. Un clic sull'immagine, sul logo o su un pulsante mostra a destra le sue impostazioni.",
+        "cover": "Seleziona l'immagine di copertina",
+        "logo": "Seleziona il logo",
+        "addLogo": "Logo",
+        "buttonPlaceholder": "Etichetta mancante"
+      },
+      "cover": {
+        "noImage": "Nessuna immagine di copertina"
+      },
+      "height": {
+        "own": "Altezza personalizzata in pixel: scegli una dimensione per sostituirla."
+      },
+      "gradient": {
+        "title": "Sfumatura senza immagine"
+      },
+      "advanced": {
+        "title": "Avanzate",
+        "helper": "Altezza in pixel e altri parametri dell'immagine"
+      },
+      "logo": {
+        "size": {
+          "title": "Dimensione",
+          "s": "Piccolo",
+          "m": "Medio",
+          "l": "Grande"
+        },
+        "shape": {
+          "title": "Forma",
+          "square": "Squadrato",
+          "rounded": "Arrotondato",
+          "round": "Rotondo"
+        },
+        "own": "Larghezza o angoli personalizzati: scegli una dimensione o una forma per sostituirli.",
+        "custom": {
+          "title": "Personalizza",
+          "helper": "Imposta larghezza, bordo e angoli uno per uno"
+        }
+      },
+      "button": {
+        "forward": "Sposta avanti"
+      }
     }
   },
   "icon": {

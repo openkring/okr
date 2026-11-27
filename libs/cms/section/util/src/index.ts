@@ -26,6 +26,8 @@ export * from './lib/button-section.validations';
 export * from './lib/button.util';
 export * from './lib/button-presets.util';
 export * from './lib/button-editor-i18n';
+export * from './lib/hero-editor-i18n';
+export * from './lib/hero-presets.util';
 export * from './lib/calendar-section.validations';
 export  * from './lib/chart-section.validations';
 export * from './lib/chat-section.validations';

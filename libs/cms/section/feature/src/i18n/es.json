@@ -917,6 +917,58 @@
       "from": "Degradado sin imagen: color izquierdo",
       "to": "Degradado sin imagen: color derecho",
       "helper": "Sin imagen de portada, el sitio web muestra una franja clara con estos dos colores. Con una imagen, se muestra la imagen."
+    },
+    "editor": {
+      "panel": {
+        "section": "Sección",
+        "cover": "Imagen de portada",
+        "logo": "Logo",
+        "back": "Volver a la sección",
+        "label": "Ajustes",
+        "errors": "Estos datos aún faltan o no son correctos:"
+      },
+      "canvas": {
+        "hint": "Escribe el título, el subtítulo y la introducción directamente en el cuadro de texto. Un clic en la imagen, el logo o un botón muestra sus ajustes a la derecha.",
+        "cover": "Seleccionar la imagen de portada",
+        "logo": "Seleccionar el logo",
+        "addLogo": "Logo",
+        "buttonPlaceholder": "Falta el texto"
+      },
+      "cover": {
+        "noImage": "Sin imagen de portada"
+      },
+      "height": {
+        "own": "Altura propia en píxeles: elige un tamaño para reemplazarla."
+      },
+      "gradient": {
+        "title": "Degradado sin imagen"
+      },
+      "advanced": {
+        "title": "Avanzado",
+        "helper": "Altura en píxeles y más parámetros de imagen"
+      },
+      "logo": {
+        "size": {
+          "title": "Tamaño",
+          "s": "Pequeño",
+          "m": "Mediano",
+          "l": "Grande"
+        },
+        "shape": {
+          "title": "Forma",
+          "square": "Cuadrado",
+          "rounded": "Redondeado",
+          "round": "Redondo"
+        },
+        "own": "Ancho o esquinas propios: elige un tamaño o una forma para reemplazarlos.",
+        "custom": {
+          "title": "Personalizar",
+          "helper": "Ajusta el ancho, el borde y las esquinas uno a uno"
+        }
+      },
+      "button": {
+        "forward": "Mover hacia delante"
+      }
     }
   },
   "icon": {

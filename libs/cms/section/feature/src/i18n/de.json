@@ -917,6 +917,58 @@
       "from": "Verlauf ohne Bild: Farbe links",
       "to": "Verlauf ohne Bild: Farbe rechts",
       "helper": "Ohne Titelbild zeigt die Website ein helles Band mit diesen zwei Farben. Mit einem Titelbild gilt das Bild."
+    },
+    "editor": {
+      "panel": {
+        "section": "Abschnitt",
+        "cover": "Titelbild",
+        "logo": "Logo",
+        "back": "Zurück zum Abschnitt",
+        "label": "Einstellungen",
+        "errors": "Diese Angaben fehlen noch oder stimmen nicht:"
+      },
+      "canvas": {
+        "hint": "Titel, Untertitel und Intro tippst du direkt ins Textfeld. Ein Klick auf das Bild, das Logo oder einen Button zeigt rechts seine Einstellungen.",
+        "cover": "Titelbild auswählen",
+        "logo": "Logo auswählen",
+        "addLogo": "Logo",
+        "buttonPlaceholder": "Beschriftung fehlt"
+      },
+      "cover": {
+        "noImage": "Kein Titelbild"
+      },
+      "height": {
+        "own": "Eigene Höhe in Pixeln: wähle eine Grösse, um sie zu ersetzen."
+      },
+      "gradient": {
+        "title": "Farbverlauf ohne Bild"
+      },
+      "advanced": {
+        "title": "Für Fortgeschrittene",
+        "helper": "Höhe in Pixeln und weitere Bildparameter"
+      },
+      "logo": {
+        "size": {
+          "title": "Grösse",
+          "s": "Klein",
+          "m": "Mittel",
+          "l": "Gross"
+        },
+        "shape": {
+          "title": "Form",
+          "square": "Eckig",
+          "rounded": "Abgerundet",
+          "round": "Rund"
+        },
+        "own": "Eigene Breite oder Ecken: wähle eine Grösse oder Form, um sie zu ersetzen.",
+        "custom": {
+          "title": "Anpassen",
+          "helper": "Breite, Rahmen und Ecken einzeln festlegen"
+        }
+      },
+      "button": {
+        "forward": "Nach vorne schieben"
+      }
     }
   },
   "icon": {

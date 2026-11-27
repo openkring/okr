@@ -51,5 +51,6 @@ export * from './lib/section-add-chips';
 export * from './lib/article-block-panel';
 export * from './lib/article-panel';
 export * from './lib/button-panel';
+export * from './lib/hero-panel';
 export * from './lib/article-block-library';
 export * from './lib/article-image-pick.modal';

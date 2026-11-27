@@ -917,6 +917,58 @@
       "from": "Gradient without image: left colour",
       "to": "Gradient without image: right colour",
       "helper": "Without a cover image the website shows a light band in these two colours. With a cover image, the image is shown."
+    },
+    "editor": {
+      "panel": {
+        "section": "Section",
+        "cover": "Cover image",
+        "logo": "Logo",
+        "back": "Back to the section",
+        "label": "Settings",
+        "errors": "These details are missing or not right yet:"
+      },
+      "canvas": {
+        "hint": "Type the title, subtitle and intro straight into the text box. Click the image, the logo or a button to see its settings on the right.",
+        "cover": "Select the cover image",
+        "logo": "Select the logo",
+        "addLogo": "Logo",
+        "buttonPlaceholder": "Label missing"
+      },
+      "cover": {
+        "noImage": "No cover image"
+      },
+      "height": {
+        "own": "Your own height in pixels: pick a size to replace it."
+      },
+      "gradient": {
+        "title": "Gradient without image"
+      },
+      "advanced": {
+        "title": "Advanced",
+        "helper": "Height in pixels and more image parameters"
+      },
+      "logo": {
+        "size": {
+          "title": "Size",
+          "s": "Small",
+          "m": "Medium",
+          "l": "Large"
+        },
+        "shape": {
+          "title": "Shape",
+          "square": "Square",
+          "rounded": "Rounded",
+          "round": "Round"
+        },
+        "own": "Your own width or corners: pick a size or shape to replace them.",
+        "custom": {
+          "title": "Customise",
+          "helper": "Set width, border and corners one by one"
+        }
+      },
+      "button": {
+        "forward": "Move forward"
+      }
     }
   },
   "icon": {

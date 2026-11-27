@@ -58,7 +58,7 @@ Collection name: `sections`
 | `energy` | `EnergyConfig` | Energy figures of one municipality: key figures, trends, tariffs, comparison (read-only, from `energy-figures`) |
 | `events` | `EventsConfig` | Upcoming / past calendar event list |
 | `files` | `FilesConfig` | Curated document file list |
-| `hero` | `HeroConfig` | Full-width hero image with logo overlay |
+| `hero` | `HeroConfig` | Full-width hero image with logo overlay; edited in the hero editor (see Hero Editor) |
 | `iframe` | `IframeConfig` | Embedded external web page |
 | `invitations` | `InvitationsConfig` | Event invitations for the current user |
 | `links` | `LinksConfig` | Curated list of external links with logo/description |
@@ -133,6 +133,20 @@ A button section that may be changed is edited graphically, as an article is: `S
 | `button-editor-i18n.ts` | util | `BUTTON_EDITOR_I18N_KEYS` (`button.editor.*`); resolved with the section and article editor keys as `ButtonEditorI18n` |
 
 **Emergency button.** Since `ButtonAction.Emergency` (appended to the stored numeric enum) it is an ordinary button section: preset `emergency` = round, solid, `danger`, 76 px across (about 2 cm), label «Hilfe !», no icon; a press calls `SectionStore.sendEmergencyMessage()`. Since a press sends name, phone number and location, `ButtonWidget` always draws a button with this action in that look (`withFixedEmergencyLook`), whatever its stored style: it can never pass for a harmless button. The former `EmergencyButtonWidget` is gone. A document stored before still carries the name `emergency-button` and another action: `withLegacyEmergency` shows it as the emergency button (button above the text) until it is patched with `emergencyButtonConfig`.
+
+## Hero Editor
+
+A hero section that may be changed is edited graphically, as a button is: `SectionEditModal` shows `HeroEditor` (feature) in place of the form when the section is a `hero`, not read-only and not in the travel journal (there the cover comes from the footprint and the overlay is set, so the form stays). The modal keeps the change confirmation and the save; the editor edits its `formData`.
+
+| Part | Where | What |
+| --- | --- | --- |
+| `hero-editor.ts` | feature | Toolbar (devices, undo, redo), canvas, panel. The canvas draws the hero as readers see it (height, focus, cover or gradient band, white card). Title, subtitle and intro are typed in place with `okrPlainEditable` (`cms-article-feature`). A click on the background selects the cover, on the logo the logo, on a button that button; «+ Logo» and «+ Button» add them. Runs `heroSectionValidations` once; its own undo history; a reset by the modal is a step |
+| `section-configuration.ts` (`part="appearance"`) | ui | The section's own settings, shared by the article, button and hero editors |
+| `hero-panel.ts` | ui | One part of the hero: **cover** (image, height S/M/L/whole screen, focus, the gradient only while there is no image; pixel height and imgix parameters behind «Für Fortgeschrittene»), **logo** (image, size, shape; width, border and radius behind «Anpassen»), **button** (label, link, look, remove) |
+| `hero-presets.util.ts` | util | Height choices, logo sizes (80/150/240 px → `imageStyle.width`) and shapes (0/12px/50% → `imageStyle.borderRadius`), adding, changing, moving and removing buttons. Each writes the stored `HeroConfig` fields, so readers, the website and older apps draw as before; a stored value that matches no choice shows none as chosen |
+| `hero-editor-i18n.ts` | util | `HERO_EDITOR_I18N_KEYS` (`hero.editor.*`); resolved with the section and article editor keys as `HeroEditorI18n`. Heights, focus, gradient and button fields keep their `hero.*` / `cta.*` texts |
+
+The former cards (`okr-hero-config`, `okr-hero-logo-config`, `okr-cta-config`) remain for the read-only view and the travel journal.
 
 ## Section Dispatcher
 
