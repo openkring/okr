@@ -2,7 +2,7 @@ export * from './lib/album-configuration';
 export * from './lib/image-edit.modal';
 export * from './lib/images-configuration';
 export * from './lib/editor-configuration';
-export * from './lib/iframe-configuration';
+export * from './lib/iframe-panel';
 export * from './lib/image-style-configuration';
 export * from './lib/map-configuration';
 export * from './lib/journal-map-configuration';

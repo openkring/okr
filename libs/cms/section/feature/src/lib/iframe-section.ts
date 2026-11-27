@@ -5,6 +5,7 @@ import { IonCard, IonCardContent } from '@ionic/angular';
 import { IframeSection } from '@okr/shared-models';
 import { OptionalCardHeader, Spinner } from '@okr/shared-ui';
 import { getSafeEmbedUrl } from '@okr/shared-util-core';
+import { iframeHeightCss } from '@okr/cms-section-util';
 
 @Component({
   selector: 'okr-iframe-section',
@@ -16,6 +17,7 @@ import { getSafeEmbedUrl } from '@okr/shared-util-core';
   styles: [`
     ion-card-content { padding: 0px; }
     ion-card { padding: 0px; margin: 0px; border: 0px; box-shadow: none !important;}
+    iframe { display: block; width: 100%; border: none; }
   `],
   template: `
     @if(section()) {
@@ -24,7 +26,7 @@ import { getSafeEmbedUrl } from '@okr/shared-util-core';
         <ion-card-content>
           <iframe
             [src]="url()"
-            [style]="style()"
+            [style.height]="height()"
             [title]="title()"
             allow="autoplay;fullscreen"
             allowfullscreen
@@ -43,7 +45,8 @@ export class IframeSectionComponent {
 
   public section = input<IframeSection>();
 
-  public style = computed(() => this.section()?.properties?.style ?? 'width:100%; min-height:400px; border:none;');
+  /** the chosen height (S, M, L, full); a section stored before 2026-11-27 takes the one nearest to its free css */
+  protected height = computed(() => iframeHeightCss(this.section()?.properties));
   public title = computed(() => this.section()?.title ?? '');
   protected subTitle = computed(() => this.section()?.subTitle);
   // Only trust the editor-supplied URL after validating it against the embed

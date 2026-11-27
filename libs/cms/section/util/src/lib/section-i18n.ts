@@ -333,12 +333,18 @@ export const SECTION_I18N_KEYS = {
 
   // iframe
   iframe_title:                             PFX + 'iframe.title',
-  iframe_style_label:                       PFX + 'iframe.style.label',
-  iframe_style_placeholder:                 PFX + 'iframe.style.placeholder',
-  iframe_style_helper:                      PFX + 'iframe.style.helper',
-  iframe_url_label:                         PFX + 'iframe.url.label',
-  iframe_url_placeholder:                   PFX + 'iframe.url.placeholder',
-  iframe_url_helper:                        PFX + 'iframe.url.helper',
+  iframe_link_label:                        PFX + 'iframe.link.label',
+  iframe_link_placeholder:                  PFX + 'iframe.link.placeholder',
+  iframe_link_helper:                       PFX + 'iframe.link.helper',
+  iframe_link_error:                        PFX + 'iframe.link.error',
+  iframe_found_allowed:                     PFX + 'iframe.found.allowed',
+  iframe_found_blocked:                     PFX + 'iframe.found.blocked',
+  iframe_height_title:                      PFX + 'iframe.height.title',
+  iframe_height_s:                          PFX + 'iframe.height.s',
+  iframe_height_m:                          PFX + 'iframe.height.m',
+  iframe_height_l:                          PFX + 'iframe.height.l',
+  iframe_height_full:                       PFX + 'iframe.height.full',
+  iframe_height_helper:                     PFX + 'iframe.height.helper',
 
   // weather
   weather_title:                            PFX + 'weather.title',

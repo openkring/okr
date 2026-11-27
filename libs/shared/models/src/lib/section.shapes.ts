@@ -139,7 +139,7 @@ export const HERO_CONFIG_SHAPE = {
 // --------------------------------------- IFRAME ----------------------------------------
 export const IFRAME_CONFIG_SHAPE = {
     url: DEFAULT_URL,
-    style: 'width: 100%; min-height:400px; border: none;'
+    height: 'M',
 } as IframeConfig;
 
 // --------------------------------------- INVITATIONS ----------------------------------------

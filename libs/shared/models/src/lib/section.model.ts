@@ -749,9 +749,15 @@ export interface IframeSection extends BaseSection {
   properties: IframeConfig;
 }
 
+/** The heights an iframe section offers: S 300px, M 400px, L 600px, full 80vh. Its width is always the section's. */
+export type IframeHeight = 'S' | 'M' | 'L' | 'full';
+export const IFRAME_HEIGHTS: readonly IframeHeight[] = ['S', 'M', 'L', 'full'];
+
 export interface IframeConfig {
-  style: string; // css style for the iframe, default is 'width: 100%; min-height:400px; border: none;'
-  url: string; // the url of the iframe
+  url: string; // the url of the embedded page (https, on the embed allowlist)
+  height?: IframeHeight; // absent = derived from a legacy `style`, else 'M'
+  /** @deprecated free css of a section stored before 2026-11-27; only read to derive `height`, never written */
+  style?: string;
 }
 
 // --------------------------------------- INVITATIONS ----------------------------------------

@@ -59,7 +59,7 @@ Collection name: `sections`
 | `events` | `EventsConfig` | Upcoming / past calendar event list |
 | `files` | `FilesConfig` | Curated document file list |
 | `hero` | `HeroConfig` | Full-width hero image with logo overlay; edited in the hero editor (see Hero Editor) |
-| `iframe` | `IframeConfig` | Embedded external web page |
+| `iframe` | `IframeConfig` | Embedded page on the embed allowlist (OpenStreetMap, YouTube, Vimeo); `height` S / M / L / full (absent = from a legacy `style`, else M) |
 | `invitations` | `InvitationsConfig` | Event invitations for the current user |
 | `links` | `LinksConfig` | Curated list of external links with logo/description |
 | `map` | `MapConfig` | Leaflet / Google Maps embed with configurable center/zoom |
@@ -176,6 +176,19 @@ A table section that may be changed is edited graphically too: `SectionEditModal
 | `table-editor-i18n.ts` | util | `TABLE_EDITOR_I18N_KEYS` (`table.editor.*`); resolved with the section and article editor keys as `TableEditorI18n` |
 
 **Stored as before.** `data.header` / `data.body` (row by row) and `grid.template` stay what readers and older apps draw: the editor writes the template from `columns` (Schmal = `100px`, Breit = `300px`). `columns` and `responsive` are optional additions; a table without `responsive` is `auto` below the phone width: up to two columns stack, wider tables scroll. `grid.gap`, `grid.padding` and `grid.backgroundColor` are not drawn and no longer offered. An empty stored style value draws none; only a missing one takes the default.
+
+## Iframe Editor
+
+An iframe section that may be changed is edited graphically too: `SectionEditModal` shows `IframeEditor` (feature) when the section is an `iframe`, not read-only and not in the travel journal.
+
+| Part | Where | What |
+| --- | --- | --- |
+| `iframe-editor.ts` | feature | Toolbar, canvas and panel as `VideoEditor`. Header typed in place; the page drawn by `okr-iframe-section` under a cover that takes the click. A page off the embed allowlist is a placeholder that says so. A new section opens with the page selected |
+| `iframe-panel.ts` | ui | One field for a link or a whole embed code (`<iframe src="…">`), with «… erkannt» or why the app cannot show it, and the height (S 300px, M 400px, L 600px, full 80vh). Also the read-only view in `SectionForm` |
+| `iframe-source.util.ts` | util | `parseIframeSource` (pasted text → url, host, allowed), `iframeHeightOf` / `iframeHeightCss`, `cleanIframeConfig` (drops a legacy `style`) |
+| `iframe-editor-i18n.ts` | util | `IFRAME_EDITOR_I18N_KEYS` (`iframe.editor.*`); the panel's own keys (`iframe.link.*`, `iframe.found.*`, `iframe.height.*`) are in `SECTION_I18N_KEYS` |
+
+The free CSS `style` is gone from `IframeConfig` (2026-11-27): the page fills the width without a border, its height is one of four choices. A section stored before has no `height`: its height is the choice nearest to its style's `height` / `min-height`. Saving it writes `height`; the old `style` field stays in Firestore (`updateModel` merges) but is no longer read. The website never published `style`. The app shows only pages on the embed allowlist (`getSafeEmbedUrl`, `frame-src` in `firebase.json`); the suite rejects any other host.
 
 ## Section Dispatcher
 

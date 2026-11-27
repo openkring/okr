@@ -18,6 +18,7 @@ import { SECTION_I18N_KEYS, SECTION_ICON_PICKER, SectionI18n, withImageStyleDefa
 
 import { ButtonEditor } from './button-editor';
 import { HeroEditor } from './hero-editor';
+import { IframeEditor } from './iframe-editor';
 import { TableEditor } from './table-editor';
 import { VideoEditor } from './video-editor';
 import { CmsSectionIconPicker } from './section-icon-picker';
@@ -42,7 +43,7 @@ import { AppStore } from '@okr/shared-feature';
     selector: 'okr-section-edit-modal',
     standalone: true,
     imports: [
-      ButtonEditor, HeroEditor, TableEditor, ChangeConfirmation, Header, ErrorBanner, SectionForm, VideoEditor,
+      ButtonEditor, HeroEditor, TableEditor, ChangeConfirmation, Header, ErrorBanner, IframeEditor, SectionForm, VideoEditor,
       IonContent
     ],
     providers: [SectionStore, { provide: SECTION_ICON_PICKER, useClass: CmsSectionIconPicker }],
@@ -54,7 +55,7 @@ import { AppStore } from '@okr/shared-feature';
       @if(store(); as store) {
         <okr-error-banner [message]="store.errorMessage()" (dismiss)="store.clearError()" />
       }
-      <ion-content class="ion-no-padding" [scrollY]="!isButtonEditor() && !isHeroEditor() && !isVideoEditor() && !isTableEditor()">
+      <ion-content class="ion-no-padding" [scrollY]="!isButtonEditor() && !isHeroEditor() && !isVideoEditor() && !isTableEditor() && !isIframeEditor()">
         @if (isTableEditor()) {
           <!-- a table section is edited graphically too: cells typed in place, settings in the panel -->
           <okr-table-editor
@@ -95,6 +96,17 @@ import { AppStore } from '@okr/shared-feature';
         } @else if (isVideoEditor()) {
           <!-- a video section is edited graphically too: the video as readers see it, and a panel -->
           <okr-video-editor
+            [formData]="$any(formData())"
+            (formDataChange)="onFormDataChange($event)"
+            [currentUser]="currentUser()"
+            [roles]="roles()"
+            [states]="states()"
+            [allTags]="allTags()"
+            (valid)="formValid.set($event)"
+          />
+        } @else if (isIframeEditor()) {
+          <!-- an iframe section likewise: the embedded page as readers see it, and a panel -->
+          <okr-iframe-editor
             [formData]="$any(formData())"
             (formDataChange)="onFormDataChange($event)"
             [currentUser]="currentUser()"
@@ -156,6 +168,8 @@ export class SectionEditModal {
   protected readonly isVideoEditor = computed(() => this.section().type === 'video' && !this.isReadOnly() && !this.journalMode());
   /** a table section likewise: cells typed in place; in the journal and read-only it keeps the form */
   protected readonly isTableEditor = computed(() => this.section().type === 'table' && !this.isReadOnly() && !this.journalMode());
+  /** an iframe section too */
+  protected readonly isIframeEditor = computed(() => this.section().type === 'iframe' && !this.isReadOnly() && !this.journalMode());
   public roles = input.required<CategoryListModel>();
   public states = input.required<CategoryListModel>();
   public readOnly = input(true);

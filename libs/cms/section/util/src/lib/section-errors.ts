@@ -78,7 +78,7 @@ export function getInlineErrorFields(type: SectionType, showAdvanced = false): s
         ...LOGO_SEGMENT_FIELDS.image, ...LOGO_SEGMENT_FIELDS.style);
       break;
     case 'iframe':
-      fields.push('url', 'style');
+      fields.push('url', 'height');
       break;
     case 'contact':
       fields.push('contact.layout', 'contact.rows', 'contact.formFields');

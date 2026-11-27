@@ -1,17 +1,35 @@
 import { describe, expect, it } from 'vitest';
-import { IFRAME_SECTION_SHAPE, IframeSection } from '@okr/shared-models';
+import { IFRAME_SECTION_SHAPE, IframeConfig, IframeSection } from '@okr/shared-models';
 
 import { iframeSectionValidations } from './iframe-section.validations';
 
+const OSM = 'https://www.openstreetmap.org/export/embed.html';
+const withConfig = (properties: Partial<IframeConfig> | Record<string, unknown>): IframeSection =>
+  ({ ...IFRAME_SECTION_SHAPE, properties: { ...IFRAME_SECTION_SHAPE.properties, ...properties } } as unknown as IframeSection);
+
 describe('iframeSectionValidations', () => {
-  it('passes for a valid iframe section', () => {
-    const result = iframeSectionValidations({ ...IFRAME_SECTION_SHAPE });
-    expect(result.isValid()).toBe(true);
+  it('passes for an iframe section with an allowed page', () => {
+    expect(iframeSectionValidations(withConfig({ url: OSM })).isValid()).toBe(true);
+  });
+
+  it('passes for a legacy section with a style and without height', () => {
+    expect(iframeSectionValidations(withConfig({ url: OSM, height: undefined, style: 'min-height: 400px' })).isValid()).toBe(true);
+  });
+
+  it('requires a page', () => {
+    expect(iframeSectionValidations({ ...IFRAME_SECTION_SHAPE }).hasErrors('url')).toBe(true);
   });
 
   it('flags a non-string url', () => {
-    const model = { ...IFRAME_SECTION_SHAPE, properties: { ...IFRAME_SECTION_SHAPE.properties, url: 123 } } as unknown as IframeSection;
-    const result = iframeSectionValidations(model);
-    expect(result.hasErrors('url')).toBe(true);
+    expect(iframeSectionValidations(withConfig({ url: 123 })).hasErrors('url')).toBe(true);
+  });
+
+  it('flags a page outside the embed allowlist', () => {
+    const result = iframeSectionValidations(withConfig({ url: 'https://example.com/widget' }));
+    expect(result.getErrors('url')).toContain('@cms/section/feature.validation.iframeHostNotAllowed');
+  });
+
+  it('flags an unknown height', () => {
+    expect(iframeSectionValidations(withConfig({ url: OSM, height: 'XL' })).hasErrors('height')).toBe(true);
   });
 });

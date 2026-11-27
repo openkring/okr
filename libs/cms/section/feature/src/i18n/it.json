@@ -994,16 +994,39 @@
     "title": "Iframe",
     "label": "Iframe",
     "edit": "Modificare la configurazione dell'iframe",
-    "description": "Incorporamento di contenuti esterni, ad es. meteo, webcam, videoconferenze",
-    "style": {
-      "label": "Stile CSS",
-      "placeholder": "attributo CSS",
-      "helper": "Con gli attributi CSS è possibile modificare l'aspetto dell'elemento (colori, bordi, layout, font ecc.)."
+    "description": "Incorpora una pagina, p. es. una mappa di OpenStreetMap o un video di YouTube o Vimeo.",
+    "link": {
+      "label": "Link o codice di incorporamento",
+      "placeholder": "https://www.openstreetmap.org/export/embed.html?…",
+      "helper": "Incolla il link o tutto il codice che hai copiato sotto «Condividi» → «Incorpora».",
+      "error": "Non riconosciamo questo link. Deve iniziare con https:// o essere un codice di incorporamento con <iframe src=\"…\">."
     },
-    "url": {
-      "label": "URL dell'iFrame",
-      "placeholder": "https://...",
-      "helper": "L'URL punta al contenuto HTML da visualizzare nell'iframe."
+    "found": {
+      "allowed": "{host} riconosciuto, la pagina verrà mostrata",
+      "blocked": "Per motivi di sicurezza l'app non può mostrare {host}."
+    },
+    "height": {
+      "title": "Altezza",
+      "s": "Piccola",
+      "m": "Media",
+      "l": "Grande",
+      "full": "Altezza piena",
+      "helper": "La pagina occupa sempre tutta la larghezza. «Altezza piena» occupa quasi tutto lo schermo."
+    },
+    "editor": {
+      "panel": {
+        "section": "Sezione",
+        "iframe": "Pagina incorporata",
+        "back": "Torna alla sezione",
+        "label": "Impostazioni",
+        "errors": "Questi dati mancano ancora o non sono corretti:"
+      },
+      "canvas": {
+        "hint": "Scrivi titolo, sottotitolo e intro direttamente qui. Un clic sulla pagina incorporata mostra le sue impostazioni a destra.",
+        "select": "Seleziona la pagina incorporata",
+        "empty": "Ancora nessuna pagina. Clicca qui e incolla il suo link a destra.",
+        "blocked": "Questa pagina non può essere mostrata qui. Sono ammessi OpenStreetMap, YouTube e Vimeo."
+      }
     }
   },
   "image": {
@@ -1915,7 +1938,7 @@
     },
     "iframe": {
       "label": "iFrame",
-      "description": "Sezione per incorporare una webview/iframe"
+      "description": "Incorpora una pagina, p. es. una mappa di OpenStreetMap o un video di YouTube o Vimeo."
     },
     "invitations": {
       "label": "Inviti",
@@ -2365,7 +2388,10 @@
     "mailTextPicture": "Questa immagine non può essere mostrata nell’e-mail. Aggiungi le immagini con il blocco «Immagine».",
     "videoRequired": "Incolla il link al video.",
     "videoLinkInvalid": "Questo video non si può riprodurre qui. Incolla di nuovo il suo link.",
-    "aspectRatioInvalid": "Scegli un formato."
+    "aspectRatioInvalid": "Scegli un formato.",
+    "iframeRequired": "Incolla il link alla pagina.",
+    "iframeHostNotAllowed": "L'app non può mostrare questa pagina. Sono ammessi OpenStreetMap, YouTube e Vimeo.",
+    "iframeHeightInvalid": "Scegli una delle altezze."
   },
   "advent": {
     "label": "Calendario dell'Avvento",

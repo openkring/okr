@@ -19,7 +19,8 @@ describe('getSectionValidationSuite', () => {
 
 describe('validateSection', () => {
   it('validates a valid section as valid', () => {
-    expect(validateSection({ ...IFRAME_SECTION_SHAPE }).isValid()).toBe(true);
+    const model = { ...IFRAME_SECTION_SHAPE, properties: { ...IFRAME_SECTION_SHAPE.properties, url: 'https://www.openstreetmap.org/export/embed.html' } };
+    expect(validateSection(model).isValid()).toBe(true);
   });
 
   it('reports type-specific errors (out-of-range map latitude)', () => {

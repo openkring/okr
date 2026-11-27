@@ -994,16 +994,39 @@
     "title": "Iframe",
     "label": "Iframe",
     "edit": "Change iframe configuration",
-    "description": "Embedding of external content, e.g. weather, webcams, video conferencing",
-    "style": {
-      "label": "CSS style",
-      "placeholder": "CSS attribute",
-      "helper": "The CSS attributes can be used to change the appearance of the element (colors, borders, layout, font etc.)."
+    "description": "Embeds a page, e.g. a map from OpenStreetMap or a video from YouTube or Vimeo.",
+    "link": {
+      "label": "Link or embed code",
+      "placeholder": "https://www.openstreetmap.org/export/embed.html?…",
+      "helper": "Paste the link or the whole code you copied under «Share» → «Embed».",
+      "error": "We don't recognise this link. It must start with https:// or be an embed code with <iframe src=\"…\">."
     },
-    "url": {
-      "label": "iFrame URL",
-      "placeholder": "https://...",
-      "helper": "The URL points to the HTML content to be displayed in the iframe."
+    "found": {
+      "allowed": "{host} recognised, it will be shown",
+      "blocked": "For security reasons the app cannot show {host}."
+    },
+    "height": {
+      "title": "Height",
+      "s": "Small",
+      "m": "Medium",
+      "l": "Large",
+      "full": "Full height",
+      "helper": "The page always fills the whole width. «Full height» takes up almost the whole screen."
+    },
+    "editor": {
+      "panel": {
+        "section": "Section",
+        "iframe": "Embedded page",
+        "back": "Back to the section",
+        "label": "Settings",
+        "errors": "These details are still missing or not right:"
+      },
+      "canvas": {
+        "hint": "Type the title, subtitle and intro right here. Click the embedded page to see its settings on the right.",
+        "select": "Select the embedded page",
+        "empty": "No page yet. Click here and paste its link on the right.",
+        "blocked": "This page cannot be shown here. OpenStreetMap, YouTube and Vimeo are allowed."
+      }
     }
   },
   "image": {
@@ -1915,7 +1938,7 @@
     },
     "iframe": {
       "label": "iFrame",
-      "description": "Section for embedding a webview/iframe"
+      "description": "Embeds a page, e.g. a map from OpenStreetMap or a video from YouTube or Vimeo."
     },
     "invitations": {
       "label": "Invitations",
@@ -2365,7 +2388,10 @@
     "mailTextPicture": "This picture cannot be shown in the email. Add pictures as an “Image” block.",
     "videoRequired": "Paste the link to the video.",
     "videoLinkInvalid": "This video can't be played here. Paste its link again.",
-    "aspectRatioInvalid": "Choose a format."
+    "aspectRatioInvalid": "Choose a format.",
+    "iframeRequired": "Paste the link to the page.",
+    "iframeHostNotAllowed": "The app cannot show this page. OpenStreetMap, YouTube and Vimeo are allowed.",
+    "iframeHeightInvalid": "Choose one of the heights."
   },
   "advent": {
     "label": "Advent calendar",

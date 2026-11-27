@@ -19,7 +19,7 @@ import { AlbumConfiguration } from './album-configuration';
 import { FeedbackConfiguration } from './feedback-configuration';
 import { JournalMapConfiguration } from './journal-map-configuration';
 import { JournalTrackConfiguration } from './journal-track-configuration';
-import { IframeConfiguration } from './iframe-configuration';
+import { IframePanel } from './iframe-panel';
 import { WeatherConfiguration, WeatherLocationOption } from './weather-configuration';
 import { ConnectionsConfiguration } from './connections-configuration';
 import { DeparturesConfiguration } from './departures-configuration';
@@ -68,7 +68,7 @@ import { CourseOption, FormOption, FormSectionConfiguration, ResponsibilityOptio
     IonItem, IonToggle, IonSegment, IonSegmentButton, IonLabel, IonNote, SectionAddChips,
     Chips, TextareaInput, ErrorNote,
     SectionConfiguration, EditorConfiguration, ImageStyleConfiguration, ArticleImagesConfiguration, AlbumConfiguration,
-    IframeConfiguration, WeatherConfiguration, ConnectionsConfiguration, DeparturesConfiguration, EnergyConfiguration, CounterConfiguration, ContactConfiguration, FooterConfiguration, PeopleConfiguration, ResponsibilityConfiguration, VideoPanel,
+    IframePanel, WeatherConfiguration, ConnectionsConfiguration, DeparturesConfiguration, EnergyConfiguration, CounterConfiguration, ContactConfiguration, FooterConfiguration, PeopleConfiguration, ResponsibilityConfiguration, VideoPanel,
     ButtonConfiguration, ChatConfiguration,
     MapConfiguration, TrackerConfiguration, TableGridConfiguration,  TableStyleConfiguration, TableHeader,
     TableBody, EventsConfiguration, CourseConfiguration, InvitationsConfiguration, ImagesConfiguration, CalendarConfiguration, ChartConfiguration,
@@ -511,8 +511,8 @@ import { CourseOption, FormOption, FormSectionConfiguration, ResponsibilityOptio
         }
         @case('iframe') {
           @if(iframeConfig(); as iframeConfig) {
-            <okr-iframe-config
-              [formData]="iframeConfig" (formDataChange)="onIframeConfigChange($event)"
+            <okr-iframe-panel
+              [config]="iframeConfig" (configChange)="onIframeConfigChange($event)"
               [readOnly]="isReadOnly()"
               [i18n]="i18n()"
               [errors]="errors()"
