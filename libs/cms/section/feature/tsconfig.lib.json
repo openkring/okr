@@ -44,6 +44,7 @@
     { "path": "../../../content/folder/util/tsconfig.lib.json" },
     { "path": "../../../content/notice/data-access/tsconfig.lib.json" },
     { "path": "../../../content/notice/util/tsconfig.lib.json" },
+    { "path": "../../../content/pdf-template/feature/tsconfig.lib.json" },
     { "path": "../../../finance/expense/feature/tsconfig.lib.json" },
     { "path": "../../../forms/data-access/tsconfig.lib.json" },
     { "path": "../../../forms/feature/tsconfig.lib.json" },
@@ -87,7 +88,6 @@
     { "path": "../../../subject/org/feature/tsconfig.lib.json" },
     { "path": "../../../subject/person/data-access/tsconfig.lib.json" },
     { "path": "../../../subject/person/feature/tsconfig.lib.json" },
-    { "path": "../../../user/data-access/tsconfig.lib.json" },
-    { "path": "../../../user/util/tsconfig.lib.json" }
+    { "path": "../../../user/data-access/tsconfig.lib.json" }
   ]
 }

@@ -22,14 +22,6 @@
     "label": "Delete section",
     "confirm": "Do you really want to delete this section?"
   },
-  "send": {
-    "confirm1": "Do you really want to send",
-    "confirm2": "?"
-  },
-  "email": {
-    "conf": "Email(s) have been sent.",
-    "error": "Email(s) could not be sent."
-  },
   "error": {
     "save": "The section could not be saved. Please try again.",
     "load": "The sections could not be loaded. Please try again.",
@@ -2156,21 +2148,6 @@
       "label": "Trip statistics",
       "description": "How many trips were made, e.g. per boat or per person"
     }
-  },
-  "message_center": {
-    "title": "Select recipients",
-    "subject": "Subject: ",
-    "from": "From: ",
-    "from_placeholder": "email@domain.com",
-    "cc": "CC: ",
-    "bcc": "BCC: ",
-    "address_list_placeholder": "email1@domain.com, email2@domain.com",
-    "hide_receivers": "Hide recipient addresses",
-    "layout": "Layout",
-    "layout_standard": "Standard",
-    "layout_plain": "Plain",
-    "all_groups": "All groups",
-    "search_placeholder": "Search …"
   },
   "sankey": {
     "label": "Sankey",

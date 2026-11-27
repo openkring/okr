@@ -144,10 +144,12 @@ export function filterStartChoices(choices: StartChoice[], search: string): Star
 
 /**
  * Whether the composer looks for start choices at all (§8.5): only a Versand, and never one that opens with content of its caller (a
- * prefilled body or subject) or with a document attached; it starts directly with a new draft.
+ * prefilled body, blocks or subject) or with a document attached; it starts directly with a new draft.
  */
-export function startStepWanted(state: { isVersand: boolean; bodyDefault: string; subjectDefault: string; storagePath: string; filename: string }): boolean {
-  return state.isVersand && !state.bodyDefault && !state.subjectDefault && !state.storagePath && !state.filename;
+export function startStepWanted(state: {
+  isVersand: boolean; bodyDefault: string; subjectDefault: string; storagePath: string; filename: string; hasBlocksDefault?: boolean;
+}): boolean {
+  return state.isVersand && !state.bodyDefault && !state.subjectDefault && !state.storagePath && !state.filename && !state.hasBlocksDefault;
 }
 
 /**

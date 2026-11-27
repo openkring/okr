@@ -22,14 +22,6 @@
     "label": "Eliminar sección",
     "confirm": "¿Realmente desea eliminar esta sección?"
   },
-  "send": {
-    "confirm1": "¿Realmente desea enviar",
-    "confirm2": "?"
-  },
-  "email": {
-    "conf": "El o los correos electrónicos se han enviado.",
-    "error": "El o los correos electrónicos no se han podido enviar."
-  },
   "error": {
     "save": "La sección no se ha podido guardar. Inténtelo de nuevo.",
     "load": "Las secciones no se han podido cargar. Inténtelo de nuevo.",
@@ -2156,21 +2148,6 @@
       "label": "Estadísticas de salidas",
       "description": "Cuántas salidas se hicieron, p. ej. por barco o por persona"
     }
-  },
-  "message_center": {
-    "title": "Seleccionar destinatarios",
-    "subject": "Asunto: ",
-    "from": "De: ",
-    "from_placeholder": "email@domain.com",
-    "cc": "CC: ",
-    "bcc": "BCC: ",
-    "address_list_placeholder": "email1@domain.com, email2@domain.com",
-    "hide_receivers": "Ocultar las direcciones de los destinatarios",
-    "layout": "Plantilla",
-    "layout_standard": "Estándar",
-    "layout_plain": "Sencilla",
-    "all_groups": "Todos los grupos",
-    "search_placeholder": "Buscar …"
   },
   "sankey": {
     "label": "Sankey",

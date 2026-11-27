@@ -22,14 +22,6 @@
     "label": "Supprimer la section",
     "confirm": "Voulez-vous vraiment supprimer cette section ?"
   },
-  "send": {
-    "confirm1": "Voulez-vous vraiment envoyer",
-    "confirm2": "?"
-  },
-  "email": {
-    "conf": "Le ou les e-mails ont été envoyés.",
-    "error": "Le ou les e-mails n'ont pas pu être envoyés."
-  },
   "error": {
     "save": "La section n'a pas pu être enregistrée. Veuillez réessayer.",
     "load": "Les sections n'ont pas pu être chargées. Veuillez réessayer.",
@@ -2156,21 +2148,6 @@
       "label": "Statistiques des sorties",
       "description": "Le nombre de sorties effectuées, p. ex. par bateau ou par personne"
     }
-  },
-  "message_center": {
-    "title": "Sélectionner les destinataires",
-    "subject": "Objet : ",
-    "from": "De : ",
-    "from_placeholder": "email@domain.com",
-    "cc": "CC : ",
-    "bcc": "BCC : ",
-    "address_list_placeholder": "email1@domain.com, email2@domain.com",
-    "hide_receivers": "Masquer les adresses des destinataires",
-    "layout": "Modèle",
-    "layout_standard": "Standard",
-    "layout_plain": "Simple",
-    "all_groups": "Tous les groupes",
-    "search_placeholder": "Rechercher …"
   },
   "sankey": {
     "label": "Sankey",

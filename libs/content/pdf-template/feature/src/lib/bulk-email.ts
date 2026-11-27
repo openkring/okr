@@ -4,7 +4,7 @@ import { ModalController } from '@ionic/angular';
 import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore } from '@okr/shared-feature';
 import {
-  AddressCollection, AddressModel, CalendarCollection, CalendarModel, CalEventCollection, CalEventModel,
+  AddressCollection, AddressModel, CalendarCollection, CalendarModel, CalEventCollection, CalEventModel, type MailBlock,
   MembershipCollection, MembershipModel, OrgModel, PersonModel, SectionCollection, SectionModel, WebsiteCollection, WebsiteModel,
 } from '@okr/shared-models';
 import {
@@ -59,7 +59,8 @@ export function toOrgVersandRecipients(orgs: OrgModel[], getEmail: (org: OrgMode
  *        (a group admin); the server then decides the sender, so the composer locks that field
  * @param groupKey a group admin's Versand: the server only reports on the group's members. For a newsletter
  *        (`options.newsletter`) it is always set, for every caller: the server then only admits subscribers
- * @param options `newsletter`: `groupKey` names a newsletter group (spec 1.169 §5.6)
+ * @param options `newsletter`: `groupKey` names a newsletter group (spec 1.169 §5.6); `subject` and `blocks`: the mail starts with
+ *        them instead of an empty draft (e.g. a news article sent from its page), and the start step is skipped
  */
 export async function openBulkEmailFlow(
   ctx: BulkEmailContext,
@@ -67,7 +68,7 @@ export async function openBulkEmailFlow(
   attachment?: { storagePath: string; filename: string },
   sendHandler?: (mail: ComposedEmail) => Promise<void>,
   groupKey?: string,
-  options: { newsletter?: boolean } = {},
+  options: { newsletter?: boolean; subject?: string; blocks?: MailBlock[] } = {},
 ): Promise<void> {
   const { favOrgEmail } = await loadOrgEmails(ctx);
   const newsletter = !!groupKey && options.newsletter === true;
@@ -93,6 +94,8 @@ export async function openBulkEmailFlow(
       filename: attachment?.filename ?? '',
       sendHandler,
       fromLocked: !!sendHandler || newsletterAdminOnly,
+      subjectDefault: options.subject ?? '',
+      blocksDefault: options.blocks ?? [],
       // the mail is written in the editor of blocks (spec 1.176 §10): loaded by the composer when it opens its editor
       mailEditor: loadMailEditor,
       mailContext: mailEditorContext(ctx),

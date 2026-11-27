@@ -447,7 +447,8 @@ export class ContentPage {
       if (offersImageUpload(section, this.articleBlocksGate.open())) {
         actionSheetOptions.buttons.push(createActionSheetButton('section.image.upload', this.store.i18n.upload_image(), this.store.imgixBaseUrl(), 'upload'));
       }
-      if (section.type === 'article') {
+      // a Versand is for those who may send one (mailJobs: privileged or memberAdmin)
+      if (section.type === 'article' && (this.hasRole('privileged') || this.hasRole('memberAdmin'))) {
         actionSheetOptions.buttons.push(createActionSheetButton('section.send', this.store.i18n.section_send(), this.store.imgixBaseUrl(), 'send'));
       }
       if (section.type === 'button') {

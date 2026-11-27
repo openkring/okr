@@ -173,8 +173,6 @@ interface AddressField {
     .mail-subject { flex: 1 1 320px; min-width: 0; }
     .mail-layout { flex: none; }
     .mail-layout ion-button { margin: 0; text-transform: none; }
-    .mail-web { flex: 0 1 300px; min-width: 0; }
-    .mail-web .note { padding: 0 0 4px; font-size: 0.8rem; }
     .mail-layouts { --width: min(640px, 94vw); }
     .mail-layouts-content { padding: 12px; }
     .mail-panel { display: flex; flex-direction: column; gap: 12px; padding: 12px; border-top: 1px solid var(--ion-color-light-shade); }
@@ -286,7 +284,7 @@ interface AddressField {
                   <ion-note color="danger" class="note">{{ i18n.page_save_error() }}</ion-note>
                 }
               </div>
-              <!-- the head line above the editor: subject, template, web version -->
+              <!-- the head line above the editor: subject and template (the web version is an option of the Zustellung) -->
               <ng-template #mailHead>
                 <div class="mail-head">
                   <div class="mail-subject" (keydown)="onSubjectKey($event)">
@@ -300,11 +298,6 @@ interface AddressField {
                       {{ i18n.layout_label() }}: {{ layoutLabel() }}
                       <ion-icon slot="end" src="{{ 'chevron-down' | svgIcon }}" aria-hidden="true" />
                     </ion-button>
-                  </div>
-                  <div class="mail-web">
-                    <okr-checkbox [i18n]="webVersionI18n()" [checked]="webVersion()" (checkedChange)="onWebVersionChange($event)"
-                      [toggle]="true" [readOnly]="false" />
-                    <ion-note class="note">{{ i18n.web_version_helper() }}</ion-note>
                   </div>
                 </div>
                 <ion-popover class="mail-layouts" [isOpen]="layoutsOpen()" [event]="layoutsEvent()" (didDismiss)="layoutsOpen.set(false)">
@@ -452,11 +445,13 @@ interface AddressField {
                   @if (versandFailed()) {
                     <ion-note color="warning" class="note">{{ i18n.delivery_error() }}</ion-note>
                   }
-                  <!-- the options of this Versand: E-Mail only (then optionally on the dashboard), QR codes in the letters -->
+                  <!-- the options of this Versand: E-Mail only (then optionally on the dashboard), web version, QR codes in the letters -->
                   <okr-checkbox [i18n]="emailOnlyI18n()" [checked]="emailOnly()" (checkedChange)="onEmailOnlyChange($event)" [readOnly]="false" />
                   @if (emailOnly()) {
                     <okr-checkbox [i18n]="dashboardI18n()" [checked]="showOnDashboard()" (checkedChange)="onDashboardChange($event)" [readOnly]="false" />
                   }
+                  <okr-checkbox [i18n]="webVersionI18n()" [checked]="webVersion()" (checkedChange)="onWebVersionChange($event)" [readOnly]="false" />
+                  <ion-note class="note">{{ i18n.web_version_helper() }}</ion-note>
                   @if (showQrOption()) {
                     <okr-checkbox [i18n]="qrCodesI18n()" [checked]="letterQrCodes()" (checkedChange)="onQrCodesChange($event)" [readOnly]="false" />
                   }
@@ -586,6 +581,8 @@ export class EmailComposerModal {
   public readonly fromDefault    = input<string>('');
   public readonly subjectDefault = input<string>('');
   public readonly bodyDefault    = input<string>('');
+  /** Prefilled blocks of a Versand mail (e.g. a news article sent as it is); win over `bodyDefault`. Empty = the composer's own. */
+  public readonly blocksDefault  = input<MailBlock[]>([]);
   /** The server decides the sender (a group admin's mail): show it, but don't let it be changed. */
   public readonly fromLocked     = input<boolean>(false);
   /**
@@ -1529,7 +1526,8 @@ export class EmailComposerModal {
     if (!isBrowser(this.platformId) || this.destroyed) return;
     const uid = this.appStore.fbUser()?.uid ?? '';
     const tenantId = this.appStore.tenantId();
-    const blocks = mailBlocksFromBody(this.bodyDefault(), () => crypto.randomUUID());
+    const given = this.blocksDefault();
+    const blocks = given.length > 0 ? given : mailBlocksFromBody(this.bodyDefault(), () => crypto.randomUUID());
     const meta = this.meta();
     try {
       const { pageKey, articleKey } = await this.mailPageService.createDraft(
@@ -1740,6 +1738,7 @@ export class EmailComposerModal {
   private async offerStart(): Promise<void> {
     if (!isBrowser(this.platformId) || !startStepWanted({
       isVersand: this.isVersand(), bodyDefault: this.bodyDefault(), subjectDefault: this.subjectDefault(), storagePath: this.storagePath(), filename: this.filename(),
+      hasBlocksDefault: this.blocksDefault().length > 0,
     })) return;
     let timer: ReturnType<typeof setTimeout> | undefined;
     const late = new Promise<undefined>((resolve) => { timer = setTimeout(() => resolve(undefined), START_LOAD_MS); });

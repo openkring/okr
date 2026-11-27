@@ -125,6 +125,7 @@ describe('startStepWanted', () => {
     expect(startStepWanted({ ...base, isVersand: false })).toBe(false);
     expect(startStepWanted({ ...base, bodyDefault: '<p>Hallo</p>' })).toBe(false);
     expect(startStepWanted({ ...base, subjectDefault: 'Protokoll' })).toBe(false);
+    expect(startStepWanted({ ...base, hasBlocksDefault: true })).toBe(false);
     expect(startStepWanted({ ...base, storagePath: 'tenant/scs/doc.pdf', filename: 'doc.pdf' })).toBe(false);
   });
 });

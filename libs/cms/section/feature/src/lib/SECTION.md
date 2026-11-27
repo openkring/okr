@@ -229,7 +229,7 @@ Notable store actions:
 - `delete()` — confirmation-guarded deletion
 - `uploadImage(section)` — picks a file, uploads to Firebase Storage at `tenant/<tid>/section/<id>/image/<name>`, updates the section's `properties.images` array (not for an article with blocks), and creates a `DocumentModel`
 - `uploadFile(section)` — same flow for button-section file downloads
-- `send(section)` — opens `MessageCenterModal` then calls the `sendEmail` Cloud Function (`europe-west6`)
+- `send(section)` — picks the recipients (`PersonSelectModal`, multi), then opens the Versand (`openBulkEmailFlow`) with the article's title as subject and its blocks as the mail
 
 ## Key Components
 

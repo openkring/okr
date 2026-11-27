@@ -263,7 +263,9 @@ export class BlogPage {
       if (offersImageUpload(section, this.articleBlocksGate.open())) {
         actionSheetOptions.buttons.push(createActionSheetButton('section.image.upload', this.store.i18n.upload_image(), this.store.imgixBaseUrl(), 'upload'));
       }
-      if (section.type === 'article') {
+      // a Versand is for those who may send one (mailJobs: privileged or memberAdmin)
+      const user = this.store.appStore.currentUser();
+      if (section.type === 'article' && (hasRole('privileged', user) || hasRole('memberAdmin', user))) {
         actionSheetOptions.buttons.push(createActionSheetButton('section.send', this.store.i18n.section_send(), this.store.imgixBaseUrl(), 'send'));
       }
       if (section.type === 'button') {

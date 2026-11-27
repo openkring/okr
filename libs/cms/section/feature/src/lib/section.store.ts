@@ -2,14 +2,13 @@ import { computed, ErrorHandler, inject, Injectable, Injector, Signal } from '@a
 import { rxResource } from '@angular/core/rxjs-interop';
 import { AlertController, ModalController, ToastController } from '@ionic/angular';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
-import { getFunctions, httpsCallable } from 'firebase/functions';
 import { Capacitor } from '@capacitor/core';
 import { Geolocation, Position } from '@capacitor/geolocation';
 
 import { catchError, firstValueFrom, of } from 'rxjs';
 
-import { AppStore, withErrorState } from '@okr/shared-feature';
-import { ArticleSection, ButtonAction, ButtonSection, CategoryItemModel, CategoryListModel, EmailLayoutChoice, IMAGE_CONFIG_SHAPE, ImageActionType, ImageConfig, PeopleSection, SectionModel, SectionType, WebsiteCollection, WebsiteModel, articleBlocksOf, withClassicFields } from '@okr/shared-models';
+import { AppStore, PersonSelectModal, type PersonSelectResult, withErrorState } from '@okr/shared-feature';
+import { ArticleSection, ButtonAction, ButtonSection, CategoryItemModel, CategoryListModel, IMAGE_CONFIG_SHAPE, ImageActionType, PeopleSection, SectionModel, SectionType, WebsiteCollection, WebsiteModel, articleBlocksOf } from '@okr/shared-models';
 import { getSystemQuery, chipMatches, generateRandomString, debugData, debugItemLoaded, debugMessage, fill, nameMatches, sanitizeFileName, chatBlockedAlertMessage, isChatBlockedError, EMERGENCY_GROUP_KEY } from '@okr/shared-util-core';
 import { DEFAULT_MIMETYPES, IMAGE_MIMETYPES } from '@okr/shared-constants';
 import { confirm, downloadTextFile, exportCsv, getExportFileName, lazyService, showToast, resourceParams, notify } from '@okr/shared-util-angular';
@@ -18,12 +17,11 @@ import { I18nService } from '@okr/shared-i18n';
 
 import { UploadService } from '@okr/avatar-data-access';
 import { ArticleBlocksGate, PeopleEditorGate, SectionService } from '@okr/cms-section-data-access';
-import { asEditedSection, createSection, narrowSection, newArticleFrom, SECTION_I18N_KEYS, usesArticleEditor, usesPeopleEditor } from '@okr/cms-section-util';
+import { asEditedSection, createSection, mailBlocksFromArticle, narrowSection, newArticleFrom, SECTION_I18N_KEYS, usesArticleEditor, usesPeopleEditor } from '@okr/cms-section-util';
 import { allowedSectionTypesForPage } from '@okr/cms-website-render';
 
 import { openArticleEditor, type OpenedArticleEditor } from './article-editor.loader';
 import { openPeopleEditor } from './people-editor.loader';
-import { activeFirebaseApp } from '@okr/shared-config';
 
 export type Coordinates = {
   latitude: number;
@@ -432,61 +430,34 @@ export const _SectionStore = signalStore(
         }
       },
 
+      /**
+       * «Versenden» of a news article: first the recipients are picked (persons, with group filter and select-all), then the usual Versand
+       * (spec 1.145) opens with them, its subject the article's title and its mail the article's blocks, as «Artikel einfügen» would put them
+       * in (spec 1.176 §8.3). Nothing happens if the picker is closed or nobody is checked.
+       */
       async send(section: SectionModel): Promise<void> {
-        const { MessageCenterModal } = await import('./message-center.modal');
-        const modal = await store.modalController.create({
-          component: MessageCenterModal,
+        if (section.type !== 'article') return;
+        const currentUser = store.appStore.currentUser();
+        if (!currentUser) return;
+        const picker = await store.modalController.create({
+          component: PersonSelectModal,
+          componentProps: { selectedTag: '', currentUser, multiple: true },
           cssClass: 'modal-fixed-height',
-          componentProps: {
-            initialSubject: section.title,
-            initialFrom: 'kommunikation@seeclub.org',
-            isPrivileged: true
-          },
         });
-        await modal.present();
-        const { data, role } = await modal.onWillDismiss();
-        if (role === 'confirm' && data?.to?.length > 0) {
-          const tos = data.to as string[];
-          const ccs = data.cc as string[];
-          const bccs = data.bcc as string[];
-          const nrEmails = tos.length + ccs.length + bccs.length;
+        await picker.present();
+        const { data, role } = await picker.onWillDismiss<PersonSelectResult>();
+        if (role !== 'confirm' || data?.kind !== 'multi' || data.persons.length === 0) return;
 
-          const message = computed(() => store.i18n.send_confirm1() + ' ' + nrEmails + ' ' + store.i18n.send_confirm2());
-          console.log(`MessageCenterModal: sending to:${tos.length}, cc:${ccs.length}, bcc:${bccs.length}`);
-          console.log('     - tos: ', tos);
-          console.log('     - ccs: ', ccs);
-          console.log('     - bccs: ', bccs);
-          const result = await confirm(store.alertController, message(), store.i18n.ok(), store.i18n.cancel(), true);
-          if (result === true) {
-            console.log('SectionStore: sending ' + data.to.length + ' emails from ' + data.from);
-            await this.sendEmail(data.to, data.subject, this.buildEmailHtml(section), data.from, data.cc, data.bcc, data.layout);
-          }
-        }
-      },
-
-      buildEmailHtml(section: SectionModel): string {
-        const classic = withClassicFields(section);   // the text and images of an article with blocks (spec 1.173)
-        const props = classic.properties as any;
-        const images: ImageConfig[] = Array.isArray(props?.images) && props.images.length > 0
-          ? props.images
-          : props?.image ? [props.image] : [];
-        const imgHtml = images
-          .map(img => `<p><img src="${img.url}" alt="${img.altText ?? ''}" style="max-width:100%;height:auto;" /></p>`)
-          .join('');
-        // classic = withClassicFields(section), above
-        const content = (classic as ArticleSection).content?.htmlContent ?? '';
-        return imgHtml + content;
-      },
-
-      async sendEmail(to: string[], subject: string, body: string, from: string, cc: string[] = [], bcc: string[] = [], layout: EmailLayoutChoice = 'standard'): Promise<void> {
-        try {
-          const fn = httpsCallable(getFunctions(activeFirebaseApp(), 'europe-west6'), 'sendEmail');
-          await fn({ to, cc, bcc, appId: store.appStore.env.appId, body, layout, from, subject });
-          await showToast(store.toastController, store.i18n.email_conf());
-        } catch (ex) {
-          console.error('SectionStore.sendEmail: error: ', ex);
-          await showToast(store.toastController, store.i18n.email_error());
-        }
+        // the Versand lib is loaded only when a Versand starts: it carries the composer and its editor
+        const { openBulkEmailFlow, toVersandRecipients } = await import('@okr/content-pdf-template-feature');
+        const recipients = toVersandRecipients(data.persons, (p) => store.appStore.getDirectoryEntry(`person.${p.okey}`)?.favEmail);
+        const blocks = mailBlocksFromArticle(section as ArticleSection, (html) => store.appStore.replacePlaceholders(html), () => crypto.randomUUID());
+        await openBulkEmailFlow({
+          modalController: store.modalController,
+          firestoreService: store.firestoreService,
+          appStore: store.appStore,
+          tenantId: store.tenantId(),
+        }, recipients, undefined, undefined, undefined, { subject: section.title ?? '', blocks });
       },
 
       getTitleLabel(readOnly: boolean, key?: string): string {

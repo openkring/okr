@@ -22,14 +22,6 @@
     "label": "Sektion löschen",
     "confirm": "Soll diese Sektion wirklich gelöscht werden ?"
   },
-  "send": {
-    "confirm1": "Sollen wirklich",
-    "confirm2": "verschickt werden ?"
-  },
-  "email": {
-    "conf": "Email(s) wurde(n) abgeschickt.",
-    "error": "Email(s) konnte(n) nicht verschickt werden."
-  },
   "error": {
     "save": "Die Sektion konnte nicht gespeichert werden. Bitte versuche es erneut.",
     "load": "Die Sektionen konnten nicht geladen werden. Bitte versuche es erneut.",
@@ -2156,21 +2148,6 @@
       "label": "Fahrtenstatistik",
       "description": "Wie viele Fahrten gemacht wurden, z.B. pro Boot oder pro Person"
     }
-  },
-  "message_center": {
-    "title": "Empfänger auswählen",
-    "subject": "Betreff: ",
-    "from": "Von: ",
-    "from_placeholder": "email@domain.com",
-    "cc": "CC: ",
-    "bcc": "BCC: ",
-    "address_list_placeholder": "email1@domain.com, email2@domain.com",
-    "hide_receivers": "Empfängeradressen verbergen",
-    "layout": "Vorlage",
-    "layout_standard": "Standard",
-    "layout_plain": "Einfach",
-    "all_groups": "Alle Gruppen",
-    "search_placeholder": "Suchen …"
   },
   "sankey": {
     "label": "Sankey",
