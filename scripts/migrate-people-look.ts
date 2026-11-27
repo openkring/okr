@@ -23,7 +23,8 @@
  *
  * WHAT IS LEFT OUT: sections that are not people; sections with nothing to change (the 32 never-saved ones keep their
  * avatar, and only get the `excludedPersons` move); sections the website would draw differently after the change
- * (`website-output-differs`; the 4px → 5px radius is not drawn there).
+ * (`website-output-differs`; the 4px → 5px radius is not drawn there); sliders and grids with their own persons per row
+ * (≠ 5) or rows (≠ 1), which would be dropped while the website cannot show it (`slider-settings`).
  *
  * SAFETY: each section is written in a transaction that re-reads it: it must be unchanged since the trial run (update
  * time), and planning it again must give the stored patch; otherwise it is skipped and reported. Stale override keys are

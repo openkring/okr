@@ -20,7 +20,7 @@ export interface StoredPeopleSection { type?: unknown; name?: unknown; tenants?:
 
 export type PeopleMigration =
   | { action: 'write'; patch: Partial<PeopleConfig> }
-  | { action: 'leave'; reason: 'not-people' | 'nothing-to-do' | 'website-output-differs' };
+  | { action: 'leave'; reason: 'not-people' | 'nothing-to-do' | 'slider-settings' | 'website-output-differs' };
 
 /** `patch` is the complete new `properties` (it replaces them); `before` the stored ones, for undo and the owner's diff. */
 export type WriteEntry = {
@@ -100,8 +100,21 @@ export function planPeopleMigration(section: StoredPeopleSection): PeopleMigrati
   }
   const patch = cleaned(props);
   if (isDeepStrictEqual(json(patch), json(props))) return { action: 'leave', reason: 'nothing-to-do' };
+  if (hasSliderSettings(props['avatar'], patch['avatar'])) return { action: 'leave', reason: 'slider-settings' };
   if (websiteDiffers(section, patch)) return { action: 'leave', reason: 'website-output-differs' };
   return { action: 'write', patch: patch as unknown as Partial<PeopleConfig> };
+}
+
+/**
+ * A slider or grid with its own persons per row (≠ 5) or rows (≠ 1): the migration would drop them and the app would draw the
+ * defaults, which the website comparison cannot see (the website draws neither). Left for the owner to decide.
+ */
+function hasSliderSettings(avatar: unknown, after: unknown): boolean {
+  if (!isObject(avatar) || (avatar['view'] !== 'slider' && avatar['view'] !== 'grid')) return false;
+  const kept = isObject(after) ? after : {};
+  const differs = (field: string, def: number): boolean =>
+    avatar[field] !== undefined && avatar[field] !== null && avatar[field] !== def && !isDeepStrictEqual(json(kept[field]), json(avatar[field]));
+  return differs('perRow', 5) || differs('sliderRows', 1);
 }
 
 function json(value: unknown): unknown {

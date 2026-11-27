@@ -164,6 +164,17 @@ test('a section that is already migrated has nothing to do; so is the result of 
     assert.deepEqual(planPeopleMigration({ ...s, properties: plan.patch }), { action: 'leave', reason: 'nothing-to-do' });
   }
 });
+test('a slider or grid with its own persons per row or rows is left (the website check cannot see them)', () => {
+  for (const view of ['slider', 'grid']) {
+    for (const more of [{ perRow: 3 }, { sliderRows: 2 }, { perRow: 7, sliderRows: 3 }]) {
+      const s = section('s', { type: 'group', groupId: 'g', persons: [], avatar: avatar({ view, ...more }) });
+      assert.deepEqual(planPeopleMigration(s), { action: 'leave', reason: 'slider-settings' }, `${view} ${JSON.stringify(more)}`);
+    }
+    assert.equal(planPeopleMigration(section('s', { type: 'group', groupId: 'g', persons: [], avatar: avatar({ view }) })).action, 'write', view);
+  }
+  // a card ignores perRow and sliderRows: dropping them changes nothing
+  assert.equal(planPeopleMigration(section('s', { type: 'group', groupId: 'g', persons: [], avatar: avatar({ perRow: 3, sliderRows: 2 }) })).action, 'write');
+});
 test('other sections are not people', () => {
   assert.deepEqual(planPeopleMigration({ type: 'article', properties: {} }), { action: 'leave', reason: 'not-people' });
   assert.deepEqual(planPeopleMigration({ type: 'people', properties: null }), { action: 'leave', reason: 'not-people' });
