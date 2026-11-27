@@ -1497,6 +1497,58 @@
         "right": "A destra",
         "overlay": "Sulla foto"
       }
+    },
+    "editor": {
+      "title": {
+        "new": "Nuova sezione persone",
+        "edit": "Modifica persone"
+      },
+      "empty": "Nessuno ancora scelto",
+      "up": "Sposta avanti",
+      "down": "Sposta indietro",
+      "hide": "Nascondi",
+      "show": "Mostra di nuovo",
+      "remove": "Rimuovi",
+      "add": "Aggiungi una persona",
+      "frame": "Azioni per {name}",
+      "person": {
+        "title": "Persona",
+        "back": "Torna alla sezione",
+        "function": "La funzione viene dalla carica o dall’affiliazione. La modifichi lì.",
+        "hidden": "Nascosta: questa persona non appare nella sezione."
+      },
+      "from": {
+        "persons": "Scelta a mano",
+        "group": "Viene dal gruppo {name}",
+        "responsibility": "Viene dalla carica {name}"
+      },
+      "who": {
+        "title": "Chi viene mostrato",
+        "label": "Da dove vengono le persone"
+      },
+      "source": {
+        "persons": "Persone",
+        "group": "Gruppo",
+        "responsibility": "Cariche"
+      },
+      "hiddenCount": "{count} nascosta/e",
+      "showAll": "Mostra di nuovo tutte",
+      "look": {
+        "title": "Aspetto"
+      },
+      "more": {
+        "title": "Altro"
+      },
+      "listName": {
+        "label": "Nome della lista",
+        "helper": "Appare accanto alle persone. Lascialo vuoto se basta il titolo della sezione."
+      },
+      "loading": "Caricamento delle persone …",
+      "save": {
+        "running": "Salvataggio delle persone …",
+        "failed": "Il salvataggio non è riuscito. Le tue modifiche sono ancora qui.",
+        "trial": "Vista di prova: non è stato salvato nulla."
+      }
     }
   },
   "rag": {

@@ -159,7 +159,7 @@ interface PersonView {
         @if(item.mailto) {
           <div class="email">{{ item.email }}</div>
         } @else {
-          <div class="email"><a [href]="'mailto:' + item.email" (click)="onEmailClick($event)">{{ item.email }}</a></div>
+          <div class="email"><a [href]="'mailto:' + item.email" [attr.tabindex]="selectable() ? -1 : null" (click)="onEmailClick($event)">{{ item.email }}</a></div>
         }
       }
     </ng-template>

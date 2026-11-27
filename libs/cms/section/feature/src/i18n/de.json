@@ -1497,6 +1497,58 @@
         "right": "Rechts",
         "overlay": "Auf dem Bild"
       }
+    },
+    "editor": {
+      "title": {
+        "new": "Neue Personen-Sektion",
+        "edit": "Personen bearbeiten"
+      },
+      "empty": "Noch niemand ausgewählt",
+      "up": "Nach vorne",
+      "down": "Nach hinten",
+      "hide": "Ausblenden",
+      "show": "Wieder zeigen",
+      "remove": "Entfernen",
+      "add": "Person hinzufügen",
+      "frame": "Aktionen für {name}",
+      "person": {
+        "title": "Person",
+        "back": "Zurück zur Sektion",
+        "function": "Die Funktion kommt aus dem Amt oder der Mitgliedschaft. Du änderst sie dort.",
+        "hidden": "Ausgeblendet: in der Sektion sieht man diese Person nicht."
+      },
+      "from": {
+        "persons": "Von Hand ausgewählt",
+        "group": "Kommt aus der Gruppe {name}",
+        "responsibility": "Kommt aus dem Amt {name}"
+      },
+      "who": {
+        "title": "Wer wird gezeigt",
+        "label": "Woher die Personen kommen"
+      },
+      "source": {
+        "persons": "Personen",
+        "group": "Gruppe",
+        "responsibility": "Ämter"
+      },
+      "hiddenCount": "{count} ausgeblendet",
+      "showAll": "Alle wieder zeigen",
+      "look": {
+        "title": "Aussehen"
+      },
+      "more": {
+        "title": "Mehr"
+      },
+      "listName": {
+        "label": "Listenname",
+        "helper": "Steht neben den Personen. Leer lassen, wenn der Titel der Sektion reicht."
+      },
+      "loading": "Die Personen werden geladen …",
+      "save": {
+        "running": "Die Personen werden gespeichert …",
+        "failed": "Speichern hat nicht geklappt. Deine Änderungen sind noch da.",
+        "trial": "Testansicht: es wurde nichts gespeichert."
+      }
     }
   },
   "rag": {

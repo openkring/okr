@@ -1497,6 +1497,58 @@
         "right": "To the right",
         "overlay": "On the photo"
       }
+    },
+    "editor": {
+      "title": {
+        "new": "New people section",
+        "edit": "Edit people"
+      },
+      "empty": "Nobody chosen yet",
+      "up": "Move forward",
+      "down": "Move back",
+      "hide": "Hide",
+      "show": "Show again",
+      "remove": "Remove",
+      "add": "Add a person",
+      "frame": "Actions for {name}",
+      "person": {
+        "title": "Person",
+        "back": "Back to the section",
+        "function": "The function comes from the role or the membership. You change it there.",
+        "hidden": "Hidden: this person is not shown in the section."
+      },
+      "from": {
+        "persons": "Chosen by hand",
+        "group": "Comes from the group {name}",
+        "responsibility": "Comes from the role {name}"
+      },
+      "who": {
+        "title": "Who is shown",
+        "label": "Where the people come from"
+      },
+      "source": {
+        "persons": "People",
+        "group": "Group",
+        "responsibility": "Roles"
+      },
+      "hiddenCount": "{count} hidden",
+      "showAll": "Show all again",
+      "look": {
+        "title": "Look"
+      },
+      "more": {
+        "title": "More"
+      },
+      "listName": {
+        "label": "List name",
+        "helper": "Shown beside the people. Leave it empty when the section title is enough."
+      },
+      "loading": "Loading the people …",
+      "save": {
+        "running": "Saving the people …",
+        "failed": "Saving did not work. Your changes are still here.",
+        "trial": "Trial view: nothing was saved."
+      }
     }
   },
   "rag": {

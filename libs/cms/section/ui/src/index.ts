@@ -53,6 +53,8 @@ export * from './lib/article-panel';
 export * from './lib/button-panel';
 export * from './lib/hero-panel';
 export * from './lib/map-panel';
+// the side panel of the people block editor (spec 1.181); only the lazily loaded editor uses it
+export * from './lib/people-panel';
 export * from './lib/article-block-library';
 export * from './lib/article-image-pick.modal';
 export * from './lib/table-view';

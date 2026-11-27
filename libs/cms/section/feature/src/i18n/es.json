@@ -1497,6 +1497,58 @@
         "right": "A la derecha",
         "overlay": "Sobre la foto"
       }
+    },
+    "editor": {
+      "title": {
+        "new": "Nueva sección de personas",
+        "edit": "Editar personas"
+      },
+      "empty": "Todavía no has elegido a nadie",
+      "up": "Mover adelante",
+      "down": "Mover atrás",
+      "hide": "Ocultar",
+      "show": "Volver a mostrar",
+      "remove": "Quitar",
+      "add": "Añadir una persona",
+      "frame": "Acciones para {name}",
+      "person": {
+        "title": "Persona",
+        "back": "Volver a la sección",
+        "function": "La función viene del cargo o de la afiliación. La cambias allí.",
+        "hidden": "Oculta: esta persona no aparece en la sección."
+      },
+      "from": {
+        "persons": "Elegida a mano",
+        "group": "Viene del grupo {name}",
+        "responsibility": "Viene del cargo {name}"
+      },
+      "who": {
+        "title": "A quién se muestra",
+        "label": "De dónde vienen las personas"
+      },
+      "source": {
+        "persons": "Personas",
+        "group": "Grupo",
+        "responsibility": "Cargos"
+      },
+      "hiddenCount": "{count} oculta(s)",
+      "showAll": "Volver a mostrar a todas",
+      "look": {
+        "title": "Aspecto"
+      },
+      "more": {
+        "title": "Más"
+      },
+      "listName": {
+        "label": "Nombre de la lista",
+        "helper": "Aparece junto a las personas. Déjalo vacío si basta con el título de la sección."
+      },
+      "loading": "Cargando las personas …",
+      "save": {
+        "running": "Guardando las personas …",
+        "failed": "No se ha podido guardar. Tus cambios siguen aquí.",
+        "trial": "Vista de prueba: no se ha guardado nada."
+      }
     }
   },
   "rag": {
