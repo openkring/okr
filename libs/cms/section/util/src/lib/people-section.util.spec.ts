@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import { AVATAR_CONFIG_SHAPE, AvatarConfig, AvatarInfo, NameDisplay } from '@okr/shared-models';
+import { AVATAR_CONFIG_SHAPE, AvatarConfig, AvatarInfo, NameDisplay, PeopleLook, resolvePeopleLook } from '@okr/shared-models';
 
 import {
-  getPeopleAltText, getPeopleBgColor, getPeopleImgixParams, getPeopleExcludedKeys, getPeopleImgRadius, getPeopleResponsibilityIds, getPeopleResponsibilityParentKey, getResponsibilityKeysUnderParent, mergeResponsibilityKeys, normalizeAvatarConfig, splitIntoRows, toHexColor
+  getPeopleAltText, getPeopleBgColor, getPeopleImgixParams, getPeopleResponsibilityIds, getPeopleResponsibilityParentKey, getResponsibilityKeysUnderParent, mergeResponsibilityKeys, normalizeAvatarConfig, splitIntoRows, toHexColor
 } from './people-section.util';
 
 const config = (patch: Partial<AvatarConfig> = {}): AvatarConfig => ({ ...AVATAR_CONFIG_SHAPE, ...patch });
@@ -59,63 +59,54 @@ describe('getPeopleAltText', () => {
   });
 });
 
-describe('getPeopleImgRadius', () => {
-  it('reads a bare number as px', () => {
-    expect(getPeopleImgRadius('8')).toBe('8px');
-  });
-  it('keeps px and percent values', () => {
-    expect(getPeopleImgRadius('12px')).toBe('12px');
-    expect(getPeopleImgRadius('50%')).toBe('50%');
-  });
-  it('falls back to the default for garbage', () => {
-    expect(getPeopleImgRadius('round')).toBe(AVATAR_CONFIG_SHAPE.imgRadius);
-    expect(getPeopleImgRadius(undefined)).toBe(AVATAR_CONFIG_SHAPE.imgRadius);
+const look = (patch: Partial<PeopleLook> = {}): PeopleLook => ({ ...resolvePeopleLook(undefined), ...patch });
+
+describe('resolvePeopleLook over normalizeAvatarConfig', () => {
+  it('still reads the old width: normalizeAvatarConfig injects no new field', () => {
+    expect(resolvePeopleLook(normalizeAvatarConfig({ imgWidth: 300 } as Partial<AvatarConfig>)).size).toBe('L');
   });
 });
 
 describe('getPeopleBgColor', () => {
-  it('is undefined for the original photo and the plain cut-out', () => {
-    expect(getPeopleBgColor(config({ background: 'original' }), 0, '#112233')).toBeUndefined();
-    expect(getPeopleBgColor(config({ background: 'removed' }), 0, '#112233')).toBeUndefined();
+  it('is undefined for the original fill', () => {
+    expect(getPeopleBgColor(look({ fill: 'original' }), 0, '#112233')).toBeUndefined();
   });
-  it('uses the org colour', () => {
-    expect(getPeopleBgColor(config({ background: 'orgColor' }), 3, '#112233')).toBe('#112233');
+  it('primary always uses the first colour', () => {
+    expect([0, 1, 5].map(i => getPeopleBgColor(look({ fill: 'primary' }), i, ['#111111', '#222222']))).toEqual(['#111111', '#111111', '#111111']);
+    expect(getPeopleBgColor(look({ fill: 'primary' }), 3, '#112233')).toBe('#112233');
   });
-  it('alternates primary and secondary org colour', () => {
-    const c = config({ background: 'orgColor', bgOrgColor: 'alternating' });
-    expect([0, 1, 2].map(i => getPeopleBgColor(c, i, ['#111111', '#222222']))).toEqual(['#111111', '#222222', '#111111']);
+  it('alternating cycles the list', () => {
+    const l = look({ fill: 'alternating' });
+    expect([0, 1, 2].map(i => getPeopleBgColor(l, i, ['#111111', '#222222']))).toEqual(['#111111', '#222222', '#111111']);
   });
-  it('cycles the own colours over the persons and skips invalid ones', () => {
-    const c = config({ background: 'colors', bgColors: ['#ff0000', 'nope', '#00ff00'] });
-    expect([0, 1, 2].map(i => getPeopleBgColor(c, i))).toEqual(['#ff0000', '#00ff00', '#ff0000']);
+  it('is undefined without a valid colour', () => {
+    expect(getPeopleBgColor(look({ fill: 'primary' }), 0, 'nope')).toBeUndefined();
+    expect(getPeopleBgColor(look({ fill: 'primary' }), 0)).toBeUndefined();
   });
 });
 
 describe('getPeopleImgixParams', () => {
-  it('crops on faces by default', () => {
-    expect(getPeopleImgixParams(config({ imgWidth: 100, imgHeight: 80 })))
-      .toBe('w=100&h=80&dpr=2&auto=format,compress&fit=crop&crop=faces');
+  it('draws a square of the size at 2x and crops on faces', () => {
+    expect(getPeopleImgixParams(look({ size: 'S', fill: 'original' }))).toBe('w=120&h=120&dpr=2&auto=format,compress&fit=crop&crop=faces');
+    expect(getPeopleImgixParams(look({ size: 'L', fill: 'original' }))).toContain('w=300&h=300');
   });
-  it('uses facearea with a facepad', () => {
-    expect(getPeopleImgixParams(config({ facePad: 1.5 }))).toContain('fit=facearea&facepad=1.5');
-  });
-  it('adds background removal and the fill colour', () => {
-    const params = getPeopleImgixParams(config({ background: 'colors' }), '#a1b2c3');
+  it('removes the background for a filled look, with the fill colour', () => {
+    const params = getPeopleImgixParams(look({ size: 'M', fill: 'primary' }), '#a1b2c3');
     expect(params).not.toContain('sat=-100');
     expect(params).toContain('bg-remove=true');
     expect(params).toContain('bg=A1B2C3');
   });
   it('greys only the person on a cut-out: no imgix fill, so the colour stays', () => {
-    const params = getPeopleImgixParams(config({ grayscale: true, background: 'colors' }), '#a1b2c3');
-    expect(params).toContain('sat=-100');
-    expect(params).toContain('bg-remove=true');
-    expect(params).not.toContain('bg=');
+    expect(getPeopleImgixParams(look({ size: 'M', fill: 'primary', grayscale: true }), '#a1b2c3'))
+      .toBe('w=200&h=200&dpr=2&auto=format,compress&fit=crop&crop=faces&sat=-100&bg-remove=true');
   });
   it('greys the whole original photo', () => {
-    expect(getPeopleImgixParams(config({ grayscale: true, background: 'original' }))).toContain('sat=-100');
+    const params = getPeopleImgixParams(look({ fill: 'original', grayscale: true }));
+    expect(params).toContain('sat=-100');
+    expect(params).not.toContain('bg-remove');
   });
   it('never removes the background of an original photo', () => {
-    expect(getPeopleImgixParams(config({ background: 'original' }), '#a1b2c3')).not.toContain('bg');
+    expect(getPeopleImgixParams(look({ fill: 'original' }), '#a1b2c3')).not.toContain('bg');
   });
 });
 
@@ -202,17 +193,3 @@ describe('mergeResponsibilityKeys', () => {
   });
 });
 
-describe('getPeopleExcludedKeys', () => {
-  const avatar = (key: string): AvatarInfo => ({ key, name1: '', name2: '', label: '', modelType: 'person', type: '', subType: '' });
-
-  it('reads the trimmed, deduped keys of a group section', () => {
-    expect(getPeopleExcludedKeys({ type: 'group', excludedPersons: [avatar(' p1 '), avatar('p2'), avatar('p1'), avatar('')] })).toEqual(['p1', 'p2']);
-  });
-
-  it('hides nobody for another type or without a list', () => {
-    expect(getPeopleExcludedKeys({ type: 'responsibility', excludedPersons: [avatar('p1')] })).toEqual([]);
-    expect(getPeopleExcludedKeys({ excludedPersons: [avatar('p1')] })).toEqual([]);
-    expect(getPeopleExcludedKeys({ type: 'group' })).toEqual([]);
-    expect(getPeopleExcludedKeys(undefined)).toEqual([]);
-  });
-});

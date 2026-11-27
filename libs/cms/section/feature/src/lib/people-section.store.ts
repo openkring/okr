@@ -3,7 +3,7 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { combineLatest, map, of } from 'rxjs';
 
-import { AvatarConfig, AvatarInfo, PeopleSection, ResponsibilityModel } from '@okr/shared-models';
+import { applyPeopleOverrides, AvatarConfig, AvatarInfo, PeopleSection, peopleHiddenKeys, ResponsibilityModel } from '@okr/shared-models';
 import { AppStore } from '@okr/shared-feature';
 import { MembershipService } from '@okr/relationship-membership-data-access';
 import { ResponsibilityService } from '@okr/relationship-responsibility-data-access';
@@ -14,7 +14,7 @@ import { I18nService } from '@okr/shared-i18n';
 
 import { DateFormat, getTodayStr } from '@okr/shared-util-core';
 import {
-  getPeopleExcludedKeys, getPeopleResponsibilityIds, getPeopleResponsibilityParentKey, getResponsibilityKeysUnderParent, mergeResponsibilityKeys,
+  getPeopleResponsibilityIds, getPeopleResponsibilityParentKey, getResponsibilityKeysUnderParent, mergeResponsibilityKeys,
   normalizeAvatarConfig, SECTION_I18N_KEYS, SectionI18n,
 } from '@okr/cms-section-util';
 
@@ -80,15 +80,14 @@ export const PeopleSectionStore = signalStore(
   })),
   withComputed((state) => ({
     avatarConfig: computed<AvatarConfig>(() => normalizeAvatarConfig(state.section()?.properties.avatar)),
-    persons: computed<AvatarInfo[]>(() => {
+    /** the persons of the source, before any override */
+    sourcePersons: computed<AvatarInfo[]>(() => {
       const type = state.section()?.properties.type ?? 'persons';
       switch (type) {
         case 'group': {
           // in the group's manual order (sortOrder, set by dragging the group's member list)
           const memberships = sortMembersBySortOrder(state.groupMembersResource.value() ?? []);
-          // members the section hides (excludedPersons) are left out here, so emails / images follow
-          const excluded = new Set(getPeopleExcludedKeys(state.section()?.properties));
-          return state.membershipService.getMemberAvatars(memberships).filter(p => !excluded.has(p.key));
+          return state.membershipService.getMemberAvatars(memberships);
         }
         case 'responsibility': {
           // responsible and delegate of each responsibility; a person holding several is shown once
@@ -104,7 +103,19 @@ export const PeopleSectionStore = signalStore(
           return state.section()?.properties.persons ?? [];
       }
     }),
+    hiddenKeys: computed<string[]>(() => peopleHiddenKeys(state.section()?.properties)),
     isLoading: computed(() => state.groupMembersResource.isLoading() || state.responsibilitiesResource.isLoading()),
+  })),
+  withComputed((state) => ({
+    /** every person of the source in the wanted order, the hidden ones included (for the editor) */
+    allPersons: computed<AvatarInfo[]>(() => applyPeopleOverrides(state.sourcePersons(), state.section()?.properties, { keepHidden: true })),
+  })),
+  withComputed((state) => ({
+    /** the persons the section shows: hidden removed, so emails / images follow */
+    persons: computed<AvatarInfo[]>(() => {
+      const hidden = new Set(state.hiddenKeys());
+      return state.allPersons().filter(p => !hidden.has(p.key));
+    }),
   })),
   withComputed((state) => ({
     /**

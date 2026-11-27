@@ -2,13 +2,12 @@ import { Component, computed, DOCUMENT, inject, input, output, PLATFORM_ID, Sign
 import { isPlatformBrowser, NgTemplateOutlet } from '@angular/common';
 import { IonCard, IonCol, IonGrid, IonRow } from '@ionic/angular';
 
-import { ColorsIonic, getCategoryStringField } from '@okr/shared-categories';
-import { AVATAR_CONFIG_SHAPE, AvatarConfig, AvatarInfo, NameDisplay } from '@okr/shared-models';
+import { AVATAR_CONFIG_SHAPE, AvatarConfig, AvatarInfo, NameDisplay, PEOPLE_SHAPE_RADIUS, PEOPLE_SIZE_PX, resolvePeopleLook } from '@okr/shared-models';
 import { ImgDirective } from '@okr/shared-ui';
 import { getFullName } from '@okr/shared-util-core';
 
 import { AvatarService } from '@okr/avatar-data-access';
-import { getPeopleAltText, getPeopleBgColor, getPeopleImgixParams, getPeopleImgRadius, splitIntoRows, toHexColor } from '@okr/cms-section-util';
+import { getPeopleAltText, getPeopleBgColor, getPeopleImgixParams, splitIntoRows, toHexColor } from '@okr/cms-section-util';
 
 interface PersonsWidgetI18n {
   people_empty:  Signal<string>
@@ -58,16 +57,13 @@ interface PersonView {
     .slide { flex: 0 0 calc((100% - (var(--per-row) - 1) * 8px) / var(--per-row)); min-width: min-content; scroll-snap-align: start; }
 
     .person { display: flex; flex-direction: column; align-items: center; cursor: pointer; }
-    .person.pos-above { flex-direction: column-reverse; }
-    .person.pos-left { flex-direction: row-reverse; }
     .person.pos-right { flex-direction: row; }
     .img-wrap { position: relative; overflow: hidden; flex: none; max-width: 100%; }
     .img-wrap img { display: block; width: 100%; height: 100%; object-fit: cover; }
 
     .info { padding: 6px 10px; text-align: center; background: var(--info-bg); color: var(--info-fg); }
-    .pos-left .info, .pos-right .info { text-align: start; align-self: stretch; display: flex; flex-direction: column; justify-content: center; }
+    .pos-right .info { text-align: start; align-self: stretch; display: flex; flex-direction: column; justify-content: center; }
     .info.overlay { position: absolute; left: 0; right: 0; opacity: 0.88; }
-    .info.overlayTop { top: 0; }
     .info.overlayBottom { bottom: 0; }
     .name { font-weight: 600; }
     .function { font-size: 0.9em; }
@@ -125,12 +121,12 @@ interface PersonView {
     </ng-template>
 
     <ng-template #bodyTpl let-item>
-      <div class="person" [class]="'person pos-' + config().infoPosition" [style.--info-bg]="infoBg()" [style.--info-fg]="infoFg()" (click)="onPersonClick(item)">
-        <div class="img-wrap" [style.width.px]="config().imgWidth" [style.height.px]="config().imgHeight"
+      <div class="person" [class]="'person pos-' + posClass()" [style.--info-bg]="infoBg" [style.--info-fg]="infoFg" (click)="onPersonClick(item)">
+        <div class="img-wrap" [style.width.px]="sizePx()" [style.height.px]="sizePx()"
           [style.border-radius]="radius()" [style.background-color]="item.bgColor">
-          <img okrImg [src]="item.url" [alt]="item.alt" [width]="config().imgWidth" [height]="config().imgHeight" loading="lazy" />
+          <img okrImg [src]="item.url" [alt]="item.alt" [width]="sizePx()" [height]="sizePx()" loading="lazy" />
           @if(isOverlay() && hasInfo(item)) {
-            <div class="info overlay" [class]="'info overlay ' + config().infoPosition">
+            <div class="info overlay" class="info overlay overlayBottom">
               <ng-container [ngTemplateOutlet]="infoTpl" [ngTemplateOutletContext]="{ $implicit: item }" />
             </div>
           }
@@ -178,37 +174,42 @@ export class PersonsWidget {
 
   protected readonly config = this.avatarConfig;
   protected readonly count = computed(() => this.persons().length);
-  protected readonly radius = computed(() => getPeopleImgRadius(this.config().imgRadius));
-  protected readonly isOverlay = computed(() => this.config().infoPosition.startsWith('overlay'));
-  private readonly colorName = computed(() => getCategoryStringField(ColorsIonic, this.config().color, 'name') || 'light');
-  protected readonly infoBg = computed(() => `var(--ion-color-${this.colorName()})`);
-  protected readonly infoFg = computed(() => `var(--ion-color-${this.colorName()}-contrast)`);
+  protected readonly look = computed(() => resolvePeopleLook(this.config()));
+  protected readonly sizePx = computed(() => PEOPLE_SIZE_PX[this.look().size]);
+  protected readonly radius = computed(() => PEOPLE_SHAPE_RADIUS[this.look().shape]);
+  protected readonly isOverlay = computed(() => this.look().textPosition === 'overlay');
+  /** pos-below, pos-right or pos-overlayBottom */
+  protected readonly posClass = computed(() => (this.isOverlay() ? 'overlayBottom' : this.look().textPosition));
+  /** the name area is always ColorIonic.Light */
+  protected readonly infoBg = 'var(--ion-color-light)';
+  protected readonly infoFg = 'var(--ion-color-light-contrast)';
 
   /**
-   * the tenant colour for background = orgColor, read from the Ionic theme (#rrggbb for imgix);
-   * for 'alternating' the pair [primary, secondary], cycled over the persons
+   * the tenant colours for a filled look, read from the Ionic theme (#rrggbb for imgix):
+   * 'primary' → [primary], 'alternating' → [primary, secondary], cycled over the persons
    */
-  private readonly orgColorHex = computed<string | string[] | undefined>(() => {
-    if (!this.isBrowser || this.config().background !== 'orgColor') return undefined;
+  private readonly orgColorHex = computed<string[] | undefined>(() => {
+    const fill = this.look().fill;
+    if (!this.isBrowser || fill === 'original') return undefined;
     const style = getComputedStyle(this.document.documentElement);
     const hex = (name: string) => toHexColor(style.getPropertyValue(`--ion-color-${name}`)) ?? '';
-    const orgColor = this.config().bgOrgColor;
-    return orgColor === 'alternating' ? [hex('primary'), hex('secondary')] : hex(orgColor);
+    return fill === 'alternating' ? [hex('primary'), hex('secondary')] : [hex('primary')];
   });
 
   protected readonly items = computed<PersonView[]>(() => {
     const config = this.config();
+    const look = this.look();
     const info = config.info ?? [];
     const emails = this.emails();
     const functions = this.functions();
     const imageKeys = this.imageKeys();
     const orgColorHex = this.orgColorHex();
     return this.persons().map((person, index) => {
-      const bgColor = getPeopleBgColor(config, index, orgColorHex);
+      const bgColor = getPeopleBgColor(look, index, orgColorHex);
       const key = imageKeys[person.key] ?? `${person.modelType}.${person.key}`;
       return {
         person,
-        url: this.avatarService.getAvatarUrlWithParams(key, person.modelType, getPeopleImgixParams(config, bgColor)),
+        url: this.avatarService.getAvatarUrlWithParams(key, person.modelType, getPeopleImgixParams(look, bgColor)),
         alt: getPeopleAltText(config.altText, getFullName(person.name1, person.name2, NameDisplay.FirstLast)),
         name: getFullName(person.name1, person.name2, config.nameDisplay),
         function: info.includes('function') ? (functions[person.key] ?? person.label ?? '') : '',

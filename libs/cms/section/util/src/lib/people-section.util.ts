@@ -1,4 +1,4 @@
-import { AVATAR_CONFIG_SHAPE, AvatarConfig, NameDisplay, PEOPLE_NAME_PLACEHOLDER, PeopleConfig } from '@okr/shared-models';
+import { AVATAR_CONFIG_SHAPE, AvatarConfig, NameDisplay, PEOPLE_NAME_PLACEHOLDER, PEOPLE_SIZE_PX, PeopleConfig, PeopleLook } from '@okr/shared-models';
 
 /** A colour accepted for a portrait background: #rrggbb. */
 export const HEX_COLOR_REGEX = /^#[0-9a-fA-F]{6}$/;
@@ -31,13 +31,6 @@ export function getPeopleAltText(altText: string | undefined, fullName: string):
   return text.split(PEOPLE_NAME_PLACEHOLDER).join(fullName).trim();
 }
 
-/** A border radius as CSS: a bare number is read as px. */
-export function getPeopleImgRadius(radius: string | undefined): string {
-  const value = (radius ?? '').trim();
-  if (!IMG_RADIUS_REGEX.test(value)) return AVATAR_CONFIG_SHAPE.imgRadius;
-  return /^\d+$/.test(value) ? `${value}px` : value;
-}
-
 /**
  * The responsibilities of a people section, in the order they were chosen. Sections saved before
  * 2026-11-13 carry a single `responsibilityId`; it is read as a list of one.
@@ -53,16 +46,6 @@ export function getPeopleResponsibilityIds(config?: Partial<PeopleConfig>): stri
 export function getPeopleResponsibilityParentKey(config?: Partial<PeopleConfig>): string {
   const key = config?.responsibilityParentKey?.trim() ?? '';
   return key && !key.includes('/') ? key : '';
-}
-
-/**
- * The person keys a group people section hides (`excludedPersons`, type 'group' only): trimmed, deduped,
- * empty keys dropped. Every other type hides nobody, so a stale list left behind by a type change is inert.
- */
-export function getPeopleExcludedKeys(config?: Partial<PeopleConfig>): string[] {
-  if ((config?.type ?? 'persons') !== 'group') return [];
-  const keys = (config?.excludedPersons ?? []).map(p => (typeof p?.key === 'string' ? p.key.trim() : '')).filter(k => !!k);
-  return [...new Set(keys)];
 }
 
 /** The fields of a responsibility that decide whether and where it is listed under its parent. */
@@ -105,48 +88,30 @@ export function mergeResponsibilityKeys(chosen: string[], underParent: string[])
 }
 
 /**
- * The background colour of the person at `index`, as #rrggbb, or undefined when the
- * background is not filled. `orgColorHex` is the tenant colour resolved by the caller;
- * for bgOrgColor = alternating it is the list [primary, secondary], cycled over the persons.
+ * The background colour of the person at `index`, as #rrggbb, or undefined when the portrait keeps its own
+ * background. `orgColorHex` is resolved by the caller: 'primary' uses the first valid colour, 'alternating'
+ * cycles the list over the persons.
  */
-export function getPeopleBgColor(config: AvatarConfig, index: number, orgColorHex?: string | string[]): string | undefined {
-  switch (config.background) {
-    case 'orgColor': {
-      const colors = (Array.isArray(orgColorHex) ? orgColorHex : [orgColorHex ?? '']).filter(c => HEX_COLOR_REGEX.test(c));
-      return colors.length > 0 ? colors[index % colors.length] : undefined;
-    }
-    case 'colors': {
-      const colors = (config.bgColors ?? []).filter(c => HEX_COLOR_REGEX.test(c));
-      return colors.length > 0 ? colors[index % colors.length] : undefined;
-    }
-    default:
-      return undefined;
-  }
+export function getPeopleBgColor(look: PeopleLook, index: number, orgColorHex?: string | string[]): string | undefined {
+  if (look.fill === 'original') return undefined;
+  const colors = (Array.isArray(orgColorHex) ? orgColorHex : [orgColorHex ?? '']).filter(c => HEX_COLOR_REGEX.test(c));
+  if (colors.length === 0) return undefined;
+  return look.fill === 'primary' ? colors[0] : colors[index % colors.length];
 }
 
 /**
- * The imgix query (without '?') for one portrait of a people section:
- * size at 2x density, face crop (facearea + facepad, or crop=faces when facePad is 0),
- * optional black and white, optional background removal with a fill colour.
+ * The imgix query (without '?') for one portrait of a people section: a square of the look's size at 2x
+ * density, face crop, optional black and white, optional background removal (any fill but 'original').
  * Black and white with a removed background greys only the person: imgix would desaturate its own
  * `bg` fill too, so the fill is left out and the caller paints `bgColor` behind the transparent cut-out.
  */
-export function getPeopleImgixParams(config: AvatarConfig, bgColor?: string): string {
-  const params = [
-    `w=${Math.round(config.imgWidth)}`,
-    `h=${Math.round(config.imgHeight)}`,
-    'dpr=2',
-    'auto=format,compress',
-  ];
-  if (config.facePad > 0) {
-    params.push('fit=facearea', `facepad=${config.facePad}`);
-  } else {
-    params.push('fit=crop', 'crop=faces');
-  }
-  if (config.grayscale) params.push('sat=-100');
-  if (config.background !== 'original') {
+export function getPeopleImgixParams(look: PeopleLook, bgColor?: string): string {
+  const px = PEOPLE_SIZE_PX[look.size];
+  const params = [`w=${px}`, `h=${px}`, 'dpr=2', 'auto=format,compress', 'fit=crop', 'crop=faces'];
+  if (look.grayscale) params.push('sat=-100');
+  if (look.fill !== 'original') {
     params.push('bg-remove=true');
-    if (!config.grayscale && bgColor && HEX_COLOR_REGEX.test(bgColor)) params.push(`bg=${bgColor.slice(1).toUpperCase()}`);
+    if (!look.grayscale && bgColor && HEX_COLOR_REGEX.test(bgColor)) params.push(`bg=${bgColor.slice(1).toUpperCase()}`);
   }
   return params.join('&');
 }
