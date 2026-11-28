@@ -182,6 +182,9 @@ async function postBuild(app) {
   // Bundle budget: the dashboard's static JS closure may not grow >5 % over perf-budget.json.
   try { await sh(app, `node scripts/perf-budget.mjs ${app}`, log); }
   catch (e) { throw new Error(`Bundle budget exceeded for ${app} (${e.message}). Run  node scripts/bundle-closure.mjs dist/apps/${app}/browser <lib>  to find the new static edge, or  node scripts/perf-budget.mjs ${app} --write  if the growth is intended.`); }
+  // Lazy imports: an import() of a barrel that is eager anyway loads nothing lazily. Warn-only until the 22 known
+  // cases are fixed (2026-11-28); the findings land in this step's log. Needs the source maps, so before the Sentry step.
+  await sh(app, `node scripts/check-lazy-imports.mjs ${app} --warn`, log);
   // OSS attribution assembles the 3rdpartylicenses.txt the build just emitted — after the build.
   await sh(app, `node scripts/gen-attribution.mjs ${app}`, log);
   // Service-worker stamp: makes ngsw-worker.js differ per release so installed apps pick up the

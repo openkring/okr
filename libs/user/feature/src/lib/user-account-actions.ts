@@ -3,6 +3,7 @@ import { ActionSheetController, ActionSheetOptions, AlertController, ModalContro
 
 import { firstValueFrom } from 'rxjs';
 
+import { loadPasskeysModal } from '@okr/auth-feature';
 import { FirebaseUserModel, PersonModel, PersonModelName } from '@okr/shared-models';
 import { openReport } from '@okr/shared-ui';
 import { confirm, copyToClipboardWithConfirmation, createActionSheetButton, createActionSheetDivider, createActionSheetOptions, error, notify, okrPrompt, showToast } from '@okr/shared-util-angular';
@@ -314,9 +315,9 @@ export class UserAccountActions {
   private async showPasskeys(row: UserAccountRow): Promise<void> {
     if (!row.uid) return;
     // lazy: the modal injects stores that would otherwise land in the list's chunk
-    const { PasskeysModal } = await import('@okr/auth-feature');
+    // through the loader: import('@okr/auth-feature') would load nothing lazily, the barrel is eager (guards)
     const modal = await this.modalController.create({
-      component: PasskeysModal,
+      component: await loadPasskeysModal(),
       componentProps: { uid: row.uid, name: row.name || row.loginEmail || row.uid },
     });
     await modal.present();

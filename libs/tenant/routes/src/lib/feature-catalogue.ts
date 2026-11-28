@@ -1,6 +1,7 @@
 import { inject } from '@angular/core';
 import type { Route } from '@angular/router';
-import { isAdminGuard, isAuthenticatedGuard, isContentAdminGuard, isContractReaderGuard, isMemberAdminGuard, isPrivilegedGuard, isResourceStaffGuard, isTreasurerGuard, isTripAdminGuard } from '@okr/auth-feature';
+import { isAdminGuard, isAuthenticatedGuard, isContentAdminGuard, isContractReaderGuard, isMemberAdminGuard, isPrivilegedGuard, isResourceStaffGuard, isTreasurerGuard, isTripAdminGuard, loadConfirmPasswordResetPage, loadLoginPage, loadLogoutPage, loadPasswordResetPage } from '@okr/auth-feature';
+import { loadMenuList } from '@okr/cms-menu-feature';
 import { AppStore } from '@okr/shared-feature';
 import { memberFeesRedirectGuard } from './member-fees-redirect';
 import { userEditRedirect } from './user-edit-redirect';
@@ -222,10 +223,10 @@ const auth: BlockRoutes = {
     path: 'auth',
     children: [
       { path: '', redirectTo: 'login', pathMatch: 'full' },
-      { path: 'login', loadComponent: () => import('@okr/auth-feature').then(m => m.LoginPage) },
-      { path: 'logout', canActivate: [isAuthenticatedGuard], loadComponent: () => import('@okr/auth-feature').then(m => m.LogoutPage) },
-      { path: 'pwdreset', loadComponent: () => import('@okr/auth-feature').then(m => m.PasswordResetPage) },
-      { path: 'confirm', loadComponent: () => import('@okr/auth-feature').then(m => m.ConfirmPasswordResetPage) },
+      { path: 'login', loadComponent: loadLoginPage },
+      { path: 'logout', canActivate: [isAuthenticatedGuard], loadComponent: loadLogoutPage },
+      { path: 'pwdreset', loadComponent: loadPasswordResetPage },
+      { path: 'confirm', loadComponent: loadConfirmPasswordResetPage },
     ],
   }],
 };
@@ -385,7 +386,7 @@ const cms: BlockRoutes = {
         // ACCESS REDUCED by owner ruling R-6, 2026-08-05: matches the `menu-all` menu doc's
         // `roleNeeded: contentAdmin`, and a `privileged`-only user loses access to the menu
         // editor. See the `page` fragment above for the full rationale.
-        { path: 'all', canActivate: [isContentAdminGuard()], loadComponent: () => import('@okr/cms-menu-feature').then(m => m.MenuList) },
+        { path: 'all', canActivate: [isContentAdminGuard()], loadComponent: loadMenuList },
       ],
     },
     {

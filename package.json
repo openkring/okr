@@ -26,6 +26,7 @@
     "catalogue:doc": "node scripts/check-feature-catalogue.mjs --write-doc",
     "check-forms": "node scripts/check-forms.mjs",
     "check-article-readers": "node scripts/check-article-readers.mjs",
+    "check-lazy-imports": "node scripts/check-lazy-imports.mjs",
     "check-ledger-reads": "node scripts/check-ledger-reads.mjs",
     "check-context-menus": "node scripts/check-context-menus.mjs",
     "check-firebase-app": "node scripts/check-firebase-app.mjs",

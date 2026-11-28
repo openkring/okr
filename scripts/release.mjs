@@ -109,6 +109,8 @@ async function releaseApp(app, kindArg = null) {
       console.log(`\n[3a/7] Bundle budget for ${app}…`);
       try { run('node', ['scripts/perf-budget.mjs', app]); }
       catch { throw new Error(`Bundle budget exceeded for ${app}. Run  node scripts/bundle-closure.mjs dist/apps/${app}/browser <lib>  to find the new static edge, or  node scripts/perf-budget.mjs ${app} --write  if the growth is intended.`); }
+      // warn-only until the known cases are fixed (2026-11-28): an import() of an eager barrel loads nothing lazily
+      run('node', ['scripts/check-lazy-imports.mjs', app, '--warn']);
     }
 
     // 3b. OSS attribution — must run AFTER the build, because it assembles the
