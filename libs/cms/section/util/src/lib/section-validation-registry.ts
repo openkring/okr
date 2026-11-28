@@ -12,7 +12,6 @@ import { iframeSectionValidations } from './iframe-section.validations';
 import { mapSectionValidations } from './map-section.validations';
 import { journalTrackSectionValidations } from './journal-track-section.validations';
 import { peopleSectionValidations } from './people-section.validations';
-import { sliderSectionValidations } from './slider-section.validations';
 import { tableSectionValidations } from './table-section.validations';
 import { trackerSectionValidations } from './tracker-section.validations';
 import { videoSectionValidations } from './video-section.validations';
@@ -56,7 +55,6 @@ export const SECTION_VALIDATION_SUITES: Partial<Record<SectionType, SectionSuite
   iframe: iframeSectionValidations as SectionSuite,
   map: mapSectionValidations as SectionSuite,
   people: peopleSectionValidations as SectionSuite,
-  slider: sliderSectionValidations as SectionSuite,
   table: tableSectionValidations as SectionSuite,
   tracker: trackerSectionValidations as SectionSuite,
   track: journalTrackSectionValidations as SectionSuite,

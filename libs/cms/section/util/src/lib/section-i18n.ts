@@ -15,8 +15,6 @@ export const SECTION_I18N_KEYS = {
   select_label:               PFX + 'select.label',
   button_action_intro:        PFX + 'buttonAction.intro',
   chat_type_description:      PFX + 'chat.type.description',
-  slider_next_image:          PFX + 'slider.nextImage',
-  slider_prev_image:          PFX + 'slider.prevImage',
   select_section:             PFX + 'select.section',
   select_group:               PFX + 'select.group',
   select_responsibility:      PFX + 'select.responsibility',

@@ -96,10 +96,6 @@ export function getInlineErrorFields(type: SectionType, showAdvanced = false): s
     case 'people':
       fields.push(PEOPLE_PREFIX);
       break;
-    case 'slider':
-      fields.push(IMAGES_PREFIX);
-      if (showAdvanced) fields.push(...IMAGE_STYLE_FIELDS);
-      break;
     case 'tracker':
       fields.push('autostart', 'intervalInSeconds', 'enableHighAccuracy', 'maximumAge', 'exportFormat');
       break;

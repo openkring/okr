@@ -1,7 +1,7 @@
 import { Component, computed, effect, inject, input, model, output, signal } from '@angular/core';
 import { form } from '@angular/forms/signals';
 
-import { AccordionConfig, AccordionSection, ColorIonic, ConnectionsConfig, ConnectionsSection, DeparturesConfig, DeparturesSection, EnergyConfig, EnergySection, CounterConfig, CounterSection, ContactConfig, ContactSection, FooterConfig, FooterSection, FORM_SECTION_CONFIG_SHAPE, FormSection, FormSectionConfig, AlbumConfig, AlbumSection, SectionFeedback, ArticleSection, ArticleSlideshow, AvatarInfo, ButtonActionConfig, ButtonSection, ButtonStyle, CalendarSection, CategoryListModel, ChartSection, ChatConfig, ChatSection, EDITOR_CONFIG_SHAPE, MemberAgeSection, MemberCatConfig, MemberCatSection, RagConfig, RagSection, EditorConfig, CourseConfig, CourseSection, EventsConfig, EventsSection, HeroConfig, HeroSection, IconConfig, IframeConfig, IframeSection, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, ImageConfig, ImageStyle, InvitationsConfig, InvitationsSection, JournalTrackConfig, JournalTrackSection, MapConfig, MapSection, PeopleConfig, peopleHiddenKeys, PeopleSection, ResponsibilityConfig, ResponsibilitySection, RoleName, SankeyConfig, SankeySection, SpiderConfig, SpiderSection, TocConfig, TocSection, TestimonialConfig, TestimonialSection, TilesConfig, TilesSection, NewsConfig, NewsSection, SectionCta, TimelineConfig, TimelineSection, AdventConfig, AdventSection, SectionModel, SectionModelName, SliderSection, TableGrid, TableSection, TableStyle, TrackerConfig, TrackerSection, UserModel, VideoConfig, VideoSection, WeatherConfig, WeatherSection, articleBlocksOf } from '@okr/shared-models';
+import { AccordionConfig, AccordionSection, ColorIonic, ConnectionsConfig, ConnectionsSection, DeparturesConfig, DeparturesSection, EnergyConfig, EnergySection, CounterConfig, CounterSection, ContactConfig, ContactSection, FooterConfig, FooterSection, FORM_SECTION_CONFIG_SHAPE, FormSection, FormSectionConfig, AlbumConfig, AlbumSection, SectionFeedback, ArticleSection, ArticleSlideshow, AvatarInfo, ButtonActionConfig, ButtonSection, ButtonStyle, CalendarSection, CategoryListModel, ChartSection, ChatConfig, ChatSection, EDITOR_CONFIG_SHAPE, MemberAgeSection, MemberCatConfig, MemberCatSection, RagConfig, RagSection, EditorConfig, CourseConfig, CourseSection, EventsConfig, EventsSection, HeroConfig, HeroSection, IconConfig, IframeConfig, IframeSection, IMAGE_CONFIG_SHAPE, IMAGE_STYLE_SHAPE, ImageConfig, ImageStyle, InvitationsConfig, InvitationsSection, JournalTrackConfig, JournalTrackSection, MapConfig, MapSection, PeopleConfig, peopleHiddenKeys, PeopleSection, ResponsibilityConfig, ResponsibilitySection, RoleName, SankeyConfig, SankeySection, SpiderConfig, SpiderSection, TocConfig, TocSection, TestimonialConfig, TestimonialSection, TilesConfig, TilesSection, NewsConfig, NewsSection, SectionCta, TimelineConfig, TimelineSection, AdventConfig, AdventSection, SectionModel, SectionModelName, TableGrid, TableSection, TableStyle, TrackerConfig, TrackerSection, UserModel, VideoConfig, VideoSection, WeatherConfig, WeatherSection, articleBlocksOf } from '@okr/shared-models';
 import { Chips, ErrorNote, TextareaInput, TextareaInputI18n } from '@okr/shared-ui';
 import { coerceBoolean, debugFormModel, hasRole, resolveImageStyle } from '@okr/shared-util-core';
 import { DEFAULT_LABEL, DEFAULT_NOTES, DEFAULT_TAGS } from '@okr/shared-constants';
@@ -555,28 +555,6 @@ import { CourseOption, FormOption, FormSectionConfiguration, ResponsibilityOptio
             />
           }
         }
-        @case('slider') {
-          @if(images(); as images) {
-            <okr-images-config
-              [images]="images" (imagesChange)="onImagesChange($event)"
-              [storagePath]="storagePath()"
-              [currentUser]="currentUser()"
-              [i18n]="i18n()"
-              [readOnly]="isReadOnly()"
-              [errors]="errors()" />
-          }
-          @if(showAdvanced()) {
-            @if(imageStyle(); as imageStyle) {
-              <okr-image-style
-                [formData]="imageStyle" (formDataChange)="onImageStyleChange($event)"
-                [i18n]="i18n()"
-                [readOnly]="isReadOnly()"
-                [showAdvanced]="showAdvanced()"
-                [errors]="errors()"
-              />
-            }
-          }
-        }
         @case('table') {
           @if(tableGrid(); as tableGrid) {
             <okr-table-grid
@@ -1028,7 +1006,6 @@ export class SectionForm {
   private getImages(): ImageConfig[] {
     switch (this.formData().type) {
       case 'article': return (this.formData() as ArticleSection).properties?.images || [];
-      case 'slider': return (this.formData() as SliderSection).properties.images || [];
       default: return [];
     }
   }
@@ -1037,7 +1014,6 @@ export class SectionForm {
     switch (this.formData().type) {
       case 'article': return resolveImageStyle((this.formData() as ArticleSection).properties?.imageStyle);
       case 'hero': return (this.formData() as HeroSection).properties.imageStyle || IMAGE_STYLE_SHAPE;
-      case 'slider': return (this.formData() as SliderSection).properties.imageStyle || IMAGE_STYLE_SHAPE;
       default: return undefined;
     }
   }
@@ -1292,8 +1268,6 @@ export class SectionForm {
     const section = this.formData();
     if (section.type === 'article') {
       this.formData.set({ ...section, properties: { ...section.properties, images } } as ArticleSection);
-    } else if (section.type === 'slider') {
-      this.formData.set({ ...section, properties: { ...section.properties, images } } as SliderSection);
     }
   }
 
@@ -1336,9 +1310,6 @@ export class SectionForm {
         break;
       case 'hero':
         this.formData.set({...section, properties: { ...section.properties, imageStyle }} as HeroSection);
-        break;
-      case 'slider':
-        this.formData.set({...section, properties: { ...section.properties, imageStyle }} as SliderSection);
         break;
     }
   }

@@ -1655,11 +1655,6 @@
       "title": "Section"
     }
   },
-  "slider": {
-    "label": "Slider",
-    "nextImage": "Next image",
-    "prevImage": "Previous image"
-  },
   "table": {
     "label": "Table",
     "title": "Table configuration",

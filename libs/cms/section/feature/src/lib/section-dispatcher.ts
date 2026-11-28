@@ -16,7 +16,6 @@ import { IframeSectionComponent } from './iframe-section';
 import { MapSectionComponent } from './map-section';
 import { MissingSectionComponent } from './missing-section';
 import { PeopleSectionComponent } from './people-section';
-import { SliderSectionComponent } from './slider-section';
 import { TableSectionComponent } from './table-section';
 import { TrackerSectionComponent } from './tracker-section';
 import { VideoSectionComponent } from './video-section';
@@ -72,7 +71,7 @@ import { SectionStore } from './section.store';
     PeopleSectionComponent, ResponsibilitySectionComponent, TrackerSectionComponent, HeroSectionComponent,
     InvitationsSectionComponent, TasksSectionComponent, ActivitiesSectionComponent, MessagesSectionComponent, NoticesSectionComponent, NewsSectionComponent, OrgchartSectionComponent, RagSectionComponent, ContextDiagramSectionComponent, MemberAgeSectionComponent, MemberCatSectionComponent, SankeySectionComponent, SpiderSectionComponent, TocSectionComponent, TestimonialSectionComponent, TilesSectionComponent, TimelineSectionComponent, AdventSectionComponent,
     IonItem, IonLabel, Spinner, DeferError,
-    CalendarSectionComponent, ChartSectionComponent, SliderSectionComponent,
+    CalendarSectionComponent, ChartSectionComponent,
     TripStatsSectionComponent,
     FormSectionComponent,
     CounterSectionComponent,
@@ -169,13 +168,6 @@ import { SectionStore } from './section.store';
           }
           @case('rag') {
             <okr-rag-section [section]="section" [editMode]="editMode()" />
-          }
-          @case('slider') {
-            @defer (on idle) {
-              <okr-slider-section [section]="section" [editMode]="editMode()" />
-            } @error {
-              <okr-defer-error />
-            }
           }
           @case('table') {
             <okr-table-section [section]="section" />

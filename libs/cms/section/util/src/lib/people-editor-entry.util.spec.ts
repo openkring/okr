@@ -14,7 +14,7 @@ describe('usesPeopleEditor', () => {
     ['people, read-only, gate closed', section(), true, false, false],
     ['a new people section (no key), gate open', section({ okey: '' }), false, true, true],
     ['another type, gate open', section({ type: 'article' }), false, true, false],
-    ['another type with people-like properties', section({ type: 'slider', properties: { persons: [] } }), false, true, false],
+    ['another type with people-like properties', section({ type: 'album', properties: { persons: [] } }), false, true, false],
   ])('%s', (_name, model, readOnly, gateOpen, expected) => {
     expect(usesPeopleEditor(model, readOnly, gateOpen)).toBe(expected);
   });

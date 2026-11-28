@@ -9,9 +9,8 @@ function section(type: string, properties: unknown): SectionModel {
 const img = (url: string) => ({ url, label: url, type: 0, actionUrl: '', altText: '', overlay: '' });
 
 describe('getSectionImageSlots', () => {
-  it('returns a single multi-slot for article and slider', () => {
+  it('returns a single multi-slot for an article', () => {
     expect(getSectionImageSlots(section('article', { images: [] }))).toEqual([{ field: 'images', multi: true }]);
-    expect(getSectionImageSlots(section('slider', { images: [] }))).toEqual([{ field: 'images', multi: true }]);
   });
 
   it('returns no slot for an article with blocks: its images are in the blocks (1.173)', () => {

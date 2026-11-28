@@ -8,7 +8,7 @@ import { Geolocation, Position } from '@capacitor/geolocation';
 import { catchError, firstValueFrom, of } from 'rxjs';
 
 import { AppStore, PersonSelectModal, type PersonSelectResult, withErrorState } from '@okr/shared-feature';
-import { ArticleSection, ButtonAction, ButtonSection, CategoryItemModel, CategoryListModel, IMAGE_CONFIG_SHAPE, ImageActionType, PeopleSection, SectionModel, SectionType, WebsiteCollection, WebsiteModel, articleBlocksOf } from '@okr/shared-models';
+import { ArticleSection, ButtonAction, ButtonSection, CategoryItemModel, CategoryListModel, IMAGE_CONFIG_SHAPE, ImageActionType, PeopleSection, SectionModel, WebsiteCollection, WebsiteModel, articleBlocksOf } from '@okr/shared-models';
 import { getSystemQuery, chipMatches, generateRandomString, debugData, debugItemLoaded, debugMessage, fill, nameMatches, sanitizeFileName, chatBlockedAlertMessage, isChatBlockedError, EMERGENCY_GROUP_KEY } from '@okr/shared-util-core';
 import { DEFAULT_MIMETYPES, IMAGE_MIMETYPES } from '@okr/shared-constants';
 import { confirm, downloadTextFile, exportCsv, getExportFileName, lazyService, showToast, resourceParams, notify } from '@okr/shared-util-angular';
@@ -17,7 +17,7 @@ import { I18nService } from '@okr/shared-i18n';
 
 import { UploadService } from '@okr/avatar-data-access';
 import { ArticleBlocksGate, PeopleEditorGate, SectionService } from '@okr/cms-section-data-access';
-import { asEditedSection, createSection, mailBlocksFromArticle, narrowSection, newArticleFrom, SECTION_I18N_KEYS, usesArticleEditor, usesPeopleEditor } from '@okr/cms-section-util';
+import { createPickedSection, mailBlocksFromArticle, narrowSection, newArticleFrom, SECTION_I18N_KEYS, usesArticleEditor, usesPeopleEditor } from '@okr/cms-section-util';
 import { allowedSectionTypesForPage } from '@okr/cms-website-render';
 
 import { openArticleEditor, type OpenedArticleEditor } from './article-editor.loader';
@@ -212,7 +212,7 @@ export const _SectionStore = signalStore(
         const { data, role } = await modal.onWillDismiss();
         if (role === 'confirm' && data) { // data = selected CategoryItemModel
           const item = data as CategoryItemModel;
-          const section = createSection(item.name as SectionType, store.tenantId());
+          const section = createPickedSection(item.name, store.tenantId());
           const sectionId = await this.edit(section, readOnly);
           this.reload();
           return sectionId;
@@ -229,8 +229,6 @@ export const _SectionStore = signalStore(
 
       async edit(section?: SectionModel, readOnly = true): Promise<string | undefined> {
         if (!section || opening) return;
-        // a slider is edited as an article with one gallery block (spec 1.182 §5); one save converts it
-        if (!readOnly) section = asEditedSection(section);
         const roles = this.getRoles();
         const states = store.appStore.getCategory('content_state');
         opening = true;

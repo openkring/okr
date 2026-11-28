@@ -9,7 +9,7 @@ import { StorageReference, deleteObject, getDownloadURL, getMetadata, listAll, r
 import { STORAGE } from '@okr/shared-config';
 import { FirestoreService } from '@okr/shared-data-access';
 import { AppStore } from '@okr/shared-feature';
-import { AccordionSection, ArticleSection, OkrModel, DocumentCollection, DocumentModel, ImageConfig, ImageType, LogInfo, MembershipCollection, MembershipModel, MenuItemModel, OrgCollection, OrgModel, PageCollection, PageModel, PeopleSection, PersonCollection, PersonModel, SectionModel, SliderSection, UserModel, articleBlocksOf } from '@okr/shared-models';
+import { AccordionSection, ArticleSection, OkrModel, DocumentCollection, DocumentModel, ImageConfig, ImageType, LogInfo, MembershipCollection, MembershipModel, MenuItemModel, OrgCollection, OrgModel, PageCollection, PageModel, PeopleSection, PersonCollection, PersonModel, SectionModel, UserModel, articleBlocksOf } from '@okr/shared-models';
 import { confirm, downloadToBrowser, navigateByUrl, showToast } from '@okr/shared-util-angular';
 import { DateFormat, convertDateFormatToString, fill, generateRandomString, getFullName, getSystemQuery, getTodayStr, replaceSubstring, safeStructuredClone } from '@okr/shared-util-core';
 import { I18nService } from '@okr/shared-i18n';
@@ -22,7 +22,7 @@ import { MenuModal } from '@okr/cms-menu-feature';
 import { PageService } from '@okr/cms-page-data-access';
 import { ArticleBlocksGate, PeopleEditorGate, SectionService } from '@okr/cms-section-data-access';
 import { loadSectionEditModal, openArticleEditor, openPeopleEditor, type ArticleEditorHost, type OpenedArticleEditor } from '@okr/cms-section-feature';
-import { SECTION_I18N_KEYS, asEditedSection, isImageLinked, newArticleFrom, usesArticleEditor, usesPeopleEditor } from '@okr/cms-section-util';
+import { SECTION_I18N_KEYS, isImageLinked, newArticleFrom, usesArticleEditor, usesPeopleEditor } from '@okr/cms-section-util';
 
 import { PAGE_I18N_KEYS } from '@okr/cms-page-util';
 
@@ -196,7 +196,6 @@ export const PageIntegrityStore = signalStore(
 
       async editSection(section: SectionModel): Promise<void> {
         if (opening) return;
-        section = asEditedSection(section);   // a slider is edited as an article (spec 1.182 §5)
         const currentUser: UserModel | undefined = store.currentUser();
         const roles = store.appStore.getCategory('roles');
         const states = store.appStore.getCategory('content_state');
@@ -541,13 +540,13 @@ export const PageIntegrityStore = signalStore(
 
       // Append an ImageConfig (pointing at the storage file) to the section's images
       // array so it shows up in the section detail list and the rendered slider.
-      // Only article and slider sections expose a properties.images list. An article with blocks (spec 1.173) is
+      // Only an article exposes a properties.images list. An article with blocks (spec 1.173) is
       // never written: the image belongs into one of its blocks, which is up to the editor.
       async linkImageToSection(image: SectionImageRef, label: string): Promise<void> {
         const key = image.section.okey;
         if (!key) return;
         const fresh = await firstValueFrom(store.sectionService.read(key));
-        if (!fresh || (fresh.type !== 'article' && fresh.type !== 'slider')) return;
+        if (!fresh || fresh.type !== 'article') return;
 
         if (isImageLinked(fresh, image.fullPath)) return; // already linked
         if (articleBlocksOf(fresh)) {
@@ -555,7 +554,7 @@ export const PageIntegrityStore = signalStore(
           return;
         }
 
-        const section = fresh as ArticleSection | SliderSection;
+        const section = fresh as ArticleSection;
         const images = section.properties.images ?? [];
 
         const newImage: ImageConfig = {

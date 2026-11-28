@@ -21,7 +21,7 @@ describe('usesArticleEditor', () => {
     ['an article of a travel journal with blocks', withBlocks({ journalKey: 'j' }), false, true, false],
     ['an empty journalKey is none', section({ journalKey: '' }), false, true, true],
     ['another type, gate open', section({ type: 'button' }), false, true, false],
-    ['another type with a field of that name', withBlocks({ type: 'slider' }), false, true, false],
+    ['another type with a field of that name', withBlocks({ type: 'album' }), false, true, false],
     ['an article without properties, gate open', section({ properties: undefined }), false, true, true],
     ['an article without properties, gate closed', section({ properties: undefined }), false, false, false],
     ['an article without a key, gate open', section({ okey: '' }), false, true, true],

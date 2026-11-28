@@ -1655,11 +1655,6 @@
       "title": "Abschnitt"
     }
   },
-  "slider": {
-    "label": "Slider",
-    "nextImage": "Nächstes Bild",
-    "prevImage": "Vorheriges Bild"
-  },
   "table": {
     "label": "Tabelle",
     "title": "Konfiguration der Tabelle",

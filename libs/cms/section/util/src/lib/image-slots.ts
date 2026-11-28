@@ -14,8 +14,6 @@ export function getSectionImageSlots(section: SectionModel): ImageSlot[] {
   switch (section.type) {
     case 'article':
       return articleBlocksOf(section) ? [] : [{ field: 'images', multi: true }];
-    case 'slider':
-      return [{ field: 'images', multi: true }];
     case 'hero':
       return [
         { field: 'logo', multi: false },

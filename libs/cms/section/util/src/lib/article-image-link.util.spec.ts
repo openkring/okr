@@ -41,10 +41,6 @@ describe('isImageLinked', () => {
     expect(isImageLinked(section({ images: [], cover: image() }), URL)).toBe(false);
   });
 
-  it('finds the image of a slider', () => {
-    expect(isImageLinked(section({ images: [image()] }, 'slider'), URL)).toBe(true);
-  });
-
   it('is false when the image is not linked', () => {
     expect(isImageLinked(withBlocks([text, { id: 'i', type: 'image', image: image('other.jpg') }]), URL)).toBe(false);
     expect(isImageLinked(withBlocks([]), URL)).toBe(false);
@@ -54,7 +50,7 @@ describe('isImageLinked', () => {
   it('does not throw on missing or malformed data', () => {
     expect(isImageLinked(section(undefined), URL)).toBe(false);
     expect(isImageLinked(section({}), URL)).toBe(false);
-    expect(isImageLinked(section({ images: [null] }, 'slider'), URL)).toBe(false);
+    expect(isImageLinked(section({ images: [null] }), URL)).toBe(false);
     expect(isImageLinked(withBlocks([{ id: 'g', type: 'gallery' }, null], { cover: null }), URL)).toBe(false);
   });
 });

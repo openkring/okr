@@ -14,7 +14,6 @@ export * from './lib/section-view.modal';
 export * from './lib/section-view.modal';
 export * from './lib/section-dispatcher';
 export * from './lib/section-select.modal';
-export * from './lib/slider-section';
 export * from './lib/table-section';
 export * from './lib/tracker-section';
 export * from './lib/video-section';

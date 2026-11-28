@@ -16,7 +16,6 @@ import { TrackerSectionComponent } from './tracker-section';
 import { HeroSectionComponent } from './hero-section';
 import { ChartSectionComponent } from './chart-section';
 import { MissingSectionComponent } from './missing-section';
-import { SliderSectionComponent } from './slider-section';
 
 /**
  * Renders a section within an accordion item.
@@ -30,7 +29,7 @@ import { SliderSectionComponent } from './slider-section';
     ArticleSectionComponent, TableSectionComponent, VideoSectionComponent,
     IframeSectionComponent, MapSectionComponent, AlbumSectionComponent, ButtonSectionComponent,
     CalendarSectionComponent, PeopleSectionComponent, TrackerSectionComponent,
-    HeroSectionComponent, SliderSectionComponent, ChartSectionComponent,
+    HeroSectionComponent, ChartSectionComponent,
     MissingSectionComponent, Spinner, DeferError
   ],
   providers: [SectionStore],
@@ -56,7 +55,6 @@ import { SliderSectionComponent } from './slider-section';
         @case('people') { <okr-people-section [section]="section" /> }
         @case('tracker') { <okr-tracker-section [section]="section" [buttonCopyI18n]="buttonCopyI18n()" /> }
         @case('hero') { <okr-hero-section [section]="section" /> }
-        @case('slider') { <okr-slider-section [section]="section" /> }
         @case('chart') {
           @defer (on viewport) {
             <okr-chart-section [section]="section" />

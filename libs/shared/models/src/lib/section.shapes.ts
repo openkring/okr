@@ -9,7 +9,7 @@ import type {
   FormSection, FormSectionConfig,
   HeroConfig, HeroSection, IconConfig, IframeConfig,
   IframeSection, InvitationsConfig, InvitationsSection, MapConfig, WeatherConfig, WeatherSection, ConnectionsConfig, ConnectionsSection, DeparturesConfig, DeparturesSection, EnergyConfig, EnergySection, CounterConfig, CounterSection, ContactConfig, ContactSection, FooterColumn, FooterConfig, FooterItem, FooterSection, MapSection, MemberAgeConfig, MemberAgeSection, MemberCatConfig, MemberCatSection, OrgchartConfig, OrgchartSection, PeopleConfig,
-  PeopleSection, RagConfig, RagSection, SankeyConfig, SankeySection, SpiderConfig, SpiderSection, TocConfig, TocSection, TestimonialConfig, TestimonialSection, TilesConfig, TilesSection, TimelineConfig, TimelineSection, AdventConfig, AdventSection, NewsConfig, NewsSection, TasksConfig, TasksSection, ActivitiesConfig, ActivitiesSection, MessagesConfig, MessagesSection, NoticesConfig, NoticesSection, TripStatsConfig, TripStatsSection, ResponsibilityConfig, ResponsibilitySection, SliderConfig, SliderSection, TableConfig, TableSection,
+  PeopleSection, RagConfig, RagSection, SankeyConfig, SankeySection, SpiderConfig, SpiderSection, TocConfig, TocSection, TestimonialConfig, TestimonialSection, TilesConfig, TilesSection, TimelineConfig, TimelineSection, AdventConfig, AdventSection, NewsConfig, NewsSection, TasksConfig, TasksSection, ActivitiesConfig, ActivitiesSection, MessagesConfig, MessagesSection, NoticesConfig, NoticesSection, TripStatsConfig, TripStatsSection, ResponsibilityConfig, ResponsibilitySection, TableConfig, TableSection,
   TrackerConfig, TrackerSection, VideoConfig, VideoSection, JournalTrackConfig, JournalTrackSection
 } from "./section.model";
 import { ButtonAction } from './enums/button-action.enum';
@@ -185,12 +185,6 @@ export const PEOPLE_CONFIG_SHAPE = {
   persons: [] as AvatarInfo[],
   responsibilityIds: [] as string[],
 } as PeopleConfig;
-
-// --------------------------------------- SLIDER ----------------------------------------
-export const SLIDER_CONFIG_SHAPE = {
-    images: [] as ImageConfig[],
-    imageStyle: IMAGE_STYLE_SHAPE,
-} as SliderConfig;
 
 // --------------------------------------- TABLE ----------------------------------------
 export const TABLE_CONFIG_SHAPE = {
@@ -387,12 +381,6 @@ export const RESPONSIBILITY_SECTION_SHAPE = {
   type: 'responsibility',
   properties: RESPONSIBILITY_CONFIG_SHAPE
 } as ResponsibilitySection;
-
-export const SLIDER_SECTION_SHAPE = {
-  ...BASE_SECTION_SHAPE,
-  type: 'slider',
-  properties: SLIDER_CONFIG_SHAPE
-} as SliderSection;
 
 export const TABLE_SECTION_SHAPE = {
   ...BASE_SECTION_SHAPE,

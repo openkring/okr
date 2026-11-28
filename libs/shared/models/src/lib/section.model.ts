@@ -23,7 +23,7 @@ export const SectionModelName = 'section';
  */
 export const SECTION_TYPES = [
     'album', 'article', 'button', 'cal', 'chart', 'chat', 'emergency', 'hero', 'iframe', 'map',
-    'people', 'responsibility', 'slider', 'table', 'tracker', 'video', 'accordion', 'events', 'invitations', 'tasks',
+    'people', 'responsibility', 'table', 'tracker', 'video', 'accordion', 'events', 'invitations', 'tasks',
     'news', 'activities', 'messages', 'rag', 'orgchart', 'context', 'member-age', 'member-cat', 'trip-stats', 'form',
     'sankey', 'spider', 'toc', 'testimonial', 'timeline', 'weather', 'learning', 'advent', 'connections', 'departures', 'energy', 'counter', 'footer', 'notices', 'tiles',
     'track', 'course', 'contact',
@@ -34,7 +34,7 @@ export type SectionType = (typeof SECTION_TYPES)[number];
 // discriminated union of all section models
 export type SectionModel =
     AlbumSection | ArticleSection | ButtonSection | CalendarSection | ChartSection | ChatSection |
-    HeroSection | IframeSection | MapSection | PeopleSection | ResponsibilitySection | SliderSection |
+    HeroSection | IframeSection | MapSection | PeopleSection | ResponsibilitySection |
     TableSection | TrackerSection | VideoSection | AccordionSection | EventsSection | InvitationsSection | TasksSection |
     NewsSection | ActivitiesSection | MessagesSection | RagSection | OrgchartSection | ContextDiagramSection | MemberAgeSection | MemberCatSection | TripStatsSection | FormSection | SankeySection | SpiderSection | TocSection | TestimonialSection | TimelineSection | WeatherSection | LearningSection | AdventSection | ConnectionsSection | DeparturesSection | EnergySection | CounterSection | FooterSection | NoticesSection | TilesSection | JournalTrackSection | CourseSection | ContactSection;
 
@@ -353,7 +353,7 @@ export interface BaseSection {
   isArchived: boolean;
   content: EditorConfig; // content from rich text editor
   properties?: AccordionConfig | AlbumConfig | ArticleConfig | ButtonConfig | CalendarOptions | EChartsOption | ChatConfig | HeroConfig |
-  IframeConfig | MapConfig | OrgchartConfig | ContextDiagramConfig | PeopleConfig | ResponsibilityConfig | SliderConfig | TableConfig | TrackerConfig | VideoConfig | EventsConfig | InvitationsConfig |
+  IframeConfig | MapConfig | OrgchartConfig | ContextDiagramConfig | PeopleConfig | ResponsibilityConfig | TableConfig | TrackerConfig | VideoConfig | EventsConfig | InvitationsConfig |
   TasksConfig | NewsConfig | ActivitiesConfig | MessagesConfig | RagConfig | MemberAgeConfig | MemberCatConfig | TripStatsConfig | FormSectionConfig | SankeyConfig | SpiderConfig | TocConfig | TestimonialConfig | TimelineConfig | WeatherConfig | LearningConfig | AdventConfig | ConnectionsConfig | DeparturesConfig | EnergyConfig | CounterConfig | FooterConfig | NoticesConfig | TilesConfig | JournalTrackConfig | CourseConfig | ContactConfig;
   notes: string;
   tags: string;
@@ -1029,17 +1029,6 @@ export interface RagConfig {
   systemPrompt?: string;    // optional system prompt steering the assistant
   documentScope?: string;   // optional folder path or tag limiting the retrieved documents
   maxTokens?: number;       // optional cap on the response length
-}
-
-// --------------------------------------- SLIDER ----------------------------------------
-export interface SliderSection extends BaseSection {
-  type: 'slider';
-  properties: SliderConfig;
-}
-
-export interface SliderConfig {
-  images: ImageConfig[]; // list of images to be shown in the slider
-  imageStyle: ImageStyle;
 }
 
 // --------------------------------------- TABLE ----------------------------------------
