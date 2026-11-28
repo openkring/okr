@@ -1,25 +1,24 @@
+import { NgTemplateOutlet } from '@angular/common';
 import { Component, computed, effect, inject, input, model, output, signal, untracked } from '@angular/core';
 import { IonButton, IonIcon, IonLabel, IonNote, IonSegment, IonSegmentButton } from '@ionic/angular';
 
 import { historyKey, PlainEditable } from '@okr/cms-article-feature';
-import { HeroPanel, HeroPanelPart, SectionConfiguration } from '@okr/cms-section-ui';
+import { HeroPanel, HeroPanelPart, SECTION_PANEL_FIELDS, SectionPanel } from '@okr/cms-section-ui';
 import {
-  addHeroCta, ARTICLE_EDITOR_I18N_KEYS, createHistory, getFieldErrors, HERO_EDITOR_I18N_KEYS, HERO_MAX_CTAS, heroBackgroundStyle, heroCtasOf, heroHasCover,
-  heroHasLogo, heroHeightCss, heroImgixParams, heroLogoStyle, heroObjectPosition, heroSectionValidations, moveHeroCtaForward, pickErrors, record, redo, restErrors,
+  addHeroCta, ARTICLE_EDITOR_I18N_KEYS, createHistory, HERO_EDITOR_I18N_KEYS, HERO_MAX_CTAS, heroBackgroundStyle, heroCtasOf, heroHasCover,
+  heroHasLogo, heroHeightCss, heroImgixParams, heroLogoStyle, heroObjectPosition, heroSectionValidations, moveHeroCtaForward, record, redo, restErrors,
   SECTION_I18N_KEYS, undo, type ArticlePreviewDevice, type EditorHistory, type HeroEditorI18n, type SectionErrors,
 } from '@okr/cms-section-util';
 import { I18nService } from '@okr/shared-i18n';
-import { CategoryListModel, HeroConfig, HeroSection, IMAGE_STYLE_SHAPE, RoleName, SectionModel, UserModel } from '@okr/shared-models';
+import { CategoryListModel, HeroConfig, HeroSection, IMAGE_STYLE_SHAPE, SectionModel, UserModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { Chips, ErrorNote, Img, TextareaInput, TextareaInputI18n } from '@okr/shared-ui';
-import { fill, hasRole } from '@okr/shared-util-core';
+import { ErrorNote, Img } from '@okr/shared-ui';
+import { fill } from '@okr/shared-util-core';
 
 type Selection = 'section' | HeroPanelPart;
 type Device = Exclude<ArticlePreviewDevice, 'auto'>;
 const DEVICES: readonly Device[] = ['mobile', 'tablet', 'desktop'];
 const DEVICE_WIDTHS: Record<Device, string> = { mobile: '390px', tablet: '768px', desktop: '100%' };
-/** the error names the section panel shows at a field */
-const SECTION_FIELDS = ['title', 'subTitle', 'intro', 'introPosition', 'roleNeeded', 'state', 'colSize', 'name', 'tags', 'notes'];
 /** the error names each part's panel shows at a field */
 const PART_FIELDS: Record<HeroPanelPart, readonly string[]> = {
   cover: ['hero.', 'height', 'focus', 'gradient.', 'imgIxParams'],
@@ -41,7 +40,7 @@ const PART_FIELDS: Record<HeroPanelPart, readonly string[]> = {
   selector: 'okr-hero-editor',
   standalone: true,
   imports: [
-    Chips, ErrorNote, HeroPanel, Img, PlainEditable, SectionConfiguration, SvgIconPipe, TextareaInput,
+    ErrorNote, HeroPanel, Img, PlainEditable, SectionPanel, NgTemplateOutlet, SvgIconPipe,
     IonButton, IonIcon, IonLabel, IonNote, IonSegment, IonSegmentButton,
   ],
   host: { '(document:keydown)': 'onKeydown($event)' },
@@ -161,45 +160,34 @@ const PART_FIELDS: Record<HeroPanelPart, readonly string[]> = {
       </div>
 
       <div class="panel" role="region" [attr.aria-label]="t.hero_editor_panel_label()">
-        <div class="panel-head">
-          @if (selected() !== 'section') {
+        @if (panelPart(); as part) {
+          <div class="panel-head">
             <ion-button fill="clear" size="small" [title]="t.hero_editor_panel_back()" [attr.aria-label]="t.hero_editor_panel_back()" (click)="select('section')">
               <ion-icon slot="icon-only" src="{{ 'arrow-back' | svgIcon }}" aria-hidden="true" />
             </ion-button>
-          }
-          <h2>{{ panelTitle() }}</h2>
-          @if (selected() === 'button' && buttonIndex() > 0) {
-            <ion-button fill="clear" size="small" (click)="moveButtonForward()">{{ t.hero_editor_button_forward() }}</ion-button>
-          }
-        </div>
-        <!-- errors that no field of this panel shows, so that a missing save banner is never unexplained -->
-        @if (rest().length > 0) {
-          <div class="rest">
-            <ion-note>{{ t.hero_editor_panel_errors() }}</ion-note>
-            @for (error of rest(); track error.field) { <okr-error-note [errors]="error.messages" /> }
+            <h2>{{ panelTitle() }}</h2>
+            @if (selected() === 'button' && buttonIndex() > 0) {
+              <ion-button fill="clear" size="small" (click)="moveButtonForward()">{{ t.hero_editor_button_forward() }}</ion-button>
+            }
           </div>
-        }
-
-        @if (panelPart(); as part) {
+          <ng-container [ngTemplateOutlet]="restErrors" />
           <okr-hero-panel [part]="part" [config]="config()" (configChange)="setConfig($event)" [buttonIndex]="buttonIndex()"
             [storagePath]="storagePath()" [currentUser]="currentUser()" [errors]="errors()" [readOnly]="false" [i18n]="t" />
         } @else {
-          <!-- title, subtitle and intro are typed on the canvas: their errors stand here -->
-          <div class="rest">
-            <okr-error-note [errors]="errorsFor('title')" />
-            <okr-error-note [errors]="errorsFor('subTitle')" />
-            <okr-error-note [errors]="errorsFor('intro')" />
-          </div>
-          <okr-section-config part="appearance" [headerTitle]="t.article_editor_article_settings()" [formData]="section()" (formDataChange)="setSection($event)"
-            [currentUser]="currentUser()" [roles]="roles()" [states]="states()" [showAdvanced]="true" [readOnly]="false" [i18n]="t" [errors]="sectionErrors()" />
-          @if (hasRole('privileged')) {
-            <okr-chips chipName="tag" [storedChips]="section().tags ?? ''" (storedChipsChange)="setField('tags', $event)" [allChips]="allTags()" [readOnly]="false" />
-            <okr-error-note [errors]="errorsFor('tags')" />
-          }
-          @if (hasRole('admin')) {
-            <okr-textarea-input variant="card" [i18n]="notesI18n()" [value]="section().notes ?? ''" (valueChange)="setField('notes', $event)" [errors]="errorsFor('notes')" [readOnly]="false" />
-          }
+          <okr-section-panel [title]="panelTitle()" [section]="section()" (sectionChange)="setSection($event)" [(showDetails)]="sectionDetails"
+            [currentUser]="currentUser()" [roles]="roles()" [states]="states()" [allTags]="allTags()" [i18n]="t" [errors]="errors()">
+            <ng-container ngProjectAs="[okrPanelErrors]"><ng-container [ngTemplateOutlet]="restErrors" /></ng-container>
+          </okr-section-panel>
         }
+        <ng-template #restErrors>
+          <!-- errors that no field of this panel shows, so that a missing save banner is never unexplained -->
+          @if (rest().length > 0) {
+            <div class="rest">
+              <ion-note>{{ t.hero_editor_panel_errors() }}</ion-note>
+              @for (error of rest(); track error.field) { <okr-error-note [errors]="error.messages" /> }
+            </div>
+          }
+        </ng-template>
       </div>
     </div>
   `,
@@ -272,13 +260,13 @@ export class HeroEditor {
   // errors: one run of the suite for canvas and panels
   private readonly result = computed(() => heroSectionValidations(this.section()));
   protected readonly errors = computed(() => this.result().getErrors() as SectionErrors);
-  protected readonly sectionErrors = computed(() => pickErrors(this.errors(), SECTION_FIELDS));
   protected readonly rest = computed(() => {
     const part = this.panelPart();
-    return restErrors(this.errors(), part ? PART_FIELDS[part] : SECTION_FIELDS);
+    return restErrors(this.errors(), part ? PART_FIELDS[part] : SECTION_PANEL_FIELDS);
   });
 
-  protected readonly notesI18n = computed(() => ({ name: 'notes', label: this.i18n.notes_label(), placeholder: this.i18n.notes_placeholder() } as TextareaInputI18n));
+  /** the toggle in the head of «Abschnitt»: off when the editor opens */
+  protected readonly sectionDetails = signal(false);
 
   // undo history
   /** starts with the first value of `formData` (a model has none while the component is created) */
@@ -306,10 +294,6 @@ export class HeroEditor {
 
   protected setSection(section: SectionModel): void {
     if (section !== this.section()) this.change(section as HeroSection, 'section');
-  }
-
-  protected setField(field: 'tags' | 'notes', value: string): void {
-    this.change({ ...this.section(), [field]: value }, field);
   }
 
   protected setText(field: 'title' | 'subTitle' | 'intro', value: string): void {
@@ -377,12 +361,4 @@ export class HeroEditor {
     if (device) this.device.set(device);
   }
 
-  protected hasRole(role: RoleName): boolean {
-    return hasRole(role, this.currentUser());
-  }
-
-  /** messages of a single field, for the inline <okr-error-note> */
-  protected errorsFor(field: string): string[] {
-    return getFieldErrors(this.errors(), field);
-  }
 }

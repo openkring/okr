@@ -1,18 +1,18 @@
+import { NgTemplateOutlet } from '@angular/common';
 import { Component, computed, effect, inject, input, model, output, signal, untracked, viewChild, ViewContainerRef } from '@angular/core';
 import { IonButton, IonCard, IonCardContent, IonIcon, IonLabel, IonNote, IonSegment, IonSegmentButton } from '@ionic/angular';
 
 import { ArticleHeaderEdit, historyKey, type ArticleHeaderChange } from '@okr/cms-article-feature';
-import { ButtonFormOption, ButtonPanel, ButtonWidget, SectionConfiguration } from '@okr/cms-section-ui';
+import { ButtonFormOption, ButtonPanel, ButtonWidget, SECTION_PANEL_FIELDS, SectionPanel } from '@okr/cms-section-ui';
 import {
-  ARTICLE_EDITOR_I18N_KEYS, BUTTON_EDITOR_I18N_KEYS, buttonConfigOf, buttonSectionValidations, withUploadedFile, createHistory, getFieldErrors, pickErrors, record, redo,
+  ARTICLE_EDITOR_I18N_KEYS, BUTTON_EDITOR_I18N_KEYS, buttonConfigOf, buttonSectionValidations, withUploadedFile, createHistory, record, redo,
   restErrors, SECTION_I18N_KEYS, undo, type ArticlePreviewDevice, type ButtonEditorI18n, type EditorHistory, type SectionErrors,
 } from '@okr/cms-section-util';
 import { I18nService } from '@okr/shared-i18n';
-import { ButtonConfig, ButtonSection, CategoryListModel, EDITOR_CONFIG_SHAPE, EditorConfig, RoleName, SectionModel, UserModel, ViewPosition } from '@okr/shared-models';
+import { ButtonConfig, ButtonSection, CategoryListModel, EDITOR_CONFIG_SHAPE, EditorConfig, SectionModel, UserModel, ViewPosition } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { Chips, ErrorNote, TextareaInput, TextareaInputI18n } from '@okr/shared-ui';
+import { ErrorNote } from '@okr/shared-ui';
 import { RichTextInline, type RichTextFeature } from '@okr/shared-ui-editor';
-import { hasRole } from '@okr/shared-util-core';
 
 type Selection = 'section' | 'button';
 type Device = Exclude<ArticlePreviewDevice, 'auto'>;
@@ -20,8 +20,6 @@ const DEVICES: readonly Device[] = ['mobile', 'tablet', 'desktop'];
 const DEVICE_WIDTHS: Record<Device, string> = { mobile: '390px', tablet: '768px', desktop: '100%' };
 /** as in a text block of an article: what readers never see is not offered */
 const HIDDEN_FEATURES: readonly RichTextFeature[] = ['history', 'colors', 'align', 'indent', 'image'];
-/** the error names the section panel shows at a field */
-const SECTION_FIELDS = ['title', 'subTitle', 'intro', 'introPosition', 'roleNeeded', 'state', 'colSize', 'name', 'tags', 'notes'];
 /** the error names the button panel shows at a field; with «Anpassen» open every one of the button */
 const BUTTON_FIELDS = ['style.', 'icon.', 'action.'];
 
@@ -29,8 +27,8 @@ const BUTTON_FIELDS = ['style.', 'icon.', 'action.'];
  * The graphical editor of a button section, as the article editor is one of an article: a toolbar (devices, undo, redo and the text
  * tools), the section as readers see it, and a panel. Title, subtitle and intro are typed in place (`okr-article-header-edit`, the
  * same as in an article), the text too (`okr-rich-text-inline`). A click on the button shows its settings (`okr-button-panel`);
- * otherwise the panel shows the section's own settings (`okr-section-config part="appearance"`, shared by every section type),
- * tags and notes.
+ * otherwise the panel shows the section's own settings (`okr-section-panel`, shared by every section editor). The toggle beside
+ * «Button» adds url, alt text and the field-by-field settings.
  *
  * It edits `formData` of `SectionEditModal`, which saves (change confirmation) as for every other section. The undo history is its
  * own: every change is a step, typing into one field makes one step per pause. A change from outside (the modal's «Abbrechen») is a step too.
@@ -39,8 +37,8 @@ const BUTTON_FIELDS = ['style.', 'icon.', 'action.'];
   selector: 'okr-button-editor',
   standalone: true,
   imports: [
-    ArticleHeaderEdit, ButtonPanel, ButtonWidget, Chips, ErrorNote, RichTextInline, SectionConfiguration, SvgIconPipe, TextareaInput,
-    IonButton, IonCard, IonCardContent, IonIcon, IonLabel, IonNote, IonSegment, IonSegmentButton,
+    ArticleHeaderEdit, ButtonPanel, ButtonWidget, ErrorNote, RichTextInline, SectionPanel, SvgIconPipe,
+    IonButton, IonCard, IonCardContent, IonIcon, IonLabel, IonNote, IonSegment, IonSegmentButton, NgTemplateOutlet,
   ],
   host: { '(document:keydown)': 'onKeydown($event)' },
   styles: [`
@@ -126,46 +124,38 @@ const BUTTON_FIELDS = ['style.', 'icon.', 'action.'];
       </div>
 
       <div class="panel" role="region" [attr.aria-label]="t.button_editor_panel_label()">
-        <div class="panel-head">
-          @if (selected() === 'button') {
+        @if (selected() === 'button') {
+          <div class="panel-head">
             <ion-button fill="clear" size="small" [title]="t.button_editor_panel_back()" [attr.aria-label]="t.button_editor_panel_back()" (click)="select('section')">
               <ion-icon slot="icon-only" src="{{ 'arrow-back' | svgIcon }}" aria-hidden="true" />
             </ion-button>
             <h2>{{ t.button_editor_panel_button() }}</h2>
-          } @else {
-            <h2>{{ t.button_editor_panel_section() }}</h2>
-          }
-        </div>
-        <!-- errors that no field of this panel shows, so that a missing save banner is never unexplained -->
+            <!-- url, alt text and the field-by-field settings -->
+            <ion-button fill="clear" size="small" [title]="t.form_advanced_label()" [attr.aria-label]="t.form_advanced_label()"
+              [attr.aria-pressed]="buttonDetails()" (click)="buttonDetails.set(!buttonDetails())">
+              <ion-icon slot="icon-only" src="{{ (buttonDetails() ? 'toggle' : 'toggle-off') | svgIcon }}" aria-hidden="true" />
+            </ion-button>
+          </div>
+          <ng-container [ngTemplateOutlet]="restErrors" />
+          <okr-button-panel [config]="config()" (configChange)="setConfig($event)" [content]="content()" (contentChange)="setContent($event)"
+            [contracts]="contracts()" [forms]="forms()" [errors]="errors()" [readOnly]="false" [i18n]="t" [showDetails]="buttonDetails()"
+            [uploads]="!!onUpload()" [uploading]="uploading()" (upload)="uploadFile()" />
+        } @else {
+          <okr-section-panel [title]="t.button_editor_panel_section()" [section]="section()" (sectionChange)="setSection($event)" [(showDetails)]="sectionDetails"
+            [currentUser]="currentUser()" [roles]="roles()" [states]="states()" [allTags]="allTags()" [i18n]="t" [errors]="errors()">
+            <ng-container ngProjectAs="[okrPanelErrors]"><ng-container [ngTemplateOutlet]="restErrors" /></ng-container>
+          </okr-section-panel>
+        }
+      </div>
+      <!-- errors that no field of this panel shows, so that a missing save banner is never unexplained -->
+      <ng-template #restErrors>
         @if (rest().length > 0) {
           <div class="rest">
             <ion-note>{{ t.button_editor_panel_errors() }}</ion-note>
             @for (error of rest(); track error.field) { <okr-error-note [errors]="error.messages" /> }
           </div>
         }
-
-        @if (selected() === 'button') {
-          <okr-button-panel [config]="config()" (configChange)="setConfig($event)" [content]="content()" (contentChange)="setContent($event)"
-            [contracts]="contracts()" [forms]="forms()" [errors]="errors()" [readOnly]="false" [i18n]="t"
-            [uploads]="!!onUpload()" [uploading]="uploading()" (upload)="uploadFile()" />
-        } @else {
-          <!-- title, subtitle and intro are typed on the canvas: their errors stand here -->
-          <div class="rest">
-            <okr-error-note [errors]="errorsFor('title')" />
-            <okr-error-note [errors]="errorsFor('subTitle')" />
-            <okr-error-note [errors]="errorsFor('intro')" />
-          </div>
-          <okr-section-config part="appearance" [headerTitle]="t.article_editor_article_settings()" [formData]="section()" (formDataChange)="setSection($event)"
-            [currentUser]="currentUser()" [roles]="roles()" [states]="states()" [showAdvanced]="true" [readOnly]="false" [i18n]="t" [errors]="sectionErrors()" />
-          @if (hasRole('privileged')) {
-            <okr-chips chipName="tag" [storedChips]="section().tags ?? ''" (storedChipsChange)="setField('tags', $event)" [allChips]="allTags()" [readOnly]="false" />
-            <okr-error-note [errors]="errorsFor('tags')" />
-          }
-          @if (hasRole('admin')) {
-            <okr-textarea-input variant="card" [i18n]="notesI18n()" [value]="section().notes ?? ''" (valueChange)="setField('notes', $event)" [errors]="errorsFor('notes')" [readOnly]="false" />
-          }
-        }
-      </div>
+      </ng-template>
     </div>
   `,
 })
@@ -228,10 +218,10 @@ export class ButtonEditor {
   // errors: one run of the suite for canvas and panels
   private readonly result = computed(() => buttonSectionValidations(this.section()));
   protected readonly errors = computed(() => this.result().getErrors() as SectionErrors);
-  protected readonly sectionErrors = computed(() => pickErrors(this.errors(), SECTION_FIELDS));
-  protected readonly rest = computed(() => restErrors(this.errors(), this.selected() === 'button' ? BUTTON_FIELDS : SECTION_FIELDS));
-
-  protected readonly notesI18n = computed(() => ({ name: 'notes', label: this.i18n.notes_label(), placeholder: this.i18n.notes_placeholder() } as TextareaInputI18n));
+  protected readonly rest = computed(() => restErrors(this.errors(), this.selected() === 'button' ? BUTTON_FIELDS : SECTION_PANEL_FIELDS));
+  /** the toggles in the panel heads: off when the editor opens */
+  protected readonly buttonDetails = signal(false);
+  protected readonly sectionDetails = signal(false);
 
   // undo history
   /** starts with the first value of `formData` (a model has none while the component is created) */
@@ -261,10 +251,6 @@ export class ButtonEditor {
     if (section !== this.section()) this.change(section as ButtonSection, 'section');
   }
 
-  protected setField(field: 'tags' | 'notes', value: string): void {
-    this.change({ ...this.section(), [field]: value }, field);
-  }
-
   protected onHeaderChange({ field, value }: ArticleHeaderChange): void {
     this.change({ ...this.section(), [field]: value }, field);
   }
@@ -282,7 +268,7 @@ export class ButtonEditor {
     this.uploading.set(true);
     try {
       const file = await upload(this.section().okey || undefined);
-      if (file) this.setConfig(withUploadedFile(this.section().properties, file));
+      if (file) this.setConfig(withUploadedFile(this.section().properties, file, this.section().title));
     } finally {
       this.uploading.set(false);
     }
@@ -325,14 +311,5 @@ export class ButtonEditor {
   protected chooseDevice(value: unknown): void {
     const device = DEVICES.find((d) => d === value);
     if (device) this.device.set(device);
-  }
-
-  protected hasRole(role: RoleName): boolean {
-    return hasRole(role, this.currentUser());
-  }
-
-  /** messages of a single field, for the inline <okr-error-note> */
-  protected errorsFor(field: string): string[] {
-    return getFieldErrors(this.errors(), field);
   }
 }

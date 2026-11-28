@@ -47,9 +47,9 @@ describe('presets', () => {
     expect(round.icon.name).toBe('process');
   });
 
-  it('round from wide takes the large diameter', () => {
-    const wide = applyButtonSize(config().style, 'wide');
-    expect(buttonSizeOf(applyButtonPreset(config({ style: wide }), 'round').style)).toBe('l');
+  it('round from XL takes the XL diameter', () => {
+    const xl = applyButtonSize(config().style, 'xl');
+    expect(buttonSizeOf(applyButtonPreset(config({ style: xl }), 'round').style)).toBe('xl');
   });
 
   it('leaving the emergency preset leaves the alarm, not the label', () => {
@@ -74,13 +74,14 @@ describe('emergencyButtonConfig', () => {
 
 describe('sizes', () => {
   it('maps sizes to width and height and back', () => {
-    for (const size of ['s', 'm', 'l', 'wide'] as const) expect(buttonSizeOf(applyButtonSize(config().style, size))).toBe(size);
+    for (const size of ['s', 'm', 'l', 'xl'] as const) expect(buttonSizeOf(applyButtonSize(config().style, size))).toBe(size);
     expect(buttonSizeOf({ ...config().style, width: '120', height: '40' })).toBeUndefined();
   });
 
-  it('offers no whole width for a round button', () => {
-    expect(buttonSizesFor({ shape: 'round' })).not.toContain('wide');
-    expect(buttonSizesFor({ shape: 'default' })).toContain('wide');
+  it('offers S to XL for every shape; a stored whole width is a size of its own', () => {
+    expect(buttonSizesFor({ shape: 'round' })).toEqual(['s', 'm', 'l', 'xl']);
+    expect(buttonSizesFor({ shape: 'default' })).toEqual(['s', 'm', 'l', 'xl']);
+    expect(buttonSizeOf({ ...config().style, width: '100%', height: '48' })).toBeUndefined();
   });
 });
 
@@ -157,13 +158,13 @@ describe('withFixedEmergencyLook', () => {
 });
 
 describe('download button (the default of a new button)', () => {
-  it('is a medium link «PDF herunterladen» with the PDF icon in front', () => {
+  it('is a large link without a label, only the PDF icon', () => {
     const fresh = downloadButtonConfig();
     expect(buttonPresetOf(fresh)).toBe('link');
-    expect(buttonSizeOf(fresh.style)).toBe('m');
+    expect(buttonSizeOf(fresh.style)).toBe('l');
     expect(iconPlacementOf(fresh.icon)).toBe('start');
     expect(fresh.icon.name).toBe('filetypes:pdf');
-    expect(fresh.style.label).toBe(DOWNLOAD_BUTTON_LABEL);
+    expect(fresh.style.label).toBe('');
     expect(fresh.action).toEqual({ type: ButtonAction.Download, url: '', altText: '' });
   });
 
@@ -172,15 +173,17 @@ describe('download button (the default of a new button)', () => {
     expect(downloadButtonConfig().style).not.toBe(downloadButtonConfig().style);
   });
 
-  it('an uploaded PDF becomes its url and alt text', () => {
+  it('an uploaded PDF becomes its url; the alt text is the title, else the file name', () => {
     const up = withUploadedFile(downloadButtonConfig(), { url: 'https://x/y.pdf', name: 'Statuten.pdf' });
     expect(up.action).toEqual({ type: ButtonAction.Download, url: 'https://x/y.pdf', altText: 'Statuten.pdf' });
     expect(up.icon.name).toBe('filetypes:pdf');
-    expect(up.style.label).toBe(DOWNLOAD_BUTTON_LABEL);
+    expect(up.style.label).toBe('');
+    expect(withUploadedFile(downloadButtonConfig(), { url: 'u', name: 'Statuten.pdf' }, ' Statuten 2026 ').action.altText).toBe('Statuten 2026');
   });
 
-  it('a file that is no PDF drops the PDF icon and the default label, a typed alt text and label stay', () => {
-    const up = withUploadedFile(downloadButtonConfig(), { url: 'u', name: 'Liste.xlsx' });
+  it('a file that is no PDF drops the PDF icon and the former default label, a typed alt text and label stay', () => {
+    const former = buttonConfigOf({ ...downloadButtonConfig(), style: { ...downloadButtonConfig().style, label: DOWNLOAD_BUTTON_LABEL } });
+    const up = withUploadedFile(former, { url: 'u', name: 'Liste.xlsx' });
     expect(up.icon.name).toBe('download');
     expect(up.style.label).toBe(FILE_DOWNLOAD_BUTTON_LABEL);
     const own = withUploadedFile(config({ action: { type: ButtonAction.Download, url: '', altText: 'Mitgliederliste' } }), { url: 'u', name: 'Liste.xlsx' });

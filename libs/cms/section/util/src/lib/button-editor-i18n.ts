@@ -40,7 +40,7 @@ export const BUTTON_EDITOR_I18N_KEYS = {
   button_editor_size_s:                         PFX + 'button.editor.size.s',
   button_editor_size_m:                         PFX + 'button.editor.size.m',
   button_editor_size_l:                         PFX + 'button.editor.size.l',
-  button_editor_size_wide:                      PFX + 'button.editor.size.wide',
+  button_editor_size_xl:                        PFX + 'button.editor.size.xl',
   button_editor_size_own:                       PFX + 'button.editor.size.own',
   button_editor_icon_title:                     PFX + 'button.editor.icon.title',
   button_editor_icon_none:                      PFX + 'button.editor.icon.none',

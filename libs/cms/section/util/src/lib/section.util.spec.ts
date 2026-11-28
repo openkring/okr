@@ -22,9 +22,10 @@ describe('createSection', () => {
   it('sets type-specific defaults for a button section', () => {
     const section = createSection('button', tenantId) as ButtonSection;
     expect(section.properties.action.type).toBe(ButtonAction.Download);
-    expect(section.properties.style.label).toBe('PDF herunterladen');
+    expect(section.properties.style.label).toBe('');
     expect(section.properties.icon.name).toBe('filetypes:pdf');
-    expect(section.content.position).toBe(ViewPosition.Top);
+    expect(section.content.position).toBe(ViewPosition.Left);
+    expect(section.content.htmlContent).toContain('Klicke auf das pdf Icon');
   });
 
   it('a new button leaves the shared shapes alone', () => {
@@ -33,7 +34,7 @@ describe('createSection', () => {
     first.content.position = ViewPosition.Right;
     const second = createSection('button', tenantId) as ButtonSection;
     expect(second.properties.action.url).toBe('');
-    expect(second.content.position).toBe(ViewPosition.Top);
+    expect(second.content.position).toBe(ViewPosition.Left);
   });
 
   it('creates member-age, member-cat and rag sections (with defaults)', () => {

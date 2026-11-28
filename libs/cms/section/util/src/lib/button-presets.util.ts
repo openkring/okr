@@ -12,7 +12,8 @@ import {
 export const BUTTON_PRESETS = ['main', 'outline', 'link', 'round', 'emergency'] as const;
 export type ButtonPreset = (typeof BUTTON_PRESETS)[number];
 
-export const BUTTON_SIZES = ['s', 'm', 'l', 'wide'] as const;
+/** 'xl' since 2026-11; 'wide' (the whole width) is no longer offered, a stored one shows as a size of its own */
+export const BUTTON_SIZES = ['s', 'm', 'l', 'xl'] as const;
 export type ButtonSize = (typeof BUTTON_SIZES)[number];
 
 export const ICON_PLACEMENTS = ['none', 'start', 'end', 'icon-only'] as const;
@@ -23,20 +24,20 @@ export const LEGACY_EMERGENCY_BUTTON_NAME = 'emergency-button';
 /** about 2 cm across: 76 CSS px at 96 px per inch (how big it is on a screen depends on the device) */
 export const EMERGENCY_BUTTON_DIAMETER = '76';
 export const EMERGENCY_BUTTON_LABEL = 'Hilfe !';
-/** the label of a new button: the most common button offers a PDF to download */
+/** the former label of a new button; a stored one is still recognised (and replaced when a file that is no PDF is uploaded) */
 export const DOWNLOAD_BUTTON_LABEL = 'PDF herunterladen';
+/** the text beside a new button: it has no label, only the PDF icon */
+export const DOWNLOAD_BUTTON_TEXT = '<p>Klicke auf das pdf Icon, um die Datei herunter zu laden.</p>';
 /** the label the default becomes when the file uploaded into a new button is no PDF */
 export const FILE_DOWNLOAD_BUTTON_LABEL = 'Datei herunterladen';
 const PDF_ICON = 'filetypes:pdf';
 const ICON_SIZE = 24;
 
-/** height of a button with a label; width follows the label ('auto'), or the whole width */
-const HEIGHTS: Record<Exclude<ButtonSize, 'wide'>, string> = { s: '36', m: '44', l: '56' };
-/** diameter of a round button; 'wide' is not offered for one */
-const DIAMETERS: Record<Exclude<ButtonSize, 'wide'>, string> = { s: '48', m: '60', l: EMERGENCY_BUTTON_DIAMETER };
-const WIDE_HEIGHT = '48';
+/** height of a button with a label; width follows the label ('auto') */
+const HEIGHTS: Record<ButtonSize, string> = { s: '36', m: '44', l: '56', xl: '68' };
+/** diameter of a round button */
+const DIAMETERS: Record<ButtonSize, string> = { s: '48', m: '60', l: EMERGENCY_BUTTON_DIAMETER, xl: '92' };
 const AUTO = 'auto';
-const FULL = '100%';
 
 type PresetLook = Pick<ButtonStyle, 'shape' | 'fill' | 'color'>;
 const LOOKS: Record<ButtonPreset, PresetLook> = {
@@ -96,7 +97,7 @@ export function applyButtonPreset(config: Partial<ButtonConfig> | undefined, pre
   if (preset === 'emergency') return emergencyButtonConfig(current);
   const size = buttonSizeOf(current.style) ?? 'm';
   let style: ButtonStyle = { ...current.style, ...LOOKS[preset] };
-  style = applyButtonSize(style, preset === 'round' && size === 'wide' ? 'l' : size);
+  style = applyButtonSize(style, size);
   let icon = current.icon;
   let action = current.action;
   if (action.type === ButtonAction.Emergency) action = { ...action, type: ButtonAction.None };
@@ -126,25 +127,19 @@ export function emergencyButtonConfig(config?: Partial<ButtonConfig>): ButtonCon
 export function buttonSizeOf(style: Partial<ButtonStyle> | undefined): ButtonSize | undefined {
   const width = String(style?.width ?? '').trim();
   const height = String(style?.height ?? '').trim();
-  const sizes = BUTTON_SIZES.filter((size): size is Exclude<ButtonSize, 'wide'> => size !== 'wide');
-  if (isRound(style)) return sizes.find((size) => width === DIAMETERS[size] && height === DIAMETERS[size]);
-  if (width === FULL && height === WIDE_HEIGHT) return 'wide';
-  return sizes.find((size) => width === AUTO && height === HEIGHTS[size]);
+  if (isRound(style)) return BUTTON_SIZES.find((size) => width === DIAMETERS[size] && height === DIAMETERS[size]);
+  return BUTTON_SIZES.find((size) => width === AUTO && height === HEIGHTS[size]);
 }
 
-/** Width and height of a size; a round button is as wide as high, and the whole width is offered only for one with a label. */
+/** Width and height of a size; a round button is as wide as high. */
 export function applyButtonSize(style: ButtonStyle, size: ButtonSize): ButtonStyle {
-  if (isRound(style)) {
-    const diameter = DIAMETERS[size === 'wide' ? 'l' : size];
-    return { ...style, width: diameter, height: diameter };
-  }
-  if (size === 'wide') return { ...style, width: FULL, height: WIDE_HEIGHT };
+  if (isRound(style)) return { ...style, width: DIAMETERS[size], height: DIAMETERS[size] };
   return { ...style, width: AUTO, height: HEIGHTS[size] };
 }
 
-/** The sizes a button may take: a round one has no 'wide'. */
-export function buttonSizesFor(style: Partial<ButtonStyle> | undefined): readonly ButtonSize[] {
-  return isRound(style) ? BUTTON_SIZES.filter((size) => size !== 'wide') : BUTTON_SIZES;
+/** The sizes a button may take (the same for every shape). */
+export function buttonSizesFor(_style?: Partial<ButtonStyle>): readonly ButtonSize[] {
+  return BUTTON_SIZES;
 }
 
 // ----------------------------------------------------- icon -----------------------------------------------------
@@ -194,11 +189,12 @@ export function applyButtonAction(config: Partial<ButtonConfig> | undefined, typ
 // --------------------------------------------------- download ---------------------------------------------------
 
 /**
- * A new button: a link «PDF herunterladen» with the PDF icon in front, medium size, that downloads its file. The file is
- * uploaded in the editor (or its address typed); until then the button has no url and cannot be saved.
+ * A new button: a large text link without a label, only the PDF icon, that downloads its file; the text beside it
+ * (`DOWNLOAD_BUTTON_TEXT`) says what to click. The file is uploaded in the editor (or its address typed); until then the
+ * button has no url and cannot be saved.
  */
 export function downloadButtonConfig(): ButtonConfig {
-  const style = applyButtonSize({ ...BUTTON_STYLE_SHAPE, ...LOOKS.link, label: DOWNLOAD_BUTTON_LABEL }, 'm');
+  const style = applyButtonSize({ ...BUTTON_STYLE_SHAPE, ...LOOKS.link, label: '' }, 'l');
   return {
     style,
     icon: { name: PDF_ICON, size: ICON_SIZE, slot: 'start' },
@@ -207,15 +203,16 @@ export function downloadButtonConfig(): ButtonConfig {
 }
 
 /**
- * The button after a file was uploaded into it: it downloads that file, and its alt text names the file unless one is there.
- * A file that is no PDF does not keep the PDF icon (it becomes 'download'), nor the default label «PDF herunterladen».
+ * The button after a file was uploaded into it: it downloads that file. Its alt text, unless one is there, becomes the section's
+ * title, else the name of the file. A file that is no PDF does not keep the PDF icon (it becomes 'download'), nor the former
+ * default label «PDF herunterladen».
  */
-export function withUploadedFile(config: Partial<ButtonConfig> | undefined, file: { url: string; name: string }): ButtonConfig {
+export function withUploadedFile(config: Partial<ButtonConfig> | undefined, file: { url: string; name: string }, title?: string): ButtonConfig {
   const current = buttonConfigOf(config);
   const isPdf = /\.pdf$/i.test(file.name);
   const icon = !isPdf && current.icon.name === PDF_ICON ? { ...current.icon, name: 'download' } : current.icon;
   const style = !isPdf && current.style.label === DOWNLOAD_BUTTON_LABEL ? { ...current.style, label: FILE_DOWNLOAD_BUTTON_LABEL } : current.style;
-  const action = { ...current.action, type: ButtonAction.Download, url: file.url, altText: current.action.altText || file.name };
+  const action = { ...current.action, type: ButtonAction.Download, url: file.url, altText: current.action.altText || title?.trim() || file.name };
   return { ...current, style, icon, action };
 }
 

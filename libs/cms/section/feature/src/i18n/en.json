@@ -541,7 +541,7 @@
         "s": "S",
         "m": "M",
         "l": "L",
-        "wide": "Wide",
+        "xl": "XL",
         "own": "Own size in pixels: pick one to replace it."
       },
       "icon": {
@@ -1640,6 +1640,9 @@
       "titleCard": "Section title",
       "sectionCard": "Section",
       "publicationCard": "Publication"
+    },
+    "panel": {
+      "title": "Section"
     }
   },
   "slider": {

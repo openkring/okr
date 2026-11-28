@@ -107,8 +107,8 @@ export class ButtonWidget {
   protected color = computed(() => this.section().properties?.style?.color ?? ColorIonic.Primary);
   protected colorName = computed(() => getCategoryStringField(ColorsIonic, this.color(), 'name'));
  
-  /** the alt text, else the label; empty → the template falls back to the translated name of the action */
-  protected ariaLabel = computed(() => this.section().properties?.action?.altText || this.label());
+  /** the alt text, else the label, else the section's title; empty → the template falls back to the translated name of the action */
+  protected ariaLabel = computed(() => this.section().properties?.action?.altText || this.label() || this.section().title?.trim() || '');
   protected actionI18nBase = computed(() =>
     ButtonActions.find((a) => a.id === this.actionType())?.i18nBase ?? '@shared/categories.buttonAction.none');
 

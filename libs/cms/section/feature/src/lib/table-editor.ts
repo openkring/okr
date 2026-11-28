@@ -1,20 +1,21 @@
+import { NgTemplateOutlet } from '@angular/common';
 import { Component, computed, effect, ElementRef, inject, input, model, output, signal, untracked, viewChild, ViewContainerRef } from '@angular/core';
 import { IonButton, IonCard, IonCardContent, IonIcon, IonLabel, IonNote, IonSegment, IonSegmentButton } from '@ionic/angular';
 
 import { ArticleHeaderEdit, historyKey, type ArticleHeaderChange } from '@okr/cms-article-feature';
-import { SectionConfiguration, TablePanel, TableView } from '@okr/cms-section-ui';
+import { SECTION_PANEL_FIELDS, SectionPanel, TablePanel, TableView } from '@okr/cms-section-ui';
 import {
   ARTICLE_EDITOR_I18N_KEYS, createHistory, deleteTableColumn, deleteTableRow, getFieldErrors, insertTableColumn, insertTableRow, isClipboardTable,
-  moveTableRow, parseClipboardTable, pasteTableCells, pickErrors, record, redo, restErrors, SECTION_I18N_KEYS, setTableCell, TABLE_EDITOR_I18N_KEYS,
+  moveTableRow, parseClipboardTable, pasteTableCells, record, redo, restErrors, SECTION_I18N_KEYS, setTableCell, TABLE_EDITOR_I18N_KEYS,
   tableContentOf, tableSectionValidations, undo, withTableContent, type ArticlePreviewDevice, type EditorHistory, type SectionErrors, type TableCellRef,
   type TableContent, type TableEditorI18n,
 } from '@okr/cms-section-util';
 import { I18nService } from '@okr/shared-i18n';
-import { CategoryListModel, RoleName, SectionModel, TABLE_CONFIG_SHAPE, TableConfig, TableSection, UserModel } from '@okr/shared-models';
+import { CategoryListModel, SectionModel, TABLE_CONFIG_SHAPE, TableConfig, TableSection, UserModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { Chips, ErrorNote, TextareaInput, TextareaInputI18n } from '@okr/shared-ui';
+import { ErrorNote } from '@okr/shared-ui';
 import { RichTextInline, type RichTextFeature } from '@okr/shared-ui-editor';
-import { fill, hasRole } from '@okr/shared-util-core';
+import { fill } from '@okr/shared-util-core';
 
 type Selection = 'section' | 'table';
 type Device = Exclude<ArticlePreviewDevice, 'auto'>;
@@ -22,8 +23,6 @@ const DEVICES: readonly Device[] = ['mobile', 'tablet', 'desktop'];
 const DEVICE_WIDTHS: Record<Device, string> = { mobile: '390px', tablet: '768px', desktop: '100%' };
 /** a cell is a short text: no headings' history, colours, alignment (the column has it), indent or images */
 const HIDDEN_FEATURES: readonly RichTextFeature[] = ['history', 'colors', 'align', 'indent', 'image'];
-/** the error names the section panel shows at a field */
-const SECTION_FIELDS = ['title', 'subTitle', 'intro', 'introPosition', 'roleNeeded', 'state', 'colSize', 'name', 'tags', 'notes'];
 /** the error names the table panel or the canvas shows */
 const TABLE_FIELDS = ['data.', 'grid.', 'columns', 'responsive.', 'header.', 'body.'];
 
@@ -52,7 +51,7 @@ function tableConfigOf(config: Partial<TableConfig> | undefined): TableConfig {
   selector: 'okr-table-editor',
   standalone: true,
   imports: [
-    ArticleHeaderEdit, Chips, ErrorNote, RichTextInline, SectionConfiguration, SvgIconPipe, TablePanel, TableView, TextareaInput,
+    ArticleHeaderEdit, ErrorNote, RichTextInline, SectionPanel, NgTemplateOutlet, SvgIconPipe, TablePanel, TableView,
     IonButton, IonCard, IonCardContent, IonIcon, IonLabel, IonNote, IonSegment, IonSegmentButton,
   ],
   host: { '(document:keydown)': 'onKeydown($event)' },
@@ -174,43 +173,31 @@ function tableConfigOf(config: Partial<TableConfig> | undefined): TableConfig {
       </ng-template>
 
       <div class="panel" role="region" [attr.aria-label]="t.table_editor_panel_label()">
-        <div class="panel-head">
-          @if (selected() === 'table') {
+        @if (selected() === 'table') {
+          <div class="panel-head">
             <ion-button fill="clear" size="small" [title]="t.table_editor_panel_back()" [attr.aria-label]="t.table_editor_panel_back()" (click)="select('section')">
               <ion-icon slot="icon-only" src="{{ 'arrow-back' | svgIcon }}" aria-hidden="true" />
             </ion-button>
             <h2>{{ t.table_editor_panel_table() }}</h2>
-          } @else {
-            <h2>{{ t.table_editor_panel_section() }}</h2>
-            <ion-button fill="clear" size="small" (click)="select('table')">{{ t.table_editor_canvas_select() }}</ion-button>
-          }
-        </div>
-        <!-- errors that no field of this panel shows, so that a missing save banner is never unexplained -->
-        @if (rest().length > 0) {
-          <div class="rest">
-            <ion-note>{{ t.table_editor_panel_errors() }}</ion-note>
-            @for (error of rest(); track error.field) { <okr-error-note [errors]="error.messages" /> }
           </div>
-        }
-
-        @if (selected() === 'table') {
+          <ng-container [ngTemplateOutlet]="restErrors" />
           <okr-table-panel [config]="config()" (configChange)="setConfig($event)" [errors]="errors()" [readOnly]="false" [i18n]="t" />
         } @else {
-          <div class="rest">
-            <okr-error-note [errors]="errorsFor('title')" />
-            <okr-error-note [errors]="errorsFor('subTitle')" />
-            <okr-error-note [errors]="errorsFor('intro')" />
-          </div>
-          <okr-section-config part="appearance" [headerTitle]="t.article_editor_article_settings()" [formData]="section()" (formDataChange)="setSection($event)"
-            [currentUser]="currentUser()" [roles]="roles()" [states]="states()" [showAdvanced]="true" [readOnly]="false" [i18n]="t" [errors]="sectionErrors()" />
-          @if (hasRole('privileged')) {
-            <okr-chips chipName="tag" [storedChips]="section().tags ?? ''" (storedChipsChange)="setField('tags', $event)" [allChips]="allTags()" [readOnly]="false" />
-            <okr-error-note [errors]="errorsFor('tags')" />
-          }
-          @if (hasRole('admin')) {
-            <okr-textarea-input variant="card" [i18n]="notesI18n()" [value]="section().notes ?? ''" (valueChange)="setField('notes', $event)" [errors]="errorsFor('notes')" [readOnly]="false" />
-          }
+          <okr-section-panel [title]="t.table_editor_panel_section()" [section]="section()" (sectionChange)="setSection($event)" [(showDetails)]="sectionDetails"
+            [currentUser]="currentUser()" [roles]="roles()" [states]="states()" [allTags]="allTags()" [i18n]="t" [errors]="errors()">
+            <ng-container ngProjectAs="[okrPanelErrors]"><ng-container [ngTemplateOutlet]="restErrors" /></ng-container>
+            <ion-button ngProjectAs="[okrPanelHead]" fill="clear" size="small" (click)="select('table')">{{ t.table_editor_canvas_select() }}</ion-button>
+          </okr-section-panel>
         }
+        <ng-template #restErrors>
+          <!-- errors that no field of this panel shows, so that a missing save banner is never unexplained -->
+          @if (rest().length > 0) {
+            <div class="rest">
+              <ion-note>{{ t.table_editor_panel_errors() }}</ion-note>
+              @for (error of rest(); track error.field) { <okr-error-note [errors]="error.messages" /> }
+            </div>
+          }
+        </ng-template>
       </div>
     </div>
   `,
@@ -255,11 +242,11 @@ export class TableEditor {
   // errors: one run of the suite for canvas and panels
   private readonly result = computed(() => tableSectionValidations(this.section()));
   protected readonly errors = computed(() => this.result().getErrors() as SectionErrors);
-  protected readonly sectionErrors = computed(() => pickErrors(this.errors(), SECTION_FIELDS));
   /** the cells' errors stand on the canvas, whichever panel is open */
-  protected readonly rest = computed(() => restErrors(this.errors(), this.selected() === 'table' ? TABLE_FIELDS : [...SECTION_FIELDS, 'data.']));
+  protected readonly rest = computed(() => restErrors(this.errors(), this.selected() === 'table' ? TABLE_FIELDS : [...SECTION_PANEL_FIELDS, 'data.']));
 
-  protected readonly notesI18n = computed(() => ({ name: 'notes', label: this.i18n.notes_label(), placeholder: this.i18n.notes_placeholder() } as TextareaInputI18n));
+  /** the toggle in the head of «Abschnitt»: off when the editor opens */
+  protected readonly sectionDetails = signal(false);
 
   // undo history
   /** starts with the first value of `formData` (a model has none while the component is created) */
@@ -303,10 +290,6 @@ export class TableEditor {
 
   protected setSection(section: SectionModel): void {
     if (section !== this.section()) this.change(section as TableSection, 'section');
-  }
-
-  protected setField(field: 'tags' | 'notes', value: string): void {
-    this.change({ ...this.section(), [field]: value }, field);
   }
 
   protected onHeaderChange({ field, value }: ArticleHeaderChange): void {
@@ -456,10 +439,6 @@ export class TableEditor {
   protected cellName(ref: TableCellRef): string {
     const column = fill(this.i18n.table_editor_columns_column(), { n: String(ref.col + 1) });
     return ref.row < 0 ? `${this.i18n.table_editor_header_label()} · ${column}` : `${ref.row + 1} · ${column}`;
-  }
-
-  protected hasRole(role: RoleName): boolean {
-    return hasRole(role, this.currentUser());
   }
 
   /** messages of a single field, for the inline <okr-error-note> */

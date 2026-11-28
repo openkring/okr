@@ -1,17 +1,18 @@
+import { NgTemplateOutlet } from '@angular/common';
 import { Component, computed, effect, inject, input, model, output, signal, untracked } from '@angular/core';
 import { IonButton, IonCard, IonCardContent, IonIcon, IonLabel, IonNote, IonSegment, IonSegmentButton } from '@ionic/angular';
 
 import { ArticleHeaderEdit, historyKey, type ArticleHeaderChange } from '@okr/cms-article-feature';
-import { IframePanel, SectionConfiguration } from '@okr/cms-section-ui';
+import { IframePanel, SECTION_PANEL_FIELDS, SectionPanel } from '@okr/cms-section-ui';
 import {
-  ARTICLE_EDITOR_I18N_KEYS, createHistory, getFieldErrors, IFRAME_EDITOR_I18N_KEYS, iframeHeightCss, iframeSectionValidations, pickErrors, record, redo,
+  ARTICLE_EDITOR_I18N_KEYS, createHistory, IFRAME_EDITOR_I18N_KEYS, iframeHeightCss, iframeSectionValidations, record, redo,
   restErrors, SECTION_I18N_KEYS, undo, type ArticlePreviewDevice, type EditorHistory, type IframeEditorI18n, type SectionErrors,
 } from '@okr/cms-section-util';
 import { I18nService } from '@okr/shared-i18n';
-import { CategoryListModel, IframeConfig, IframeSection, RoleName, SectionModel, UserModel } from '@okr/shared-models';
+import { CategoryListModel, IframeConfig, IframeSection, SectionModel, UserModel } from '@okr/shared-models';
 import { SvgIconPipe } from '@okr/shared-pipes';
-import { Chips, ErrorNote, TextareaInput, TextareaInputI18n } from '@okr/shared-ui';
-import { getSafeEmbedUrl, hasRole } from '@okr/shared-util-core';
+import { ErrorNote } from '@okr/shared-ui';
+import { getSafeEmbedUrl } from '@okr/shared-util-core';
 
 import { IframeSectionComponent } from './iframe-section';
 
@@ -19,8 +20,6 @@ type Selection = 'section' | 'iframe';
 type Device = Exclude<ArticlePreviewDevice, 'auto'>;
 const DEVICES: readonly Device[] = ['mobile', 'tablet', 'desktop'];
 const DEVICE_WIDTHS: Record<Device, string> = { mobile: '390px', tablet: '768px', desktop: '100%' };
-/** the error names the section panel shows at a field */
-const SECTION_FIELDS = ['title', 'subTitle', 'intro', 'introPosition', 'roleNeeded', 'state', 'colSize', 'name', 'tags', 'notes'];
 /** the error names the iframe panel shows at a field */
 const IFRAME_FIELDS = ['url', 'height'];
 
@@ -39,7 +38,7 @@ const IFRAME_FIELDS = ['url', 'height'];
   selector: 'okr-iframe-editor',
   standalone: true,
   imports: [
-    ArticleHeaderEdit, Chips, ErrorNote, IframePanel, IframeSectionComponent, SectionConfiguration, SvgIconPipe, TextareaInput,
+    ArticleHeaderEdit, ErrorNote, IframePanel, IframeSectionComponent, SectionPanel, NgTemplateOutlet, SvgIconPipe,
     IonButton, IonCard, IonCardContent, IonIcon, IonLabel, IonNote, IonSegment, IonSegmentButton,
   ],
   host: { '(document:keydown)': 'onKeydown($event)' },
@@ -113,43 +112,30 @@ const IFRAME_FIELDS = ['url', 'height'];
       </div>
 
       <div class="panel" role="region" [attr.aria-label]="t.iframe_editor_panel_label()">
-        <div class="panel-head">
-          @if (selected() === 'iframe') {
+        @if (selected() === 'iframe') {
+          <div class="panel-head">
             <ion-button fill="clear" size="small" [title]="t.iframe_editor_panel_back()" [attr.aria-label]="t.iframe_editor_panel_back()" (click)="select('section')">
               <ion-icon slot="icon-only" src="{{ 'arrow-back' | svgIcon }}" aria-hidden="true" />
             </ion-button>
             <h2>{{ t.iframe_editor_panel_iframe() }}</h2>
-          } @else {
-            <h2>{{ t.iframe_editor_panel_section() }}</h2>
-          }
-        </div>
-        <!-- errors that no field of this panel shows, so that a missing save banner is never unexplained -->
-        @if (rest().length > 0) {
-          <div class="rest">
-            <ion-note>{{ t.iframe_editor_panel_errors() }}</ion-note>
-            @for (error of rest(); track error.field) { <okr-error-note [errors]="error.messages" /> }
           </div>
-        }
-
-        @if (selected() === 'iframe') {
+          <ng-container [ngTemplateOutlet]="restErrors" />
           <okr-iframe-panel [config]="config()" (configChange)="setConfig($event)" [errors]="errors()" [readOnly]="false" [i18n]="t" />
         } @else {
-          <!-- title, subtitle and intro are typed on the canvas: their errors stand here -->
-          <div class="rest">
-            <okr-error-note [errors]="errorsFor('title')" />
-            <okr-error-note [errors]="errorsFor('subTitle')" />
-            <okr-error-note [errors]="errorsFor('intro')" />
-          </div>
-          <okr-section-config part="appearance" [headerTitle]="t.article_editor_article_settings()" [formData]="section()" (formDataChange)="setSection($event)"
-            [currentUser]="currentUser()" [roles]="roles()" [states]="states()" [showAdvanced]="true" [readOnly]="false" [i18n]="t" [errors]="sectionErrors()" />
-          @if (hasRole('privileged')) {
-            <okr-chips chipName="tag" [storedChips]="section().tags ?? ''" (storedChipsChange)="setField('tags', $event)" [allChips]="allTags()" [readOnly]="false" />
-            <okr-error-note [errors]="errorsFor('tags')" />
-          }
-          @if (hasRole('admin')) {
-            <okr-textarea-input variant="card" [i18n]="notesI18n()" [value]="section().notes ?? ''" (valueChange)="setField('notes', $event)" [errors]="errorsFor('notes')" [readOnly]="false" />
-          }
+          <okr-section-panel [title]="t.iframe_editor_panel_section()" [section]="section()" (sectionChange)="setSection($event)" [(showDetails)]="sectionDetails"
+            [currentUser]="currentUser()" [roles]="roles()" [states]="states()" [allTags]="allTags()" [i18n]="t" [errors]="errors()">
+            <ng-container ngProjectAs="[okrPanelErrors]"><ng-container [ngTemplateOutlet]="restErrors" /></ng-container>
+          </okr-section-panel>
         }
+        <ng-template #restErrors>
+          <!-- errors that no field of this panel shows, so that a missing save banner is never unexplained -->
+          @if (rest().length > 0) {
+            <div class="rest">
+              <ion-note>{{ t.iframe_editor_panel_errors() }}</ion-note>
+              @for (error of rest(); track error.field) { <okr-error-note [errors]="error.messages" /> }
+            </div>
+          }
+        </ng-template>
       </div>
     </div>
   `,
@@ -195,10 +181,10 @@ export class IframeEditor {
   // errors: one run of the suite for canvas and panels
   private readonly result = computed(() => iframeSectionValidations(this.section()));
   protected readonly errors = computed(() => this.result().getErrors() as SectionErrors);
-  protected readonly sectionErrors = computed(() => pickErrors(this.errors(), SECTION_FIELDS));
-  protected readonly rest = computed(() => restErrors(this.errors(), this.selected() === 'iframe' ? IFRAME_FIELDS : SECTION_FIELDS));
+  protected readonly rest = computed(() => restErrors(this.errors(), this.selected() === 'iframe' ? IFRAME_FIELDS : SECTION_PANEL_FIELDS));
 
-  protected readonly notesI18n = computed(() => ({ name: 'notes', label: this.i18n.notes_label(), placeholder: this.i18n.notes_placeholder() } as TextareaInputI18n));
+  /** the toggle in the head of «Abschnitt»: off when the editor opens */
+  protected readonly sectionDetails = signal(false);
 
   // undo history
   /** starts with the first value of `formData` (a model has none while the component is created) */
@@ -228,10 +214,6 @@ export class IframeEditor {
 
   protected setSection(section: SectionModel): void {
     if (section !== this.section()) this.change(section as IframeSection, 'section');
-  }
-
-  protected setField(field: 'tags' | 'notes', value: string): void {
-    this.change({ ...this.section(), [field]: value }, field);
   }
 
   protected onHeaderChange({ field, value }: ArticleHeaderChange): void {
@@ -268,12 +250,4 @@ export class IframeEditor {
     if (device) this.device.set(device);
   }
 
-  protected hasRole(role: RoleName): boolean {
-    return hasRole(role, this.currentUser());
-  }
-
-  /** messages of a single field, for the inline <okr-error-note> */
-  protected errorsFor(field: string): string[] {
-    return getFieldErrors(this.errors(), field);
-  }
 }

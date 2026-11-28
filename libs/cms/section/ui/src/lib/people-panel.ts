@@ -6,7 +6,7 @@ import {
 } from '@ionic/angular';
 
 import { AvatarConfig, AvatarInfo, CategoryListModel, isSameValue, PeopleConfig, PeopleSection, RoleName, SectionModel, UserModel } from '@okr/shared-models';
-import { Chips, ErrorNote, TextareaInput, TextareaInputI18n, TextInput, TextInputI18n } from '@okr/shared-ui';
+import { ErrorNote, TextInput, TextInputI18n } from '@okr/shared-ui';
 import { fill, getAvatarName, hasRole } from '@okr/shared-util-core';
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { ResponsibilityService } from '@okr/relationship-responsibility-data-access';
@@ -18,7 +18,7 @@ import {
 
 import { ARTICLE_PANEL_STYLES } from './article-panel.styles';
 import { PeopleLookConfig } from './people-look-configuration';
-import { SectionConfiguration } from './section-configuration';
+import { SectionPanel } from './section-panel';
 
 /** The person selected in the canvas, as the panel shows it. */
 export interface PeoplePanelPerson {
@@ -39,15 +39,15 @@ type MoreField = 'altText' | 'linkedSection' | 'title';
 
 /**
  * The side panel of the people block editor (spec 1.181 §7.4). With a person selected: its name, function, where it comes from and
- * what can be done with it. Without: who sees the section, how wide it is and where the intro stands (`okr-section-config`), «Wer wird
- * gezeigt», «Aussehen», «Mehr», tags and notes. Title, subtitle and intro are typed in the canvas; their errors stand at the top.
+ * what can be done with it. Without: «Abschnitt» (`okr-section-panel`: who sees the section, how wide it is, where the intro stands,
+ * behind its toggle type, key, tags and notes) and in it «Wer wird gezeigt», «Aussehen», «Mehr». Title, subtitle and intro are typed in the canvas; their errors stand at the top.
  * Every change sets `section` once; nothing is set on init. Picking is left to the editor (`pick`).
  */
 @Component({
   selector: 'okr-people-panel',
   standalone: true,
   imports: [
-    Chips, ErrorNote, TextareaInput, TextInput, PeopleLookConfig, SectionConfiguration, SvgIconPipe,
+    ErrorNote, TextInput, PeopleLookConfig, SectionPanel, SvgIconPipe,
     IonButton, IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonChip, IonIcon, IonLabel, IonNote, IonSegment, IonSegmentButton,
   ],
   host: { role: 'region', '[attr.aria-label]': 'regionLabel()' },
@@ -98,15 +98,13 @@ type MoreField = 'altText' | 'linkedSection' | 'title';
         </ion-card-content>
       </ion-card>
     } @else {
+      <!-- «Abschnitt» as in every section editor; «Wer», «Aussehen» and «Mehr» stand between its settings and tags and notes -->
+      <okr-section-panel [section]="section()" (sectionChange)="set($event)" [(showDetails)]="sectionDetails"
+        [currentUser]="currentUser()" [roles]="roles()" [states]="states()" [allTags]="allTags()" [i18n]="t" [errors]="fieldErrors()">
       <!-- an error that no field below shows, so that a missing save banner is never unexplained -->
-      @for (error of rest(); track error.field) { <okr-error-note [errors]="error.messages" /> }
-      <!-- title, subtitle and intro are typed in the canvas: their errors stand here -->
-      <okr-error-note [errors]="errorsFor('title')" />
-      <okr-error-note [errors]="errorsFor('subTitle')" />
-      <okr-error-note [errors]="errorsFor('intro')" />
-
-      <okr-section-config part="appearance" [headerTitle]="t.article_editor_article_settings()" [formData]="section()" (formDataChange)="set($event)"
-        [currentUser]="currentUser()" [roles]="roles()" [states]="states()" [showAdvanced]="true" [readOnly]="false" [i18n]="t" [errors]="fieldErrors()" />
+      <ng-container ngProjectAs="[okrPanelErrors]">
+        @for (error of rest(); track error.field) { <okr-error-note [errors]="error.messages" /> }
+      </ng-container>
 
       <ion-card>
         <ion-card-header><ion-card-title>{{ t.people_editor_who_title() }}</ion-card-title></ion-card-header>
@@ -206,13 +204,7 @@ type MoreField = 'altText' | 'linkedSection' | 'title';
         </ion-card-content>
       </ion-card>
 
-      @if (hasRole('privileged')) {
-        <okr-chips chipName="tag" [storedChips]="section().tags ?? ''" (storedChipsChange)="setField('tags', $event)" [allChips]="allTags()" [readOnly]="false" />
-        <okr-error-note [errors]="errorsFor('tags')" />
-      }
-      @if (hasRole('admin')) {
-        <okr-textarea-input variant="card" [i18n]="notesI18n()" [value]="section().notes ?? ''" (valueChange)="setField('notes', $event)" [errors]="errorsFor('notes')" [readOnly]="false" />
-      }
+      </okr-section-panel>
     }
   `,
 })
@@ -288,7 +280,8 @@ export class PeoplePanel {
   protected readonly listNameI18n = computed(() => ({
     name: 'title', label: this.i18n().people_editor_listName_label(), placeholder: this.i18n().people_title_placeholder(), helper: this.i18n().people_editor_listName_helper(),
   } as TextInputI18n));
-  protected readonly notesI18n = computed(() => ({ name: 'notes', label: this.i18n().notes_label(), placeholder: this.i18n().notes_placeholder() } as TextareaInputI18n));
+  /** the toggle in the head of «Abschnitt»: type and key, tags and notes */
+  protected readonly sectionDetails = signal(false);
 
   constructor() {
     effect(() => {
@@ -307,10 +300,6 @@ export class PeoplePanel {
 
   private change(go: (config: PeopleConfig) => PeopleConfig): void {
     this.setConfig(go(this.config()));
-  }
-
-  protected setField(field: 'tags' | 'notes', value: string): void {
-    this.set({ ...this.section(), [field]: value });
   }
 
   protected setSource(value: unknown): void {

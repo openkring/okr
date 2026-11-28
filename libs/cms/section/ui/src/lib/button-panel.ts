@@ -1,5 +1,5 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, computed, inject, input, output, signal } from '@angular/core';
+import { Component, computed, inject, input, output } from '@angular/core';
 import { IonButton, IonCard, IonCardContent, IonIcon, IonLabel, IonNote, IonSegment, IonSegmentButton, IonSelect, IonSelectOption } from '@ionic/angular';
 
 import { ButtonActions } from '@okr/shared-categories';
@@ -27,8 +27,9 @@ const RATIOS = [3, 4, 6] as const;
 
 /**
  * The settings of an «Aktions-Button» in the button editor, shown while the button is selected: what it does first, then its label,
- * look, size, icon and where it stands next to the text. «Anpassen» opens the former settings, field by field
- * (`okr-button-config`), for what no preset covers. Every change sets `config` or `content` once.
+ * look, size, icon and where it stands next to the text. The toggle beside «Button» in the editor's panel head (`showDetails`) adds
+ * the url (where an upload, a form or a contract list stands for it), the alt text and the former settings, field by field
+ * (`okr-button-config`), for what no preset covers. A field with an error is shown anyway. Every change sets `config` or `content` once.
  */
 @Component({
   selector: 'okr-button-panel',
@@ -70,7 +71,6 @@ const RATIOS = [3, 4, 6] as const;
     ion-segment { margin-bottom: 4px; }
     /* four short choices in a 360 px panel: no capitals, little padding, so none is cut off */
     ion-segment-button { min-width: 0; --padding-start: 2px; --padding-end: 2px; text-transform: none; letter-spacing: 0; font-size: 0.85rem; }
-    .custom { display: flex; align-items: center; justify-content: space-between; }
   `],
   template: `
     @let t = i18n();
@@ -98,7 +98,9 @@ const RATIOS = [3, 4, 6] as const;
               </ion-button>
               <ion-note class="note">{{ t.button_editor_action_uploadHelper() }}</ion-note>
             }
-            <okr-text-input [i18n]="urlI18n()" [value]="url()" (valueChange)="setActionField('url', $event)" [maxLength]="urlLength" [readOnly]="readOnly()" />
+            @if (showUrl(uploads())) {
+              <okr-text-input [i18n]="urlI18n()" [value]="url()" (valueChange)="setActionField('url', $event)" [maxLength]="urlLength" [readOnly]="readOnly()" />
+            }
             <okr-error-note [errors]="errorsFor('action.url')" />
           }
           @case (BA.ContractDocument) {
@@ -119,7 +121,9 @@ const RATIOS = [3, 4, 6] as const;
               </ion-select>
               <ion-note class="note">{{ t.button_editor_action_formHelper() }}</ion-note>
             }
-            <okr-text-input [i18n]="urlI18n()" [value]="url()" (valueChange)="setActionField('url', $event)" [maxLength]="urlLength" [readOnly]="readOnly()" />
+            @if (showUrl(forms().length > 0)) {
+              <okr-text-input [i18n]="urlI18n()" [value]="url()" (valueChange)="setActionField('url', $event)" [maxLength]="urlLength" [readOnly]="readOnly()" />
+            }
             <okr-error-note [errors]="errorsFor('action.url')" />
           }
           @default {
@@ -137,8 +141,11 @@ const RATIOS = [3, 4, 6] as const;
           <okr-text-input [i18n]="labelI18n()" [value]="config().style.label" (valueChange)="setLabel($event)" [maxLength]="labelLength" [readOnly]="readOnly()" />
           <okr-error-note [errors]="errorsFor('style.label')" />
         }
-        <okr-text-input [i18n]="altTextI18n()" [value]="config().action.altText ?? ''" (valueChange)="setActionField('altText', $event)" [maxLength]="altTextLength" [readOnly]="readOnly()" />
-        <okr-error-note [errors]="errorsFor('action.altText')" />
+        <!-- empty, it falls back to the label, then to the section's title (an upload fills in the title, else the file name) -->
+        @if (showDetails() || errorsFor('action.altText').length > 0) {
+          <okr-text-input [i18n]="altTextI18n()" [value]="config().action.altText ?? ''" (valueChange)="setActionField('altText', $event)" [maxLength]="altTextLength" [readOnly]="readOnly()" />
+          <okr-error-note [errors]="errorsFor('action.altText')" />
+        }
 
         <span class="field-label">{{ t.button_editor_look_title() }}</span>
         <div class="presets" role="radiogroup" [attr.aria-label]="t.button_editor_look_title()">
@@ -205,19 +212,8 @@ const RATIOS = [3, 4, 6] as const;
       </ion-card-content>
     </ion-card>
 
-    <!-- what no preset covers: the former settings, field by field -->
-    <ion-card>
-      <ion-card-content class="custom">
-        <ion-label>
-          <strong>{{ t.button_editor_custom_title() }}</strong>
-          <ion-note class="note">{{ t.button_editor_custom_helper() }}</ion-note>
-        </ion-label>
-        <ion-button fill="clear" size="small" [attr.aria-expanded]="customOpen()" [attr.aria-label]="t.button_editor_custom_title()" (click)="customOpen.set(!customOpen())">
-          <ion-icon slot="icon-only" src="{{ (customOpen() ? 'chevron-up' : 'chevron-down') | svgIcon }}" aria-hidden="true" />
-        </ion-button>
-      </ion-card-content>
-    </ion-card>
-    @if (customOpen()) {
+    <!-- what no preset covers: the former settings, field by field (behind the toggle) -->
+    @if (showDetails()) {
       <okr-button-config [style]="config().style" (styleChange)="setConfig({ style: $event })" [icon]="config().icon" (iconChange)="setConfig({ icon: $event })"
         [action]="config().action" (actionChange)="setConfig({ action: $event })" [contracts]="contracts()" [readOnly]="readOnly()" [i18n]="i18n()" [errors]="errors()" />
     }
@@ -237,14 +233,14 @@ export class ButtonPanel {
   public readonly uploads = input(false);
   public readonly uploading = input(false);
   public readonly i18n = input.required<ButtonEditorI18n>();
+  /** the toggle beside «Button»: url, alt text and the field-by-field settings */
+  public readonly showDetails = input(false);
 
   // outputs
   public readonly configChange = output<ButtonConfig>();
   public readonly contentChange = output<EditorConfig>();
   /** pick and upload a file for the download button */
   public readonly upload = output<void>();
-
-  protected readonly customOpen = signal(false);
 
   // constants for the template
   protected readonly BA = ButtonAction;
@@ -286,7 +282,7 @@ export class ButtonPanel {
   });
   protected readonly sizeLabels = computed<Record<ButtonSize, string>>(() => {
     const t = this.i18n();
-    return { s: t.button_editor_size_s(), m: t.button_editor_size_m(), l: t.button_editor_size_l(), wide: t.button_editor_size_wide() };
+    return { s: t.button_editor_size_s(), m: t.button_editor_size_m(), l: t.button_editor_size_l(), xl: t.button_editor_size_xl() };
   });
   protected readonly placementLabels = computed<Record<IconPlacement, string>>(() => {
     const t = this.i18n();
@@ -366,6 +362,11 @@ export class ButtonPanel {
       case ViewPosition.Bottom: return 'layout col reverse';
       default: return 'layout alone';
     }
+  }
+
+  /** the url field: always behind the toggle where something else fills it in (`replaced`); with an error shown anyway */
+  protected showUrl(replaced: boolean): boolean {
+    return !replaced || this.showDetails() || this.errorsFor('action.url').length > 0;
   }
 
   /** messages of a single field, for the inline <okr-error-note> */

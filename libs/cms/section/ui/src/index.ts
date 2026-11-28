@@ -14,6 +14,7 @@ export * from './lib/video-panel';
 
 export * from './lib/section.form';
 export * from './lib/section-configuration';
+export * from './lib/section-panel';
 
 export * from './lib/button-widget';
 export * from './lib/persons-widget';

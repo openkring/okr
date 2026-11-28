@@ -1,6 +1,6 @@
 import { ALBUM_SECTION_SHAPE, AlbumSection, ARTICLE_CONFIG_SHAPE, ARTICLE_SECTION_SHAPE, ArticleSection, BUTTON_SECTION_SHAPE, ButtonSection, CAL_SECTION_SHAPE, CalendarSection, CHART_SECTION_SHAPE, ChartSection, CHAT_SECTION_SHAPE, ChatSection, ColorIonic, CONTEXT_DIAGRAM_SECTION_SHAPE, ContextDiagramSection, COURSE_CONFIG_SHAPE, COURSE_SECTION_SHAPE, CourseSection, EVENTS_SECTION_SHAPE, EventsSection, HERO_SECTION_SHAPE, HeroSection, IFRAME_SECTION_SHAPE, IframeSection, INVITATIONS_SECTION_SHAPE, InvitationsSection, MAP_SECTION_SHAPE, MapSection, MEMBER_AGE_SECTION_SHAPE, MemberAgeSection, MEMBER_CAT_SECTION_SHAPE, MemberCatSection, PEOPLE_SECTION_SHAPE, PeopleSection, RAG_SECTION_SHAPE, RagSection, RESPONSIBILITY_SECTION_SHAPE, ResponsibilitySection, SANKEY_SECTION_SHAPE, SankeySection, SPIDER_SECTION_SHAPE, SpiderSection, TOC_SECTION_SHAPE, TocSection, TESTIMONIAL_SECTION_SHAPE, TestimonialSection, TIMELINE_SECTION_SHAPE, TimelineSection, TILES_CONFIG_SHAPE, TILES_SECTION_SHAPE, TilesSection, SectionModel, SectionType, SLIDER_SECTION_SHAPE, SliderSection, TABLE_SECTION_SHAPE, TableSection, TRACKER_SECTION_SHAPE, TrackerSection, VIDEO_SECTION_SHAPE, VideoSection, ViewPosition, WEATHER_CONFIG_SHAPE, WEATHER_SECTION_SHAPE, WeatherSection, CONNECTIONS_CONFIG_SHAPE, CONNECTIONS_SECTION_SHAPE, ConnectionsSection, DEPARTURES_CONFIG_SHAPE, DEPARTURES_SECTION_SHAPE, DeparturesSection, ENERGY_CONFIG_SHAPE, ENERGY_SECTION_SHAPE, EnergySection, COUNTER_CONFIG_SHAPE, COUNTER_SECTION_SHAPE, CounterSection, CONTACT_CONFIG_SHAPE, CONTACT_SECTION_SHAPE, ContactSection, FOOTER_CONFIG_SHAPE, FOOTER_MAX_COLUMNS, FOOTER_SECTION_SHAPE, FooterSection, FORM_SECTION_CONFIG_SHAPE, FormSection, FORM_SECTION_SHAPE, LEARNING_CONFIG_SHAPE, LEARNING_SECTION_SHAPE, LearningSection, ADVENT_CONFIG_SHAPE, ADVENT_SECTION_SHAPE, AdventSection, NEWS_CONFIG_SHAPE, NEWS_SECTION_SHAPE, NewsSection, TASKS_CONFIG_SHAPE, TASKS_SECTION_SHAPE, TasksSection, ACTIVITIES_CONFIG_SHAPE, ACTIVITIES_SECTION_SHAPE, ActivitiesSection, MESSAGES_CONFIG_SHAPE, MESSAGES_SECTION_SHAPE, MessagesSection, NOTICES_CONFIG_SHAPE, NOTICES_SECTION_SHAPE, NoticesSection, TRIP_STATS_CONFIG_SHAPE, TRIP_STATS_SECTION_SHAPE, TripStatsSection, JOURNAL_TRACK_SECTION_SHAPE, JournalTrackSection } from '@okr/shared-models';
 import { cloneRows } from './contact-section.util';
-import { downloadButtonConfig } from './button-presets.util';
+import { DOWNLOAD_BUTTON_TEXT, downloadButtonConfig } from './button-presets.util';
 import { createAdventDoors, newAdventSeed } from './advent.util';
 import { buildSearchTokens, DateFormat, die, getTodayStr } from '@okr/shared-util-core';
 
@@ -37,7 +37,8 @@ export function createSection(type: SectionType, tenantId: string): SectionModel
       // fresh content and properties: writing into the spread shape would change the module-level constants for every later section
       section = {
         ...BUTTON_SECTION_SHAPE,
-        content: { ...BUTTON_SECTION_SHAPE.content, position: ViewPosition.Top },
+        // the PDF icon on the left (a quarter of the width), the text that says what to click beside it
+        content: { ...BUTTON_SECTION_SHAPE.content, position: ViewPosition.Left, colSize: 3, htmlContent: DOWNLOAD_BUTTON_TEXT },
         properties: downloadButtonConfig(),
       } as ButtonSection;
       break;
