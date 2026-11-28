@@ -13,7 +13,6 @@ import { coerceBoolean, getImgixUrlWithAutoParams, hasRole, publicWebsiteOrigin 
 
 import { AuthInfo } from '@okr/auth-ui';
 import { Menu, MENU_WIDE_QUERY, MenuBar, MenuLayout, MenuStatic } from '@okr/cms-menu-feature';
-import { ProfileEditModal } from '@okr/profile-feature';
 import { CookieBanner } from '@okr/consent-ui';
 import { ConsentService } from '@okr/consent-data-access';
 
@@ -373,6 +372,8 @@ export class OkrRoot {
   }
 
   protected async openProfile(): Promise<void> {
+    // dynamic: a static import binds the profile feature (newsletters, mandates) into the start bundle
+    const { ProfileEditModal } = await import('@okr/profile-feature');
     const modal = await this.modalController.create({
       component: ProfileEditModal,
     });

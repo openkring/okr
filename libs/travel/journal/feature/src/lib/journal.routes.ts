@@ -16,6 +16,11 @@ export const JOURNAL_CHILD_ROUTES: Route[] = [
   { path: ':journalKey/:footprintKey', loadComponent: () => import('./journal-story.page').then((m) => m.JournalStoryPage) },
 ];
 
+/** The guest page, as children of `g/:journalKey/:code` (the empty path inherits both params), for an app that lazy-loads it. */
+export const JOURNAL_GUEST_CHILD_ROUTES: Route[] = [
+  { path: '', loadComponent: () => import('./journal-guest.page').then((m) => m.JournalGuestPage) },
+];
+
 export const JOURNAL_ROUTES: Route[] = [
   { path: 'journal', canActivate: [isAuthenticatedGuard], children: JOURNAL_CHILD_ROUTES },
   // the guest's personal link (plan 7): no sign-in — the link code is the credential of the journalGuest callable

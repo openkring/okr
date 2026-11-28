@@ -25,6 +25,11 @@ export class JournalLaunchService {
   public start(): void {
     if (this.started || !Capacitor.isNativePlatform()) return;
     this.started = true;
+    // an app that loads this service lazily may start it after the first navigation already ended
+    if (this.router.navigated) {
+      void this.decide(this.router.url);
+      return;
+    }
     merge(
       this.router.events.pipe(filter((e): e is NavigationEnd => e instanceof NavigationEnd), map((e) => e.urlAfterRedirects)),
       timer(FALLBACK_MS).pipe(map(() => this.router.url)),
