@@ -32,7 +32,7 @@ import {
   nonPdfAttachmentNames, parseEmails, sharedEmailCount, untickEmailAddress, withLinksInNewTab, toggleDelivery, versandBcc, versandDeliveries,
   EmailComposerFormModel, emailComposerValidations, VersandDeliveries, VersandEvent, VersandRow,
   EMAIL_COMPOSER_I18N_KEYS, EMAIL_COMPOSER_MSG_KEYS, EmailComposerI18n, isLetterPictureRefusal, mailEditorWanted, MailPageMeta, mailPageRefusalBlockId,
-  mailPageRefusalKey, PREVIEW_MOBILE_WIDTH, testMailRefusalKey, type PreviewWidth,
+  mailPageRefusalKey, MAIL_LAYOUT_SLOT_BODY, testMailRefusalKey, withLayoutSlot,
   choicesWithoutSubject, composerCloseDecision, draftCandidates, START_LOAD_MS, startChoices, startStepWanted,
   type MailingView, type StartChoice, type StartPage, type StartPick,
 } from '@okr/content-pdf-template-util';
@@ -54,6 +54,7 @@ import { APP_STORE_MIN } from '@okr/shared-data-access';
 import { MailPageService } from '@okr/content-pdf-template-data-access';
 import { MailPageDraft } from './mail-page-draft';
 import { MailStartModal } from './mail-start.modal';
+import { MailLayoutFrame } from './mail-layout-frame';
 
 /** What the close question answered: keep the draft, throw it away, or stay. */
 type CloseAnswer = 'keep' | 'discard' | 'back';
@@ -128,7 +129,7 @@ interface AddressField {
     FormsModule,
     SvgIconPipe,
     Header, Spinner, RichTextInput, ChangeConfirmation, Checkbox, EmailInput, ErrorNote, TextInput,
-    VersandDeliveryTable, VersandEventsSelect, PostversandStep,
+    VersandDeliveryTable, VersandEventsSelect, PostversandStep, MailLayoutFrame,
     IonContent, IonButton,
     IonCard, IonCardContent, IonGrid, IonRow, IonCol, IonIcon, IonChip, IonLabel, IonNote,
     IonSegment, IonSegmentButton, IonItem, IonAccordionGroup, IonAccordion, IonPopover, IonSpinner,
@@ -153,16 +154,6 @@ interface AddressField {
     .preview-frame { width: 100%; min-height: 420px; border: 0; background: #ffffff; }
     /* the same height whether the preview is empty, loading or shown: the segment does not jump */
     .preview-card { min-height: 420px; }
-    /* Versand (spec 1.176 §8.4): the width of the preview and «Testmail senden» above it */
-    .preview-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; padding: 8px 12px 0; }
-    .preview-bar ion-segment { flex: 0 1 280px; min-width: 0; }
-    .preview-bar ion-segment-button { flex: 1 1 0; min-width: 0; }
-    .preview-bar .spacer { flex: 1; }
-    .preview-bar ion-button { margin: 0; text-transform: none; }
-    .preview-bar ion-spinner { width: 16px; height: 16px; margin-inline-end: 8px; }
-    .preview-helper { padding: 4px 12px 0; font-size: 0.8rem; text-align: right; }
-    .preview-card.mobile { background: var(--ion-color-light, #f4f5f8); display: flex; justify-content: center; }
-    .preview-card.mobile .preview-frame { max-width: 100%; box-shadow: 0 0 0 1px var(--ion-color-light-shade, #d7d8da); }
     /* Versand (spec 1.176 §8.1): the editor fills the window below the segments, the canvas and the panel scroll on their own */
     ion-content.mail-fill::part(scroll) { display: flex; flex-direction: column; }
     ion-content.mail-fill form { flex: 1; min-height: 0; display: flex; flex-direction: column; }
@@ -171,8 +162,9 @@ interface AddressField {
     .mail-message { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 16px 12px; }
     .mail-head { display: flex; flex-wrap: wrap; align-items: center; gap: 0 16px; padding: 0 8px 4px; }
     .mail-subject { flex: 1 1 320px; min-width: 0; }
-    .mail-layout { flex: none; }
+    .mail-layout { flex: none; display: flex; flex-wrap: wrap; gap: 8px; }
     .mail-layout ion-button { margin: 0; text-transform: none; }
+    .mail-layout ion-spinner { width: 16px; height: 16px; margin-inline-end: 8px; }
     .mail-layouts { --width: min(640px, 94vw); }
     .mail-layouts-content { padding: 12px; }
     .mail-panel { display: flex; flex-direction: column; gap: 12px; padding: 12px; border-top: 1px solid var(--ion-color-light-shade); }
@@ -247,7 +239,10 @@ interface AddressField {
       <div class="segment">
         <ion-segment [(ngModel)]="activeSegment">
           <ion-segment-button value="editor"><ion-label>{{ i18n.segment_editor() }}</ion-label></ion-segment-button>
-          <ion-segment-button value="preview"><ion-label>{{ i18n.segment_preview() }}</ion-label></ion-segment-button>
+          <!-- a Versand shows its template around the blocks in the editor itself: no preview of its own -->
+          @if (!isVersand()) {
+            <ion-segment-button value="preview"><ion-label>{{ i18n.segment_preview() }}</ion-label></ion-segment-button>
+          }
           @if (isVersand()) {
             <ion-segment-button value="delivery"><ion-label>{{ i18n.segment_delivery() }} ({{ versandRows().length }})</ion-label></ion-segment-button>
             @if (anyPost()) {
@@ -298,6 +293,16 @@ interface AddressField {
                       {{ i18n.layout_label() }}: {{ layoutLabel() }}
                       <ion-icon slot="end" src="{{ 'chevron-down' | svgIcon }}" aria-hidden="true" />
                     </ion-button>
+                    <ion-button size="small" fill="outline" [title]="i18n.test_helper()"
+                      [disabled]="testRunning() || isSending() || !draft.loaded() || !hasContent() || !draft.valid()" (click)="sendTestMail()">
+                      @if (testRunning()) {
+                        <ion-spinner slot="start" name="crescent" aria-hidden="true" />
+                        {{ i18n.test_running() }}
+                      } @else {
+                        <ion-icon slot="start" src="{{ 'send' | svgIcon }}" aria-hidden="true" />
+                        {{ i18n.test_send() }}
+                      }
+                    </ion-button>
                   </div>
                 </div>
                 <ion-popover class="mail-layouts" [isOpen]="layoutsOpen()" [event]="layoutsEvent()" (didDismiss)="layoutsOpen.set(false)">
@@ -340,6 +345,13 @@ interface AddressField {
                     <input #fileInput type="file" hidden (change)="onFileSelected($event)" />
                   </div>
                 </div>
+              </ng-template>
+              <!-- the head and the foot of the chosen template, above and below the blocks (the canvas draws them in place) -->
+              <ng-template #mailTop>
+                @if (layoutFrameHtml(); as html) { <okr-mail-layout-frame [html]="html" part="top" [title]="layoutLabel()" /> }
+              </ng-template>
+              <ng-template #mailFoot>
+                @if (layoutFrameHtml(); as html) { <okr-mail-layout-frame [html]="html" part="foot" [title]="layoutLabel()" /> }
               </ng-template>
             } @else {
               <ion-card>
@@ -400,26 +412,7 @@ interface AddressField {
           <!-- Preview: the mail as the server renders it, i.e. exactly what the recipient receives. -->
           @if (activeSegment() === 'preview') {
             <ion-card>
-              @if (isVersand()) {
-                <div class="preview-bar">
-                  <ion-segment [value]="previewWidth()" (ionChange)="onPreviewWidth($event.detail.value)" [attr.aria-label]="i18n.preview_width()">
-                    <ion-segment-button value="mobile"><ion-label>{{ i18n.preview_mobile() }}</ion-label></ion-segment-button>
-                    <ion-segment-button value="desktop"><ion-label>{{ i18n.preview_desktop() }}</ion-label></ion-segment-button>
-                  </ion-segment>
-                  <span class="spacer"></span>
-                  <ion-button size="small" fill="outline" [disabled]="testRunning() || isSending() || !draft.loaded() || !hasContent() || !draft.valid()" (click)="sendTestMail()">
-                    @if (testRunning()) {
-                      <ion-spinner slot="start" name="crescent" aria-hidden="true" />
-                      {{ i18n.test_running() }}
-                    } @else {
-                      <ion-icon slot="start" src="{{ 'send' | svgIcon }}" aria-hidden="true" />
-                      {{ i18n.test_send() }}
-                    }
-                  </ion-button>
-                </div>
-                <ion-note class="note preview-helper">{{ i18n.test_helper() }}</ion-note>
-              }
-              <ion-card-content class="ion-no-padding preview-card" [class.mobile]="isVersand() && previewWidth() === 'mobile'">
+              <ion-card-content class="ion-no-padding preview-card">
                 @if (!hasContent()) {
                   <ion-note class="note">{{ i18n.preview_empty() }}</ion-note>
                 } @else if (previewLoading()) {
@@ -429,7 +422,7 @@ interface AddressField {
                 } @else {
                   <!-- no scripts; links open in a new tab (allow-popups) outside the sandbox, so they can be tried out -->
                   <iframe class="preview-frame" [title]="i18n.preview_frame()" sandbox="allow-popups allow-popups-to-escape-sandbox" [srcdoc]="previewHtml()"
-                    [style.width]="previewFrameWidth()"></iframe>
+                    ></iframe>
                 }
               </ion-card-content>
             </ion-card>
@@ -876,6 +869,15 @@ export class EmailComposerModal {
   private readonly mailHost = viewChild('mailHost', { read: ViewContainerRef });
   private readonly mailHead = viewChild<TemplateRef<unknown>>('mailHead');
   private readonly mailPanel = viewChild<TemplateRef<unknown>>('mailPanel');
+  private readonly mailTop = viewChild<TemplateRef<unknown>>('mailTop');
+  private readonly mailFoot = viewChild<TemplateRef<unknown>>('mailFoot');
+  /**
+   * The chosen template rendered around a marker where the mail goes (`withLayoutSlot`): the editor shows its head and foot around the
+   * blocks. Undefined while it loads or when it could not be had; the editor then shows its plain strips.
+   */
+  protected readonly layoutFrameHtml = signal<string | undefined>(undefined);
+  /** Number of the latest frame request: a response for an older template is dropped. */
+  private layoutFrameRequest = 0;
   private hostRef: ComponentRef<unknown> | undefined;
   private hostCreating = false;
   /** The editor's chunk could not be loaded (offline, a stale release): a message with «Erneut versuchen»; the draft is untouched. */
@@ -916,10 +918,6 @@ export class EmailComposerModal {
   protected readonly previewRefusal = signal<string | undefined>(undefined);
   /** Number of the latest preview request: a response with an older number is dropped. */
   private previewRequest = 0;
-  /** The width of a Versand's preview (spec 1.176 §8.4): a phone of 390 px, or the window. */
-  protected readonly previewWidth = signal<PreviewWidth>('desktop');
-  protected readonly previewFrameWidth = computed(() =>
-    this.isVersand() && this.previewWidth() === 'mobile' ? `${PREVIEW_MOBILE_WIDTH}px` : '100%');
   /** «Testmail senden» runs: a second press is ignored, a close waits for it. */
   protected readonly testRunning = signal(false);
   /** The test mail under way (flush + `sendTestMailing`); settles, never rejects. */
@@ -974,6 +972,16 @@ export class EmailComposerModal {
         if (this.isDirty()) return;
         this.formData.update((vm) => ({ ...vm, subject: `${prefix} ${this.filename()}` }));
       });
+    });
+    // A Versand: the template's head and foot for the editor, again whenever another template is chosen; the editor gets them as they come.
+    effect(() => {
+      if (!this.isVersand()) return;
+      const layout = this.layout();
+      untracked(() => void this.loadLayoutFrame(layout));
+    });
+    effect(() => {
+      this.layoutFrameHtml();
+      untracked(() => { if (this.hostRef) this.setLayoutFrame(this.hostRef); });
     });
     // The preview is fetched every time its segment opens and again if what it shows changes while it is
     // open (layout, body, attachment name). Reads happen here, the request itself runs untracked.
@@ -1376,6 +1384,30 @@ export class EmailComposerModal {
     return prefix ? `${prefix} ${filename}` : filename;
   }
 
+  /** The head and the foot of the template for the editor, while there is a rendering of it; else the editor draws its strips. */
+  private setLayoutFrame(ref: ComponentRef<unknown>): void {
+    const shown = !!this.layoutFrameHtml();
+    ref.setInput('layoutTop', shown ? this.mailTop() : undefined);
+    ref.setInput('layoutFoot', shown ? this.mailFoot() : undefined);
+  }
+
+  /**
+   * The template rendered by the server around `MAIL_LAYOUT_SLOT_BODY`, the renderer that sends: what the editor shows above and below
+   * the blocks. Only the latest request writes. A failure leaves the strips: the mail can still be written and sent.
+   */
+  private async loadLayoutFrame(layout: EmailLayoutChoice): Promise<void> {
+    const request = ++this.layoutFrameRequest;
+    try {
+      const rendered = await this.docEmailService.renderPreview({ body: MAIL_LAYOUT_SLOT_BODY, layout, attachmentName: '' });
+      if (this.destroyed || request !== this.layoutFrameRequest) return;
+      this.layoutFrameHtml.set(withLayoutSlot(rendered.html));
+    } catch (err) {
+      if (this.destroyed || request !== this.layoutFrameRequest) return;
+      console.warn(`EmailComposerModal.loadLayoutFrame(${layout}) failed`, err);
+      this.layoutFrameHtml.set(undefined);
+    }
+  }
+
   private async loadThumbnail(layout: EmailLayoutChoice, sample: string): Promise<void> {
     let html: SafeHtml | '' = '';
     try {
@@ -1568,6 +1600,7 @@ export class EmailComposerModal {
       ref.setInput('context', context);
       ref.setInput('head', this.mailHead());
       ref.setInput('panel', this.mailPanel());
+      this.setLayoutFrame(ref);
       ref.setInput('storagePath', `tenant/${this.appStore.tenantId()}/section/${this.draft.articleKey()}`);
       ref.setInput('currentUser', this.appStore.currentUser());
       ref.setInput('active', () => !this.destroyed && !this.isSending());
@@ -1605,10 +1638,6 @@ export class EmailComposerModal {
   protected openLayouts(event: Event): void {
     this.layoutsEvent.set(event);
     this.layoutsOpen.set(true);
-  }
-
-  protected onPreviewWidth(value: unknown): void {
-    if (value === 'mobile' || value === 'desktop') this.previewWidth.set(value);
   }
 
   /**

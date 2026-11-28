@@ -1118,6 +1118,11 @@ const subject: FeatureBlock = {
       { key: 'org-copy-emails', name: 'org-copy-emails', url: 'copyEmailAddresses', action: 'call', roleNeeded: 'memberAdmin', icon: 'copy', label: '@item.org-copy-emails' },
       { key: 'comm-center', name: 'comm-center', url: 'commCenter', action: 'call', roleNeeded: 'memberAdmin', icon: 'send', label: '@item.comm-center' },
     ] },
+    // context menu of the Versand overview (`/mailings/all`, spec 1.145): a new Versand to persons picked first. NEW spec, seeded by
+    // `scripts/seed-mailing-context-menu.mjs`; `memberAdmin` like `mailing-all` and the route. The `url` is the list's method name.
+    { key: 'c-mailings', name: 'c-mailings', url: '', action: 'context', roleNeeded: 'memberAdmin', icon: 'help-circle', label: '', children: [
+      { key: 'mailing-new', name: 'mailing-new', url: 'newVersand', action: 'call', roleNeeded: 'memberAdmin', icon: 'add-circle', label: '@item.mailing-new' },
+    ] },
     // context menu of the Anmeldungen list (`/applications/c-application`): record an application that came in
     // outside a form, export the listed ones as CSV. The `url` is the list's method name (onPopoverDismiss).
     { key: 'c-application', name: 'c-application', url: '', action: 'context', roleNeeded: 'memberAdmin', icon: 'help-circle', label: '', children: [
@@ -1222,11 +1227,9 @@ const relationship: FeatureBlock = {
       { key: 'membership-add', name: 'membership-add', url: 'add', action: 'call', roleNeeded: 'registered', icon: 'add-circle', label: '@item.membership-add' },
       { key: 'membership-copyemail', name: 'membership-copyemail', url: 'copyEmailAddresses', action: 'call', roleNeeded: 'memberAdmin', icon: 'copy', label: '@item.membership-copyemail' },
       { key: 'comm-center', name: 'comm-center', url: 'commCenter', action: 'call', roleNeeded: 'memberAdmin', icon: 'send', label: '@item.comm-center' },
-      { key: 'membership-exportraw', name: 'membership-exportraw', url: 'exportRaw', action: 'call', roleNeeded: 'registered', icon: 'download', label: '@item.membership-exportraw' },
-      { key: 'membership-exportsrv', name: 'membership-exportsrv', url: 'exportSrv', action: 'call', roleNeeded: 'registered', icon: 'download', label: '@item.membership-exportsrv' },
-      { key: 'membership-exportmembers', name: 'membership-exportmembers', url: 'exportMembers', action: 'call', roleNeeded: 'registered', icon: 'download', label: '@item.membership-exportmembers' },
-      { key: 'membership-exportaddresses', name: 'membership-exportaddresses', url: 'exportAddresses', action: 'call', roleNeeded: 'registered', icon: 'download', label: '@item.membership-exportaddresses' },
-      { key: 'membership-exportclubdesk', name: 'membership-exportclubdesk', url: 'exportClubdesk', action: 'call', roleNeeded: 'contentAdmin', icon: 'download', label: '@item.membership-exportclubdesk' },
+      // «Export …» (2026-11-28): one row opens the picker of the export kinds, which says what each file contains. It replaces
+      // the single export rows; `scripts/migrate-membership-menus.mjs` brings the live docs in line.
+      { key: 'membership-export', name: 'membership-export', url: 'export', action: 'call', roleNeeded: 'registered', icon: 'download', label: '@item.membership-export' },
       { key: 'maint-divider-member', name: 'maint-divider-member', url: '', action: 'divider', roleNeeded: 'memberAdmin', icon: 'help-circle', label: '@item.maint-divider-member' },
       { key: 'membership-old-juniors', name: 'membership-old-juniors', url: 'oldJuniors', action: 'call', roleNeeded: 'memberAdmin', icon: 'checkbox-circle-double', label: '@item.membership-old-juniors' },
       { key: 'membership-category-changes', name: 'membership-category-changes', url: 'categoryChanges', action: 'call', roleNeeded: 'memberAdmin', icon: 'checkbox-circle-double', label: '@item.membership-category-changes' },
@@ -1236,8 +1239,7 @@ const relationship: FeatureBlock = {
       { key: 'membership-add', name: 'membership-add', url: 'add', action: 'call', roleNeeded: 'registered', icon: 'add-circle', label: '@item.membership-add' },
       { key: 'membership-copyemail', name: 'membership-copyemail', url: 'copyEmailAddresses', action: 'call', roleNeeded: 'memberAdmin', icon: 'copy', label: '@item.membership-copyemail' },
       { key: 'comm-center', name: 'comm-center', url: 'commCenter', action: 'call', roleNeeded: 'memberAdmin', icon: 'send', label: '@item.comm-center' },
-      { key: 'membership-exportraw', name: 'membership-exportraw', url: 'exportRaw', action: 'call', roleNeeded: 'registered', icon: 'download', label: '@item.membership-exportraw' },
-      { key: 'membership-exportaddresses', name: 'membership-exportaddresses', url: 'exportAddresses', action: 'call', roleNeeded: 'registered', icon: 'download', label: '@item.membership-exportaddresses' },
+      { key: 'membership-export', name: 'membership-export', url: 'export', action: 'call', roleNeeded: 'registered', icon: 'download', label: '@item.membership-export' },
     ] },
     { key: 'c-invitation', name: 'c-invitation', url: '', action: 'context', roleNeeded: 'contentAdmin', icon: 'help-circle', label: '', children: [
       { key: 'invitation-togglepast', name: 'invitation-togglepast', url: 'togglePast', action: 'toggle', roleNeeded: 'admin', icon: 'eye-on', label: '@item.invitation-togglepast' },

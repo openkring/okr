@@ -15,6 +15,7 @@ import { Menu } from '@okr/cms-menu-feature';
 import { getMainContact, isAdminMember } from '@okr/subject-group-util';
 
 import { MembershipStore } from './membership.store';
+import type { MembershipExportKind } from './membership-export.modal';
 import { PFX } from './scope';
 
 /**
@@ -326,6 +327,17 @@ export class MembershipList {
   }
 
   /******************************* actions *************************************** */
+  /**
+   * What «Export …» offers: the contact list of a group the address list and all details, the member list every kind
+   * (Clubdesk for content admins, as its menu row was before).
+   */
+  private exportKinds(): MembershipExportKind[] {
+    if (this.contextMenuName() === 'c-groupmembers') return ['address', 'raw'];
+    const kinds: MembershipExportKind[] = ['member', 'address', 'raw', 'srv'];
+    if (this.hasRole('contentAdmin')) kinds.push('clubdesk');
+    return kinds;
+  }
+
   public async onPopoverDismiss($event: CustomEvent): Promise<void> {
     const selectedMethod = $event.detail.data;
     if (!selectedMethod) return; // dismissed without choosing an item (backdrop/escape) — not an error
@@ -340,6 +352,8 @@ export class MembershipList {
         break;
       }
       case 'memberAdd': await this.store.addNewMember(); break;
+      case 'export': await this.store.chooseExport(this.filteredMemberships(), this.exportKinds()); break;
+      // the single export rows before «Export …» (scripts/migrate-membership-menus.mjs), kept until every app is released
       case 'exportRaw': await this.store.export("raw", this.filteredMemberships()); break;
       case 'exportSrv': await this.store.export("srv", this.filteredMemberships()); break;
       case 'exportMembers': await this.store.export("member", this.filteredMemberships()); break;

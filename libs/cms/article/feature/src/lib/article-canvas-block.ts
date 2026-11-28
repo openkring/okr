@@ -50,7 +50,6 @@ export abstract class ArticleCanvasContext {
   public abstract readonly captionFallbacks: Signal<string[]>;
   public abstract act(id: string, action: FrameAction): void;
   public abstract editText(id: string, html: string): void;
-  public abstract splitText(id: string, html: string): void;
   public abstract joinText(id: string, html: string): void;
   public abstract textFailed(id: string): void;
 }
@@ -187,7 +186,7 @@ const HIDDEN_FEATURES: readonly RichTextFeature[] = ['history', 'colors', 'align
     <ng-template #editor>
       @if (!ready()) { <div [innerHTML]="drawnHtml()"></div> }
       <okr-rich-text-inline [value]="html()" [placeholder]="t.article_editor_canvas_textPlaceholder()" [hiddenFeatures]="hiddenFeatures" [blockEditing]="block.type === 'text'"
-        [toolbarHost]="canvas.toolbarHost()" [caret]="caret()" (valueChange)="canvas.editText(block.id, $event)" (split)="canvas.splitText(block.id, $event)"
+        [toolbarHost]="canvas.toolbarHost()" [caret]="caret()" (valueChange)="canvas.editText(block.id, $event)"
         (join)="canvas.joinText(block.id, $event)" (ready)="onReady()" (failed)="onFailed()" />
     </ng-template>
   `,

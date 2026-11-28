@@ -115,7 +115,3 @@ export function testMailRefusalKey(err: unknown): TestMailRefusalKey | undefined
   if (own && hasOwn(own, message)) return own[message];
   return mailPageRefusalKey(err);
 }
-
-/** The width of the preview (spec 1.176 §8.4): a phone is 390 px wide, the desktop takes the window. */
-export const PREVIEW_MOBILE_WIDTH = 390;
-export type PreviewWidth = 'mobile' | 'desktop';

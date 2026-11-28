@@ -33,6 +33,7 @@ import { MemberNewModal } from './member-new.modal';
 import { MembershipEditModal } from './membership-edit.modal';
 import { ActivityService } from '@okr/activity-data-access';
 import { activeFirebaseApp } from '@okr/shared-config';
+import type { MembershipExportKind } from './membership-export.modal';
 
 export type MembershipState = {
   orgId: string;  // the organization to which the memberships belong (can be org or group)
@@ -856,6 +857,22 @@ export const _MembershipStore = signalStore(
         }
       },
 
+
+      /**
+       * «Export …»: the picker of the export kinds (each says what its file contains), then the chosen export of the listed memberships.
+       * Closing the picker exports nothing. The SRV list ignores the filter, as before.
+       */
+      async chooseExport(memberships: MembershipModel[], kinds: MembershipExportKind[]): Promise<void> {
+        const { MembershipExportModal } = await import('./membership-export.modal');
+        const modal = await store.modalController.create({
+          component: MembershipExportModal,
+          componentProps: { i18n: store.i18n, kinds },
+        });
+        await modal.present();
+        const { data, role } = await modal.onWillDismiss<MembershipExportKind>();
+        if (role !== 'confirm' || !data) return;
+        await this.export(data, memberships);
+      },
 
       async export(type: string, memberships: MembershipModel[]): Promise<void> {
         let keys: (keyof MembershipModel)[] = [];

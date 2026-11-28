@@ -93,7 +93,7 @@ export type ArticlePanelPart = ArticlePanelTab | 'all';
     <ng-content select="[belowBar]" />
     <div class="work">
       <okr-article-canvas class="canvas" [profile]="profile()" [section]="section()" [selectedId]="selectedId()" [errorIds]="errorIds()" [device]="device()" [dragEnabled]="!phone()"
-        [toolbarHost]="toolbarHost()" [caret]="caret()" [eventLines]="eventLines()" [i18n]="t" (selectBlock)="select($event)" (change)="onCanvasChange($event)" (headerChange)="onHeaderChange($event)" />
+        [toolbarHost]="toolbarHost()" [caret]="caret()" [eventLines]="eventLines()" [mailTop]="mailTop()" [mailFoot]="mailFoot()" [i18n]="t" (selectBlock)="select($event)" (change)="onCanvasChange($event)" (headerChange)="onHeaderChange($event)" />
       <div class="panel" #panel>
         @if (selectedBlock(); as block) {
           <okr-article-block-panel [block]="block" [profile]="profile()" [column]="column()" [errors]="selectedErrors()" [outdated]="selectedOutdated()" [calendars]="calendars()"
@@ -144,6 +144,9 @@ export class ArticleEditorSurface {
   public readonly currentUser = input<UserModel | undefined>();
   /** of a mail: the upcoming events, by the key of their calendar (at least MAX_MAIL_EVENTS when there are); a missing key: not known yet */
   public readonly eventLines = input<Record<string, MailEventLine[]>>({});
+  /** a mail: the head and the foot of its template (see `ArticleCanvas`) */
+  public readonly mailTop = input<TemplateRef<unknown>>();
+  public readonly mailFoot = input<TemplateRef<unknown>>();
   /** of a mail: the calendars that can be chosen */
   public readonly calendars = input<readonly { key: string; name: string }[]>([]);
   /** asked at a key press: false while the host is closing */

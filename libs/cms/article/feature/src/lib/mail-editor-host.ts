@@ -45,7 +45,7 @@ type History = EditorHistory<EditorState>;
     }
     <okr-article-editor-surface [profile]="profile" [history]="draft().history()" (historyChange)="onHistory($event)" [errors]="draft().errors()"
       [articleImages]="articleImages()" [onUpload]="onUpload()" [storagePath]="storagePath()" [currentUser]="currentUser()"
-      [eventLines]="eventLines()" [calendars]="calendars()" [active]="active()" [i18n]="i18n"
+      [eventLines]="eventLines()" [calendars]="calendars()" [mailTop]="layoutTop()" [mailFoot]="layoutFoot()" [active]="active()" [i18n]="i18n"
       [attr.inert]="draft().readOnly() ? '' : null" [attr.aria-busy]="draft().readOnly() ? 'true' : null">
       <ion-button barEnd fill="clear" size="small" [title]="i18n.article_editor_mail_insert_button()" (click)="insertArticle()">
         <ion-icon slot="start" src="{{ 'add' | svgIcon }}" aria-hidden="true" />
@@ -65,6 +65,9 @@ export class MailEditorHost {
   public readonly head = input<TemplateRef<unknown>>();
   /** what the panel shows below the block library while nothing is selected: answer-link events and attachments */
   public readonly panel = input<TemplateRef<unknown>>();
+  /** the head and the foot of the mail's template, above and below the blocks; undefined while they are not there */
+  public readonly layoutTop = input<TemplateRef<unknown>>();
+  public readonly layoutFoot = input<TemplateRef<unknown>>();
   public readonly storagePath = input.required<string>();
   public readonly currentUser = input<UserModel | undefined>();
   /** asked at a key press: false while the composer closes or sends */

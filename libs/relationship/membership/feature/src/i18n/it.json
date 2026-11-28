@@ -763,5 +763,29 @@
   "reorder": {
     "hint": "Trascina le maniglie a destra per cambiare l'ordine. I membri compaiono in quest'ordine anche sul sito web e nelle sezioni delle persone.",
     "error": "Non è stato possibile salvare il nuovo ordine. Riprova, per favore."
+  },
+  "exportChoice": {
+    "title": "Esporta",
+    "intro": "Scegli cosa vuoi scaricare. Tranne l’elenco SRV, ogni file contiene i membri che vedi ora nella lista, quindi valgono ricerca e filtri.",
+    "raw": {
+      "label": "Iscrizioni (tutti i dati)",
+      "desc": "Tutti i dati salvati per ogni iscrizione, una colonna per dato. Utile per le tue analisi, per esempio in Excel."
+    },
+    "member": {
+      "label": "Elenco membri",
+      "desc": "Numero, nome, cognome, anno di nascita, data di entrata, categoria e funzione. Utile da stampare o da inoltrare."
+    },
+    "address": {
+      "label": "Elenco indirizzi",
+      "desc": "Nome, indirizzo postale, telefono ed e-mail, per esempio per lettere in serie o etichette."
+    },
+    "srv": {
+      "label": "Elenco SRV",
+      "desc": "L’elenco per la Federazione svizzera di canottaggio con tutti i membri attivi e le uscite dell’anno scorso. Non dipende da ricerca e filtri."
+    },
+    "clubdesk": {
+      "label": "Esporta per Clubdesk",
+      "desc": "I membri con indirizzo, data di nascita, entrata, categoria e stato, preparati in modo che Clubdesk li possa importare direttamente."
+    }
   }
 }

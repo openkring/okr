@@ -2,15 +2,17 @@
 import { Component, computed, inject, input } from '@angular/core';
 import { Router } from '@angular/router';
 import {
-  IonButton, IonButtons, IonChip, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonLabel, IonMenuButton, IonRow, IonTitle, IonToolbar,
+  IonButton, IonButtons, IonChip, IonCol, IonContent, IonGrid, IonHeader, IonIcon, IonLabel, IonMenuButton, IonPopover, IonRow, IonTitle, IonToolbar,
 } from '@ionic/angular';
 
 import { SvgIconPipe } from '@okr/shared-pipes';
 import { EmptyList, ListFilter, Spinner } from '@okr/shared-ui';
 import { MailingView, mailingStateColor } from '@okr/content-pdf-template-util';
-import { prettyFormatDateTime } from '@okr/shared-util-core';
+import { contextMenuId, prettyFormatDateTime } from '@okr/shared-util-core';
+import { Menu } from '@okr/cms-menu-feature';
 
 import { MailingStore } from './mailing.store';
+import { MailingSegments } from './mailing-segments';
 
 /**
  * The tenant's sent Versände (spec 1.145), newest first — the answer to «where do I see the status of
@@ -26,7 +28,7 @@ import { MailingStore } from './mailing.store';
   imports: [
     SvgIconPipe, Spinner, ListFilter, EmptyList, IonButton, IonIcon,
     IonHeader, IonToolbar, IonTitle, IonButtons, IonMenuButton,
-    IonContent, IonLabel, IonGrid, IonRow, IonCol, IonChip,
+    IonContent, IonLabel, IonGrid, IonRow, IonCol, IonChip, IonPopover, Menu, MailingSegments,
   ],
   styles: [`
     ion-row { cursor: pointer; border-bottom: 1px solid var(--ion-color-light); }
@@ -39,14 +41,22 @@ import { MailingStore } from './mailing.store';
       <ion-toolbar color="secondary">
         <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
         <ion-title>{{ filteredCount() }}/{{ count() }} {{ store.i18n.list_title() }}</ion-title>
-        <!-- the status board of all letters sent through the post provider (spec 1.150 §9) -->
+        <!-- «Neuen Versand erstellen» (menuItems c-mailings) -->
         <ion-buttons slot="end">
-          <ion-button (click)="openLetters()">
-            <ion-icon slot="start" src="{{ 'send' | svgIcon }}" />
-            {{ store.sendingI18n.open_letters() }}
+          <ion-button [id]="popupId">
+            <ion-icon slot="icon-only" [src]="'ellipsis-vertical' | svgIcon" />
           </ion-button>
+          <ion-popover [trigger]="popupId" triggerAction="click" [showBackdrop]="true" [dismissOnSelect]="true" (ionPopoverDidDismiss)="onPopoverDismiss($event)">
+            <ng-template>
+              <ion-content>
+                <okr-menu [menuName]="contextMenuName" />
+              </ion-content>
+            </ng-template>
+          </ion-popover>
         </ion-buttons>
       </ion-toolbar>
+      <!-- the Versände and the status board of all letters sent through the post provider (spec 1.150 §9) -->
+      <okr-mailing-segments active="overview" [overviewLabel]="store.i18n.segment_overview()" [lettersLabel]="store.sendingI18n.list_title()" />
       <okr-list-filter (searchTermChanged)="store.setSearchTerm($event)" />
       <ion-toolbar color="primary" class="ion-hide-sm-down">
         <ion-grid>
@@ -99,6 +109,9 @@ export class MailingList {
 
   /** route segment; 'all' until the list gets a partition */
   public readonly listId = input('all');
+  /** the context menu (menuItems). A constant, not an input: route input binding would set an unbound input to undefined */
+  protected readonly contextMenuName = 'c-mailings';
+  protected readonly popupId = contextMenuId('c_mailing_list');
 
   protected readonly count = computed(() => this.store.mailings().length);
   protected readonly filteredCount = computed(() => this.store.filteredMailings().length);
@@ -130,8 +143,13 @@ export class MailingList {
     }
   }
 
-  protected async openLetters(): Promise<void> {
-    await this.router.navigate(['/mailings', 'letters']);
+  protected async onPopoverDismiss($event: CustomEvent): Promise<void> {
+    const selectedMethod = $event.detail.data;
+    if (!selectedMethod) return; // dismissed without choosing an item (backdrop/escape)
+    switch (selectedMethod) {
+      case 'newVersand': await this.store.newVersand(); break;
+      default: console.error(`MailingList.onPopoverDismiss: unknown method ${selectedMethod}`);
+    }
   }
 
   protected async open(mailing: MailingView): Promise<void> {

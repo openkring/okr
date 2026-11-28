@@ -4,7 +4,10 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { patchState, signalStore, withComputed, withMethods, withProps, withState } from '@ngrx/signals';
 import { combineLatest, of } from 'rxjs';
 
-import { AppStore } from '@okr/shared-feature';
+import { ModalController } from '@ionic/angular';
+
+import { FirestoreService } from '@okr/shared-data-access';
+import { AppStore, PersonSelectModal, type PersonSelectResult } from '@okr/shared-feature';
 import { I18nService } from '@okr/shared-i18n';
 import { CalEventModel, NameDisplay } from '@okr/shared-models';
 import { DocEmailService, MailingLetters, MailingService, SendingService } from '@okr/content-pdf-template-data-access';
@@ -67,6 +70,8 @@ export const MailingStore = signalStore(
     i18n: inject(I18nService).translateAll(MAILING_I18N_KEYS) as MailingI18n,
     sendingI18n: inject(I18nService).translateAll(SENDING_I18N_KEYS) as SendingI18n,
     appStore: inject(AppStore),
+    modalController: inject(ModalController),
+    firestoreService: inject(FirestoreService),
     mailingService: inject(MailingService),
     docEmailService: inject(DocEmailService),
     sendingService: inject(SendingService),
@@ -214,6 +219,32 @@ export const MailingStore = signalStore(
       } finally {
         patchState(store, { deliveriesLoading: false });
       }
+    },
+
+    /**
+     * «Neuen Versand erstellen» of the overview: the recipients are picked first (persons, with group filter and select-all, as
+     * «Versenden» of a news article does), then the usual Versand opens with them. Nothing happens if the picker is closed or
+     * nobody is checked. The composer and its editor are loaded only now, never with the list.
+     */
+    async newVersand(): Promise<void> {
+      const currentUser = store.appStore.currentUser();
+      if (!currentUser) return;
+      const picker = await store.modalController.create({
+        component: PersonSelectModal,
+        componentProps: { selectedTag: '', currentUser, multiple: true },
+        cssClass: 'modal-fixed-height',
+      });
+      await picker.present();
+      const { data, role } = await picker.onWillDismiss<PersonSelectResult>();
+      if (role !== 'confirm' || data?.kind !== 'multi' || data.persons.length === 0) return;
+      const { openBulkEmailFlow, toVersandRecipients } = await import('./bulk-email');
+      const recipients = toVersandRecipients(data.persons, (p) => store.appStore.getDirectoryEntry(`person.${p.okey}`)?.favEmail);
+      await openBulkEmailFlow({
+        modalController: store.modalController,
+        firestoreService: store.firestoreService,
+        appStore: store.appStore,
+        tenantId: store.appStore.tenantId(),
+      }, recipients);
     },
 
     async loadLetters(mailing: MailingView | undefined): Promise<void> {

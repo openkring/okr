@@ -763,5 +763,29 @@
   "reorder": {
     "hint": "Arrastra los asideros de la derecha para cambiar el orden. Los miembros aparecen en este orden también en el sitio web y en las secciones de personas.",
     "error": "No se pudo guardar el nuevo orden. Inténtalo de nuevo, por favor."
+  },
+  "exportChoice": {
+    "title": "Exportar",
+    "intro": "Elige lo que quieres descargar. Salvo la lista SRV, cada archivo contiene los miembros que ves ahora en la lista, así que se aplican la búsqueda y los filtros.",
+    "raw": {
+      "label": "Membresías (todos los datos)",
+      "desc": "Todos los datos guardados de cada membresía, una columna por dato. Útil para tus propios análisis, por ejemplo en Excel."
+    },
+    "member": {
+      "label": "Lista de miembros",
+      "desc": "Número, nombre, apellido, año de nacimiento, fecha de ingreso, categoría y función. Útil para imprimir o compartir."
+    },
+    "address": {
+      "label": "Lista de direcciones",
+      "desc": "Nombre, dirección postal, teléfono y correo, por ejemplo para cartas en serie o etiquetas."
+    },
+    "srv": {
+      "label": "Lista SRV",
+      "desc": "La lista para la Federación Suiza de Remo con todos los miembros activos y las bajas del año pasado. No depende de la búsqueda ni de los filtros."
+    },
+    "clubdesk": {
+      "label": "Exportar para Clubdesk",
+      "desc": "Los miembros con dirección, fecha de nacimiento, ingreso, categoría y estado, preparados para que Clubdesk los pueda importar directamente."
+    }
   }
 }

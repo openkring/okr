@@ -9,7 +9,7 @@ import { Decoration, DecorationSet, EditorView } from 'prosemirror-view';
 import { RichTextFormat } from '../rich-text-format';
 import { RichTextI18n } from '../rich-text-i18n';
 import type { RichTextCaret, RichTextFeature } from '../rich-text-inline';
-import { caretSelection, isAtVeryStart, redo, removeEmptyLastParagraph, splitItem, toggleChecked, undo } from './rich-text.commands';
+import { caretSelection, isAtVeryStart, redo, splitItem, toggleChecked, undo } from './rich-text.commands';
 import { docToHtml, EMPTY_HTML, htmlToDoc } from './rich-text.html';
 import { docToMarkdown, EMPTY_MARKDOWN, markdownToDoc } from './rich-text.markdown';
 import { richTextSchema as schema } from './rich-text.schema';
@@ -148,14 +148,15 @@ export class RichTextEngine implements AfterViewInit, RichTextToolbarEngine {
   public readonly showToolbar = input(true);
   /** The text stands where readers see it and must look the same (okr-rich-text-inline). Read once. */
   public readonly inPlace = input(false);
-  /** Enter in an empty last paragraph and Backspace at the very start ask the host (`split`, `join`). */
+  /**
+   * Backspace at the very start asks the host (`join`). Enter always stays a line break in this text, also on an empty line:
+   * a blank line is how a mail gets its spacing, and a new block is added with the block library, never by a key.
+   */
   public readonly blockEditing = input(false);
   /** Where the cursor goes when a text is loaded or this changes; undefined = it is left alone (start of the text). */
   public readonly caret = input<RichTextCaret | undefined>(undefined);
   /** The stored text after every change the author makes; never echoes a value pushed in through `value`. */
   public readonly valueChange = output<string>();
-  /** blockEditing: a new text is wanted below; the text without its empty last paragraph (also emitted by `valueChange`) */
-  public readonly split = output<string>();
   /** blockEditing: this text is to be joined with the one above; the text */
   public readonly join = output<string>();
 
@@ -231,7 +232,6 @@ export class RichTextEngine implements AfterViewInit, RichTextToolbarEngine {
     return [
       ...(off('history') ? [noNativeHistoryPlugin()] : [history(), keymap({ 'Mod-z': undo, 'Shift-Mod-z': redo, 'Mod-y': redo })]),
       keymap({
-        'Enter': this.requestSplit(),
         'Backspace': this.requestJoin(), 'Shift-Backspace': this.requestJoin(), 'Mod-Backspace': this.requestJoin(),
       }),
       keymap({
@@ -247,15 +247,6 @@ export class RichTextEngine implements AfterViewInit, RichTextToolbarEngine {
       ...(untracked(() => this.inPlace()) ? [emptyLinesPlugin()] : []),
       taskCheckboxPlugin(),
     ];
-  }
-
-  /** Enter in an empty last paragraph of a text block: that paragraph becomes the next block. */
-  private requestSplit(): Command {
-    return (state, dispatch) => {
-      if (!untracked(() => this.blockEditing()) || !removeEmptyLastParagraph()(state, dispatch)) return false;
-      if (dispatch && this.view) this.split.emit(this.fromDoc(this.view.state.doc));
-      return true;
-    };
   }
 
   /** Backspace at the very start of a text block: the host joins it with the text above. */

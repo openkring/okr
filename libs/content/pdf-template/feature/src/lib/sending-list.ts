@@ -11,6 +11,7 @@ import type { SendingPeriod, SendingStatus } from '@okr/content-pdf-template-uti
 import type { SendingModel } from '@okr/shared-models';
 
 import { SendingStore } from './sending.store';
+import { MailingSegments } from './mailing-segments';
 
 /**
  * Every letter the tenant sent through the post provider, newest first, live (spec 1.150 §9).
@@ -24,7 +25,7 @@ import { SendingStore } from './sending.store';
   imports: [
     Spinner, EmptyList,
     IonHeader, IonToolbar, IonTitle, IonButtons, IonMenuButton, IonContent, IonLabel, IonGrid, IonRow, IonCol, IonBadge,
-    IonSegment, IonSegmentButton, IonSelect, IonSelectOption,
+    IonSegment, IonSegmentButton, IonSelect, IonSelectOption, MailingSegments,
   ],
   styles: [`
     ion-row { border-bottom: 1px solid var(--ion-color-light); }
@@ -38,6 +39,7 @@ import { SendingStore } from './sending.store';
         <ion-buttons slot="start"><ion-menu-button /></ion-buttons>
         <ion-title>{{ filteredCount() }}/{{ count() }} {{ store.i18n.list_title() }}</ion-title>
       </ion-toolbar>
+      <okr-mailing-segments active="letters" [overviewLabel]="store.i18n.segment_overview()" [lettersLabel]="store.i18n.list_title()" />
       <ion-toolbar>
         <ion-segment [scrollable]="true" [value]="store.status()" (ionChange)="onStatus($event.detail.value)">
           <ion-segment-button value="all"><ion-label>{{ store.i18n.status_all() }}</ion-label></ion-segment-button>

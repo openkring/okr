@@ -63,7 +63,7 @@ export class RichTextInline {
   public readonly placeholder = input('');
   /** Read once for the keys (when the engine is created), always for the toolbar. */
   public readonly hiddenFeatures = input<readonly RichTextFeature[]>([]);
-  /** Enter in an empty last paragraph emits `split`, Backspace at the very start `join`; otherwise the keys are the field's. */
+  /** Backspace at the very start emits `join`; otherwise the keys are the field's (Enter is always a line break in the text). */
   public readonly blockEditing = input(false);
   public readonly toolbarHost = input<ViewContainerRef | undefined>(undefined);
   /** Where the cursor goes when the text is ready, when another html is loaded, and when this changes. */
@@ -71,8 +71,6 @@ export class RichTextInline {
 
   // outputs
   public readonly valueChange = output<string>();
-  /** html without the empty last paragraph; `valueChange` has emitted the same */
-  public readonly split = output<string>();
   /** html */
   public readonly join = output<string>();
   public readonly ready = output<void>();
@@ -184,7 +182,6 @@ export class RichTextInline {
     ref.setInput('blockEditing', this.blockEditing());
     ref.setInput('caret', this.caretWish());
     ref.instance.valueChange.subscribe((html: string) => this.valueChange.emit(html));
-    ref.instance.split.subscribe((html: string) => this.split.emit(html));
     ref.instance.join.subscribe((html: string) => this.join.emit(html));
     ref.changeDetectorRef.detectChanges();
     return ref;

@@ -327,6 +327,19 @@ export const MEMBERSHIP_I18N_KEYS = {
   srv_create_mainclub_warning:              PFX + 'srv.create.mainclub_warning',
   srv_create_done:                          PFX + 'srv.create.done',
   srv_create_error:                         PFX + 'srv.create.error',
+  // «Export …» of the member list: the picker of the export kinds, each with what it contains
+  export_title:                             PFX + 'exportChoice.title',
+  export_intro:                             PFX + 'exportChoice.intro',
+  export_raw_label:                         PFX + 'exportChoice.raw.label',
+  export_raw_desc:                          PFX + 'exportChoice.raw.desc',
+  export_member_label:                      PFX + 'exportChoice.member.label',
+  export_member_desc:                       PFX + 'exportChoice.member.desc',
+  export_address_label:                     PFX + 'exportChoice.address.label',
+  export_address_desc:                      PFX + 'exportChoice.address.desc',
+  export_srv_label:                         PFX + 'exportChoice.srv.label',
+  export_srv_desc:                          PFX + 'exportChoice.srv.desc',
+  export_clubdesk_label:                    PFX + 'exportChoice.clubdesk.label',
+  export_clubdesk_desc:                     PFX + 'exportChoice.clubdesk.desc',
 } satisfies Record<string, string>;
 
 export type MembershipI18n = { [K in keyof typeof MEMBERSHIP_I18N_KEYS]: Signal<string> };

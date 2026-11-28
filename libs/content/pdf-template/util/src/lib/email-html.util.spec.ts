@@ -1,6 +1,6 @@
 import '@angular/compiler';
 import { describe, it, expect } from 'vitest';
-import { emailBodyHasContent, emailDomainOf, isSenderDomainAllowed, parseEmails } from './email-html.util';
+import { emailBodyHasContent, emailDomainOf, isSenderDomainAllowed, MAIL_LAYOUT_SLOT_BODY, MAIL_LAYOUT_SLOT_ID, parseEmails, withLayoutSlot } from './email-html.util';
 
 describe('parseEmails', () => {
   it('splits on comma and trims', () => {
@@ -64,5 +64,22 @@ describe('emailBodyHasContent', () => {
     expect(emailBodyHasContent('<p>&nbsp;</p><p>&#160;</p>')).toBe(false);
     expect(emailBodyHasContent('<p><br></p>')).toBe(false);
     expect(emailBodyHasContent('<p><img></p>')).toBe(false);
+  });
+});
+
+describe('withLayoutSlot', () => {
+  const marker = `<div id="${MAIL_LAYOUT_SLOT_ID}"></div>`;
+
+  it('replaces the slot paragraph, with or without attributes', () => {
+    expect(withLayoutSlot(`<h1>Kopf</h1>${MAIL_LAYOUT_SLOT_BODY}<p>Fuss</p>`)).toBe(`<h1>Kopf</h1>${marker}<p>Fuss</p>`);
+    expect(withLayoutSlot(`<td><p style="margin:0"> ${MAIL_LAYOUT_SLOT_ID} </p></td>`)).toBe(`<td>${marker}</td>`);
+  });
+
+  it('replaces the word alone when the paragraph was rewritten', () => {
+    expect(withLayoutSlot(`<div>${MAIL_LAYOUT_SLOT_ID}</div>`)).toBe(`<div>${marker}</div>`);
+  });
+
+  it('is undefined when the slot is not in the rendering', () => {
+    expect(withLayoutSlot('<p>Hallo</p>')).toBeUndefined();
   });
 });

@@ -2,14 +2,14 @@ import { CdkDrag, CdkDragDrop, CdkDropList, type DragRef, type Point } from '@an
 import { CdkScrollable } from '@angular/cdk/scrolling';
 import { NgTemplateOutlet } from '@angular/common';
 import {
-  Component, DestroyRef, ElementRef, Injector, ViewContainerRef, afterNextRender, computed, effect, forwardRef, inject, input, linkedSignal, output, signal, untracked,
+  Component, DestroyRef, ElementRef, Injector, TemplateRef, ViewContainerRef, afterNextRender, computed, effect, forwardRef, inject, input, linkedSignal, output, signal, untracked,
 } from '@angular/core';
 import { ActionSheetController, IonIcon, IonNote } from '@ionic/angular';
 
 import {
   ARTICLE_BLOCK_ICONS, ARTICLE_BLOCKS_MAX, ARTICLE_PROFILE, type ArticleEditorI18n, type ArticlePreviewDevice, BlockViewCache, type BlockPlace, type EditorProfile,
-  allowedTypesAt, articleBackground, articleColumnsForm, articleHeaderPlace, blockTypeLabel, canAddBlock, columnsTemplate, createBlock, drawnBlock, duplicateBlock, findBlock,
-  getSectionIntro, insertBlock, joinWithAbove, moveBlockBy, removeBlock, replaceBlock,
+  allowedTypesAt, articleBackground, articleColumnsForm, articleHeaderPlace, blockTypeLabel, canAddBlock, columnsTemplate, drawnBlock, duplicateBlock, findBlock,
+  getSectionIntro, joinWithAbove, moveBlockBy, removeBlock, replaceBlock,
 } from '@okr/cms-section-util';
 import { ENV } from '@okr/shared-config';
 import { AppStore } from '@okr/shared-feature';
@@ -109,7 +109,9 @@ let canvases = 0;
     <div class="scroller" cdkScrollable role="region" [class]="device()" [attr.aria-label]="t.article_editor_canvas_label()">
       <div class="room">
         <div class="page" [class]="device()" [class.mail]="isMail()" [style.width.px]="size().width" [style.max-width.px]="size().maxWidth" [style.--mail-padding]="isMail() ? profile().padding + 'px' : null">
-          @if (isMail()) { <div class="strip">{{ t.article_editor_mail_head() }}</div> }
+          @if (isMail()) {
+            @if (mailTop(); as top) { <ng-container [ngTemplateOutlet]="top" /> } @else { <div class="strip">{{ t.article_editor_mail_head() }}</div> }
+          }
           <div class="inside">
             <okr-article-frame [section]="section()" [headerPlace]="headerPlace()" [headerTemplate]="editHeader() && headerPlace() !== 'column' ? headerEdit : undefined">
               <div class="list" cdkDropList [id]="topListId" [class.classic-text]="classicText()" [cdkDropListData]="topPlace" [cdkDropListConnectedTo]="dropLists()"
@@ -157,7 +159,7 @@ let canvases = 0;
           </div>
           @if (isMail()) {
             <ng-container [ngTemplateOutlet]="addAtEnd" />
-            <div class="strip">{{ t.article_editor_mail_foot() }}</div>
+            @if (mailFoot(); as foot) { <ng-container [ngTemplateOutlet]="foot" /> } @else { <div class="strip">{{ t.article_editor_mail_foot() }}</div> }
           }
         </div>
         @if (!isMail()) { <ng-container [ngTemplateOutlet]="addAtEnd" /> }
@@ -202,6 +204,9 @@ export class ArticleCanvas extends ArticleCanvasContext {
   public readonly errorIds = input<string[]>([]);
   /** 'auto' = the real viewport and all the room there is (a phone) */
   public readonly device = input<ArticlePreviewDevice>('desktop');
+  /** a mail: the head and the foot of its template, drawn by the composer; without them a strip stands for each */
+  public readonly mailTop = input<TemplateRef<unknown>>();
+  public readonly mailFoot = input<TemplateRef<unknown>>();
   public readonly dragEnabled = input(true);
   /** where the toolbar of the text being edited is created */
   public readonly toolbarHost = input<ViewContainerRef>();
@@ -347,15 +352,6 @@ export class ArticleCanvas extends ArticleCanvasContext {
     const blocks = this.withHtml(this.blocksNow(), id, html);
     // the selection as it is: a text may hand over its last words when another block was already clicked
     if (blocks !== this.blocksNow()) this.emit({ blocks, selectedId: this.selectedNow(), tag: `text:${id}` });
-  }
-
-  public splitText(id: string, html: string): void {
-    const blocks = this.withHtml(this.blocksNow(), id, html);
-    const found = findBlock(blocks, id);
-    if (!found) return;
-    const block = createBlock('text', newId);
-    const next = insertBlock(blocks, block, { ...found.place, index: found.place.index + 1 });
-    if (next !== blocks) this.emit({ blocks: next, selectedId: block.id, caret: 'start' });
   }
 
   public joinText(id: string, html: string): void {

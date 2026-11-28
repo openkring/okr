@@ -141,10 +141,7 @@
     "preview": {
       "empty": "Non c’è ancora nulla da mostrare.",
       "frame": "Anteprima email",
-      "error": "Impossibile caricare l’anteprima.",
-      "width": "Larghezza dell'anteprima",
-      "mobile": "Cellulare",
-      "desktop": "Desktop"
+      "error": "Impossibile caricare l’anteprima."
     },
     "list": {
       "empty": "Nessun destinatario inserito.",
@@ -182,7 +179,7 @@
       "p6": "Le lettere restano disponibili per 7 giorni e poi vengono cancellate, perché contengono indirizzi. Come admin di gruppo non puoi spedire per posta.",
       "p7": "Eventi: se scegli degli eventi nell’editor, ogni persona che riceve l’invio via e-mail riceve una propria e-mail con un link personale. Con questo link accetta o rifiuta ogni evento, anche senza un account nell’app. La risposta compare subito nella lista dei partecipanti, e il link vale fino al giorno dell’ultimo evento. L’indirizzo sotto «To:» diventa allora l’indirizzo di risposta, e il Cc: non è possibile. Comunicazioni e lettere non contengono alcun link.",
       "p8": "Allegati: con «Aggiungi» alleghi file di al massimo 7 MB ciascuno. Via e-mail arrivano come allegati, in app fanno parte della comunicazione. Nelle lettere vanno solo i file PDF, che seguono ogni lettera. Gli altri file partono solo via e-mail e in app.",
-      "p9": "Bozza ed e-mail di prova: ciò che scrivi viene salvato man mano. Quando chiudi puoi tenere la bozza e continuare più tardi; dopo 30 giorni senza modifiche viene eliminata. Puoi anche copiare un’e-mail precedente o inserire un articolo. Con «Invia e-mail di prova» nell’anteprima mandi prima l’e-mail a te stesso."
+      "p9": "Bozza ed e-mail di prova: ciò che scrivi viene salvato man mano. Quando chiudi puoi tenere la bozza e continuare più tardi; dopo 30 giorni senza modifiche viene eliminata. Puoi anche copiare un’e-mail precedente o inserire un articolo. L’editor mostra l’intestazione e il piè di pagina del modello scelto subito sopra e sotto il tuo testo. Con «Invia e-mail di prova» accanto al modello mandi prima l’e-mail a te stesso."
     },
     "letters": {
       "pending": "Le lettere sono in preparazione …",
@@ -368,6 +365,7 @@
   "mailing": {
     "list": {
       "title": "Invii",
+      "segment_overview": "Panoramica",
       "empty": "Ancora nessun invio."
     },
     "subject": "Oggetto",
@@ -504,7 +502,6 @@
     "price": "Prezzo",
     "unknown_recipient": "Destinatario sconosciuto",
     "task_created": "Attività creata",
-    "open_letters": "Tutte le lettere",
     "back": "Indietro"
   }
 }

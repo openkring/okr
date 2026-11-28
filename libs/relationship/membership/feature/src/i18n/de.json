@@ -763,5 +763,29 @@
   "reorder": {
     "hint": "Ziehe die Griffe rechts, um die Reihenfolge zu ändern. So erscheinen die Mitglieder auch auf der Website und in den Personen-Abschnitten.",
     "error": "Die neue Reihenfolge konnte nicht gespeichert werden. Bitte versuche es noch einmal."
+  },
+  "exportChoice": {
+    "title": "Exportieren",
+    "intro": "Wähle, was du herunterladen möchtest. Mit Ausnahme der SRV-Liste enthält jede Datei die Mitglieder, die du in der Liste gerade siehst, Suche und Filter gelten also.",
+    "raw": {
+      "label": "Mitgliedschaften (alle Angaben)",
+      "desc": "Alle gespeicherten Angaben zu jeder Mitgliedschaft, eine Spalte pro Angabe. Gut für eigene Auswertungen, zum Beispiel in Excel."
+    },
+    "member": {
+      "label": "Mitgliederliste",
+      "desc": "Nummer, Vorname, Name, Jahrgang, Eintrittsdatum, Kategorie und Funktion. Gut zum Ausdrucken oder Weitergeben."
+    },
+    "address": {
+      "label": "Adressliste",
+      "desc": "Name, Postadresse, Telefon und E-Mail, zum Beispiel für Serienbriefe oder Etiketten."
+    },
+    "srv": {
+      "label": "SRV-Liste",
+      "desc": "Die Liste für den Schweizerischen Ruderverband mit allen aktiven Mitgliedern und den Austritten des letzten Jahres. Sie hängt nicht von Suche und Filter ab."
+    },
+    "clubdesk": {
+      "label": "Export für Clubdesk",
+      "desc": "Mitglieder mit Adresse, Geburtsdatum, Eintritt, Kategorie und Status, so aufbereitet, dass Clubdesk sie direkt einlesen kann."
+    }
   }
 }

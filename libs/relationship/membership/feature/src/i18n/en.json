@@ -763,5 +763,29 @@
   "reorder": {
     "hint": "Drag the handles on the right to change the order. Members appear in this order on the website and in the people sections, too.",
     "error": "The new order could not be saved. Please try again."
+  },
+  "exportChoice": {
+    "title": "Export",
+    "intro": "Choose what you want to download. Except for the SRV list, each file holds the members you currently see in the list, so search and filters apply.",
+    "raw": {
+      "label": "Memberships (all details)",
+      "desc": "Everything stored about each membership, one column per detail. Useful for your own analyses, for example in Excel."
+    },
+    "member": {
+      "label": "Member list",
+      "desc": "Number, first name, name, year of birth, date of entry, category and function. Useful for printing or passing on."
+    },
+    "address": {
+      "label": "Address list",
+      "desc": "Name, postal address, phone and email, for example for mail merges or labels."
+    },
+    "srv": {
+      "label": "SRV list",
+      "desc": "The list for the Swiss Rowing Federation with all active members and last year’s exits. It does not depend on search or filters."
+    },
+    "clubdesk": {
+      "label": "Export for Clubdesk",
+      "desc": "Members with address, date of birth, entry, category and status, prepared so that Clubdesk can read them in directly."
+    }
   }
 }

@@ -763,5 +763,29 @@
   "reorder": {
     "hint": "Fais glisser les poignées à droite pour changer l'ordre. Les membres apparaissent aussi dans cet ordre sur le site web et dans les sections de personnes.",
     "error": "Le nouvel ordre n'a pas pu être enregistré. Réessaie, s'il te plaît."
+  },
+  "exportChoice": {
+    "title": "Exporter",
+    "intro": "Choisis ce que tu veux télécharger. Sauf pour la liste SRV, chaque fichier contient les membres que tu vois dans la liste, la recherche et les filtres s’appliquent donc.",
+    "raw": {
+      "label": "Adhésions (toutes les données)",
+      "desc": "Toutes les données enregistrées pour chaque adhésion, une colonne par donnée. Pratique pour tes propres analyses, par exemple dans Excel."
+    },
+    "member": {
+      "label": "Liste des membres",
+      "desc": "Numéro, prénom, nom, année de naissance, date d’entrée, catégorie et fonction. Pratique pour imprimer ou transmettre."
+    },
+    "address": {
+      "label": "Liste d’adresses",
+      "desc": "Nom, adresse postale, téléphone et e-mail, par exemple pour des lettres types ou des étiquettes."
+    },
+    "srv": {
+      "label": "Liste SRV",
+      "desc": "La liste pour la Fédération suisse des sociétés d’aviron avec tous les membres actifs et les sorties de l’année passée. Elle ne dépend ni de la recherche ni des filtres."
+    },
+    "clubdesk": {
+      "label": "Export pour Clubdesk",
+      "desc": "Les membres avec adresse, date de naissance, entrée, catégorie et statut, préparés pour que Clubdesk puisse les importer directement."
+    }
   }
 }

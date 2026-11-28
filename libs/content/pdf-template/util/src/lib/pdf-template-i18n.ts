@@ -278,9 +278,6 @@ export const EMAIL_COMPOSER_I18N_KEYS = {
   page_refused_too_large: PFX + 'composer.page.refused_too_large',
   page_refused_letter_picture: PFX + 'composer.page.refused_letter_picture',
   // the preview's width and «Testmail senden» (spec 1.176 §8.4)
-  preview_width:      PFX + 'composer.preview.width',
-  preview_mobile:     PFX + 'composer.preview.mobile',
-  preview_desktop:    PFX + 'composer.preview.desktop',
   test_send:          PFX + 'composer.test.send',
   test_running:       PFX + 'composer.test.running',
   test_helper:        PFX + 'composer.test.helper',
@@ -336,6 +333,8 @@ export const EMAIL_COMPOSER_MSG_KEYS = {
 /** Keys for the Versand overview (MailingList, MailingPage): the status of a send. */
 export const MAILING_I18N_KEYS = {
   list_title:        PFX + 'mailing.list.title',
+  /** the segment of the overview; the other one, «Briefe», is `SENDING_I18N_KEYS.list_title` */
+  segment_overview:  PFX + 'mailing.list.segment_overview',
   empty:             PFX + 'mailing.list.empty',
   subject:           PFX + 'mailing.subject',
   no_subject:        PFX + 'mailing.no_subject',
@@ -440,6 +439,7 @@ export type MailingI18n = { [K in keyof typeof MAILING_I18N_KEYS]: Signal<string
 /** Keys for the letter status board (SendingList, the «Briefe» card of MailingPage; spec 1.150 §9). */
 export const SENDING_I18N_KEYS = {
   list_title: PFX + 'sending.list_title',
+  segment_overview: PFX + 'mailing.list.segment_overview',
   empty: PFX + 'sending.empty',
   page_empty: PFX + 'sending.page_empty',
   card_title: PFX + 'sending.card_title',
@@ -467,7 +467,6 @@ export const SENDING_I18N_KEYS = {
   price: PFX + 'sending.price',
   unknown_recipient: PFX + 'sending.unknown_recipient',
   task_created: PFX + 'sending.task_created',
-  open_letters: PFX + 'sending.open_letters',
   back: PFX + 'sending.back',
 } satisfies Record<string, string>;
 
