@@ -159,6 +159,10 @@ export const EMAIL_COMPOSER_I18N_KEYS = {
   preview_frame:    PFX + 'composer.preview.frame',
   /** The server preview could not be fetched — sending stays possible. */
   preview_error:    PFX + 'composer.preview.error',
+  preview_width:      PFX + 'composer.preview.width',
+  preview_raw:        PFX + 'composer.preview.raw',
+  preview_mobile:     PFX + 'composer.preview.mobile',
+  preview_desktop:    PFX + 'composer.preview.desktop',
   list_empty:       PFX + 'composer.list.empty',
   list_email_only:  PFX + 'composer.list.email_only',
   bcc_from_delivery: PFX + 'composer.bcc.from_delivery',

@@ -32,7 +32,7 @@ import {
   nonPdfAttachmentNames, parseEmails, sharedEmailCount, untickEmailAddress, withLinksInNewTab, toggleDelivery, versandBcc, versandDeliveries,
   EmailComposerFormModel, emailComposerValidations, VersandDeliveries, VersandEvent, VersandRow,
   EMAIL_COMPOSER_I18N_KEYS, EMAIL_COMPOSER_MSG_KEYS, EmailComposerI18n, isLetterPictureRefusal, mailEditorWanted, MailPageMeta, mailPageRefusalBlockId,
-  mailPageRefusalKey, MAIL_LAYOUT_SLOT_BODY, testMailRefusalKey, withLayoutSlot,
+  mailPageRefusalKey, MAIL_LAYOUT_SLOT_BODY, PREVIEW_MOBILE_WIDTH, testMailRefusalKey, withLayoutSlot, type PreviewWidth,
   choicesWithoutSubject, composerCloseDecision, draftCandidates, START_LOAD_MS, startChoices, startStepWanted,
   type MailingView, type StartChoice, type StartPage, type StartPick,
 } from '@okr/content-pdf-template-util';
@@ -154,6 +154,17 @@ interface AddressField {
     .preview-frame { width: 100%; min-height: 420px; border: 0; background: #ffffff; }
     /* the same height whether the preview is empty, loading or shown: the segment does not jump */
     .preview-card { min-height: 420px; }
+    /* Versand (spec 1.176 §8.4): the width of the preview and «Testmail senden» above it */
+    .preview-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; padding: 8px 12px 0; }
+    .preview-bar ion-segment { flex: 0 1 280px; min-width: 0; }
+    .preview-bar ion-segment-button { flex: 1 1 0; min-width: 0; }
+    .preview-bar .spacer { flex: 1; }
+    .preview-bar ion-button { margin: 0; text-transform: none; }
+    .preview-bar ion-spinner { width: 16px; height: 16px; margin-inline-end: 8px; }
+    .preview-helper { padding: 4px 12px 0; font-size: 0.8rem; text-align: right; }
+    .raw-html { margin: 0; padding: 12px; max-height: 70vh; overflow: auto; white-space: pre-wrap; word-break: break-all; font-size: 0.75rem; line-height: 1.4; }
+    .preview-card.mobile { background: var(--ion-color-light, #f4f5f8); display: flex; justify-content: center; }
+    .preview-card.mobile .preview-frame { max-width: 100%; box-shadow: 0 0 0 1px var(--ion-color-light-shade, #d7d8da); }
     /* Versand (spec 1.176 §8.1): the editor fills the window below the segments, the canvas and the panel scroll on their own */
     ion-content.mail-fill::part(scroll) { display: flex; flex-direction: column; }
     ion-content.mail-fill form { flex: 1; min-height: 0; display: flex; flex-direction: column; }
@@ -239,10 +250,8 @@ interface AddressField {
       <div class="segment">
         <ion-segment [(ngModel)]="activeSegment">
           <ion-segment-button value="editor"><ion-label>{{ i18n.segment_editor() }}</ion-label></ion-segment-button>
-          <!-- a Versand shows its template around the blocks in the editor itself: no preview of its own -->
-          @if (!isVersand()) {
-            <ion-segment-button value="preview"><ion-label>{{ i18n.segment_preview() }}</ion-label></ion-segment-button>
-          }
+          <!-- the mail as the server renders it: the editor shows the text as typed, the preview the html the recipient gets -->
+          <ion-segment-button value="preview"><ion-label>{{ i18n.segment_preview() }}</ion-label></ion-segment-button>
           @if (isVersand()) {
             <ion-segment-button value="delivery"><ion-label>{{ i18n.segment_delivery() }} ({{ versandRows().length }})</ion-label></ion-segment-button>
             @if (anyPost()) {
@@ -412,17 +421,47 @@ interface AddressField {
           <!-- Preview: the mail as the server renders it, i.e. exactly what the recipient receives. -->
           @if (activeSegment() === 'preview') {
             <ion-card>
-              <ion-card-content class="ion-no-padding preview-card">
+              <div class="preview-bar">
+                @if (isVersand()) {
+                  <ion-segment [value]="previewWidth()" (ionChange)="onPreviewWidth($event.detail.value)" [attr.aria-label]="i18n.preview_width()">
+                    <ion-segment-button value="mobile"><ion-label>{{ i18n.preview_mobile() }}</ion-label></ion-segment-button>
+                    <ion-segment-button value="desktop"><ion-label>{{ i18n.preview_desktop() }}</ion-label></ion-segment-button>
+                  </ion-segment>
+                  <span class="spacer"></span>
+                  <ion-button size="small" fill="outline" [disabled]="testRunning() || isSending() || !draft.loaded() || !hasContent() || !draft.valid()" (click)="sendTestMail()">
+                    @if (testRunning()) {
+                      <ion-spinner slot="start" name="crescent" aria-hidden="true" />
+                      {{ i18n.test_running() }}
+                    } @else {
+                      <ion-icon slot="start" src="{{ 'send' | svgIcon }}" aria-hidden="true" />
+                      {{ i18n.test_send() }}
+                    }
+                  </ion-button>
+                } @else {
+                  <span class="spacer"></span>
+                }
+                <!-- the html the server writes, as text: how the content is marked up, apart from its look -->
+                <ion-button size="small" [fill]="showRawHtml() ? 'solid' : 'outline'" [title]="i18n.preview_raw()" [attr.aria-label]="i18n.preview_raw()"
+                  [attr.aria-pressed]="showRawHtml()" (click)="showRawHtml.set(!showRawHtml())">
+                  <ion-icon slot="icon-only" src="{{ 'code' | svgIcon }}" aria-hidden="true" />
+                </ion-button>
+              </div>
+              @if (isVersand()) {
+                <ion-note class="note preview-helper">{{ i18n.test_helper() }}</ion-note>
+              }
+              <ion-card-content class="ion-no-padding preview-card" [class.mobile]="isVersand() && previewWidth() === 'mobile'">
                 @if (!hasContent()) {
                   <ion-note class="note">{{ i18n.preview_empty() }}</ion-note>
                 } @else if (previewLoading()) {
                   <okr-spinner />
                 } @else if (previewFailed()) {
                   <ion-note color="danger" class="note">{{ previewRefusal() ?? i18n.preview_error() }}</ion-note>
+                } @else if (showRawHtml()) {
+                  <pre class="raw-html">{{ previewRaw() }}</pre>
                 } @else {
                   <!-- no scripts; links open in a new tab (allow-popups) outside the sandbox, so they can be tried out -->
                   <iframe class="preview-frame" [title]="i18n.preview_frame()" sandbox="allow-popups allow-popups-to-escape-sandbox" [srcdoc]="previewHtml()"
-                    ></iframe>
+                    [style.width]="previewFrameWidth()"></iframe>
                 }
               </ion-card-content>
             </ion-card>
@@ -911,6 +950,9 @@ export class EmailComposerModal {
    * The HTML comes back sanitised from the server; the iframe is sandboxed on top of that.
    */
   protected readonly previewHtml = signal<SafeHtml | string>('');
+  /** the same html as text, for the «code» toggle of the preview: shown, never run */
+  protected readonly previewRaw = signal('');
+  protected readonly showRawHtml = signal(false);
   protected readonly previewLoading = signal(false);
   /** The preview could not be fetched; sending stays possible. */
   protected readonly previewFailed = signal(false);
@@ -918,6 +960,10 @@ export class EmailComposerModal {
   protected readonly previewRefusal = signal<string | undefined>(undefined);
   /** Number of the latest preview request: a response with an older number is dropped. */
   private previewRequest = 0;
+  /** The width of a Versand's preview (spec 1.176 §8.4): a phone of 390 px, or the window. */
+  protected readonly previewWidth = signal<PreviewWidth>('desktop');
+  protected readonly previewFrameWidth = computed(() =>
+    this.isVersand() && this.previewWidth() === 'mobile' ? `${PREVIEW_MOBILE_WIDTH}px` : '100%');
   /** «Testmail senden» runs: a second press is ignored, a close waits for it. */
   protected readonly testRunning = signal(false);
   /** The test mail under way (flush + `sendTestMailing`); settles, never rejects. */
@@ -1384,6 +1430,10 @@ export class EmailComposerModal {
     return prefix ? `${prefix} ${filename}` : filename;
   }
 
+  protected onPreviewWidth(value: unknown): void {
+    if (value === 'mobile' || value === 'desktop') this.previewWidth.set(value);
+  }
+
   /** The head and the foot of the template for the editor, while there is a rendering of it; else the editor draws its strips. */
   private setLayoutFrame(ref: ComponentRef<unknown>): void {
     const shown = !!this.layoutFrameHtml();
@@ -1435,6 +1485,7 @@ export class EmailComposerModal {
       if (this.isVersand() && !(await this.draft.flush())) {
         if (request !== this.previewRequest) return;
         this.previewHtml.set('');
+        this.previewRaw.set('');
         this.previewFailed.set(true);
         await this.showSaveError();
         return;
@@ -1449,6 +1500,7 @@ export class EmailComposerModal {
       });
       if (request !== this.previewRequest) return;
       this.previewHtml.set(this.sanitizer.bypassSecurityTrustHtml(withLinksInNewTab(rendered.html)));
+      this.previewRaw.set(rendered.html);
     } catch (err) {
       if (request !== this.previewRequest) return;
       // a refused mail page (no content, already sent, gone) is said in words; anything else is a generic failure
@@ -1456,6 +1508,7 @@ export class EmailComposerModal {
       if (!refusal) console.error('EmailComposerModal.loadPreview: renderEmailPreview failed', err);
       this.previewRefusal.set(refusal ? this.i18n[refusal]() : undefined);
       this.previewHtml.set('');
+      this.previewRaw.set('');
       this.previewFailed.set(true);
       // the refused block is selected for when the sender goes to the editor; the preview stays where it is
       this.openRefusedBlock(err, false);

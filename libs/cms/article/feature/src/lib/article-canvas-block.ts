@@ -15,6 +15,7 @@ import { ArticleBlockComponent } from './article-block';
 import type { CanvasItemKind } from './article-canvas.util';
 import { MailEvents } from './mail-events';
 import { MailGallery } from './mail-gallery';
+import { mailDrawnHtml } from './mail-drawn-html.util';
 
 /** A block as the canvas shows it. `view`: what readers see of it, undefined when they see nothing. */
 export interface CanvasItem {
@@ -56,6 +57,8 @@ export abstract class ArticleCanvasContext {
 
 /** What readers do not see anyway (Angular's sanitizer drops it), a picture (a block of its own), and the engine's own history. */
 const HIDDEN_FEATURES: readonly RichTextFeature[] = ['history', 'colors', 'align', 'indent', 'image'];
+/** A mail keeps the text colour and the indent (its renderer writes them inline); the background colour and the alignment of a paragraph not. */
+const MAIL_HIDDEN_FEATURES: readonly RichTextFeature[] = ['history', 'fill', 'align', 'image'];
 
 /**
  * One block in the canvas of the article editor (spec 1.175 §7.4, §7.5), or of a mail (1.176 §8.2): its drawing, the frame and its buttons, and the editor of a text.
@@ -185,7 +188,7 @@ const HIDDEN_FEATURES: readonly RichTextFeature[] = ['history', 'colors', 'align
     <!-- stands inside the drawn text, so that it has its width, font and alignment -->
     <ng-template #editor>
       @if (!ready()) { <div [innerHTML]="drawnHtml()"></div> }
-      <okr-rich-text-inline [value]="html()" [placeholder]="t.article_editor_canvas_textPlaceholder()" [hiddenFeatures]="hiddenFeatures" [blockEditing]="block.type === 'text'"
+      <okr-rich-text-inline [value]="html()" [placeholder]="t.article_editor_canvas_textPlaceholder()" [hiddenFeatures]="hiddenFeatures()" [blockEditing]="block.type === 'text'" [showEmptyLines]="canvas.profile().kind === 'mail'"
         [toolbarHost]="canvas.toolbarHost()" [caret]="caret()" (valueChange)="canvas.editText(block.id, $event)"
         (join)="canvas.joinText(block.id, $event)" (ready)="onReady()" (failed)="onFailed()" />
     </ng-template>
@@ -207,7 +210,7 @@ export class ArticleCanvasBlock {
   /** a «+» below the selected block; not for the last one, which has the «+» of the article below it */
   public readonly addBelow = input(true);
 
-  protected readonly hiddenFeatures = HIDDEN_FEATURES;
+  protected readonly hiddenFeatures = computed(() => this.canvas.profile().kind === 'mail' ? MAIL_HIDDEN_FEATURES : HIDDEN_FEATURES);
   // computed
   protected readonly selected = computed(() => this.canvas.selectedId() === this.item().block.id);
   protected readonly editing = computed(() => this.canvas.editingId() === this.item().block.id);
@@ -235,6 +238,8 @@ export class ArticleCanvasBlock {
   protected readonly drawn = computed((): ArticleBlockView | undefined => {
     const { view } = this.item();
     const block = drawnBlock(this.item().block, this.canvas.profile());
+    // a mail's colours and indents survive the sanitizer of the drawing (see `mailDrawnHtml`)
+    if (view && this.canvas.profile().kind === 'mail' && 'html' in view && typeof view.html === 'string') return { ...view, html: mailDrawnHtml(view.html) };
     if (view || this.item().kind !== 'block') return view;
     const html = `<p>${this.canvas.i18n().article_editor_canvas_textPlaceholder()}</p>`;
     if (block.type === 'text') return { key: block.id, type: 'text', html, align: block.align ?? 'left' };

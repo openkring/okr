@@ -344,6 +344,16 @@
         "canvasEmpty": "Questa e-mail è ancora vuota.",
         "head": "Intestazione del modello",
         "foot": "Piè di pagina del modello",
+        "info": {
+          "button": "Come appare il tuo testo nell’e-mail",
+          "title": "Come il tuo testo diventa un’e-mail",
+          "p1": "Nell’editor scrivi il contenuto: testo, titoli, elenchi, immagini e pulsanti. L’aspetto, cioè carattere, grandezza, colori e spaziature, lo decidono il modello e il programma di posta. Contenuto e presentazione sono separati. Per questo il tuo testo nell’editor appare un po’ diverso che nell’e-mail finita.",
+          "p2": "L’«Anteprima» ti mostra come sarà l’e-mail. Il controllo più sicuro è «Invia e-mail di prova»: così la vedi nel tuo programma di posta.",
+          "p3": "Ogni persona legge l’e-mail nel suo programma, sul suo dispositivo e con le sue impostazioni. Alcuni scelgono un carattere più grande o uno sfondo scuro, altri caricano le immagini solo su richiesta. Per questo l’e-mail può apparire un po’ diversa per ognuno. È voluto: così ognuno la può leggere bene.",
+          "p4": "Invio inizia un nuovo paragrafo. Nell’e-mail tra due paragrafi c’è uno spazio. In un elenco, Invio inizia un nuovo punto.",
+          "p5": "Maiusc e Invio inizia una nuova riga nello stesso paragrafo, senza spazio. Va bene per esempio per un indirizzo o per un saluto con il tuo nome sotto.",
+          "p6": "Due volte Invio dà una riga vuota, che appare anche nell’e-mail come spazio in più. I punti di un elenco stanno più vicini dei paragrafi."
+        },
         "full": "Un'e-mail può avere al massimo {max} blocchi.",
         "writeInMail": "Scrivi il testo direttamente nell'e-mail.",
         "brand": "Colore del marchio",

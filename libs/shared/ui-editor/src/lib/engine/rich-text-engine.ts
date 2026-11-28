@@ -148,6 +148,8 @@ export class RichTextEngine implements AfterViewInit, RichTextToolbarEngine {
   public readonly showToolbar = input(true);
   /** The text stands where readers see it and must look the same (okr-rich-text-inline). Read once. */
   public readonly inPlace = input(false);
+  /** inPlace: empty lines keep their height (a mail, whose renderer gives them one). Read once. */
+  public readonly showEmptyLines = input(false);
   /**
    * Backspace at the very start asks the host (`join`). Enter always stays a line break in this text, also on an empty line:
    * a blank line is how a mail gets its spacing, and a new block is added with the block library, never by a key.
@@ -244,7 +246,7 @@ export class RichTextEngine implements AfterViewInit, RichTextToolbarEngine {
       }),
       keymap(baseKeymap),
       placeholderPlugin(() => this.placeholder()),
-      ...(untracked(() => this.inPlace()) ? [emptyLinesPlugin()] : []),
+      ...(untracked(() => this.inPlace() && !this.showEmptyLines()) ? [emptyLinesPlugin()] : []),
       taskCheckboxPlugin(),
     ];
   }

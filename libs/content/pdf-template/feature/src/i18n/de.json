@@ -141,7 +141,11 @@
     "preview": {
       "empty": "Noch kein Inhalt zum Anzeigen.",
       "frame": "Email-Vorschau",
-      "error": "Die Vorschau konnte nicht geladen werden."
+      "error": "Die Vorschau konnte nicht geladen werden.",
+      "width": "Breite der Vorschau",
+      "mobile": "Mobil",
+      "desktop": "Desktop",
+      "raw": "Den Quelltext der E-Mail anzeigen"
     },
     "list": {
       "empty": "Keine Empfänger erfasst.",
@@ -179,7 +183,7 @@
       "p6": "Briefe bleiben 7 Tage zum Herunterladen bereit und werden dann gelöscht, weil sie Adressen enthalten. Als Gruppenadmin kannst du nicht per Post versenden.",
       "p7": "Anlässe: Wählst du im Editor Anlässe aus, erhält jede Person, die den Versand per E-Mail bekommt, eine eigene Mail mit ihrem persönlichen Link. Darüber sagt sie für jeden Anlass zu oder ab, auch ohne Konto in der App. Die Antwort steht sofort in der Teilnehmerliste des Anlasses, und der Link gilt bis zum Tag des letzten Anlasses. Die Adresse unter «To:» ist dann die Antwortadresse, Cc: ist nicht möglich. Mitteilungen und Briefe enthalten keinen Link.",
       "p8": "Anhänge: Mit «Hinzufügen» legst du Dateien bei, jede höchstens 7 MB gross. Per E-Mail kommen sie als Beilage mit, In-App stehen sie in der Mitteilung. In die Briefe kommen nur PDF-Dateien, sie folgen hinter jedem Brief. Andere Dateien gehen nur per E-Mail und In-App.",
-      "p9": "Entwurf und Testmail: Was du schreibst, wird laufend gespeichert. Beim Schliessen kannst du den Entwurf behalten und später weiterschreiben, nach 30 Tagen ohne Änderung wird er gelöscht. Du kannst auch eine frühere E-Mail kopieren oder einen Artikel einfügen. Kopf und Fuss der gewählten Vorlage siehst du im Editor direkt über und unter deinem Text. Mit «Testmail senden» neben der Vorlage schickst du die E-Mail zuerst an dich selbst."
+      "p9": "Entwurf und Testmail: Was du schreibst, wird laufend gespeichert. Beim Schliessen kannst du den Entwurf behalten und später weiterschreiben, nach 30 Tagen ohne Änderung wird er gelöscht. Du kannst auch eine frühere E-Mail kopieren oder einen Artikel einfügen. Kopf und Fuss der gewählten Vorlage siehst du im Editor direkt über und unter deinem Text. Wie die E-Mail beim Empfänger genau aussieht, zeigt dir die «Vorschau». Mit «Testmail senden» neben der Vorlage schickst du die E-Mail zuerst an dich selbst."
     },
     "letters": {
       "pending": "Die Briefe werden erstellt …",

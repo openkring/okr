@@ -141,7 +141,11 @@
     "preview": {
       "empty": "Rien à afficher pour le moment.",
       "frame": "Aperçu de l’email",
-      "error": "L’aperçu n’a pas pu être chargé."
+      "error": "L’aperçu n’a pas pu être chargé.",
+      "width": "Largeur de l’aperçu",
+      "mobile": "Mobile",
+      "desktop": "Ordinateur",
+      "raw": "Afficher le code source de l’e-mail"
     },
     "list": {
       "empty": "Aucun destinataire saisi.",
@@ -179,7 +183,7 @@
       "p6": "Les lettres restent disponibles 7 jours, puis elles sont supprimées, car elles contiennent des adresses. En tant qu’admin de groupe, tu ne peux pas envoyer par courrier.",
       "p7": "Événements : si tu choisis des événements dans l’éditeur, chaque personne qui reçoit l’envoi par e-mail reçoit son propre e-mail avec un lien personnel. Avec ce lien, elle accepte ou refuse chaque événement, même sans compte dans l’app. La réponse apparaît tout de suite dans la liste des participants, et le lien reste valable jusqu’au jour du dernier événement. L’adresse sous «To:» devient alors l’adresse de réponse, et Cc: n’est pas possible. Les messages et les lettres ne contiennent pas de lien.",
       "p8": "Pièces jointes : avec «Ajouter», tu joins des fichiers de 7 Mo au maximum chacun. Par e-mail, ils sont joints au message ; dans l’app, ils figurent dans le message. Seuls les fichiers PDF vont dans les lettres, où ils suivent chaque lettre. Les autres fichiers partent uniquement par e-mail et dans l’app.",
-      "p9": "Brouillon et e-mail de test : ce que tu écris est enregistré au fur et à mesure. En fermant, tu peux garder le brouillon et continuer plus tard ; après 30 jours sans modification, il est supprimé. Tu peux aussi copier un e-mail précédent ou insérer un article. L’éditeur montre l’en-tête et le pied du modèle choisi juste au-dessus et au-dessous de ton texte. Avec «Envoyer un e-mail de test» à côté du modèle, tu t’envoies d’abord l’e-mail à toi-même."
+      "p9": "Brouillon et e-mail de test : ce que tu écris est enregistré au fur et à mesure. En fermant, tu peux garder le brouillon et continuer plus tard ; après 30 jours sans modification, il est supprimé. Tu peux aussi copier un e-mail précédent ou insérer un article. L’éditeur montre l’en-tête et le pied du modèle choisi juste au-dessus et au-dessous de ton texte. L’«Aperçu» montre exactement comment le destinataire verra l’e-mail. Avec «Envoyer un e-mail de test» à côté du modèle, tu t’envoies d’abord l’e-mail à toi-même."
     },
     "letters": {
       "pending": "Les lettres sont en cours de création …",

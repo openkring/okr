@@ -344,6 +344,16 @@
         "canvasEmpty": "Cet e-mail est encore vide.",
         "head": "En-tête du modèle",
         "foot": "Pied du modèle",
+        "info": {
+          "button": "Comment ton texte apparaît dans l’e-mail",
+          "title": "Comment ton texte devient un e-mail",
+          "p1": "Dans l’éditeur, tu écris le contenu : texte, titres, listes, images et boutons. L’apparence, c’est-à-dire la police, la taille, les couleurs et les espacements, dépend du modèle et du programme de messagerie. Le contenu et la présentation sont séparés. C’est pourquoi ton texte paraît un peu différent dans l’éditeur et dans l’e-mail terminé.",
+          "p2": "L’«Aperçu» te montre l’allure exacte de l’e-mail. Le plus sûr est de l’essayer avec «Envoyer un e-mail de test» : tu le vois alors dans ton propre programme de messagerie.",
+          "p3": "Chaque personne lit l’e-mail dans son propre programme, sur son propre appareil et avec ses propres réglages. Certaines choisissent une police plus grande ou un fond sombre, d’autres ne chargent les images que sur demande. L’e-mail peut donc paraître un peu différent chez chacun. C’est voulu : ainsi chacun peut bien le lire.",
+          "p4": "Entrée commence un nouveau paragraphe. Dans l’e-mail, un espace sépare deux paragraphes. Dans une liste, Entrée commence un nouveau point.",
+          "p5": "Maj et Entrée commence une nouvelle ligne dans le même paragraphe, sans espace. C’est utile par exemple pour une adresse ou une salutation avec ton nom en dessous.",
+          "p6": "Deux fois Entrée donne une ligne vide, qui apparaît aussi dans l’e-mail comme espace supplémentaire. Les points d’une liste sont plus rapprochés que les paragraphes."
+        },
         "full": "Un e-mail peut contenir au maximum {max} blocs.",
         "writeInMail": "Tu écris le texte directement dans l'e-mail.",
         "brand": "Couleur de la marque",

@@ -16,6 +16,7 @@ import { fill, type MailEventLine } from '@okr/shared-util-core';
 
 import { ArticleEditorSurface } from './article-editor-surface';
 import { editorBlocks, insertedInto, uploadInto } from './article-editor-surface.util';
+import { MailTextInfoModal } from './mail-text-info.modal';
 import type { MailArticleChoice } from './mail-article-pick.modal';
 
 type History = EditorHistory<EditorState>;
@@ -50,6 +51,9 @@ type History = EditorHistory<EditorState>;
       <ion-button barEnd fill="clear" size="small" [title]="i18n.article_editor_mail_insert_button()" (click)="insertArticle()">
         <ion-icon slot="start" src="{{ 'add' | svgIcon }}" aria-hidden="true" />
         {{ i18n.article_editor_mail_insert_button() }}
+      </ion-button>
+      <ion-button barEnd fill="clear" size="small" [title]="i18n.article_editor_mail_info_button()" [attr.aria-label]="i18n.article_editor_mail_info_button()" (click)="showInfo()">
+        <ion-icon slot="icon-only" src="{{ 'info-circle' | svgIcon }}" aria-hidden="true" />
       </ion-button>
       <ng-template #nothingSelected>
         @if (panel(); as panel) { <ng-container [ngTemplateOutlet]="panel" /> }
@@ -91,6 +95,12 @@ export class MailEditorHost {
     .filter((block) => block?.type === 'events' && typeof block.calendarKey === 'string' && block.calendarKey !== '')
     .map((block) => (block as Extract<MailBlock, { type: 'events' }>).calendarKey))], { equal: (a, b) => a.join('\n') === b.join('\n') });
   private destroyed = false;
+
+  /** The (i) of the toolbar: why the text looks different in the editor, in the mail and per reader, and what Enter does. */
+  protected async showInfo(): Promise<void> {
+    const modal = await this.modalController.create({ component: MailTextInfoModal, componentProps: { i18n: this.i18n } });
+    await modal.present();
+  }
 
   constructor() {
     inject(DestroyRef).onDestroy(() => { this.destroyed = true; });

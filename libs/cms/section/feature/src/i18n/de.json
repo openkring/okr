@@ -344,6 +344,16 @@
         "canvasEmpty": "Diese E-Mail ist noch leer.",
         "head": "Kopf der Vorlage",
         "foot": "Fuss der Vorlage",
+        "info": {
+          "button": "So erscheint dein Text in der E-Mail",
+          "title": "So wird aus deinem Text eine E-Mail",
+          "p1": "Im Editor schreibst du den Inhalt: Text, Überschriften, Listen, Bilder und Knöpfe. Wie das aussieht, also Schrift, Grösse, Farben und Abstände, bestimmen die Vorlage und das E-Mail-Programm. Inhalt und Gestaltung sind getrennt. Darum sieht dein Text im Editor etwas anders aus als in der fertigen E-Mail.",
+          "p2": "Wie die E-Mail genau aussieht, zeigt dir die «Vorschau». Am sichersten prüfst du sie mit «Testmail senden»: Dann siehst du sie in deinem eigenen E-Mail-Programm.",
+          "p3": "Jede Person liest die E-Mail in ihrem eigenen Programm, auf ihrem eigenen Gerät und mit ihren eigenen Einstellungen. Manche wählen eine grössere Schrift oder einen dunklen Hintergrund, andere laden Bilder erst auf Wunsch. Die E-Mail kann deshalb bei jeder Person etwas anders aussehen. Das ist gewollt: So kann sie jede Person gut lesen.",
+          "p4": "Enter beginnt einen neuen Absatz. Zwischen zwei Absätzen steht in der E-Mail ein Abstand. In einer Liste beginnt Enter einen neuen Punkt.",
+          "p5": "Umschalt und Enter beginnt eine neue Zeile im selben Absatz, ohne Abstand. Das passt zum Beispiel für eine Adresse oder einen Gruss mit deinem Namen darunter.",
+          "p6": "Zweimal Enter ergibt eine leere Zeile, die auch in der E-Mail als zusätzlicher Abstand erscheint. Die Punkte einer Liste stehen enger beieinander als Absätze."
+        },
         "full": "Eine E-Mail kann höchstens {max} Blöcke haben.",
         "writeInMail": "Den Text schreibst du direkt in der E-Mail.",
         "brand": "Markenfarbe",

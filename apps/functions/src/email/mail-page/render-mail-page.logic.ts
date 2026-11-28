@@ -38,8 +38,11 @@ export interface MailRenderContext {
 /** The width the layout gives the content; article images are fetched at this width. */
 const MAIL_IMAGE_WIDTH = 600;
 
-/** The sanitizer prepends this to every <p>; a fragment sanitized twice would carry it twice. */
-export const P_MARGIN_REPEAT = /(margin:0 0 16px;)+(?=margin:0 0 16px)/g;
+/**
+ * The sanitizer prepends this to every <p>; a fragment sanitized twice would carry it twice, and a paragraph that sets its own
+ * margin (one in a list item, `LIST_ITEM_GAP`) would carry it in front of that. Either way the own margin is what stays.
+ */
+export const P_MARGIN_REPEAT = /(margin:0 0 16px;)+(?=margin:)/g;
 
 function isMailSectionType(type: unknown): type is MailSectionType {
   return typeof type === 'string' && (MAIL_SECTION_TYPES as readonly string[]).includes(type);

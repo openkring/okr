@@ -141,7 +141,11 @@
     "preview": {
       "empty": "Nothing to preview yet.",
       "frame": "Email preview",
-      "error": "The preview could not be loaded."
+      "error": "The preview could not be loaded.",
+      "width": "Width of the preview",
+      "mobile": "Mobile",
+      "desktop": "Desktop",
+      "raw": "Show the source code of the email"
     },
     "list": {
       "empty": "No recipients entered.",
@@ -179,7 +183,7 @@
       "p6": "Letters stay ready for download for 7 days and are then deleted, because they contain addresses. As a group admin you cannot send by post.",
       "p7": "Events: If you choose events in the editor, everyone who gets the mailing by email receives their own mail with a personal link. With it they accept or decline each event, even without an account in the app. The answer appears right away in the event's attendee list, and the link works until the day of the last event. The address under «To:» then becomes the reply address, and Cc: is not possible. Notices and letters contain no link.",
       "p8": "Attachments: With «Add» you attach files of up to 7 MB each. By email they come along as attachments, in-app they are part of the notice. Only PDF files go into the letters, where they follow each letter. Other files go by email and in-app only.",
-      "p9": "Draft and test email: what you write is saved as you go. When you close, you can keep the draft and continue later; after 30 days without a change it is deleted. You can also copy an earlier email or insert an article. The editor shows the head and foot of the chosen template right above and below your text. With «Send test email» next to the template you send the email to yourself first."
+      "p9": "Draft and test email: what you write is saved as you go. When you close, you can keep the draft and continue later; after 30 days without a change it is deleted. You can also copy an earlier email or insert an article. The editor shows the head and foot of the chosen template right above and below your text. The «Preview» shows exactly how the email looks for the recipient. With «Send test email» next to the template you send the email to yourself first."
     },
     "letters": {
       "pending": "The letters are being created …",

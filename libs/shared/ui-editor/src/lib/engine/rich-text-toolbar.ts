@@ -125,10 +125,12 @@ export interface RichTextToolbarEngine {
           [attr.aria-label]="i18n().textColor()" [title]="i18n().textColor()">
           <ion-icon slot="icon-only" src="{{ 'format-text-color' | svgIcon }}" />
         </ion-button>
-        <ion-button type="button" fill="clear" size="small" [class.active]="!!backgroundColor()" (click)="openPopover($event, 'text_background_color')"
-          [attr.aria-label]="i18n().backgroundColor()" [title]="i18n().backgroundColor()">
-          <ion-icon slot="icon-only" src="{{ 'format-fill-color' | svgIcon }}" />
-        </ion-button>
+        @if (shows().fill) {
+          <ion-button type="button" fill="clear" size="small" [class.active]="!!backgroundColor()" (click)="openPopover($event, 'text_background_color')"
+            [attr.aria-label]="i18n().backgroundColor()" [title]="i18n().backgroundColor()">
+            <ion-icon slot="icon-only" src="{{ 'format-fill-color' | svgIcon }}" />
+          </ion-button>
+        }
         <span class="rte-sep"></span>
       }
 
@@ -163,10 +165,10 @@ export interface RichTextToolbarEngine {
       <!-- markdown cannot indent a paragraph; a list item still nests with Mod-] / Mod-[ -->
       @if (shows().indent) {
         <ion-button type="button" fill="clear" size="small" (click)="engine().run(outdentCmd)" [attr.aria-label]="i18n().outdent()" [title]="i18n().outdent()">
-          <ion-icon slot="icon-only" src="{{ 'indent-decrease' | svgIcon }}" />
+          <ion-icon slot="icon-only" src="{{ 'outdent' | svgIcon }}" />
         </ion-button>
         <ion-button type="button" fill="clear" size="small" (click)="engine().run(indentCmd)" [attr.aria-label]="i18n().indent()" [title]="i18n().indent()">
-          <ion-icon slot="icon-only" src="{{ 'indent-increase' | svgIcon }}" />
+          <ion-icon slot="icon-only" src="{{ 'indent' | svgIcon }}" />
         </ion-button>
       }
       @if (shows().lists || shows().align || shows().quote || shows().indent) {
@@ -291,7 +293,7 @@ export class RichTextToolbar {
     const html = !this.isMarkdown();
     const has = (feature: RichTextFeature) => !hidden.includes(feature);
     return {
-      history: has('history'), heading: has('heading'), marks: has('marks'), colors: html && has('colors'), lists: has('lists'),
+      history: has('history'), heading: has('heading'), marks: has('marks'), colors: html && has('colors'), fill: html && has('colors') && has('fill'), lists: has('lists'),
       align: html && has('align'), quote: has('quote'), indent: html && has('indent'), link: has('link'), image: html && has('image'),
     } satisfies Record<RichTextFeature, boolean>;
   });

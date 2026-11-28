@@ -145,10 +145,27 @@ function withoutOuterMargins(html: string): string {
   return result;
 }
 
+/**
+ * An empty line the sender typed (`<p></p>`, `<p><br></p>`) gets a non-breaking space: a mail program draws an empty paragraph
+ * without height, so the line would be lost, while the editor shows it.
+ */
+export function withFilledEmptyLines(html: string): string {
+  return html.replace(/<p(\s[^>]*)?>\s*(?:<br\s*\/?>\s*)?<\/p>/gi, (_match, attributes: string | undefined) => `<p${attributes ?? ''}>&nbsp;</p>`);
+}
+
+/** The gap below a paragraph in a list item, instead of the 16px a paragraph gets (`sanitizeEmailBody`). */
+export const LIST_ITEM_GAP = '0 0 4px';
+
+/** The style of a paragraph in a list item: its margin is `LIST_ITEM_GAP`, the rest stays. */
+export function listItemParagraphStyle(style: string): string {
+  const rest = style.split(';').map((d) => d.trim()).filter((d) => d !== '' && !/^margin\s*:/i.test(d));
+  return [`margin:${LIST_ITEM_GAP}`, ...rest].join(';');
+}
+
 /** The sanitized html of a text, fit for a mail. */
 export function mailTextHtml(sanitized: string, options: MailTextOptions): string {
   const written: string[] = []; // per open tag what was written for it; '' = nothing
-  const html = sanitized.replace(/<(\/?)([a-z][a-z0-9]*)([^>]*)>/gi, (_tag, slash: string, name: string, rest: string) => {
+  const html = withFilledEmptyLines(sanitized).replace(/<(\/?)([a-z][a-z0-9]*)([^>]*)>/gi, (_tag, slash: string, name: string, rest: string) => {
     if (slash) {
       const tag = written.pop();
       return tag ? `</${tag}>` : '';
@@ -162,8 +179,11 @@ export function mailTextHtml(sanitized: string, options: MailTextOptions): strin
       written.push(url ? 'a' : '');
       return url ? `<a href="${encode(url)}" target="_blank"${style ? ` style="${encode(style)}"` : ''}>` : '';
     }
-    const tag = writtenTag(name, written.filter((t) => t !== ''));
+    const open = written.filter((t) => t !== '');
+    const tag = writtenTag(name, open);
     written.push(tag);
+    // a paragraph of a list item: its items stand close together, not a paragraph apart
+    if (tag === 'p' && open[open.length - 1] === 'li') attributes['style'] = listItemParagraphStyle(attributes['style'] ?? '');
     if (tag === '') return '';
     return tag === name ? plainTag(name, attributes, false) : `<${tag}>`;
   });

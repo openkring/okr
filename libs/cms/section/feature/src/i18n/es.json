@@ -344,6 +344,16 @@
         "canvasEmpty": "Este correo todavía está vacío.",
         "head": "Cabecera de la plantilla",
         "foot": "Pie de la plantilla",
+        "info": {
+          "button": "Cómo aparece tu texto en el correo",
+          "title": "Cómo tu texto se convierte en un correo",
+          "p1": "En el editor escribes el contenido: texto, títulos, listas, imágenes y botones. El aspecto, es decir la letra, el tamaño, los colores y los espacios, lo deciden la plantilla y el programa de correo. Contenido y diseño están separados. Por eso tu texto se ve un poco distinto en el editor que en el correo terminado.",
+          "p2": "La «Vista previa» te muestra cómo se verá el correo. Lo más seguro es probarlo con «Enviar correo de prueba»: así lo ves en tu propio programa de correo.",
+          "p3": "Cada persona lee el correo en su propio programa, en su propio dispositivo y con sus propios ajustes. Algunas eligen una letra más grande o un fondo oscuro, otras cargan las imágenes solo cuando quieren. Por eso el correo puede verse un poco distinto para cada persona. Es a propósito: así todos lo pueden leer bien.",
+          "p4": "Intro empieza un párrafo nuevo. En el correo hay un espacio entre dos párrafos. En una lista, Intro empieza un punto nuevo.",
+          "p5": "Mayús e Intro empieza una línea nueva en el mismo párrafo, sin espacio. Sirve por ejemplo para una dirección o para un saludo con tu nombre debajo.",
+          "p6": "Pulsar Intro dos veces da una línea vacía, que también aparece en el correo como espacio extra. Los puntos de una lista están más juntos que los párrafos."
+        },
         "full": "Un correo puede tener como máximo {max} bloques.",
         "writeInMail": "Escribes el texto directamente en el correo.",
         "brand": "Color de la marca",

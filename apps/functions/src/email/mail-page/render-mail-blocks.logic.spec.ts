@@ -8,7 +8,7 @@ import { sanitizeEmailBody } from '../../pdf/sanitize';
 import { htmlToText } from '../html-to-text';
 import { MAIL_BLOCK_TEMPLATES } from './mail-block-templates';
 import { noticeBlocks, renderMailBlocks, type MailBlockContext } from './render-mail-blocks.logic';
-import { mailButtonUrl, MailPageError } from './render-mail-page.logic';
+import { mailButtonUrl, MailPageError, P_MARGIN_REPEAT } from './render-mail-page.logic';
 
 const EVENTS: Record<string, MailEventLine[]> = {
   club: [
@@ -99,6 +99,25 @@ describe('renderMailBlocks: text', () => {
     expect(await styles('<h2>a</h2>', 'h2')).toEqual(['margin-bottom:0;margin-top:0']);
     expect(await styles('<p>b</p><ul><li>c<ul><li>d</li></ul></li></ul>', 'ul')).toEqual(['margin-bottom:0', '']);
     expect(await styles('vor <p>b</p> nach', 'p')).toEqual(['margin:0 0 16px']);
+  });
+
+  it('the paragraphs of list items stand close together; other paragraphs keep their gap', async () => {
+    const html = await render([text('t', '<p>a</p><ul><li><p style="color:red">x</p></li><li><p>y</p></li></ul><p>b</p>')]);
+    expect(tagsOf(html, 'p').map((t) => attrOf(t, 'style'))).toEqual([
+      'margin:0 0 16px;margin-top:0', 'margin:0 0 4px;color:red', 'margin:0 0 4px', 'margin:0 0 16px;margin-bottom:0',
+    ]);
+  });
+
+  it('keeps the text colour and the indent of the editor', async () => {
+    const html = await render([text('t', '<p style="margin-left:40px" data-indent="1">a <span style="color:#ff0000;">rot</span></p><p>b</p>')]);
+    expect(attrOf(tagsOf(html, 'p')[0], 'style')).toContain('margin-left:40px');
+    expect(html).toMatch(/<span style="color:#ff0000;?">rot<\/span>/);
+  });
+
+  it('an empty line keeps its height: it gets a non-breaking space', async () => {
+    const html = await render([text('t', '<p>a</p><p></p><p><br></p><p>b</p>')]);
+    expect(tagsOf(html, 'p')).toHaveLength(4);
+    expect(html.match(/>(?:&nbsp;|\u00a0)<\/p>/g)).toHaveLength(2);
   });
 
   it('only the German text is drawn', async () => {
@@ -647,7 +666,7 @@ describe('renderMailBlocks: structure', () => {
       const html = await render([...EVERY_BLOCK, text('w', '<p style="margin:0;color:red">x</p><p>y</p>')], { target });
       const again = await sanitizeEmailBody(html);
       expect(html).not.toMatch(/(margin:0 0 16px;)+margin:0 0 16px/);
-      expect(again.replace(/(margin:0 0 16px;)+(?=margin:0 0 16px)/g, '')).toBe(html);
+      expect(again.replace(P_MARGIN_REPEAT, '')).toBe(html);
     }
   });
 

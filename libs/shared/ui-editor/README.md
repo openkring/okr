@@ -19,9 +19,10 @@ drawing stays. Destroyed while loading, it creates nothing.
 
 - `hiddenFeatures` leaves out groups of buttons and their keys. Without `'history'` undo is the host's job: there is no history,
   the key events bubble and the browser's own undo is off. Colours, alignment and indents that are hidden are also not shown
-  in the text, because readers do not see them either; they stay stored. An empty line has no height unless the cursor is in it.
+  in the text, because readers do not see them either; they stay stored. An empty line has no height unless the cursor is in it,
+  except with `showEmptyLines` (a mail, whose renderer gives empty lines a height).
 - ProseMirror prevents the default of Mod-z (and Mod-b, -i, -y) in any case: a host that undoes must not skip events that are
   `defaultPrevented`.
-- `blockEditing`: Enter in an empty last paragraph emits `split` (the text without it), Backspace at the very start emits `join`.
+- `blockEditing`: Backspace at the very start emits `join`. Enter is always a line break in the text.
 - `caret`: where the cursor goes when the text is ready, when another html is loaded and when the input changes. The html that
   `valueChange` emitted can be passed back: the cursor stays.

@@ -344,6 +344,16 @@
         "canvasEmpty": "This email is still empty.",
         "head": "Header of the template",
         "foot": "Footer of the template",
+        "info": {
+          "button": "How your text appears in the email",
+          "title": "How your text becomes an email",
+          "p1": "In the editor you write the content: text, headings, lists, pictures and buttons. How it looks, that is font, size, colours and spacing, is decided by the template and the email program. Content and design are kept apart. That is why your text looks a little different in the editor than in the finished email.",
+          "p2": "The «Preview» shows how the email will look. The surest check is «Send test email»: you then see it in your own email program.",
+          "p3": "Everyone reads the email in their own program, on their own device and with their own settings. Some choose a larger font or a dark background, others load pictures only when they ask for them. So the email can look a little different for each person. That is intended: it lets everyone read it well.",
+          "p4": "Enter starts a new paragraph. In the email there is a gap between two paragraphs. In a list, Enter starts a new item.",
+          "p5": "Shift and Enter starts a new line in the same paragraph, without a gap. That suits an address, for example, or a greeting with your name below it.",
+          "p6": "Pressing Enter twice gives an empty line, which also shows as extra space in the email. The items of a list stand closer together than paragraphs."
+        },
         "full": "An email can have at most {max} blocks.",
         "writeInMail": "You write the text directly in the email.",
         "brand": "Brand colour",

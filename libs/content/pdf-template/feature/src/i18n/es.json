@@ -141,7 +141,11 @@
     "preview": {
       "empty": "Todavía no hay nada que mostrar.",
       "frame": "Vista previa del correo",
-      "error": "No se pudo cargar la vista previa."
+      "error": "No se pudo cargar la vista previa.",
+      "width": "Ancho de la vista previa",
+      "mobile": "Móvil",
+      "desktop": "Escritorio",
+      "raw": "Mostrar el código fuente del correo"
     },
     "list": {
       "empty": "No hay destinatarios.",
@@ -179,7 +183,7 @@
       "p6": "Las cartas quedan disponibles 7 días y luego se borran, porque contienen direcciones. Como admin de grupo no puedes enviar por correo postal.",
       "p7": "Eventos: si eliges eventos en el editor, cada persona que recibe el envío por correo recibe su propio correo con un enlace personal. Con él acepta o rechaza cada evento, también sin cuenta en la app. La respuesta aparece enseguida en la lista de participantes, y el enlace vale hasta el día del último evento. La dirección en «To:» pasa a ser la dirección de respuesta, y Cc: no es posible. Los avisos y las cartas no llevan enlace.",
       "p8": "Adjuntos: con «Añadir» adjuntas archivos de hasta 7 MB cada uno. Por correo llegan como adjuntos, en la app forman parte del aviso. En las cartas solo entran archivos PDF, que siguen a cada carta. Los demás archivos se envían solo por correo y en la app.",
-      "p9": "Borrador y correo de prueba: lo que escribes se guarda sobre la marcha. Al cerrar puedes conservar el borrador y seguir más tarde; tras 30 días sin cambios se borra. También puedes copiar un correo anterior o insertar un artículo. El editor muestra la cabecera y el pie de la plantilla elegida justo encima y debajo de tu texto. Con «Enviar correo de prueba» junto a la plantilla te envías primero el correo a ti."
+      "p9": "Borrador y correo de prueba: lo que escribes se guarda sobre la marcha. Al cerrar puedes conservar el borrador y seguir más tarde; tras 30 días sin cambios se borra. También puedes copiar un correo anterior o insertar un artículo. El editor muestra la cabecera y el pie de la plantilla elegida justo encima y debajo de tu texto. La «Vista previa» muestra exactamente cómo verá el correo el destinatario. Con «Enviar correo de prueba» junto a la plantilla te envías primero el correo a ti."
     },
     "letters": {
       "pending": "Se están creando las cartas …",

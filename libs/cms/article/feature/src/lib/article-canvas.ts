@@ -84,6 +84,18 @@ let canvases = 0;
     .page.mail .inside { padding: 24px calc(var(--mail-padding) - ${ARTICLE_BLOCK_PADDING}); }
     .page.mail ::ng-deep okr-article-frame > ion-card > ion-card-content { padding: 0; }
     .page.mail .list { padding: 0; }
+    /* a mail's empty line has a height (its renderer fills it with a non-breaking space); a browser draws an empty paragraph without */
+    .page.mail ::ng-deep p:empty::before { content: "\\00a0"; }
+    /* list items stand close together, as the mail renderer writes them (LIST_ITEM_GAP) */
+    .page.mail ::ng-deep li > p { margin: 0 0 4px; }
+    /* the indents of a mail's text, drawn as classes (mailDrawnHtml; 40px a step up to MAX_DRAWN_INDENT): the sanitizer of the drawing drops the inline margin */
+    .page.mail ::ng-deep .rte-indent-1 { margin-left: 40px; } .page.mail ::ng-deep .rte-indent-2 { margin-left: 80px; } .page.mail ::ng-deep .rte-indent-3 { margin-left: 120px; }
+    .page.mail ::ng-deep .rte-indent-4 { margin-left: 160px; } .page.mail ::ng-deep .rte-indent-5 { margin-left: 200px; } .page.mail ::ng-deep .rte-indent-6 { margin-left: 240px; }
+    .page.mail ::ng-deep .rte-indent-7 { margin-left: 280px; } .page.mail ::ng-deep .rte-indent-8 { margin-left: 320px; } .page.mail ::ng-deep .rte-indent-9 { margin-left: 360px; }
+    .page.mail ::ng-deep .rte-indent-10 { margin-left: 400px; } .page.mail ::ng-deep .rte-indent-11 { margin-left: 440px; } .page.mail ::ng-deep .rte-indent-12 { margin-left: 480px; }
+    .page.mail ::ng-deep .rte-indent-13 { margin-left: 520px; } .page.mail ::ng-deep .rte-indent-14 { margin-left: 560px; } .page.mail ::ng-deep .rte-indent-15 { margin-left: 600px; }
+    .page.mail ::ng-deep .rte-indent-16 { margin-left: 640px; } .page.mail ::ng-deep .rte-indent-17 { margin-left: 680px; } .page.mail ::ng-deep .rte-indent-18 { margin-left: 720px; }
+    .page.mail ::ng-deep .rte-indent-19 { margin-left: 760px; } .page.mail ::ng-deep .rte-indent-20 { margin-left: 800px; }
     .page.mail .list ::ng-deep ion-item { --inner-padding-end: 0; }
     .page.mail .list ::ng-deep .callout .tint { padding: 16px; }
     /* with the paddings of two blocks the gutter of 16 px; unequal columns are up to 2 px wider or narrower than in the mail */

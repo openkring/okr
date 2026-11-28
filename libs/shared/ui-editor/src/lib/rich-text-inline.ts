@@ -12,7 +12,8 @@ import { EMPTY_RICH_TEXT } from './rich-text-format';
 import { RICH_TEXT_I18N_KEYS, RichTextI18n } from './rich-text-i18n';
 
 /** A group of buttons that a host can leave out, together with the keys and, in a text edited in place, the look of what it makes. */
-export type RichTextFeature = 'history' | 'heading' | 'marks' | 'colors' | 'lists' | 'align' | 'quote' | 'indent' | 'link' | 'image';
+/** `fill`: the background colour alone, which `colors` hides too (a mail offers the text colour without it). */
+export type RichTextFeature = 'history' | 'heading' | 'marks' | 'colors' | 'fill' | 'lists' | 'align' | 'quote' | 'indent' | 'link' | 'image';
 
 /** Where the cursor goes; `afterHtml` = right after the content with this html (between two joined texts), 'end' if it is not there. */
 export type RichTextCaret = 'start' | 'end' | { afterHtml: string };
@@ -34,6 +35,7 @@ export type RichTextCaret = 'start' | 'end' | { afterHtml: string };
     '[class.hides-colors]': `hiddenFeatures().includes('colors')`,
     '[class.hides-align]': `hiddenFeatures().includes('align')`,
     '[class.hides-indent]': `hiddenFeatures().includes('indent')`,
+    '[class.hides-fill]': `hiddenFeatures().includes('fill')`,
   },
   styles: [`
     okr-rich-text-inline { display: block; }
@@ -46,6 +48,7 @@ export type RichTextCaret = 'start' | 'end' | { afterHtml: string };
     okr-rich-text-inline.hides-colors .ProseMirror span[style] { color: inherit !important; background-color: transparent !important; }
     okr-rich-text-inline.hides-align .ProseMirror :is(p, h1, h2, h3, h4, h5, h6)[style] { text-align: inherit !important; }
     okr-rich-text-inline.hides-indent .ProseMirror [data-indent] { margin-left: revert !important; }
+    okr-rich-text-inline.hides-fill .ProseMirror span[style] { background-color: transparent !important; }
   `],
   template: `<ng-container #engineHost />`,
 })
@@ -65,6 +68,11 @@ export class RichTextInline {
   public readonly hiddenFeatures = input<readonly RichTextFeature[]>([]);
   /** Backspace at the very start emits `join`; otherwise the keys are the field's (Enter is always a line break in the text). */
   public readonly blockEditing = input(false);
+  /**
+   * true: an empty line keeps its height, also without the cursor in it. For a text whose readers see empty lines (a mail: its
+   * renderer writes them with a non-breaking space). Default: hidden, as a browser draws an empty paragraph. Read once.
+   */
+  public readonly showEmptyLines = input(false);
   public readonly toolbarHost = input<ViewContainerRef | undefined>(undefined);
   /** Where the cursor goes when the text is ready, when another html is loaded, and when this changes. */
   public readonly caret = input<RichTextCaret>('end');
@@ -180,6 +188,7 @@ export class RichTextInline {
     ref.setInput('placeholder', this.placeholder() || this.texts.placeholder());
     ref.setInput('hiddenFeatures', this.hiddenFeatures());
     ref.setInput('blockEditing', this.blockEditing());
+    ref.setInput('showEmptyLines', this.showEmptyLines());
     ref.setInput('caret', this.caretWish());
     ref.instance.valueChange.subscribe((html: string) => this.valueChange.emit(html));
     ref.instance.join.subscribe((html: string) => this.join.emit(html));
